@@ -1,0 +1,26 @@
+# Dockerfile para desarrollo con hot-reload
+
+FROM node:20-alpine AS development
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache openssl libc6-compat
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Instalar TODAS las dependencias (incluyendo devDependencies)
+RUN npm install && \
+    npx prisma generate
+
+# Copiar código fuente
+COPY . .
+
+# Exponer puerto
+EXPOSE 3000
+
+# Comando de desarrollo con nodemon
+CMD ["npm", "run", "dev"]

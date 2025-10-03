@@ -1,82 +1,277 @@
-Descripción del Proyecto: ChronosFlow
+# 🚀 Creapolis - Sistema de Gestión de Proyectos Inteligente
 
-1. Visión General (Elevator Pitch)
-   ChronosFlow es un sistema de gestión de proyectos colaborativo e inteligente que crea cronogramas de trabajo dinámicos. A diferencia de las herramientas estáticas, ChronosFlow ajusta automáticamente las fechas y plazos del proyecto en tiempo real basándose en la disponibilidad real del equipo (sincronizada con Google Calendar) y el tiempo de ejecución real de las tareas, eliminando la necesidad de replanificar manualmente ante cada imprevisto.
+> Sistema de gestión de proyectos colaborativo con planificación adaptativa y sincronización con Google Calendar
 
-2. Problema a Solucionar
-   Los planes de proyecto tradicionales fallan al enfrentarse a la realidad: reuniones inesperadas, tareas que toman más o menos tiempo de lo estimado y cambios de prioridades. Esto obliga a los Jefes de Proyecto a perder horas replanificando manualmente, genera fechas de entrega poco realistas y crea una desconexión entre el plan y la ejecución diaria del equipo.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.0-brightgreen.svg)](https://nodejs.org)
+[![Flutter](https://img.shields.io/badge/flutter-3.9%2B-blue.svg)](https://flutter.dev)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com)
+[![PostgreSQL](https://img.shields.io/badge/postgres-16-blue.svg)](https://www.postgresql.org)
 
-3. Módulos y Características Clave
-   Módulo 1: Gestión de Proyectos y Tareas (El Núcleo)
-   Proyectos: Creación de proyectos con nombre, descripción y equipo asignado.
+## 📋 Tabla de Contenidos
 
-Tareas: Creación de tareas con título, descripción, tiempo estimado en horas y responsable asignado.
+- [Características](#-características-principales)
+- [Arquitectura](#-arquitectura)
+- [Quick Start con Docker](#-quick-start-con-docker)
+- [Instalación Manual](#-instalación-manual)
+- [Documentación](#-documentación)
+- [API](#-api)
+- [Contribuir](#-contribuir)
 
-Dependencias Avanzadas: Sistema para vincular tareas (Final a Inicio, Inicio a Inicio, Final a Final) para crear flujos de trabajo lógicos.
+---
 
-Tareas Ancladas: Opción para fijar tareas a fechas inamovibles que el motor de replanificación no puede desplazar.
+## ✨ Características Principales
 
-Módulo 2: Motor de Planificación Adaptativa (La Inteligencia)
-Cálculo Inicial de Cronograma: Al definir las tareas, dependencias y la fecha de inicio de la primera tarea, el motor genera el cronograma completo del proyecto.
+### 🎯 Gestión Inteligente de Proyectos
 
-Sincronización con Calendarios: Conexión vía OAuth 2.0 a Google Calendar de cada miembro del equipo para leer sus eventos y considerarlos como "tiempo no disponible".
+- **Planificación Automática**: Motor de scheduling con algoritmos topológicos
+- **Replanificación Adaptativa**: Ajuste automático ante cambios
+- **Dependencias Avanzadas**: Soporte para FINISH_TO_START y START_TO_START
+- **Tareas Ancladas**: Fija fechas inamovibles
 
-Disparadores de Replanificación Automática: El motor se activa y recalcula el cronograma si:
+### 📅 Integración con Google Calendar
 
-Un evento se añade/modifica en el Google Calendar de un miembro.
+- **OAuth 2.0**: Conexión segura con calendarios
+- **Sincronización Bidireccional**: Lee disponibilidad real del equipo
+- **Detección de Conflictos**: Alerta automática de sobrecargas
 
-Una tarea se completa fuera de su tiempo estimado (usando datos del time tracker).
+### ⏱️ Time Tracking Completo
 
-Se modifica manualmente una dependencia o la fecha de una tarea anclada.
+- **Cronómetro Integrado**: Play/Stop/Finish en cada tarea
+- **Análisis de Desviaciones**: Tiempo estimado vs real
+- **Métricas por Usuario**: Carga de trabajo y productividad
 
-Lógica de Horarios Laborales: Permite configurar un horario laboral (ej. L-V de 9:00 a 18:00) para que las tareas solo se programen en tiempo de trabajo real.
+### 📊 Visualización Avanzada
 
-Módulo 3: Colaboración y Gestión de Recursos
-Roles de Usuario:
+- **Diagrama de Gantt Interactivo**: Custom paint con Canvas
+- **Vista de Workload**: Análisis de carga con color coding
+- **Dashboard de Métricas**: KPIs del proyecto en tiempo real
 
-Administrador: Control total sobre usuarios y proyectos.
+### 🔐 Gestión de Usuarios
 
-Jefe de Proyecto: Crea proyectos y asigna tareas a su equipo.
+- **Roles Granulares**: Admin, Project Manager, Team Member
+- **Autenticación JWT**: Segura y escalable
+- **Permisos por Proyecto**: Control de acceso fino
 
-Miembro de Equipo: Trabaja en las tareas asignadas.
+---
 
-Invitado: Rol de solo lectura para stakeholders.
+## 🏗️ Arquitectura
 
-Asignación de Tareas: Asignación clara de cada tarea a un único miembro del equipo.
+### Backend
 
-Vista de Carga de Trabajo (Workload): Un panel visual que muestra la cantidad de horas asignadas a cada miembro por día/semana, con alertas visuales de sobreasignación.
+- **Node.js + Express**: API RESTful
+- **Prisma ORM**: Type-safe database access
+- **PostgreSQL**: Base de datos relacional
+- **JWT**: Autenticación stateless
 
-Módulo 4: Time Tracking y Analíticas
-Control de Tiempo: Botones de "Play", "Stop" y "Finish" en cada tarea para registrar el tiempo de ejecución real.
+### Frontend
 
-Dashboard de Métricas:
+- **Flutter 3.9+**: Multiplataforma (iOS/Android/Web/Desktop)
+- **Clean Architecture**: Separación domain/data/presentation
+- **BLoC Pattern**: State management reactivo
+- **Dio**: HTTP client con interceptores
 
-Comparativa: Tiempo Estimado vs. Tiempo Real (por tarea, por usuario, por proyecto).
+### Infraestructura
 
-Reporte de Desviación: Identificación de las tareas que más se desvían de las estimaciones.
+- **Docker Compose**: Orquestación de servicios
+- **Multi-stage Build**: Imágenes optimizadas
+- **Health Checks**: Monitoreo automático
+- **PgAdmin**: Administración de BD (opcional)
 
-Avance del Proyecto: Porcentaje de completado general.
+---
 
-Módulo 5: Visualización
-Diagrama de Gantt Interactivo: Vista principal del proyecto que muestra las tareas como barras en una línea de tiempo, con sus dependencias y el progreso indicado visualmente.
+## 🐳 Quick Start con Docker
 
-Panel Personal "Mis Tareas": Vista simplificada para que cada miembro del equipo vea solo las tareas que tiene asignadas para el día/semana.
+### Prerequisitos
 
-4. Flujo de Usuario de Alto Nivel
-   Un Jefe de Proyecto crea un proyecto e invita a su equipo.
+- Docker 24.0+
+- Docker Compose 2.20+
 
-El equipo conecta su Google Calendar.
+### Instalación en 3 Pasos
 
-El JP desglosa el proyecto en tareas, las estima en horas, establece dependencias y las asigna.
+```bash
+# 1. Copiar configuración
+cp .env.docker .env
 
-ChronosFlow genera el cronograma inicial y lo puebla en los calendarios.
+# 2. Iniciar servicios
+docker-compose up -d
 
-Un Miembro de Equipo inicia su día, va a su panel "Mis Tareas", le da "Play" a su primera tarea.
+# 3. Verificar
+curl http://localhost:3000/api/health
+```
 
-Durante el día, surge una reunión. Se añade al Google Calendar.
+### Servicios Disponibles
 
-ChronosFlow detecta el conflicto, replanifica automáticamente y notifica al JP del ajuste en la fecha final.
+- **Backend API**: http://localhost:3000
+- **PostgreSQL**: localhost:5432
+- **PgAdmin**: http://localhost:5050 (con `--profile tools`)
 
-Al terminar una tarea, el miembro le da a "Finish". El sistema compara el tiempo real con el estimado y ajusta el resto del cronograma si es necesario.
+### Comandos Útiles
 
-El JP revisa el Dashboard para monitorear el progreso y la precisión de las estimaciones.
+#### Windows (PowerShell)
+
+```powershell
+.\docker.ps1 up        # Iniciar producción
+.\docker.ps1 dev       # Iniciar desarrollo (hot-reload)
+.\docker.ps1 logs      # Ver logs
+.\docker.ps1 status    # Estado de servicios
+.\docker.ps1 help      # Ver todos los comandos
+```
+
+#### Linux/Mac (Make)
+
+```bash
+make up              # Iniciar producción
+make dev             # Iniciar desarrollo
+make logs            # Ver logs
+make ps              # Estado de servicios
+make help            # Ver todos los comandos
+```
+
+### Modo Desarrollo (Hot-Reload)
+
+```bash
+# Iniciar con hot-reload automático
+docker-compose -f docker-compose.dev.yml up -d
+
+# Acceso:
+# - Backend: http://localhost:3001
+# - PgAdmin: http://localhost:5051
+```
+
+Ver documentación completa en [DOCKER_README.md](./DOCKER_README.md)
+
+---
+
+## 📦 Instalación Manual
+
+### Backend
+
+```bash
+cd backend
+
+# Instalar dependencias
+npm install
+
+# Configurar .env
+cp .env.example .env
+# Editar DATABASE_URL, JWT_SECRET, etc.
+
+# Ejecutar migraciones
+npx prisma migrate deploy
+npx prisma generate
+
+# Iniciar servidor
+npm run dev  # Desarrollo
+npm start    # Producción
+```
+
+### Frontend Flutter
+
+```bash
+cd creapolis_app
+
+# Instalar dependencias
+flutter pub get
+
+# Generar código
+dart run build_runner build --delete-conflicting-outputs
+
+# Ejecutar app
+flutter run -d chrome  # Web
+flutter run -d windows # Desktop
+flutter run            # Móvil (con emulador)
+```
+
+---
+
+## 📚 Documentación
+
+- **[DOCKER_README.md](./DOCKER_README.md)**: Guía completa de Docker
+- **[QUICKSTART_DOCKER.md](./QUICKSTART_DOCKER.md)**: Quick Start rápido
+- **[backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)**: Documentación de API
+- **[documentation/tasks.md](./documentation/tasks.md)**: Plan de tareas
+- **[creapolis_app/ARCHITECTURE.md](./creapolis_app/ARCHITECTURE.md)**: Arquitectura Flutter
+
+---
+
+## 🔌 API
+
+### Endpoints Principales
+
+#### Autenticación
+
+```bash
+POST /api/auth/register  # Registro
+POST /api/auth/login     # Login
+```
+
+#### Proyectos
+
+```bash
+GET    /api/projects           # Listar proyectos
+POST   /api/projects           # Crear proyecto
+GET    /api/projects/:id       # Obtener proyecto
+PUT    /api/projects/:id       # Actualizar
+DELETE /api/projects/:id       # Eliminar
+```
+
+#### Tareas
+
+```bash
+GET    /api/projects/:projectId/tasks      # Listar tareas
+POST   /api/projects/:projectId/tasks      # Crear tarea
+GET    /api/tasks/:taskId                  # Obtener tarea
+PUT    /api/tasks/:taskId                  # Actualizar
+DELETE /api/tasks/:taskId                  # Eliminar
+```
+
+#### Scheduler
+
+```bash
+POST /api/projects/:id/schedule/calculate    # Calcular cronograma inicial
+POST /api/projects/:id/schedule/reschedule   # Replanificar desde tarea
+GET  /api/projects/:id/schedule/resources    # Análisis de carga
+```
+
+#### Google Calendar
+
+```bash
+GET  /api/integrations/google/auth-url       # Obtener URL OAuth
+POST /api/integrations/google/callback       # Completar OAuth
+GET  /api/integrations/google/status         # Estado de conexión
+GET  /api/integrations/google/events         # Eventos del calendario
+```
+
+---
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea tu rama (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para más detalles.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](./LICENSE) para más información.
+
+---
+
+## 👥 Equipo
+
+**Creapolis Team**
+
+- GitHub: [@tiagofur](https://github.com/tiagofur)
+- Proyecto: [creapolis-project](https://github.com/tiagofur/creapolis-project)
+
+---
+
+**Última actualización**: 3 de octubre de 2025  
+**Versión**: 1.0.0  
+**Estado**: ✅ Producción Ready

@@ -1,0 +1,97 @@
+version: "3.9"
+
+# Docker Compose para Desarrollo
+# Uso: docker-compose -f docker-compose.dev.yml up
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: creapolis-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-creapolis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-creapolis_dev_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-creapolis_dev}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432" # Puerto diferente para no conflictuar
+    networks:
+      - creapolis-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-creapolis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (modo desarrollo con hot-reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: creapolis-backend-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-creapolis}:${POSTGRES_PASSWORD:-creapolis_dev_2024}@postgres:5432/${POSTGRES_DB:-creapolis_dev}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-not-for-production}
+      JWT_EXPIRES_IN: 7d
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: http://localhost:3001/api/integrations/google/callback
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "${BACKEND_PORT:-3001}:3000" # Puerto diferente para desarrollo
+    networks:
+      - creapolis-dev-network
+    volumes:
+      # Hot-reload: cambios en src se reflejan automáticamente
+      - ./backend/src:/app/src:cached
+      - ./backend/prisma:/app/prisma:cached
+      - backend_dev_node_modules:/app/node_modules # Evitar conflictos con host
+      - backend_dev_logs:/app/logs
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+
+  # PgAdmin para desarrollo
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: creapolis-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@creapolis.com
+      PGADMIN_DEFAULT_PASSWORD: dev
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5051:80"
+    networks:
+      - creapolis-dev-network
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+networks:
+  creapolis-dev-network:
+    driver: bridge
+    name: creapolis-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+    name: creapolis-postgres-dev-data
+  pgadmin_dev_data:
+    driver: local
+    name: creapolis-pgadmin-dev-data
+  backend_dev_node_modules:
+    driver: local
+    name: creapolis-backend-dev-node-modules
+  backend_dev_logs:
+    driver: local
+    name: creapolis-backend-dev-logs

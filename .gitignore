@@ -13,6 +13,8 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+# Pero NO ignorar .env.docker (es template)
+
 
 # Dependencies
 node_modules/
@@ -200,9 +202,13 @@ pubspec.lock
 /playwright/.cache/
 
 # Docker
-.dockerignore
-Dockerfile*
-docker-compose*.yml
+# .dockerignore NO se ignora (es necesario)
+# Dockerfile* NO se ignora (es necesario)
+# docker-compose*.yml NO se ignora (es necesario)
+docker-volumes/
+postgres-data/
+pgadmin-data/
+
 
 # Terraform
 *.tfstate
