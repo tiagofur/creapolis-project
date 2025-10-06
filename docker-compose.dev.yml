@@ -40,7 +40,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-creapolis}:${POSTGRES_PASSWORD:-creapolis_dev_2024}@postgres:5432/${POSTGRES_DB:-creapolis_dev}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-database}?schema=public
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-not-for-production}
       JWT_EXPIRES_IN: 7d
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
