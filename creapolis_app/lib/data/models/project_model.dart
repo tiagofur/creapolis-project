@@ -21,13 +21,24 @@ class ProjectModel extends Project {
   ///
   /// Usado para deserializar respuestas de la API.
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
+    // El backend puede no incluir startDate, endDate y status
+    // Si no están presentes, usar valores por defecto
+    final now = DateTime.now();
+    final defaultEndDate = now.add(const Duration(days: 30));
+
     return ProjectModel(
       id: json['id'] as int,
       name: json['name'] as String,
-      description: json['description'] as String,
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: DateTime.parse(json['endDate'] as String),
-      status: _statusFromString(json['status'] as String),
+      description: json['description'] as String? ?? '',
+      startDate: json['startDate'] != null
+          ? DateTime.parse(json['startDate'] as String)
+          : now,
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'] as String)
+          : defaultEndDate,
+      status: json['status'] != null
+          ? _statusFromString(json['status'] as String)
+          : ProjectStatus.planned,
       managerId: json['managerId'] as int?,
       managerName: json['managerName'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),

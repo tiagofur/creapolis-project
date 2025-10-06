@@ -17,6 +17,20 @@ class UserModel extends User {
   ///
   /// Usado para deserializar respuestas de la API.
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Validar campos requeridos
+    if (json['id'] == null) {
+      throw Exception('User ID is required but was null');
+    }
+    if (json['email'] == null) {
+      throw Exception('User email is required but was null');
+    }
+    if (json['name'] == null) {
+      throw Exception('User name is required but was null');
+    }
+    if (json['role'] == null) {
+      throw Exception('User role is required but was null');
+    }
+
     return UserModel(
       id: json['id'] as int,
       email: json['email'] as String,

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
@@ -58,8 +59,85 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'email': email, 'password': password},
       );
 
-      // La respuesta debe contener: {user: {...}, token: "..."}
-      return response.data as Map<String, dynamic>;
+      // Validar que la respuesta sea exitosa
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Error al iniciar sesión: código ${response.statusCode}',
+        );
+      }
+
+      // Validar que la respuesta tenga datos
+      if (response.data == null) {
+        throw ServerException('Respuesta vacía del servidor');
+      }
+
+      // La respuesta del backend tiene estructura: {success, message, data: {user, token}}
+      final responseData = response.data as Map<String, dynamic>;
+
+      print('🔍 LOGIN - responseData type: ${responseData.runtimeType}');
+      print('🔍 LOGIN - responseData.keys: ${responseData.keys.toList()}');
+      print(
+        '🔍 LOGIN - responseData.containsKey("data"): ${responseData.containsKey("data")}',
+      );
+      print(
+        '🔍 LOGIN - responseData["data"] type: ${responseData["data"]?.runtimeType}',
+      );
+
+      // Extraer el objeto 'data' que contiene user y token
+      final dataRaw = responseData['data'];
+      print('🔍 LOGIN - dataRaw: $dataRaw');
+      print('🔍 LOGIN - dataRaw is Map: ${dataRaw is Map}');
+      print(
+        '🔍 LOGIN - dataRaw is Map<String, dynamic>: ${dataRaw is Map<String, dynamic>}',
+      );
+
+      final data = dataRaw as Map<String, dynamic>?;
+
+      print('🔍 LOGIN - data is null: ${data == null}');
+      if (data != null) {
+        print('🔍 LOGIN - data.keys: ${data.keys.toList()}');
+        print('🔍 LOGIN - data["token"] type: ${data["token"]?.runtimeType}');
+        print('🔍 LOGIN - data["user"] type: ${data["user"]?.runtimeType}');
+        print(
+          '🔍 LOGIN - data.containsKey("token"): ${data.containsKey("token")}',
+        );
+        print(
+          '🔍 LOGIN - data.containsKey("user"): ${data.containsKey("user")}',
+        );
+      }
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      // Validar estructura de respuesta
+      if (!data.containsKey('token') || !data.containsKey('user')) {
+        throw ServerException(
+          'Formato de respuesta inválido. Keys encontradas: ${data.keys.toList()}. Data completa: $data',
+        );
+      }
+
+      print('✅ LOGIN - Retornando data con token y user');
+      return data;
+    } on DioException catch (e) {
+      // Manejar errores de Dio (401, 409, etc.)
+      if (e.response?.statusCode == 401) {
+        throw AuthException(e.error?.toString() ?? 'Credenciales inválidas');
+      } else if (e.response?.statusCode == 409) {
+        throw ConflictException(
+          e.error?.toString() ?? 'Conflicto con el estado actual',
+        );
+      } else if (e.response?.statusCode == 422) {
+        throw ValidationException(
+          e.error?.toString() ?? 'Datos de entrada inválidos',
+        );
+      } else {
+        throw ServerException(
+          e.error?.toString() ?? 'Error del servidor: ${e.message}',
+        );
+      }
     } on AuthException {
       rethrow;
     } on ServerException {
@@ -81,8 +159,51 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'email': email, 'password': password, 'name': name},
       );
 
-      // La respuesta debe contener: {user: {...}, token: "..."}
-      return response.data as Map<String, dynamic>;
+      // Validar que la respuesta sea exitosa
+      if (response.statusCode != 201) {
+        throw ServerException(
+          'Error al registrar: código ${response.statusCode}',
+        );
+      }
+
+      // Validar que la respuesta tenga datos
+      if (response.data == null) {
+        throw ServerException('Respuesta vacía del servidor');
+      }
+
+      // La respuesta del backend tiene estructura: {success, message, data: {user, token}}
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Extraer el objeto 'data' que contiene user y token
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      // Validar estructura de respuesta
+      if (!data.containsKey('token') || !data.containsKey('user')) {
+        throw ServerException(
+          'Formato de respuesta inválido. Data recibida: $data',
+        );
+      }
+
+      return data;
+    } on DioException catch (e) {
+      // Manejar errores de Dio
+      if (e.response?.statusCode == 409) {
+        throw ConflictException(e.error?.toString() ?? 'El usuario ya existe');
+      } else if (e.response?.statusCode == 422) {
+        throw ValidationException(
+          e.error?.toString() ?? 'Datos de entrada inválidos',
+        );
+      } else {
+        throw ServerException(
+          e.error?.toString() ?? 'Error del servidor: ${e.message}',
+        );
+      }
     } on ValidationException {
       rethrow;
     } on ServerException {
@@ -95,9 +216,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> getProfile() async {
     try {
-      final response = await _dioClient.get('/auth/profile');
+      final response = await _dioClient.get('/auth/me');
 
-      return UserModel.fromJson(response.data as Map<String, dynamic>);
+      // La respuesta del backend tiene estructura: {success, message, data: {user data}}
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Extraer el objeto 'data' que contiene los datos del usuario
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException('Datos de usuario no encontrados en respuesta');
+      }
+
+      return UserModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on ServerException {

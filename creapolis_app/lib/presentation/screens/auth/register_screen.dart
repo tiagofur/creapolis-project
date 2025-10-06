@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: const Text('Crear Cuenta'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/login'),
+          onPressed: () => context.go('/auth/login'),
         ),
       ),
       body: BlocListener<AuthBloc, AuthState>(
@@ -287,7 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           TextButton(
-                            onPressed: () => context.go('/login'),
+                            onPressed: () => context.go('/auth/login'),
                             child: const Text('Inicia Sesión'),
                           ),
                         ],

@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           TextButton(
-                            onPressed: () => context.go('/register'),
+                            onPressed: () => context.go('/auth/register'),
                             child: const Text('Regístrate'),
                           ),
                         ],

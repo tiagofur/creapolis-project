@@ -152,7 +152,10 @@ class _ErrorInterceptor extends Interceptor {
         break;
 
       case DioExceptionType.badResponse:
-        errorMessage = _handleStatusCode(err.response?.statusCode);
+        // Intentar extraer el mensaje del servidor
+        errorMessage =
+            _extractErrorMessage(err.response) ??
+            _handleStatusCode(err.response?.statusCode);
         break;
 
       case DioExceptionType.cancel:
@@ -183,6 +186,35 @@ class _ErrorInterceptor extends Interceptor {
     );
 
     handler.next(customError);
+  }
+
+  /// Extraer mensaje de error del response del servidor
+  String? _extractErrorMessage(Response? response) {
+    if (response?.data == null) return null;
+
+    try {
+      final data = response!.data;
+
+      // Intentar diferentes estructuras de respuesta del backend
+      if (data is Map<String, dynamic>) {
+        // Estructura: { "error": { "message": "..." } }
+        if (data['error'] is Map<String, dynamic>) {
+          return data['error']['message'] as String?;
+        }
+        // Estructura: { "error": "..." }
+        if (data['error'] is String) {
+          return data['error'] as String;
+        }
+        // Estructura: { "message": "..." }
+        if (data['message'] is String) {
+          return data['message'] as String;
+        }
+      }
+    } catch (_) {
+      // Si falla la extracción, retornar null para usar mensaje genérico
+    }
+
+    return null;
   }
 
   String _handleStatusCode(int? statusCode) {

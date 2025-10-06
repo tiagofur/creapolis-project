@@ -56,7 +56,17 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   Future<List<TaskModel>> getTasksByProject(int projectId) async {
     try {
       final response = await _client.get('/projects/$projectId/tasks');
-      final data = response.data as List;
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final dataRaw = responseData['data'];
+
+      // Si data es null o no es una lista, retornar lista vacía
+      if (dataRaw == null || dataRaw is! List) {
+        return [];
+      }
+
+      final data = dataRaw as List;
       return data
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -73,7 +83,12 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   Future<TaskModel> getTaskById(int id) async {
     try {
       final response = await _client.get('/tasks/$id');
-      return TaskModel.fromJson(response.data as Map<String, dynamic>);
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>;
+
+      return TaskModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -102,17 +117,18 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         data: {
           'title': title,
           'description': description,
-          'status': TaskModel.statusToString(status),
-          'priority': TaskModel.priorityToString(priority),
-          'start_date': startDate.toIso8601String(),
-          'end_date': endDate.toIso8601String(),
-          'estimated_hours': estimatedHours,
-          if (assignedUserId != null) 'assigned_user_id': assignedUserId,
+          'estimatedHours': estimatedHours,
+          if (assignedUserId != null) 'assigneeId': assignedUserId,
           if (dependencyIds != null && dependencyIds.isNotEmpty)
-            'dependency_ids': dependencyIds,
+            'predecessorIds': dependencyIds,
         },
       );
-      return TaskModel.fromJson(response.data as Map<String, dynamic>);
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>;
+
+      return TaskModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on ValidationException {
@@ -145,15 +161,20 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       if (priority != null) {
         data['priority'] = TaskModel.priorityToString(priority);
       }
-      if (startDate != null) data['start_date'] = startDate.toIso8601String();
-      if (endDate != null) data['end_date'] = endDate.toIso8601String();
-      if (estimatedHours != null) data['estimated_hours'] = estimatedHours;
-      if (actualHours != null) data['actual_hours'] = actualHours;
-      if (assignedUserId != null) data['assigned_user_id'] = assignedUserId;
-      if (dependencyIds != null) data['dependency_ids'] = dependencyIds;
+      if (startDate != null) data['startDate'] = startDate.toIso8601String();
+      if (endDate != null) data['endDate'] = endDate.toIso8601String();
+      if (estimatedHours != null) data['estimatedHours'] = estimatedHours;
+      if (actualHours != null) data['actualHours'] = actualHours;
+      if (assignedUserId != null) data['assigneeId'] = assignedUserId;
+      if (dependencyIds != null) data['predecessorIds'] = dependencyIds;
 
       final response = await _client.put('/tasks/$id', data: data);
-      return TaskModel.fromJson(response.data as Map<String, dynamic>);
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final taskData = responseData['data'] as Map<String, dynamic>;
+
+      return TaskModel.fromJson(taskData);
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -182,7 +203,17 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   Future<List<TaskDependencyModel>> getTaskDependencies(int taskId) async {
     try {
       final response = await _client.get('/tasks/$taskId/dependencies');
-      final data = response.data as List;
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final dataRaw = responseData['data'];
+
+      // Si data es null o no es una lista, retornar lista vacía
+      if (dataRaw == null || dataRaw is! List) {
+        return [];
+      }
+
+      final data = dataRaw as List;
       return data
           .map(
             (json) =>
@@ -211,9 +242,12 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
           'successor_task_id': successorTaskId,
         },
       );
-      return TaskDependencyModel.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>;
+
+      return TaskDependencyModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on ValidationException {
@@ -242,7 +276,17 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       final response = await _client.post(
         '/projects/$projectId/schedule/calculate',
       );
-      final data = response.data as List;
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final dataRaw = responseData['data'];
+
+      // Si data es null o no es una lista, retornar lista vacía
+      if (dataRaw == null || dataRaw is! List) {
+        return [];
+      }
+
+      final data = dataRaw as List;
       return data
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -265,7 +309,17 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         '/projects/$projectId/schedule/reschedule',
         data: {'trigger_task_id': triggerTaskId},
       );
-      final data = response.data as List;
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final dataRaw = responseData['data'];
+
+      // Si data es null o no es una lista, retornar lista vacía
+      if (dataRaw == null || dataRaw is! List) {
+        return [];
+      }
+
+      final data = dataRaw as List;
       return data
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();

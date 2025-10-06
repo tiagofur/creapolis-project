@@ -36,6 +36,20 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
 
+      // Validar estructura de respuesta
+      if (response['token'] == null) {
+        return Left(
+          ServerFailure('Token no recibido del servidor. Respuesta: $response'),
+        );
+      }
+      if (response['user'] == null) {
+        return Left(
+          ServerFailure(
+            'Datos de usuario no recibidos del servidor. Respuesta: $response',
+          ),
+        );
+      }
+
       // Extraer datos de la respuesta
       final token = response['token'] as String;
       final userJson = response['user'] as Map<String, dynamic>;

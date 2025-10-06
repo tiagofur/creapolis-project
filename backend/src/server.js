@@ -22,9 +22,13 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 
 // CORS configuration
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+  : ["http://localhost:5173"];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: corsOrigins,
     credentials: true,
   })
 );
@@ -95,7 +99,7 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error("Error:", err);
 
-  const status = err.status || 500;
+  const status = err.statusCode || err.status || 500;
   const message = err.message || "Internal Server Error";
 
   res.status(status).json({

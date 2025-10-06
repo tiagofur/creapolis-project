@@ -66,7 +66,24 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     try {
       final response = await _dioClient.get('/projects');
 
-      final List<dynamic> projectsJson = response.data as List<dynamic>;
+      // La respuesta del backend tiene estructura: {success, message, data: {projects, pagination}}
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      final projectsJson = data['projects'] as List<dynamic>?;
+
+      if (projectsJson == null) {
+        throw ServerException(
+          'Lista de proyectos no encontrada en respuesta. Data recibida: $data',
+        );
+      }
+
       return projectsJson
           .map((json) => ProjectModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -84,7 +101,17 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     try {
       final response = await _dioClient.get('/projects/$id');
 
-      return ProjectModel.fromJson(response.data as Map<String, dynamic>);
+      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      return ProjectModel.fromJson(data);
     } on NotFoundException {
       rethrow;
     } on ServerException {
@@ -104,19 +131,32 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     int? managerId,
   }) async {
     try {
+      // El backend actualmente solo maneja name y description
+      // Los campos startDate, endDate, status y managerId se ignorarán por ahora
       final response = await _dioClient.post(
         '/projects',
         data: {
           'name': name,
           'description': description,
-          'startDate': startDate.toIso8601String(),
-          'endDate': endDate.toIso8601String(),
-          'status': _statusToString(status),
-          if (managerId != null) 'managerId': managerId,
+          // TODO: Cuando el backend soporte estos campos, descomentarlos:
+          // 'startDate': startDate.toIso8601String(),
+          // 'endDate': endDate.toIso8601String(),
+          // 'status': _statusToString(status),
+          // if (managerId != null) 'managerId': managerId,
         },
       );
 
-      return ProjectModel.fromJson(response.data as Map<String, dynamic>);
+      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      return ProjectModel.fromJson(data);
     } on ValidationException {
       rethrow;
     } on ServerException {
@@ -137,17 +177,29 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     int? managerId,
   }) async {
     try {
-      final data = <String, dynamic>{};
-      if (name != null) data['name'] = name;
-      if (description != null) data['description'] = description;
-      if (startDate != null) data['startDate'] = startDate.toIso8601String();
-      if (endDate != null) data['endDate'] = endDate.toIso8601String();
-      if (status != null) data['status'] = _statusToString(status);
-      if (managerId != null) data['managerId'] = managerId;
+      final requestData = <String, dynamic>{};
+      if (name != null) requestData['name'] = name;
+      if (description != null) requestData['description'] = description;
+      // El backend actualmente solo maneja name y description
+      // TODO: Cuando el backend soporte estos campos, descomentarlos:
+      // if (startDate != null) requestData['startDate'] = startDate.toIso8601String();
+      // if (endDate != null) requestData['endDate'] = endDate.toIso8601String();
+      // if (status != null) requestData['status'] = _statusToString(status);
+      // if (managerId != null) requestData['managerId'] = managerId;
 
-      final response = await _dioClient.put('/projects/$id', data: data);
+      final response = await _dioClient.put('/projects/$id', data: requestData);
 
-      return ProjectModel.fromJson(response.data as Map<String, dynamic>);
+      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException(
+          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
+        );
+      }
+
+      return ProjectModel.fromJson(data);
     } on NotFoundException {
       rethrow;
     } on ValidationException {
@@ -173,6 +225,8 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   }
 
   /// Convertir ProjectStatus a string para API
+  /// TODO: Usado cuando el backend soporte campos status, startDate, endDate
+  // ignore: unused_element
   String _statusToString(ProjectStatus status) {
     switch (status) {
       case ProjectStatus.planned:
