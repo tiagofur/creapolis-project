@@ -40,8 +40,11 @@ class WorkloadRemoteDataSource {
         'WorkloadRemoteDataSource: Resource allocation obtenido exitosamente',
       );
 
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
+      // Extract resources array from the data object
+      final responseData = response.data['data'];
+      final List<dynamic> resources =
+          responseData['resources'] as List<dynamic>;
+      return resources
           .map((json) => ResourceAllocationModel.fromJson(json))
           .toList();
     } catch (e) {

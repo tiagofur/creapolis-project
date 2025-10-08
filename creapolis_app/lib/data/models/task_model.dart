@@ -23,27 +23,46 @@ class TaskModel extends Task {
 
   /// Crea un TaskModel desde JSON
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    // El backend puede enviar tanto camelCase como snake_case
+    final projectId = json['projectId'] ?? json['project_id'];
+    final estimatedHours = json['estimatedHours'] ?? json['estimated_hours'];
+    final actualHours = json['actualHours'] ?? json['actual_hours'];
+    final startDateStr = json['startDate'] ?? json['start_date'];
+    final endDateStr = json['endDate'] ?? json['end_date'];
+    final createdAtStr = json['createdAt'] ?? json['created_at'];
+    final updatedAtStr = json['updatedAt'] ?? json['updated_at'];
+
     return TaskModel(
       id: json['id'] as int,
-      projectId: json['project_id'] as int,
+      projectId: projectId as int,
       title: json['title'] as String,
       description: json['description'] as String,
       status: statusFromString(json['status'] as String),
-      priority: priorityFromString(json['priority'] as String),
-      estimatedHours: (json['estimated_hours'] as num).toDouble(),
-      actualHours: json['actual_hours'] != null
-          ? (json['actual_hours'] as num).toDouble()
-          : 0.0,
+      priority: json['priority'] != null
+          ? priorityFromString(json['priority'] as String)
+          : TaskPriority.medium, // Default si no viene
+      estimatedHours: (estimatedHours as num).toDouble(),
+      actualHours: actualHours != null ? (actualHours as num).toDouble() : 0.0,
       assignee: json['assignee'] != null
           ? UserModel.fromJson(json['assignee'] as Map<String, dynamic>)
           : null,
-      startDate: DateTime.parse(json['start_date'] as String),
-      endDate: DateTime.parse(json['end_date'] as String),
+      startDate: startDateStr != null
+          ? DateTime.parse(startDateStr as String)
+          : DateTime.now(), // Default a fecha actual si no viene
+      endDate: endDateStr != null
+          ? DateTime.parse(endDateStr as String)
+          : DateTime.now().add(
+              const Duration(days: 7),
+            ), // Default a 7 días después
       dependencyIds: json['dependency_ids'] != null
           ? List<int>.from(json['dependency_ids'] as List)
-          : const [],
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+          : (json['predecessors'] != null && json['predecessors'] is List
+                ? (json['predecessors'] as List)
+                      .map((p) => p['id'] as int)
+                      .toList()
+                : const []),
+      createdAt: DateTime.parse(createdAtStr as String),
+      updatedAt: DateTime.parse(updatedAtStr as String),
     );
   }
 

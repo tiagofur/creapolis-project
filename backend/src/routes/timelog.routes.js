@@ -60,6 +60,86 @@ router.get(
   timeLogController.getTaskTimeLogs
 );
 
+/**
+ * @route   GET /api/tasks/:taskId
+ * @desc    Get task by ID (without needing projectId)
+ * @access  Private
+ */
+router.get("/:taskId", taskIdValidation, validate, async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.user.userId;
+
+    // Import prisma to query directly
+    const { default: prisma } = await import("../config/database.js");
+
+    // Find task with project membership verification
+    const task = await prisma.task.findFirst({
+      where: {
+        id: parseInt(taskId),
+        project: {
+          members: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+      include: {
+        assignee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        predecessors: {
+          include: {
+            predecessor: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+              },
+            },
+          },
+        },
+        successors: {
+          include: {
+            successor: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            timeLogs: true,
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      const { ErrorResponses } = await import("../utils/errors.js");
+      throw ErrorResponses.notFound("Task not found or you don't have access");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Task retrieved successfully",
+      data: task,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // General timelog routes
 const timelogRouter = express.Router();
 timelogRouter.use(authenticate);

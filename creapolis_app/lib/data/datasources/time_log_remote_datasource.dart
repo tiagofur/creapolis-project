@@ -70,7 +70,17 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
   Future<List<TimeLogModel>> getTimeLogsByTask(int taskId) async {
     try {
       final response = await _client.get('/tasks/$taskId/timelogs');
-      final data = response.data as List;
+
+      // Extraer el campo 'data' de la respuesta anidada
+      final responseData = response.data as Map<String, dynamic>;
+      final dataRaw = responseData['data'];
+
+      // Si data es null o no es una lista, retornar lista vacía
+      if (dataRaw == null || dataRaw is! List) {
+        return [];
+      }
+
+      final data = dataRaw as List;
       return data
           .map((json) => TimeLogModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -87,10 +97,16 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
   Future<TimeLogModel?> getActiveTimeLog() async {
     try {
       final response = await _client.get('/timelogs/active');
-      if (response.data == null) {
+
+      // Extract data from the nested response structure
+      final responseData = response.data;
+      if (responseData == null || responseData['data'] == null) {
         return null;
       }
-      return TimeLogModel.fromJson(response.data as Map<String, dynamic>);
+
+      return TimeLogModel.fromJson(
+        responseData['data'] as Map<String, dynamic>,
+      );
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -105,10 +121,16 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
   Future<TimeLogModel?> getActiveTimeLogByTask(int taskId) async {
     try {
       final response = await _client.get('/tasks/$taskId/timelogs/active');
-      if (response.data == null) {
+
+      // Extract data from the nested response structure
+      final responseData = response.data;
+      if (responseData == null || responseData['data'] == null) {
         return null;
       }
-      return TimeLogModel.fromJson(response.data as Map<String, dynamic>);
+
+      return TimeLogModel.fromJson(
+        responseData['data'] as Map<String, dynamic>,
+      );
     } on AuthException {
       rethrow;
     } on NotFoundException {

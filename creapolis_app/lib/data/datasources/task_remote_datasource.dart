@@ -82,6 +82,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<TaskModel> getTaskById(int id) async {
     try {
+      // Usar la ruta /api/tasks/:id que no requiere projectId
       final response = await _client.get('/tasks/$id');
 
       // Extraer el campo 'data' de la respuesta anidada
@@ -307,7 +308,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     try {
       final response = await _client.post(
         '/projects/$projectId/schedule/reschedule',
-        data: {'trigger_task_id': triggerTaskId},
+        data: {'triggerTaskId': triggerTaskId},
       );
 
       // Extraer el campo 'data' de la respuesta anidada
