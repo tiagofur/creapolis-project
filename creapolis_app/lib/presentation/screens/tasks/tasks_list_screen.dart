@@ -21,14 +21,38 @@ class TasksListScreen extends StatefulWidget {
   State<TasksListScreen> createState() => _TasksListScreenState();
 }
 
-class _TasksListScreenState extends State<TasksListScreen> {
+class _TasksListScreenState extends State<TasksListScreen>
+    with WidgetsBindingObserver {
   TaskStatus? _statusFilter;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Cargar tareas al iniciar
-    context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
+    _loadTasks();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Recargar tareas cuando la app vuelve a primer plano
+      _loadTasks();
+    }
+  }
+
+  void _loadTasks() {
+    final currentState = context.read<TaskBloc>().state;
+    // Solo cargar si no estamos ya en TasksLoaded con el proyecto correcto
+    if (currentState is! TasksLoaded) {
+      context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
+    }
   }
 
   @override

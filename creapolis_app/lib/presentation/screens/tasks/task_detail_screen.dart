@@ -14,8 +14,13 @@ import '../../widgets/time_tracking/time_tracker_widget.dart';
 /// Pantalla de detalle de tarea con time tracking
 class TaskDetailScreen extends StatefulWidget {
   final int taskId;
+  final int projectId;
 
-  const TaskDetailScreen({super.key, required this.taskId});
+  const TaskDetailScreen({
+    super.key,
+    required this.taskId,
+    required this.projectId,
+  });
 
   @override
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
@@ -23,14 +28,16 @@ class TaskDetailScreen extends StatefulWidget {
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   late final TimeTrackingBloc _timeTrackingBloc;
+  late final TaskBloc _taskBloc;
 
   @override
   void initState() {
     super.initState();
     _timeTrackingBloc = getIt<TimeTrackingBloc>();
+    _taskBloc = getIt<TaskBloc>();
 
-    // Cargar tarea
-    context.read<TaskBloc>().add(LoadTaskByIdEvent(widget.taskId));
+    // Cargar tarea en el BLoC local
+    _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
 
     // Cargar time logs
     _timeTrackingBloc.add(LoadTimeLogsEvent(widget.taskId));
@@ -38,14 +45,18 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   @override
   void dispose() {
+    _taskBloc.close();
     _timeTrackingBloc.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<TimeTrackingBloc>.value(
-      value: _timeTrackingBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<TimeTrackingBloc>.value(value: _timeTrackingBloc),
+        BlocProvider<TaskBloc>.value(value: _taskBloc),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Detalle de Tarea'),
@@ -53,7 +64,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                context.read<TaskBloc>().add(LoadTaskByIdEvent(widget.taskId));
+                _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
                 _timeTrackingBloc.add(LoadTimeLogsEvent(widget.taskId));
               },
             ),
@@ -89,9 +100,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: () {
-                        context.read<TaskBloc>().add(
-                          LoadTaskByIdEvent(widget.taskId),
-                        );
+                        _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text('Reintentar'),
@@ -269,7 +278,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             task: task,
             onTaskFinished: () {
               // Recargar tarea después de finalizar
-              context.read<TaskBloc>().add(LoadTaskByIdEvent(widget.taskId));
+              _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
             },
           ),
         ],

@@ -72,8 +72,12 @@ class AppRouter {
         path: RoutePaths.taskDetail,
         name: RouteNames.taskDetail,
         builder: (context, state) {
+          final projectId = state.pathParameters['projectId'] ?? '0';
           final taskId = state.pathParameters['taskId'] ?? '0';
-          return TaskDetailScreen(taskId: int.parse(taskId));
+          return TaskDetailScreen(
+            taskId: int.parse(taskId),
+            projectId: int.parse(projectId),
+          );
         },
       ),
 

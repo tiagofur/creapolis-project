@@ -25,7 +25,8 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
   Future<TimeLogModel> startTimer(int taskId) async {
     try {
       final response = await _client.post('/tasks/$taskId/start');
-      return TimeLogModel.fromJson(response.data as Map<String, dynamic>);
+      final payload = _extractDataMap(response.data);
+      return TimeLogModel.fromJson(payload);
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -41,7 +42,8 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
   Future<TimeLogModel> stopTimer(int taskId) async {
     try {
       final response = await _client.post('/tasks/$taskId/stop');
-      return TimeLogModel.fromJson(response.data as Map<String, dynamic>);
+      final payload = _extractDataMap(response.data);
+      return TimeLogModel.fromJson(payload);
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -80,10 +82,16 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
         return [];
       }
 
-      final data = dataRaw as List;
-      return data
-          .map((json) => TimeLogModel.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final List<dynamic> data = dataRaw;
+      return data.map((json) {
+        try {
+          return TimeLogModel.fromJson(json as Map<String, dynamic>);
+        } catch (error, stackTrace) {
+          throw ServerException(
+            'Error al parsear time log: ${error.toString()} | payload: $json\nStackTrace: $stackTrace',
+          );
+        }
+      }).toList();
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -142,4 +150,19 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
       );
     }
   }
+}
+
+Map<String, dynamic> _extractDataMap(dynamic responseData) {
+  if (responseData is Map<String, dynamic>) {
+    final data = responseData['data'];
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (responseData.containsKey('id')) {
+      return responseData;
+    }
+  }
+
+  throw ServerException('Formato de respuesta inesperado: $responseData');
 }
