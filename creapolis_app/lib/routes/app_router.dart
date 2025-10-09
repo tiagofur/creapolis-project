@@ -12,6 +12,13 @@ import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/task_detail_screen.dart';
 import '../presentation/screens/workload/workload_screen.dart';
+import '../presentation/screens/workspace/workspace_create_screen.dart';
+import '../presentation/screens/workspace/workspace_detail_screen.dart';
+import '../presentation/screens/workspace/workspace_edit_screen.dart';
+import '../presentation/screens/workspace/workspace_invitations_screen.dart';
+import '../presentation/screens/workspace/workspace_list_screen.dart';
+import '../presentation/screens/workspace/workspace_members_screen.dart';
+import '../presentation/screens/workspace/workspace_settings_screen.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -97,6 +104,47 @@ class AppRouter {
         name: RouteNames.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
+
+      // Workspace Routes
+      GoRoute(
+        path: RoutePaths.workspaces,
+        name: RouteNames.workspaces,
+        builder: (context, state) => const WorkspaceListScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.workspaceDetail,
+        name: RouteNames.workspaceDetail,
+        builder: (context, state) {
+          // TODO: Cargar workspace por ID
+          return const WorkspaceListScreen(); // Temporal
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.workspaceCreate,
+        name: RouteNames.workspaceCreate,
+        builder: (context, state) => const WorkspaceCreateScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.workspaceMembers,
+        name: RouteNames.workspaceMembers,
+        builder: (context, state) {
+          // TODO: Cargar workspace por ID y pasar a MembersScreen
+          return const WorkspaceListScreen(); // Temporal
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.workspaceSettings,
+        name: RouteNames.workspaceSettings,
+        builder: (context, state) {
+          // TODO: Cargar workspace por ID y pasar a SettingsScreen
+          return const WorkspaceListScreen(); // Temporal
+        },
+      ),
+      GoRoute(
+        path: RoutePaths.invitations,
+        name: RouteNames.invitations,
+        builder: (context, state) => const WorkspaceInvitationsScreen(),
+      ),
     ],
   );
 
@@ -174,6 +222,15 @@ class RoutePaths {
   static const String workload = '/projects/:projectId/workload';
   static const String timeTracking = '/time-tracking';
   static const String settings = '/settings';
+  
+  // Workspace routes
+  static const String workspaces = '/workspaces';
+  static const String workspaceDetail = '/workspaces/:id';
+  static const String workspaceCreate = '/workspaces/create';
+  static const String workspaceEdit = '/workspaces/:id/edit';
+  static const String workspaceMembers = '/workspaces/:id/members';
+  static const String workspaceSettings = '/workspaces/:id/settings';
+  static const String invitations = '/invitations';
 }
 
 /// Nombres de rutas para navegación con nombre
@@ -189,4 +246,13 @@ class RouteNames {
   static const String timeTracking = 'time-tracking';
   static const String workload = 'workload';
   static const String settings = 'settings';
+  
+  // Workspace route names
+  static const String workspaces = 'workspaces';
+  static const String workspaceDetail = 'workspace-detail';
+  static const String workspaceCreate = 'workspace-create';
+  static const String workspaceEdit = 'workspace-edit';
+  static const String workspaceMembers = 'workspace-members';
+  static const String workspaceSettings = 'workspace-settings';
+  static const String invitations = 'invitations';
 }

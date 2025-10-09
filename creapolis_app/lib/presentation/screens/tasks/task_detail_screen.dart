@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../../domain/entities/task.dart';
 import '../../../injection.dart';
@@ -8,8 +9,10 @@ import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
 import '../../bloc/time_tracking/time_tracking_bloc.dart';
 import '../../bloc/time_tracking/time_tracking_event.dart';
+import '../../providers/workspace_context.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
 import '../../widgets/time_tracking/time_tracker_widget.dart';
+import '../../widgets/workspace/workspace_switcher.dart';
 
 /// Pantalla de detalle de tarea con time tracking
 class TaskDetailScreen extends StatefulWidget {
@@ -61,6 +64,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         appBar: AppBar(
           title: const Text('Detalle de Tarea'),
           actions: [
+            const WorkspaceSwitcher(compact: true),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {

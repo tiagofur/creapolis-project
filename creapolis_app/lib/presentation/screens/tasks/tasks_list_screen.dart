@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../../routes/app_router.dart';
+import '../../bloc/project/project_bloc.dart';
+import '../../bloc/project/project_event.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
+import '../../providers/workspace_context.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
 import '../../widgets/task/task_card.dart';
+import '../../widgets/workspace/workspace_switcher.dart';
 
 /// Pantalla de lista de tareas de un proyecto
 class TasksListScreen extends StatefulWidget {
@@ -29,8 +34,10 @@ class _TasksListScreenState extends State<TasksListScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Cargar tareas al iniciar
-    _loadTasks();
+    // Cargar tareas al iniciar después de verificar workspace
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkWorkspaceAndLoadTasks();
+    });
   }
 
   @override
@@ -47,6 +54,26 @@ class _TasksListScreenState extends State<TasksListScreen>
     }
   }
 
+  /// Verificar workspace activo y cargar tareas
+  void _checkWorkspaceAndLoadTasks() {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final activeWorkspace = workspaceContext.activeWorkspace;
+    
+    if (activeWorkspace == null) {
+      // Si no hay workspace activo, navegar a workspace list
+      AppLogger.warning('TasksListScreen: No hay workspace activo');
+      return;
+    }
+    
+    // Los miembros de workspace pueden ver tareas (todos excepto guest pueden ver)
+    if (workspaceContext.isGuest) {
+      AppLogger.warning('TasksListScreen: Sin permisos para ver tareas en workspace ${activeWorkspace.id}');
+      return;
+    }
+    
+    _loadTasks();
+  }
+
   void _loadTasks() {
     final currentState = context.read<TaskBloc>().state;
     // Solo cargar si no estamos ya en TasksLoaded con el proyecto correcto
@@ -61,6 +88,13 @@ class _TasksListScreenState extends State<TasksListScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tareas'),
+        actions: const [
+          WorkspaceSwitcher(compact: true),
+          SizedBox(width: 8),
+        ],
+      ),
       body: Column(
         children: [
           // Filtros
@@ -133,9 +167,19 @@ class _TasksListScreenState extends State<TasksListScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateTaskSheet(context),
-        child: const Icon(Icons.add),
+      floatingActionButton: Consumer<WorkspaceContext>(
+        builder: (context, workspaceContext, _) {
+          // Solo mostrar FAB si tiene permisos para crear tareas
+          final canCreateTasks = workspaceContext.hasActiveWorkspace && 
+                                !workspaceContext.isGuest;
+          
+          if (!canCreateTasks) return const SizedBox.shrink();
+          
+          return FloatingActionButton(
+            onPressed: () => _showCreateTaskSheet(context),
+            child: const Icon(Icons.add),
+          );
+        },
       ),
     );
   }
@@ -304,6 +348,19 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   /// Mostrar sheet para crear tarea
   void _showCreateTaskSheet(BuildContext context) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    
+    // Verificar permisos
+    if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes permisos para crear tareas en este workspace'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -313,6 +370,19 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   /// Mostrar sheet para editar tarea
   void _showEditTaskSheet(BuildContext context, Task task) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    
+    // Verificar permisos
+    if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes permisos para editar tareas en este workspace'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -333,6 +403,19 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   /// Confirmar eliminación de tarea
   Future<void> _confirmDelete(BuildContext context, Task task) async {
+    final workspaceContext = context.read<WorkspaceContext>();
+    
+    // Verificar permisos
+    if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes permisos para eliminar tareas en este workspace'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../../domain/entities/task.dart';
 import '../../bloc/time_tracking/time_tracking_bloc.dart';
 import '../../bloc/time_tracking/time_tracking_event.dart';
 import '../../bloc/time_tracking/time_tracking_state.dart';
+import '../../providers/workspace_context.dart';
 import 'time_logs_list.dart';
 
 /// Widget de time tracking para una tarea
@@ -138,6 +140,36 @@ class TimeTrackerWidget extends StatelessWidget {
   Widget _buildControls(BuildContext context, TimeTrackingState state) {
     final isRunning = state is TimeTrackingRunning;
     final canFinish = !task.isCompleted && !task.isCancelled;
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final canTrackTime = workspaceContext.hasActiveWorkspace && !workspaceContext.isGuest;
+
+    // Si no tiene permisos, mostrar mensaje
+    if (!canTrackTime) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'No tienes permisos para registrar tiempo en este workspace',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -145,7 +177,7 @@ class TimeTrackerWidget extends StatelessWidget {
         // Botón Start/Stop
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {
+            onPressed: !canTrackTime ? null : () {
               if (isRunning) {
                 context.read<TimeTrackingBloc>().add(StopTimerEvent(task.id));
               } else {
@@ -165,7 +197,7 @@ class TimeTrackerWidget extends StatelessWidget {
         // Botón Finalizar
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: canFinish
+            onPressed: (!canFinish || !canTrackTime)
                 ? () => _showFinishConfirmation(context)
                 : null,
             icon: const Icon(Icons.check_circle),

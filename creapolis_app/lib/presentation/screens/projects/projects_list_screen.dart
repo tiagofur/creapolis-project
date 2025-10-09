@@ -9,6 +9,7 @@ import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
 import '../../providers/workspace_context.dart';
+import '../../widgets/common/main_drawer.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../../widgets/project/project_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
@@ -41,6 +42,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      drawer: const MainDrawer(),
       appBar: AppBar(
         title: const Text('Proyectos'),
         actions: [

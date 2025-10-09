@@ -3,7 +3,7 @@ class ApiConstants {
   ApiConstants._();
 
   // Base URL - Cambiar según el entorno
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://localhost:3001/api';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
