@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
+import '../../providers/workspace_context.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../../widgets/project/project_card.dart';
+import '../../widgets/workspace/workspace_switcher.dart';
 
 /// Pantalla de lista de proyectos
 class ProjectsListScreen extends StatefulWidget {
@@ -22,8 +25,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar proyectos al iniciar
-    context.read<ProjectBloc>().add(const LoadProjectsEvent());
+    // Cargar proyectos filtrados por workspace activo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final workspaceContext = context.read<WorkspaceContext>();
+      final activeWorkspace = workspaceContext.activeWorkspace;
+      context.read<ProjectBloc>().add(
+        LoadProjectsEvent(workspaceId: activeWorkspace?.id),
+      );
+    });
   }
 
   @override
@@ -35,6 +44,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       appBar: AppBar(
         title: const Text('Proyectos'),
         actions: [
+          // Selector de workspace
+          const WorkspaceSwitcher(compact: true),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -65,8 +77,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Recargar lista
-            context.read<ProjectBloc>().add(const LoadProjectsEvent());
+            // Recargar lista filtrada por workspace activo
+            final workspaceContext = context.read<WorkspaceContext>();
+            final activeWorkspace = workspaceContext.activeWorkspace;
+            context.read<ProjectBloc>().add(
+              LoadProjectsEvent(workspaceId: activeWorkspace?.id),
+            );
           } else if (state is ProjectDeleted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -74,8 +90,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Recargar lista
-            context.read<ProjectBloc>().add(const LoadProjectsEvent());
+            // Recargar lista filtrada por workspace activo
+            final workspaceContext = context.read<WorkspaceContext>();
+            final activeWorkspace = workspaceContext.activeWorkspace;
+            context.read<ProjectBloc>().add(
+              LoadProjectsEvent(workspaceId: activeWorkspace?.id),
+            );
           } else if (state is ProjectError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

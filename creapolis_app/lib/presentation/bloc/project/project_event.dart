@@ -12,12 +12,22 @@ abstract class ProjectEvent extends Equatable {
 
 /// Evento para cargar lista de proyectos
 class LoadProjectsEvent extends ProjectEvent {
-  const LoadProjectsEvent();
+  final int? workspaceId;
+
+  const LoadProjectsEvent({this.workspaceId});
+
+  @override
+  List<Object?> get props => [workspaceId];
 }
 
 /// Evento para refrescar lista de proyectos
 class RefreshProjectsEvent extends ProjectEvent {
-  const RefreshProjectsEvent();
+  final int? workspaceId;
+
+  const RefreshProjectsEvent({this.workspaceId});
+
+  @override
+  List<Object?> get props => [workspaceId];
 }
 
 /// Evento para cargar un proyecto por ID
@@ -38,6 +48,7 @@ class CreateProjectEvent extends ProjectEvent {
   final DateTime endDate;
   final ProjectStatus status;
   final int? managerId;
+  final int workspaceId;
 
   const CreateProjectEvent({
     required this.name,
@@ -46,6 +57,7 @@ class CreateProjectEvent extends ProjectEvent {
     required this.endDate,
     required this.status,
     this.managerId,
+    required this.workspaceId,
   });
 
   @override
@@ -56,6 +68,7 @@ class CreateProjectEvent extends ProjectEvent {
     endDate,
     status,
     managerId,
+    workspaceId,
   ];
 }
 

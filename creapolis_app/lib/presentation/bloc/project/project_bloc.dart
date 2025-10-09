@@ -39,10 +39,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     LoadProjectsEvent event,
     Emitter<ProjectState> emit,
   ) async {
-    AppLogger.info('ProjectBloc: Cargando proyectos');
+    final workspaceInfo = event.workspaceId != null
+        ? ' del workspace ${event.workspaceId}'
+        : '';
+    AppLogger.info('ProjectBloc: Cargando proyectos$workspaceInfo');
     emit(const ProjectLoading());
 
-    final result = await _getProjectsUseCase();
+    final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
 
     result.fold(
       (failure) {
@@ -52,7 +55,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         emit(ProjectError(failure.message));
       },
       (projects) {
-        AppLogger.info('ProjectBloc: ${projects.length} proyectos cargados');
+        AppLogger.info(
+          'ProjectBloc: ${projects.length} proyectos cargados$workspaceInfo',
+        );
         emit(ProjectsLoaded(projects));
       },
     );
@@ -63,10 +68,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     RefreshProjectsEvent event,
     Emitter<ProjectState> emit,
   ) async {
-    AppLogger.info('ProjectBloc: Refrescando proyectos');
+    final workspaceInfo = event.workspaceId != null
+        ? ' del workspace ${event.workspaceId}'
+        : '';
+    AppLogger.info('ProjectBloc: Refrescando proyectos$workspaceInfo');
     // No emitir loading para refresh
 
-    final result = await _getProjectsUseCase();
+    final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
 
     result.fold(
       (failure) {
@@ -76,7 +84,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         emit(ProjectError(failure.message));
       },
       (projects) {
-        AppLogger.info('ProjectBloc: ${projects.length} proyectos refrescados');
+        AppLogger.info(
+          'ProjectBloc: ${projects.length} proyectos refrescados$workspaceInfo',
+        );
         emit(ProjectsLoaded(projects));
       },
     );
@@ -122,6 +132,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         endDate: event.endDate,
         status: event.status,
         managerId: event.managerId,
+        workspaceId: event.workspaceId,
       ),
     );
 

@@ -30,6 +30,7 @@ abstract class ProjectRemoteDataSource {
     required DateTime endDate,
     required ProjectStatus status,
     int? managerId,
+    required int workspaceId,
   });
 
   /// Actualizar proyecto existente
@@ -129,10 +130,11 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     required DateTime endDate,
     required ProjectStatus status,
     int? managerId,
+    required int workspaceId,
   }) async {
     try {
       // El backend actualmente solo maneja name y description
-      // Los campos startDate, endDate, status y managerId se ignorarán por ahora
+      // Los campos startDate, endDate, status, managerId y workspaceId se ignorarán por ahora
       final response = await _dioClient.post(
         '/projects',
         data: {
@@ -143,6 +145,7 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
           // 'endDate': endDate.toIso8601String(),
           // 'status': _statusToString(status),
           // if (managerId != null) 'managerId': managerId,
+          // 'workspaceId': workspaceId,
         },
       );
 

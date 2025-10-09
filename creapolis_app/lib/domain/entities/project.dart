@@ -10,6 +10,7 @@ class Project extends Equatable {
   final ProjectStatus status;
   final int? managerId;
   final String? managerName;
+  final int workspaceId; // ID del workspace al que pertenece
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,6 +23,7 @@ class Project extends Equatable {
     required this.status,
     this.managerId,
     this.managerName,
+    required this.workspaceId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -66,6 +68,7 @@ class Project extends Equatable {
     ProjectStatus? status,
     int? managerId,
     String? managerName,
+    int? workspaceId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -78,6 +81,7 @@ class Project extends Equatable {
       status: status ?? this.status,
       managerId: managerId ?? this.managerId,
       managerName: managerName ?? this.managerName,
+      workspaceId: workspaceId ?? this.workspaceId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -93,6 +97,7 @@ class Project extends Equatable {
     status,
     managerId,
     managerName,
+    workspaceId,
     createdAt,
     updatedAt,
   ];

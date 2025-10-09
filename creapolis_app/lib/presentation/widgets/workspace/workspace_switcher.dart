@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
+import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
+import '../../providers/workspace_context.dart';
 
 /// Widget para cambiar entre workspaces activos
 /// Se puede usar en AppBar, Drawer o como botón independiente
 class WorkspaceSwitcher extends StatelessWidget {
-  final Workspace? currentWorkspace;
-  final Function(Workspace)? onWorkspaceChanged;
   final bool showCreateButton;
   final bool compact;
 
   const WorkspaceSwitcher({
     super.key,
-    this.currentWorkspace,
-    this.onWorkspaceChanged,
     this.showCreateButton = true,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final currentWorkspace = workspaceContext.activeWorkspace;
+
     return BlocBuilder<WorkspaceBloc, WorkspaceState>(
       builder: (context, state) {
         List<Workspace> workspaces = [];
@@ -35,8 +38,8 @@ class WorkspaceSwitcher extends StatelessWidget {
           tooltip: 'Cambiar workspace',
           offset: const Offset(0, 50),
           child: compact
-              ? _buildCompactButton(context)
-              : _buildFullButton(context),
+              ? _buildCompactButton(context, currentWorkspace)
+              : _buildFullButton(context, currentWorkspace),
           itemBuilder: (context) {
             final items = <PopupMenuEntry<String>>[];
 
@@ -153,13 +156,28 @@ class WorkspaceSwitcher extends StatelessWidget {
                   ),
                 ),
               );
+
+              items.add(
+                PopupMenuItem<String>(
+                  value: 'view_all',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.dashboard),
+                      const SizedBox(width: 12),
+                      const Text('Ver Todos'),
+                    ],
+                  ),
+                ),
+              );
             }
 
             return items;
           },
           onSelected: (value) {
             if (value == 'create_workspace') {
-              _navigateToCreateWorkspace(context);
+              context.push('/workspaces/create');
+            } else if (value == 'view_all') {
+              context.push('/workspaces');
             } else if (value.startsWith('workspace_')) {
               final workspaceId = int.parse(
                 value.replaceFirst('workspace_', ''),
@@ -167,13 +185,20 @@ class WorkspaceSwitcher extends StatelessWidget {
               _selectWorkspace(context, workspaceId, workspaces);
             }
           },
+          onOpened: () {
+            // Recargar workspaces al abrir el menú
+            context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
+          },
         );
       },
     );
   }
 
   /// Botón compacto (solo icono)
-  Widget _buildCompactButton(BuildContext context) {
+  Widget _buildCompactButton(
+    BuildContext context,
+    Workspace? currentWorkspace,
+  ) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -185,7 +210,7 @@ class WorkspaceSwitcher extends StatelessWidget {
         children: [
           Icon(
             currentWorkspace != null
-                ? _getWorkspaceTypeIcon(currentWorkspace!.type)
+                ? _getWorkspaceTypeIcon(currentWorkspace.type)
                 : Icons.workspaces,
             size: 20,
           ),
@@ -197,7 +222,7 @@ class WorkspaceSwitcher extends StatelessWidget {
   }
 
   /// Botón completo (con nombre)
-  Widget _buildFullButton(BuildContext context) {
+  Widget _buildFullButton(BuildContext context, Workspace? currentWorkspace) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -209,7 +234,7 @@ class WorkspaceSwitcher extends StatelessWidget {
         children: [
           Icon(
             currentWorkspace != null
-                ? _getWorkspaceTypeIcon(currentWorkspace!.type)
+                ? _getWorkspaceTypeIcon(currentWorkspace.type)
                 : Icons.workspaces,
             size: 20,
           ),
@@ -229,16 +254,6 @@ class WorkspaceSwitcher extends StatelessWidget {
     );
   }
 
-  /// Navegar a crear workspace
-  void _navigateToCreateWorkspace(BuildContext context) {
-    // TODO: Implementar navegación a WorkspaceCreateScreen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navegación a crear workspace próximamente'),
-      ),
-    );
-  }
-
   /// Seleccionar workspace
   void _selectWorkspace(
     BuildContext context,
@@ -247,21 +262,21 @@ class WorkspaceSwitcher extends StatelessWidget {
   ) {
     final workspace = workspaces.firstWhere((w) => w.id == workspaceId);
 
-    // Callback personalizado
-    if (onWorkspaceChanged != null) {
-      onWorkspaceChanged!(workspace);
-    }
+    AppLogger.info(
+      'WorkspaceSwitcher: Cambiando a workspace ${workspace.name}',
+    );
+
+    // Cambiar workspace activo usando WorkspaceContext
+    final workspaceContext = context.read<WorkspaceContext>();
+    workspaceContext.switchWorkspace(workspace);
 
     // Feedback visual
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Cambiado a "${workspace.name}"'),
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
       ),
     );
-
-    // TODO: Aquí podrías disparar un evento global para cambiar el workspace activo
-    // Por ejemplo: context.read<AppBloc>().add(ChangeWorkspaceEvent(workspace));
   }
 
   /// Obtener icono del tipo de workspace

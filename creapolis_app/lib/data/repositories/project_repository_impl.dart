@@ -15,9 +15,18 @@ class ProjectRepositoryImpl implements ProjectRepository {
   ProjectRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<Either<Failure, List<Project>>> getProjects() async {
+  Future<Either<Failure, List<Project>>> getProjects({int? workspaceId}) async {
     try {
       final projects = await _remoteDataSource.getProjects();
+
+      // Filtrar por workspace si se proporciona
+      if (workspaceId != null) {
+        final filtered = projects
+            .where((p) => p.workspaceId == workspaceId)
+            .toList();
+        return Right(filtered);
+      }
+
       return Right(projects);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
@@ -54,6 +63,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     required DateTime endDate,
     required ProjectStatus status,
     int? managerId,
+    required int workspaceId,
   }) async {
     try {
       final project = await _remoteDataSource.createProject(
@@ -63,6 +73,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
         endDate: endDate,
         status: status,
         managerId: managerId,
+        workspaceId: workspaceId,
       );
       return Right(project);
     } on ValidationException catch (e) {

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
+import '../../providers/workspace_context.dart';
 
 /// Bottom sheet para crear o editar un proyecto
 class CreateProjectBottomSheet extends StatefulWidget {
@@ -297,6 +299,20 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
         return;
       }
 
+      // Obtener workspace activo
+      final workspaceContext = context.read<WorkspaceContext>();
+      final activeWorkspace = workspaceContext.activeWorkspace;
+
+      if (activeWorkspace == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay un workspace activo'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       if (widget.project != null) {
         // Actualizar
         AppLogger.info(
@@ -314,7 +330,9 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
         );
       } else {
         // Crear
-        AppLogger.info('CreateProjectBottomSheet: Creando nuevo proyecto');
+        AppLogger.info(
+          'CreateProjectBottomSheet: Creando nuevo proyecto en workspace ${activeWorkspace.id}',
+        );
         context.read<ProjectBloc>().add(
           CreateProjectEvent(
             name: name,
@@ -322,6 +340,7 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
             startDate: _startDate,
             endDate: _endDate,
             status: _selectedStatus,
+            workspaceId: activeWorkspace.id,
           ),
         );
       }

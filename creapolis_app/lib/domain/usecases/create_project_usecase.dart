@@ -52,6 +52,7 @@ class CreateProjectUseCase {
       endDate: params.endDate,
       status: params.status,
       managerId: params.managerId,
+      workspaceId: params.workspaceId,
     );
   }
 }
@@ -64,6 +65,7 @@ class CreateProjectParams extends Equatable {
   final DateTime endDate;
   final ProjectStatus status;
   final int? managerId;
+  final int workspaceId;
 
   const CreateProjectParams({
     required this.name,
@@ -72,6 +74,7 @@ class CreateProjectParams extends Equatable {
     required this.endDate,
     required this.status,
     this.managerId,
+    required this.workspaceId,
   });
 
   @override
@@ -82,5 +85,6 @@ class CreateProjectParams extends Equatable {
     endDate,
     status,
     managerId,
+    workspaceId,
   ];
 }

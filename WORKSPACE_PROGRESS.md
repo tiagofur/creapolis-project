@@ -318,13 +318,13 @@
 
 **Estado:** PENDIENTE
 
-### 5.1 Integrar Workspaces con Proyectos (0/5):
+### 5.1 Integrar Workspaces con Proyectos (5/5): ✅
 
-- ⏳ Agregar `workspaceId` a Project entity
-- ⏳ Actualizar ProjectRepository para filtrar por workspace
-- ⏳ Modificar ProjectListScreen para mostrar solo proyectos del workspace activo
-- ⏳ Actualizar CreateProjectScreen para asignar workspace automáticamente
-- ⏳ Agregar selector de workspace en navegación principal
+- ✅ Agregar `workspaceId` a Project entity
+- ✅ Actualizar ProjectRepository para filtrar por workspace
+- ✅ Modificar ProjectListScreen para mostrar solo proyectos del workspace activo
+- ✅ Actualizar CreateProjectScreen para asignar workspace automáticamente
+- ✅ Agregar selector de workspace en navegación principal
 
 ### 5.2 Integrar Workspaces con Tasks (0/4):
 

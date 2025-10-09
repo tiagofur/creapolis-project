@@ -13,6 +13,7 @@ class ProjectModel extends Project {
     required super.status,
     super.managerId,
     super.managerName,
+    required super.workspaceId,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -41,6 +42,9 @@ class ProjectModel extends Project {
           : ProjectStatus.planned,
       managerId: json['managerId'] as int?,
       managerName: json['managerName'] as String?,
+      workspaceId:
+          json['workspaceId'] as int? ??
+          1, // Default workspace si no está presente
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -59,6 +63,7 @@ class ProjectModel extends Project {
       'status': _statusToString(status),
       if (managerId != null) 'managerId': managerId,
       if (managerName != null) 'managerName': managerName,
+      'workspaceId': workspaceId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -75,6 +80,7 @@ class ProjectModel extends Project {
       status: project.status,
       managerId: project.managerId,
       managerName: project.managerName,
+      workspaceId: project.workspaceId,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     );
@@ -125,6 +131,7 @@ class ProjectModel extends Project {
     ProjectStatus? status,
     int? managerId,
     String? managerName,
+    int? workspaceId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -137,6 +144,7 @@ class ProjectModel extends Project {
       status: status ?? this.status,
       managerId: managerId ?? this.managerId,
       managerName: managerName ?? this.managerName,
+      workspaceId: workspaceId ?? this.workspaceId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

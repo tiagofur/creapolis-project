@@ -9,9 +9,10 @@ import '../entities/project.dart';
 abstract class ProjectRepository {
   /// Obtener lista de proyectos
   ///
+  /// Si se proporciona [workspaceId], filtra por ese workspace.
   /// Retorna `Right(List<Project>)` si es exitoso.
   /// Retorna `Left(Failure)` si hay error.
-  Future<Either<Failure, List<Project>>> getProjects();
+  Future<Either<Failure, List<Project>>> getProjects({int? workspaceId});
 
   /// Obtener proyecto por ID
   ///
@@ -30,6 +31,7 @@ abstract class ProjectRepository {
     required DateTime endDate,
     required ProjectStatus status,
     int? managerId,
+    required int workspaceId,
   });
 
   /// Actualizar proyecto existente

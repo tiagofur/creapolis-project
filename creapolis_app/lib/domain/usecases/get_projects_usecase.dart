@@ -14,9 +14,10 @@ class GetProjectsUseCase {
 
   /// Ejecutar el caso de uso
   ///
+  /// Si se proporciona [workspaceId], filtra por ese workspace.
   /// Retorna `Right(List<Project>)` si es exitoso.
   /// Retorna `Left(Failure)` si hay error.
-  Future<Either<Failure, List<Project>>> call() async {
-    return await repository.getProjects();
+  Future<Either<Failure, List<Project>>> call({int? workspaceId}) async {
+    return await repository.getProjects(workspaceId: workspaceId);
   }
 }
