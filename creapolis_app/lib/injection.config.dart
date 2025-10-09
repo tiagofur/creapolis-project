@@ -21,18 +21,22 @@ import 'data/datasources/project_remote_datasource.dart' as _i922;
 import 'data/datasources/task_remote_datasource.dart' as _i1007;
 import 'data/datasources/time_log_remote_datasource.dart' as _i714;
 import 'data/datasources/workload_remote_datasource.dart' as _i233;
+import 'data/datasources/workspace_local_datasource.dart' as _i268;
+import 'data/datasources/workspace_remote_datasource.dart' as _i391;
 import 'data/repositories/auth_repository_impl.dart' as _i145;
 import 'data/repositories/calendar_repository_impl.dart' as _i365;
 import 'data/repositories/project_repository_impl.dart' as _i40;
 import 'data/repositories/task_repository_impl.dart' as _i221;
 import 'data/repositories/time_log_repository_impl.dart' as _i384;
 import 'data/repositories/workload_repository_impl.dart' as _i773;
+import 'data/repositories/workspace_repository_impl.dart' as _i753;
 import 'domain/repositories/auth_repository.dart' as _i716;
 import 'domain/repositories/calendar_repository.dart' as _i916;
 import 'domain/repositories/project_repository.dart' as _i17;
 import 'domain/repositories/task_repository.dart' as _i449;
 import 'domain/repositories/time_log_repository.dart' as _i657;
 import 'domain/repositories/workload_repository.dart' as _i42;
+import 'domain/repositories/workspace_repository.dart' as _i713;
 import 'domain/usecases/complete_calendar_oauth_usecase.dart' as _i812;
 import 'domain/usecases/connect_calendar_usecase.dart' as _i913;
 import 'domain/usecases/create_project_usecase.dart' as _i1015;
@@ -60,12 +64,23 @@ import 'domain/usecases/start_timer_usecase.dart' as _i137;
 import 'domain/usecases/stop_timer_usecase.dart' as _i838;
 import 'domain/usecases/update_project_usecase.dart' as _i589;
 import 'domain/usecases/update_task_usecase.dart' as _i1018;
+import 'domain/usecases/workspace/accept_invitation.dart' as _i927;
+import 'domain/usecases/workspace/create_invitation.dart' as _i359;
+import 'domain/usecases/workspace/create_workspace.dart' as _i225;
+import 'domain/usecases/workspace/get_pending_invitations.dart' as _i591;
+import 'domain/usecases/workspace/get_user_workspaces.dart' as _i820;
+import 'domain/usecases/workspace/get_workspace_members.dart' as _i517;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/project/project_bloc.dart' as _i190;
 import 'presentation/bloc/task/task_bloc.dart' as _i944;
 import 'presentation/bloc/time_tracking/time_tracking_bloc.dart' as _i808;
 import 'presentation/bloc/workload/workload_bloc.dart' as _i107;
+import 'presentation/bloc/workspace/workspace_bloc.dart' as _i754;
+import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart'
+    as _i953;
+import 'presentation/bloc/workspace_member/workspace_member_bloc.dart' as _i53;
+import 'presentation/providers/workspace_context.dart' as _i34;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -74,8 +89,14 @@ extension GetItInjectableX on _i174.GetIt {
     _i526.EnvironmentFilter? environmentFilter,
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    gh.lazySingleton<_i268.WorkspaceLocalDataSource>(
+      () => _i268.WorkspaceLocalDataSourceImpl(gh<_i460.SharedPreferences>()),
+    );
     gh.singleton<_i45.DioClient>(
       () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
+    );
+    gh.lazySingleton<_i391.WorkspaceRemoteDataSource>(
+      () => _i391.WorkspaceRemoteDataSourceImpl(gh<_i45.DioClient>()),
     );
     gh.lazySingleton<_i127.AuthRemoteDataSource>(
       () => _i127.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
@@ -117,6 +138,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i784.RegisterUseCase>(
       () => _i784.RegisterUseCase(gh<_i716.AuthRepository>()),
     );
+    gh.lazySingleton<_i713.WorkspaceRepository>(
+      () => _i753.WorkspaceRepositoryImpl(
+        gh<_i391.WorkspaceRemoteDataSource>(),
+        gh<_i268.WorkspaceLocalDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i17.ProjectRepository>(
       () => _i40.ProjectRepositoryImpl(gh<_i922.ProjectRemoteDataSource>()),
     );
@@ -128,6 +155,27 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i42.WorkloadRepository>(
       () => _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()),
+    );
+    gh.factory<_i927.AcceptInvitationUseCase>(
+      () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i359.CreateInvitationUseCase>(
+      () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i225.CreateWorkspaceUseCase>(
+      () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i591.GetPendingInvitationsUseCase>(
+      () => _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i820.GetUserWorkspacesUseCase>(
+      () => _i820.GetUserWorkspacesUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i517.GetWorkspaceMembersUseCase>(
+      () => _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i53.WorkspaceMemberBloc>(
+      () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()),
     );
     gh.factory<_i1015.CreateProjectUseCase>(
       () => _i1015.CreateProjectUseCase(gh<_i17.ProjectRepository>()),
@@ -167,6 +215,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i784.RegisterUseCase>(),
         gh<_i889.GetProfileUseCase>(),
         gh<_i808.LogoutUseCase>(),
+      ),
+    );
+    gh.factory<_i953.WorkspaceInvitationBloc>(
+      () => _i953.WorkspaceInvitationBloc(
+        gh<_i591.GetPendingInvitationsUseCase>(),
+        gh<_i359.CreateInvitationUseCase>(),
+        gh<_i927.AcceptInvitationUseCase>(),
       ),
     );
     gh.factory<_i659.CalendarBloc>(
@@ -235,6 +290,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i177.DeleteProjectUseCase>(),
       ),
     );
+    gh.factory<_i754.WorkspaceBloc>(
+      () => _i754.WorkspaceBloc(
+        gh<_i820.GetUserWorkspacesUseCase>(),
+        gh<_i225.CreateWorkspaceUseCase>(),
+      ),
+    );
     gh.factory<_i107.WorkloadBloc>(
       () => _i107.WorkloadBloc(
         gh<_i654.GetResourceAllocationUseCase>(),
@@ -251,6 +312,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i757.DeleteTaskUseCase>(),
         gh<_i449.TaskRepository>(),
       ),
+    );
+    gh.factory<_i34.WorkspaceContext>(
+      () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()),
     );
     return this;
   }

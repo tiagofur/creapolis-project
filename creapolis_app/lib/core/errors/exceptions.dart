@@ -39,6 +39,16 @@ class AuthorizationException implements Exception {
   String toString() => 'AuthorizationException: $message';
 }
 
+/// Excepción de acceso prohibido (403)
+class ForbiddenException implements Exception {
+  final String message;
+
+  ForbiddenException([this.message = 'Acceso prohibido']);
+
+  @override
+  String toString() => 'ForbiddenException: $message';
+}
+
 /// Excepción de validación
 class ValidationException implements Exception {
   final String message;

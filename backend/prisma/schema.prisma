@@ -28,6 +28,26 @@ enum DependencyType {
   START_TO_START
 }
 
+enum WorkspaceType {
+  PERSONAL
+  TEAM
+  ENTERPRISE
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
 // Models
 model User {
   id                 Int       @id @default(autoincrement())
@@ -35,6 +55,7 @@ model User {
   password           String
   name               String
   role               Role      @default(TEAM_MEMBER)
+  avatarUrl          String?
   googleAccessToken  String?
   googleRefreshToken String?
   createdAt          DateTime  @default(now())
@@ -44,21 +65,94 @@ model User {
   projects           ProjectMember[]
   assignedTasks      Task[]
   timeLogs           TimeLog[]
+  ownedWorkspaces    Workspace[]        @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
+  sentInvitations    WorkspaceInvitation[] @relation("InvitationSender")
 
   @@index([email])
+}
+
+model Workspace {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  description               String?
+  avatarUrl                 String?
+  type                      WorkspaceType @default(TEAM)
+  ownerId                   Int
+  
+  // Settings
+  allowGuestInvites         Boolean   @default(true)
+  requireEmailVerification  Boolean   @default(true)
+  autoAssignNewMembers      Boolean   @default(false)
+  defaultProjectTemplate    String?
+  timezone                  String    @default("UTC")
+  language                  String    @default("es")
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  // Relations
+  owner                     User      @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members                   WorkspaceMember[]
+  projects                  Project[]
+  invitations               WorkspaceInvitation[]
+
+  @@index([ownerId])
+  @@index([name])
+}
+
+model WorkspaceMember {
+  id            Int           @id @default(autoincrement())
+  workspaceId   Int
+  userId        Int
+  role          WorkspaceRole @default(MEMBER)
+  joinedAt      DateTime      @default(now())
+  lastActiveAt  DateTime?
+  isActive      Boolean       @default(true)
+
+  // Relations
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvitation {
+  id            Int              @id @default(autoincrement())
+  workspaceId   Int
+  inviterUserId Int
+  inviteeEmail  String
+  role          WorkspaceRole    @default(MEMBER)
+  token         String           @unique
+  status        InvitationStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  expiresAt     DateTime
+
+  // Relations
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter       User             @relation("InvitationSender", fields: [inviterUserId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([inviteeEmail])
+  @@index([token])
 }
 
 model Project {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
+  workspaceId Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members     ProjectMember[]
   tasks       Task[]
 
+  @@index([workspaceId])
   @@index([name])
 }
 

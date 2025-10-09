@@ -14,6 +14,7 @@ import projectRoutes from "./routes/project.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import { taskTimeLogRoutes, timelogRouter } from "./routes/timelog.routes.js";
 import googleCalendarRoutes from "./routes/google-calendar.routes.js";
+import workspaceRoutes from "./routes/workspace.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,6 +70,7 @@ app.get("/api/health", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/projects/:projectId/tasks", taskRoutes);
 app.use("/api/tasks", taskTimeLogRoutes);
