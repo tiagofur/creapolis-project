@@ -38,7 +38,7 @@ class CreopolisApp extends StatelessWidget {
         BlocProvider(create: (context) => getIt<WorkspaceBloc>()),
         BlocProvider(create: (context) => getIt<WorkspaceMemberBloc>()),
         BlocProvider(create: (context) => getIt<WorkspaceInvitationBloc>()),
-        
+
         // Context Provider
         ChangeNotifierProvider(create: (context) => getIt<WorkspaceContext>()),
       ],

@@ -46,73 +46,81 @@ void main() {
   );
 
   group('CreateWorkspace', () {
-    test(
-      'should create a new workspace through the repository',
-      () async {
-        // arrange
-        when(mockRepository.createWorkspace(
+    test('should create a new workspace through the repository', () async {
+      // arrange
+      when(
+        mockRepository.createWorkspace(
           name: anyNamed('name'),
           description: anyNamed('description'),
           avatarUrl: anyNamed('avatarUrl'),
           type: anyNamed('type'),
           settings: anyNamed('settings'),
-        )).thenAnswer((_) async => Right(tWorkspace));
+        ),
+      ).thenAnswer((_) async => Right(tWorkspace));
 
-        // act
-        final result = await usecase(tParams);
+      // act
+      final result = await usecase(tParams);
 
-        // assert
-        expect(result, Right(tWorkspace));
-        verify(mockRepository.createWorkspace(
+      // assert
+      expect(result, Right(tWorkspace));
+      verify(
+        mockRepository.createWorkspace(
           name: tParams.name,
           description: tParams.description,
           avatarUrl: tParams.avatarUrl,
           type: tParams.type,
           settings: tParams.settings,
-        ));
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        ),
+      );
+      verifyNoMoreInteractions(mockRepository);
+    });
 
-    test(
-      'should return ServerFailure when repository call fails',
-      () async {
-        // arrange
-        when(mockRepository.createWorkspace(
+    test('should return ServerFailure when repository call fails', () async {
+      // arrange
+      when(
+        mockRepository.createWorkspace(
           name: anyNamed('name'),
           description: anyNamed('description'),
           avatarUrl: anyNamed('avatarUrl'),
           type: anyNamed('type'),
           settings: anyNamed('settings'),
-        )).thenAnswer((_) async => Left(ServerFailure('Failed to create workspace')));
+        ),
+      ).thenAnswer(
+        (_) async => Left(ServerFailure('Failed to create workspace')),
+      );
 
-        // act
-        final result = await usecase(tParams);
+      // act
+      final result = await usecase(tParams);
 
-        // assert
-        expect(result, Left(ServerFailure('Failed to create workspace')));
-        verify(mockRepository.createWorkspace(
+      // assert
+      expect(result, Left(ServerFailure('Failed to create workspace')));
+      verify(
+        mockRepository.createWorkspace(
           name: tParams.name,
           description: tParams.description,
           avatarUrl: tParams.avatarUrl,
           type: tParams.type,
           settings: tParams.settings,
-        ));
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        ),
+      );
+      verifyNoMoreInteractions(mockRepository);
+    });
 
     test(
       'should return ValidationFailure when workspace name is invalid',
       () async {
         // arrange
-        when(mockRepository.createWorkspace(
-          name: anyNamed('name'),
-          description: anyNamed('description'),
-          avatarUrl: anyNamed('avatarUrl'),
-          type: anyNamed('type'),
-          settings: anyNamed('settings'),
-        )).thenAnswer((_) async => Left(ValidationFailure('Workspace name is required')));
+        when(
+          mockRepository.createWorkspace(
+            name: anyNamed('name'),
+            description: anyNamed('description'),
+            avatarUrl: anyNamed('avatarUrl'),
+            type: anyNamed('type'),
+            settings: anyNamed('settings'),
+          ),
+        ).thenAnswer(
+          (_) async => Left(ValidationFailure('Workspace name is required')),
+        );
 
         // act
         final result = await usecase(tParams);
@@ -126,13 +134,17 @@ void main() {
       'should return NetworkFailure when there is no internet connection',
       () async {
         // arrange
-        when(mockRepository.createWorkspace(
-          name: anyNamed('name'),
-          description: anyNamed('description'),
-          avatarUrl: anyNamed('avatarUrl'),
-          type: anyNamed('type'),
-          settings: anyNamed('settings'),
-        )).thenAnswer((_) async => Left(NetworkFailure('No internet connection')));
+        when(
+          mockRepository.createWorkspace(
+            name: anyNamed('name'),
+            description: anyNamed('description'),
+            avatarUrl: anyNamed('avatarUrl'),
+            type: anyNamed('type'),
+            settings: anyNamed('settings'),
+          ),
+        ).thenAnswer(
+          (_) async => Left(NetworkFailure('No internet connection')),
+        );
 
         // act
         final result = await usecase(tParams);

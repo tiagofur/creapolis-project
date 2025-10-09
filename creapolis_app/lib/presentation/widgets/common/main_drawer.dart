@@ -14,13 +14,12 @@ class MainDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return Drawer(
       child: Column(
         children: [
           // Header con workspace activo
           _buildHeader(context),
-          
+
           // Navegación principal
           Expanded(
             child: ListView(
@@ -34,7 +33,7 @@ class MainDrawer extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Footer con logout
           _buildFooter(context),
         ],
@@ -46,11 +45,11 @@ class MainDrawer extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Consumer<WorkspaceContext>(
       builder: (context, workspaceContext, _) {
         final activeWorkspace = workspaceContext.activeWorkspace;
-        
+
         return DrawerHeader(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -73,9 +72,9 @@ class MainDrawer extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Workspace activo
               if (activeWorkspace != null) ...[
                 Text(
@@ -124,9 +123,9 @@ class MainDrawer extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Botón cambiar workspace
                 OutlinedButton.icon(
                   onPressed: () {
@@ -147,7 +146,10 @@ class MainDrawer extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: colorScheme.onPrimary),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     minimumSize: const Size(0, 32),
                   ),
                 ),
@@ -164,11 +166,7 @@ class MainDrawer extends StatelessWidget {
                     Navigator.of(context).pop();
                     context.push('/workspaces');
                   },
-                  icon: Icon(
-                    Icons.add,
-                    size: 16,
-                    color: colorScheme.onPrimary,
-                  ),
+                  icon: Icon(Icons.add, size: 16, color: colorScheme.onPrimary),
                   label: Text(
                     'Seleccionar Workspace',
                     style: TextStyle(
@@ -178,7 +176,10 @@ class MainDrawer extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: colorScheme.onPrimary),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     minimumSize: const Size(0, 32),
                   ),
                 ),
@@ -233,7 +234,7 @@ class MainDrawer extends StatelessWidget {
     return Consumer<WorkspaceContext>(
       builder: (context, workspaceContext, _) {
         final hasWorkspace = workspaceContext.hasActiveWorkspace;
-        
+
         return Column(
           children: [
             // Título de sección
@@ -256,31 +257,43 @@ class MainDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             if (hasWorkspace) ...[
               _buildDrawerItem(
                 context,
                 icon: Icons.people_outline,
                 title: 'Miembros del Workspace',
-                onTap: () => _navigateTo(context, '/workspace/${workspaceContext.activeWorkspace!.id}/members'),
+                onTap: () => _navigateTo(
+                  context,
+                  '/workspace/${workspaceContext.activeWorkspace!.id}/members',
+                ),
               ),
               if (workspaceContext.canInviteMembers)
                 _buildDrawerItem(
                   context,
                   icon: Icons.person_add_outlined,
                   title: 'Invitar Miembros',
-                  onTap: () => _navigateTo(context, '/workspace/${workspaceContext.activeWorkspace!.id}/invite'),
+                  onTap: () => _navigateTo(
+                    context,
+                    '/workspace/${workspaceContext.activeWorkspace!.id}/invite',
+                  ),
                 ),
               if (workspaceContext.canManageSettings)
                 _buildDrawerItem(
                   context,
                   icon: Icons.settings_outlined,
                   title: 'Configuración Workspace',
-                  onTap: () => _navigateTo(context, '/workspace/${workspaceContext.activeWorkspace!.id}/settings'),
+                  onTap: () => _navigateTo(
+                    context,
+                    '/workspace/${workspaceContext.activeWorkspace!.id}/settings',
+                  ),
                 ),
             ] else ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Selecciona un workspace para ver opciones del equipo',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -290,7 +303,7 @@ class MainDrawer extends StatelessWidget {
                 ),
               ),
             ],
-            
+
             _buildDrawerItem(
               context,
               icon: Icons.mail_outline,
@@ -332,12 +345,10 @@ class MainDrawer extends StatelessWidget {
   /// Footer con logout
   Widget _buildFooter(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: _buildDrawerItem(
         context,
@@ -360,7 +371,7 @@ class MainDrawer extends StatelessWidget {
     Color? textColor,
   }) {
     final theme = Theme.of(context);
-    
+
     return ListTile(
       leading: Icon(
         icon,
@@ -386,7 +397,7 @@ class MainDrawer extends StatelessWidget {
   /// Logout
   void _logout(BuildContext context) {
     Navigator.of(context).pop(); // Cerrar drawer
-    
+
     // Mostrar confirmación
     showDialog(
       context: context,

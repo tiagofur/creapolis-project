@@ -63,63 +63,58 @@ void main() {
   ];
 
   group('GetWorkspaceMembers', () {
-    test(
-      'should get list of workspace members from the repository',
-      () async {
-        // arrange
-        when(mockRepository.getWorkspaceMembers(any))
-            .thenAnswer((_) async => Right(tMembers));
+    test('should get list of workspace members from the repository', () async {
+      // arrange
+      when(
+        mockRepository.getWorkspaceMembers(any),
+      ).thenAnswer((_) async => Right(tMembers));
 
-        // act
-        final result = await usecase(tParams);
+      // act
+      final result = await usecase(tParams);
 
-        // assert
-        expect(result, Right(tMembers));
-        verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, Right(tMembers));
+      verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
+      verifyNoMoreInteractions(mockRepository);
+    });
 
-    test(
-      'should return empty list when workspace has no members',
-      () async {
-        // arrange
-        when(mockRepository.getWorkspaceMembers(any))
-            .thenAnswer((_) async => const Right(<WorkspaceMember>[]));
+    test('should return empty list when workspace has no members', () async {
+      // arrange
+      when(
+        mockRepository.getWorkspaceMembers(any),
+      ).thenAnswer((_) async => const Right(<WorkspaceMember>[]));
 
-        // act
-        final result = await usecase(tParams);
+      // act
+      final result = await usecase(tParams);
 
-        // assert
-        expect(result, const Right(<WorkspaceMember>[]));
-        verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, const Right(<WorkspaceMember>[]));
+      verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
+      verifyNoMoreInteractions(mockRepository);
+    });
 
-    test(
-      'should return ServerFailure when repository call fails',
-      () async {
-        // arrange
-        when(mockRepository.getWorkspaceMembers(any))
-            .thenAnswer((_) async => Left(ServerFailure('Server error')));
+    test('should return ServerFailure when repository call fails', () async {
+      // arrange
+      when(
+        mockRepository.getWorkspaceMembers(any),
+      ).thenAnswer((_) async => Left(ServerFailure('Server error')));
 
-        // act
-        final result = await usecase(tParams);
+      // act
+      final result = await usecase(tParams);
 
-        // assert
-        expect(result, Left(ServerFailure('Server error')));
-        verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, Left(ServerFailure('Server error')));
+      verify(mockRepository.getWorkspaceMembers(tWorkspaceId));
+      verifyNoMoreInteractions(mockRepository);
+    });
 
     test(
       'should return NotFoundFailure when workspace does not exist',
       () async {
         // arrange
-        when(mockRepository.getWorkspaceMembers(any))
-            .thenAnswer((_) async => Left(NotFoundFailure('Workspace not found')));
+        when(
+          mockRepository.getWorkspaceMembers(any),
+        ).thenAnswer((_) async => Left(NotFoundFailure('Workspace not found')));
 
         // act
         final result = await usecase(tParams);
@@ -135,8 +130,9 @@ void main() {
       'should return NetworkFailure when there is no internet connection',
       () async {
         // arrange
-        when(mockRepository.getWorkspaceMembers(any))
-            .thenAnswer((_) async => Left(NetworkFailure('No internet')));
+        when(
+          mockRepository.getWorkspaceMembers(any),
+        ).thenAnswer((_) async => Left(NetworkFailure('No internet')));
 
         // act
         final result = await usecase(tParams);

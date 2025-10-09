@@ -61,46 +61,43 @@ void main() {
   ];
 
   group('GetUserWorkspaces', () {
-    test(
-      'should get list of workspaces from the repository',
-      () async {
-        // arrange
-        when(mockRepository.getUserWorkspaces())
-            .thenAnswer((_) async => Right(tWorkspaces));
+    test('should get list of workspaces from the repository', () async {
+      // arrange
+      when(
+        mockRepository.getUserWorkspaces(),
+      ).thenAnswer((_) async => Right(tWorkspaces));
 
-        // act
-        final result = await usecase();
+      // act
+      final result = await usecase();
 
-        // assert
-        expect(result, Right(tWorkspaces));
-        verify(mockRepository.getUserWorkspaces());
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, Right(tWorkspaces));
+      verify(mockRepository.getUserWorkspaces());
+      verifyNoMoreInteractions(mockRepository);
+    });
 
-    test(
-      'should return ServerFailure when repository call fails',
-      () async {
-        // arrange
-        when(mockRepository.getUserWorkspaces())
-            .thenAnswer((_) async => Left(ServerFailure('Server error')));
+    test('should return ServerFailure when repository call fails', () async {
+      // arrange
+      when(
+        mockRepository.getUserWorkspaces(),
+      ).thenAnswer((_) async => Left(ServerFailure('Server error')));
 
-        // act
-        final result = await usecase();
+      // act
+      final result = await usecase();
 
-        // assert
-        expect(result, Left(ServerFailure('Server error')));
-        verify(mockRepository.getUserWorkspaces());
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, Left(ServerFailure('Server error')));
+      verify(mockRepository.getUserWorkspaces());
+      verifyNoMoreInteractions(mockRepository);
+    });
 
     test(
       'should return NetworkFailure when there is no internet connection',
       () async {
         // arrange
-        when(mockRepository.getUserWorkspaces())
-            .thenAnswer((_) async => Left(NetworkFailure('No internet')));
+        when(
+          mockRepository.getUserWorkspaces(),
+        ).thenAnswer((_) async => Left(NetworkFailure('No internet')));
 
         // act
         final result = await usecase();
@@ -112,21 +109,19 @@ void main() {
       },
     );
 
-    test(
-      'should return empty list when user has no workspaces',
-      () async {
-        // arrange
-        when(mockRepository.getUserWorkspaces())
-            .thenAnswer((_) async => const Right(<Workspace>[]));
+    test('should return empty list when user has no workspaces', () async {
+      // arrange
+      when(
+        mockRepository.getUserWorkspaces(),
+      ).thenAnswer((_) async => const Right(<Workspace>[]));
 
-        // act
-        final result = await usecase();
+      // act
+      final result = await usecase();
 
-        // assert
-        expect(result, const Right(<Workspace>[]));
-        verify(mockRepository.getUserWorkspaces());
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+      // assert
+      expect(result, const Right(<Workspace>[]));
+      verify(mockRepository.getUserWorkspaces());
+      verifyNoMoreInteractions(mockRepository);
+    });
   });
 }

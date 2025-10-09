@@ -334,6 +334,7 @@
 - ✅ Agregar permisos de workspace a TaskDetailScreen
 
 **Archivos Modificados:**
+
 - `lib/presentation/screens/tasks/tasks_list_screen.dart`
 - `lib/presentation/screens/tasks/task_detail_screen.dart`
 
@@ -344,6 +345,7 @@
 - ✅ Actualizar UI de time tracking con restricciones
 
 **Archivos Modificados:**
+
 - `lib/presentation/widgets/time_tracker_widget.dart`
 
 ### 5.4 Navegación Global (3/3): ✅
@@ -353,9 +355,11 @@
 - ✅ Integrar WorkspaceSwitcher en pantallas principales
 
 **Archivos Creados:**
+
 - `lib/presentation/widgets/main_drawer.dart` (402 líneas)
 
 **Archivos Modificados:**
+
 - `lib/presentation/screens/projects/projects_list_screen.dart`
 
 ### 5.5 Sincronización (2/2): ✅
@@ -364,10 +368,12 @@
 - ✅ Conectar todos los BLoCs con el workspace activo
 
 **Archivos Modificados:**
+
 - `lib/main.dart`
 - `lib/core/router/app_router.dart`
 
 **Características Implementadas:**
+
 - ✅ Control de permisos en toda la aplicación
 - ✅ MainDrawer con navegación adaptativa por rol
 - ✅ WorkspaceSwitcher en pantallas principales
@@ -382,6 +388,7 @@
 **Estado:** EN PROGRESO 🔄
 
 ### Configuración (1/1): ✅
+
 - ✅ Agregado bloc_test: ^9.1.7
 - ✅ Agregado mocktail: ^1.0.4
 - ✅ Configurado build_runner para mocks
@@ -389,12 +396,14 @@
 ### Unit Tests - Use Cases (3/6): ✅
 
 - ✅ **GetUserWorkspacesUseCase** - 4 tests pasando
+
   - ✅ Obtener lista de workspaces
   - ✅ Manejar ServerFailure
   - ✅ Manejar NetworkFailure
   - ✅ Lista vacía
 
 - ✅ **CreateWorkspaceUseCase** - 4 tests pasando
+
   - ✅ Crear workspace exitosamente
   - ✅ Manejar ServerFailure
   - ✅ Manejar ValidationFailure
@@ -410,6 +419,7 @@
 **Total: 13 tests pasando ✅**
 
 **Archivos de Test Creados:**
+
 ```
 test/domain/usecases/workspace/
 ├── get_user_workspaces_test.dart

@@ -7,6 +7,7 @@ Sistema de gestión de proyectos con planificación automática, sistema de work
 **Progreso General:** 76% Completado (67/88 tareas) 🚀
 
 ### Fases Implementadas:
+
 - ✅ **Fase 1:** Backend API (100%)
 - ✅ **Fase 2:** Domain Layer (100%)
 - ✅ **Fase 3:** Data Layer (100%)
@@ -18,29 +19,34 @@ Sistema de gestión de proyectos con planificación automática, sistema de work
 ## ✨ Características Principales
 
 ### 🏢 Sistema de Workspaces
+
 - **Multi-usuario con roles**: Owner, Admin, Member, Guest
 - **Gestión de equipos**: Invitaciones, permisos granulares
 - **Control de acceso**: Permisos por rol en toda la aplicación
 - **Configuración avanzada**: Settings por workspace
 
 ### 📊 Gestión de Proyectos
+
 - Creación y seguimiento de proyectos
 - Filtrado automático por workspace activo
 - Asignación de tareas y responsables
 - Integración con workspaces
 
 ### ✅ Sistema de Tareas
+
 - Gestión completa de tareas
 - Time tracking integrado
 - Control de permisos por rol
 - Estados y prioridades
 
 ### ⏱️ Time Tracking
+
 - Seguimiento de tiempo por tarea
 - Restricciones basadas en permisos
 - Estadísticas y reportes
 
 ### � UI/UX
+
 - Material Design 3
 - Tema oscuro/claro
 - Navegación global con MainDrawer
@@ -129,6 +135,7 @@ flutter test test/domain/usecases/workspace/
 ```
 
 **Cobertura Actual:**
+
 - ✅ GetUserWorkspacesUseCase (4 tests)
 - ✅ CreateWorkspaceUseCase (4 tests)
 - ✅ GetWorkspaceMembersUseCase (5 tests)
@@ -139,21 +146,25 @@ flutter test test/domain/usecases/workspace/
 ## 📋 Principios de Organización
 
 ### 1. **Clean Architecture**
+
 - **Domain**: Lógica de negocio pura (entities + use cases)
 - **Data**: Manejo de datos y APIs (models + repositories + datasources)
 - **Presentation**: UI y gestión de estado (BLoC + screens + widgets)
 
 ### 2. **BLoC Pattern**
+
 - Estado predecible con eventos y estados inmutables
 - Separación clara entre lógica de negocio y UI
 - Testeable con bloc_test
 
 ### 3. **Dependency Injection**
+
 - GetIt + Injectable para DI automática
 - Fácil de testear con mocks
 - Desacoplamiento de dependencias
 
 ### 4. **Error Handling**
+
 - Either<Failure, Success> pattern con Dartz
 - Tipos de Failure: ServerFailure, NetworkFailure, ValidationFailure, NotFoundFailure
 - Manejo robusto de errores en toda la app
@@ -194,26 +205,26 @@ dependencies:
   # Core
   flutter:
     sdk: flutter
-  
+
   # State Management
   flutter_bloc: ^8.1.6
   provider: ^6.1.2
   equatable: ^2.0.5
-  
+
   # Dependency Injection
   get_it: ^8.0.2
   injectable: ^2.5.0
-  
+
   # Networking
   dio: ^5.7.0
-  
+
   # Storage
   shared_preferences: ^2.3.3
   flutter_secure_storage: ^9.2.2
-  
+
   # Navigation
   go_router: ^14.6.2
-  
+
   # Functional Programming
   dartz: ^0.10.1
 
@@ -222,9 +233,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mockito: ^5.4.4
-  bloc_test: ^9.1.7    # ✨ Nuevo
-  mocktail: ^1.0.4     # ✨ Nuevo
-  
+  bloc_test: ^9.1.7 # ✨ Nuevo
+  mocktail: ^1.0.4 # ✨ Nuevo
+
   # Code Generation
   build_runner: ^2.4.13
   injectable_generator: ^2.6.2
@@ -234,12 +245,12 @@ dev_dependencies:
 
 ### Roles de Workspace
 
-| Rol | Crear | Editar | Eliminar | Gestionar Miembros | Time Tracking |
-|-----|-------|--------|----------|-------------------|---------------|
-| **Owner** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Member** | ✅ | ✅ | ❌ | ❌ | ✅ |
-| **Guest** | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Rol        | Crear | Editar | Eliminar | Gestionar Miembros | Time Tracking |
+| ---------- | ----- | ------ | -------- | ------------------ | ------------- |
+| **Owner**  | ✅    | ✅     | ✅       | ✅                 | ✅            |
+| **Admin**  | ✅    | ✅     | ✅       | ✅                 | ✅            |
+| **Member** | ✅    | ✅     | ❌       | ❌                 | ✅            |
+| **Guest**  | ❌    | ❌     | ❌       | ❌                 | ❌            |
 
 ### Verificación de Permisos
 
@@ -323,4 +334,4 @@ Este proyecto sigue los estándares de Flutter y Clean Architecture. Para contri
 ---
 
 **Creapolis** - Sistema de gestión de proyectos con workspaces colaborativos 🚀  
-*Última actualización: Octubre 8, 2025*
+_Última actualización: Octubre 8, 2025_

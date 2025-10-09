@@ -141,7 +141,8 @@ class TimeTrackerWidget extends StatelessWidget {
     final isRunning = state is TimeTrackingRunning;
     final canFinish = !task.isCompleted && !task.isCancelled;
     final workspaceContext = context.watch<WorkspaceContext>();
-    final canTrackTime = workspaceContext.hasActiveWorkspace && !workspaceContext.isGuest;
+    final canTrackTime =
+        workspaceContext.hasActiveWorkspace && !workspaceContext.isGuest;
 
     // Si no tiene permisos, mostrar mensaje
     if (!canTrackTime) {
@@ -177,13 +178,19 @@ class TimeTrackerWidget extends StatelessWidget {
         // Botón Start/Stop
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: !canTrackTime ? null : () {
-              if (isRunning) {
-                context.read<TimeTrackingBloc>().add(StopTimerEvent(task.id));
-              } else {
-                context.read<TimeTrackingBloc>().add(StartTimerEvent(task.id));
-              }
-            },
+            onPressed: !canTrackTime
+                ? null
+                : () {
+                    if (isRunning) {
+                      context.read<TimeTrackingBloc>().add(
+                        StopTimerEvent(task.id),
+                      );
+                    } else {
+                      context.read<TimeTrackingBloc>().add(
+                        StartTimerEvent(task.id),
+                      );
+                    }
+                  },
             icon: Icon(isRunning ? Icons.stop : Icons.play_arrow),
             label: Text(isRunning ? 'Detener' : 'Iniciar'),
             style: ElevatedButton.styleFrom(

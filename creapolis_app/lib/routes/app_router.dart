@@ -222,7 +222,7 @@ class RoutePaths {
   static const String workload = '/projects/:projectId/workload';
   static const String timeTracking = '/time-tracking';
   static const String settings = '/settings';
-  
+
   // Workspace routes
   static const String workspaces = '/workspaces';
   static const String workspaceDetail = '/workspaces/:id';
@@ -246,7 +246,7 @@ class RouteNames {
   static const String timeTracking = 'time-tracking';
   static const String workload = 'workload';
   static const String settings = 'settings';
-  
+
   // Workspace route names
   static const String workspaces = 'workspaces';
   static const String workspaceDetail = 'workspace-detail';

@@ -58,19 +58,21 @@ class _TasksListScreenState extends State<TasksListScreen>
   void _checkWorkspaceAndLoadTasks() {
     final workspaceContext = context.read<WorkspaceContext>();
     final activeWorkspace = workspaceContext.activeWorkspace;
-    
+
     if (activeWorkspace == null) {
       // Si no hay workspace activo, navegar a workspace list
       AppLogger.warning('TasksListScreen: No hay workspace activo');
       return;
     }
-    
+
     // Los miembros de workspace pueden ver tareas (todos excepto guest pueden ver)
     if (workspaceContext.isGuest) {
-      AppLogger.warning('TasksListScreen: Sin permisos para ver tareas en workspace ${activeWorkspace.id}');
+      AppLogger.warning(
+        'TasksListScreen: Sin permisos para ver tareas en workspace ${activeWorkspace.id}',
+      );
       return;
     }
-    
+
     _loadTasks();
   }
 
@@ -90,10 +92,7 @@ class _TasksListScreenState extends State<TasksListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tareas'),
-        actions: const [
-          WorkspaceSwitcher(compact: true),
-          SizedBox(width: 8),
-        ],
+        actions: const [WorkspaceSwitcher(compact: true), SizedBox(width: 8)],
       ),
       body: Column(
         children: [
@@ -170,11 +169,11 @@ class _TasksListScreenState extends State<TasksListScreen>
       floatingActionButton: Consumer<WorkspaceContext>(
         builder: (context, workspaceContext, _) {
           // Solo mostrar FAB si tiene permisos para crear tareas
-          final canCreateTasks = workspaceContext.hasActiveWorkspace && 
-                                !workspaceContext.isGuest;
-          
+          final canCreateTasks =
+              workspaceContext.hasActiveWorkspace && !workspaceContext.isGuest;
+
           if (!canCreateTasks) return const SizedBox.shrink();
-          
+
           return FloatingActionButton(
             onPressed: () => _showCreateTaskSheet(context),
             child: const Icon(Icons.add),
@@ -349,18 +348,20 @@ class _TasksListScreenState extends State<TasksListScreen>
   /// Mostrar sheet para crear tarea
   void _showCreateTaskSheet(BuildContext context) {
     final workspaceContext = context.read<WorkspaceContext>();
-    
+
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No tienes permisos para crear tareas en este workspace'),
+          content: Text(
+            'No tienes permisos para crear tareas en este workspace',
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -371,18 +372,20 @@ class _TasksListScreenState extends State<TasksListScreen>
   /// Mostrar sheet para editar tarea
   void _showEditTaskSheet(BuildContext context, Task task) {
     final workspaceContext = context.read<WorkspaceContext>();
-    
+
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No tienes permisos para editar tareas en este workspace'),
+          content: Text(
+            'No tienes permisos para editar tareas en este workspace',
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -404,18 +407,20 @@ class _TasksListScreenState extends State<TasksListScreen>
   /// Confirmar eliminación de tarea
   Future<void> _confirmDelete(BuildContext context, Task task) async {
     final workspaceContext = context.read<WorkspaceContext>();
-    
+
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No tienes permisos para eliminar tareas en este workspace'),
+          content: Text(
+            'No tienes permisos para eliminar tareas en este workspace',
+          ),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
