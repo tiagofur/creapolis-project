@@ -11,6 +11,7 @@ import 'presentation/bloc/workspace/workspace_bloc.dart';
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart';
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import 'presentation/providers/workspace_context.dart';
+import 'presentation/providers/theme_provider.dart';
 import 'routes/app_router.dart';
 
 void main() async {
@@ -39,16 +40,21 @@ class CreopolisApp extends StatelessWidget {
         BlocProvider(create: (context) => getIt<WorkspaceMemberBloc>()),
         BlocProvider(create: (context) => getIt<WorkspaceInvitationBloc>()),
 
-        // Context Provider
+        // Context Providers
         ChangeNotifierProvider(create: (context) => getIt<WorkspaceContext>()),
+        ChangeNotifierProvider(create: (context) => getIt<ThemeProvider>()),
       ],
-      child: MaterialApp.router(
-        title: AppStrings.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        routerConfig: AppRouter.router,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp.router(
+            title: AppStrings.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.effectiveThemeMode,
+            routerConfig: AppRouter.router,
+          );
+        },
       ),
     );
   }

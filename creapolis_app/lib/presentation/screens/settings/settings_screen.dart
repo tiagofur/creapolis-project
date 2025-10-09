@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/utils/app_logger.dart';
@@ -8,6 +9,7 @@ import '../../../injection.dart';
 import '../../bloc/calendar/calendar_bloc.dart';
 import '../../bloc/calendar/calendar_event.dart';
 import '../../bloc/calendar/calendar_state.dart';
+import '../../providers/theme_provider.dart';
 
 /// Pantalla de configuración
 class SettingsScreen extends StatelessWidget {
@@ -22,6 +24,10 @@ class SettingsScreen extends StatelessWidget {
         appBar: AppBar(title: const Text('Configuración')),
         body: ListView(
           children: [
+            // Sección de Apariencia
+            _AppearanceSection(),
+            const Divider(),
+
             // Sección de Integraciones
             _IntegrationsSection(),
             const Divider(),
@@ -82,6 +88,283 @@ class SettingsScreen extends StatelessWidget {
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
+    );
+  }
+}
+
+/// Sección de apariencia (tema y layout)
+class _AppearanceSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título de la sección
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.palette, color: colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Apariencia',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Selector de modo de tema
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.brightness_6,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tema',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Opciones de tema
+                    _ThemeOption(
+                      title: 'Claro',
+                      icon: Icons.light_mode,
+                      isSelected: themeProvider.themeMode == AppThemeMode.light,
+                      onTap: () => themeProvider.setThemeMode(AppThemeMode.light),
+                    ),
+                    const SizedBox(height: 8),
+                    _ThemeOption(
+                      title: 'Oscuro',
+                      icon: Icons.dark_mode,
+                      isSelected: themeProvider.themeMode == AppThemeMode.dark,
+                      onTap: () => themeProvider.setThemeMode(AppThemeMode.dark),
+                    ),
+                    const SizedBox(height: 8),
+                    _ThemeOption(
+                      title: 'Seguir sistema',
+                      icon: Icons.brightness_auto,
+                      isSelected: themeProvider.themeMode == AppThemeMode.system,
+                      onTap: () => themeProvider.setThemeMode(AppThemeMode.system),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Selector de layout (futuro)
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.view_quilt,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tipo de navegación',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Selecciona cómo prefieres navegar por la aplicación',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Opciones de layout
+                    _LayoutOption(
+                      title: 'Barra lateral',
+                      subtitle: 'Menú de navegación en el lateral',
+                      icon: Icons.menu,
+                      isSelected: themeProvider.layoutType == LayoutType.sidebar,
+                      onTap: () => themeProvider.setLayoutType(LayoutType.sidebar),
+                    ),
+                    const SizedBox(height: 8),
+                    _LayoutOption(
+                      title: 'Navegación inferior',
+                      subtitle: 'Menú de navegación en la parte inferior',
+                      icon: Icons.navigation,
+                      isSelected: themeProvider.layoutType == LayoutType.bottomNavigation,
+                      onTap: () => themeProvider.setLayoutType(LayoutType.bottomNavigation),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Widget para una opción de tema
+class _ThemeOption extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOption({
+    required this.title,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : colorScheme.outline,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? colorScheme.primary.withOpacity(0.1)
+              : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: colorScheme.primary,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget para una opción de layout
+class _LayoutOption extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LayoutOption({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : colorScheme.outline,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? colorScheme.primary.withOpacity(0.1)
+              : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: colorScheme.primary,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
