@@ -80,6 +80,7 @@ import 'presentation/bloc/workspace/workspace_bloc.dart' as _i754;
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart'
     as _i953;
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart' as _i53;
+import 'presentation/providers/theme_provider.dart' as _i999;
 import 'presentation/providers/workspace_context.dart' as _i34;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -315,6 +316,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i34.WorkspaceContext>(
       () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()),
+    );
+    gh.factory<_i999.ThemeProvider>(
+      () => _i999.ThemeProvider(gh<_i460.SharedPreferences>()),
     );
     return this;
   }
