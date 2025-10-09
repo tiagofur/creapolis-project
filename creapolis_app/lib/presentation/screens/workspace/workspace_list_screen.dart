@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/animations/list_animations.dart';
+import '../../../core/animations/page_transitions.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
 import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
@@ -100,11 +102,16 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                   final workspace = workspaces[index];
                   final isActive = state.activeWorkspaceId == workspace.id;
 
-                  return WorkspaceCard(
-                    workspace: workspace,
-                    isActive: isActive,
-                    onTap: () => _navigateToWorkspaceDetail(workspace),
-                    onSetActive: () => _setActiveWorkspace(workspace.id),
+                  return StaggeredListAnimation(
+                    index: index,
+                    delay: const Duration(milliseconds: 50),
+                    duration: const Duration(milliseconds: 400),
+                    child: WorkspaceCard(
+                      workspace: workspace,
+                      isActive: isActive,
+                      onTap: () => _navigateToWorkspaceDetail(workspace),
+                      onSetActive: () => _setActiveWorkspace(workspace.id),
+                    ),
                   );
                 },
               ),
@@ -158,10 +165,12 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
   /// Navegar a detalle de workspace
   void _navigateToWorkspaceDetail(Workspace workspace) async {
     AppLogger.info('Navegando a detalle de workspace ${workspace.id}');
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => WorkspaceDetailScreen(workspace: workspace),
-      ),
+
+    // Usar transition personalizada
+    await context.pushWithTransition(
+      WorkspaceDetailScreen(workspace: workspace),
+      type: PageTransitionType.slideFromRight,
+      duration: const Duration(milliseconds: 300),
     );
 
     // Refrescar después de volver
@@ -179,8 +188,12 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
   /// Navegar a crear workspace
   void _navigateToCreateWorkspace() async {
     AppLogger.info('Navegando a crear workspace');
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const WorkspaceCreateScreen()),
+
+    // Usar transition desde abajo (modal style)
+    final result = await context.pushWithTransition(
+      const WorkspaceCreateScreen(),
+      type: PageTransitionType.slideFromBottom,
+      duration: const Duration(milliseconds: 300),
     );
 
     // Si se creó un workspace, recargar la lista

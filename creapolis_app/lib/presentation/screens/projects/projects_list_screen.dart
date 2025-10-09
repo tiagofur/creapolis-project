@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../bloc/project/project_bloc.dart';
@@ -159,11 +160,16 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
             itemCount: projects.length,
             itemBuilder: (context, index) {
               final project = projects[index];
-              return ProjectCard(
-                project: project,
-                onTap: () => _navigateToDetail(context, project.id),
-                onEdit: () => _showEditProjectSheet(context, project),
-                onDelete: () => _confirmDelete(context, project),
+              return StaggeredListAnimation(
+                index: index,
+                delay: const Duration(milliseconds: 40),
+                duration: const Duration(milliseconds: 350),
+                child: ProjectCard(
+                  project: project,
+                  onTap: () => _navigateToDetail(context, project.id),
+                  onEdit: () => _showEditProjectSheet(context, project),
+                  onDelete: () => _confirmDelete(context, project),
+                ),
               );
             },
           );

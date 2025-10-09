@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../../routes/app_router.dart';
@@ -256,11 +257,16 @@ class _TasksListScreenState extends State<TasksListScreen>
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
-          return TaskCard(
-            task: task,
-            onTap: () => _navigateToDetail(context, task.id),
-            onEdit: () => _showEditTaskSheet(context, task),
-            onDelete: () => _confirmDelete(context, task),
+          return StaggeredListAnimation(
+            index: index,
+            delay: const Duration(milliseconds: 30),
+            duration: const Duration(milliseconds: 300),
+            child: TaskCard(
+              task: task,
+              onTap: () => _navigateToDetail(context, task.id),
+              onEdit: () => _showEditTaskSheet(context, task),
+              onDelete: () => _confirmDelete(context, task),
+            ),
           );
         },
       ),

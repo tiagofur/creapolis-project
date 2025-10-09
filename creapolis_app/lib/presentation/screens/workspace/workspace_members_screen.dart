@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../../domain/entities/workspace_member.dart';
@@ -238,14 +239,19 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                 children: [
                   // Estadísticas por rol
                   _buildRoleStats(allMembers),
-                  // Lista de miembros
+                  // Lista de miembros con animación
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: filteredMembers.length,
                       itemBuilder: (context, index) {
                         final member = filteredMembers[index];
-                        return _buildMemberCard(member);
+                        return StaggeredListAnimation(
+                          index: index,
+                          delay: const Duration(milliseconds: 40),
+                          duration: const Duration(milliseconds: 350),
+                          child: _buildMemberCard(member),
+                        );
                       },
                     ),
                   ),
