@@ -11,23 +11,80 @@ Los proyectos pueden tener tres tipos de relación con el usuario actual:
 ### 1. **Personal** 🔵
 - **Definición**: Proyectos donde el usuario actual es el manager y no tiene otros miembros compartidos.
 - **Características visuales**:
-  - Color: Color primario del tema (azul)
+  - Color: Color primario del tema (azul #3B82F6)
   - Marcador: Ninguno (diseño limpio)
 - **Identificación**: Solo el usuario puede ver y trabajar en estos proyectos.
+
+**Vista previa:**
+```
+┌─────────────────────────────────────┐
+│ [Activo]                    ⚠️      │  ← Header azul (#3B82F6)
+├─────────────────────────────────────┤
+│                                     │
+│  Mi Proyecto Personal               │  ← Solo título
+│                                     │
+│  Este es un proyecto que manejo     │
+│  únicamente yo, sin colaboradores   │
+│                                     │
+│  ████████████░░░░░░░ 75%            │  ← Progreso azul
+│                                     │
+│  📅 01/01/2025 - 31/12/2025         │
+│  👤 Juan Pérez                      │
+│                                     │
+└─────────────────────────────────────┘
+```
 
 ### 2. **Compartido por mí** 🟣
 - **Definición**: Proyectos donde el usuario actual es el manager y ha invitado a otros miembros.
 - **Características visuales**:
-  - Color: Color primario del tema (azul)
-  - Marcador: Badge con icono de "compartir" (share) en color secundario
+  - Color: Color primario del tema (azul #3B82F6)
+  - Marcador: Badge con icono de "compartir" (share) en color secundario (#8B5CF6)
 - **Identificación**: El usuario creó el proyecto y lo comparte con otros.
+
+**Vista previa:**
+```
+┌─────────────────────────────────────┐
+│ [Activo] [↗️ Compartido por mí]     │  ← Badge púrpura adicional
+├─────────────────────────────────────┤
+│                                     │
+│  Proyecto Colaborativo              │
+│                                     │
+│  Proyecto con varios colaboradores  │
+│  que trabajan en equipo             │
+│                                     │
+│  ████████░░░░░░░░░░░ 45%            │
+│                                     │
+│  📅 15/02/2025 - 30/11/2025         │
+│  👤 Juan Pérez (Tú)                 │
+│                                     │
+└─────────────────────────────────────┘
+```
 
 ### 3. **Compartido conmigo** 🟢
 - **Definición**: Proyectos donde el usuario actual NO es el manager, fue invitado por otro usuario.
 - **Características visuales**:
-  - Color: Color primario del tema (azul)
-  - Marcador: Badge con icono de "grupo" (people) en color terciario
+  - Color: Color primario del tema (azul #3B82F6)
+  - Marcador: Badge con icono de "grupo" (people) en color terciario (#10B981)
 - **Identificación**: Otro usuario invitó al usuario actual a colaborar en el proyecto.
+
+**Vista previa:**
+```
+┌─────────────────────────────────────┐
+│ [Activo] [👥 Compartido conmigo]    │  ← Badge verde
+├─────────────────────────────────────┤
+│                                     │
+│  Proyecto del Equipo                │
+│                                     │
+│  Me invitaron a colaborar en este   │
+│  proyecto del equipo de desarrollo  │
+│                                     │
+│  ██████████████░░░░░ 70%            │
+│                                     │
+│  📅 01/03/2025 - 31/12/2025         │
+│  👤 María García (Manager)          │
+│                                     │
+└─────────────────────────────────────┘
+```
 
 ## Esquema de Colores
 
@@ -39,6 +96,16 @@ Color principal: colorScheme.primary (Color(0xFF3B82F6) - Azul)
 Compartido por mí: colorScheme.secondary (Color(0xFF8B5CF6) - Púrpura)
 Compartido conmigo: colorScheme.tertiary (Color(0xFF10B981) - Verde)
 ```
+
+### Tabla Comparativa de Estilos
+
+| Tipo de Relación      | Color Header | Marcador Visual | Icono      | Color Marcador |
+|-----------------------|--------------|-----------------|------------|----------------|
+| Personal              | 🔵 Azul      | Ninguno         | -          | -              |
+| Compartido por mí     | 🔵 Azul      | Badge           | ↗️ Share   | 🟣 Púrpura     |
+| Compartido conmigo    | 🔵 Azul      | Badge           | 👥 People  | 🟢 Verde       |
+
+**Nota importante**: El color del header y la barra de progreso es **siempre azul** (#3B82F6) para mantener consistencia visual. Solo los marcadores usan colores distintivos.
 
 ## Componentes Implementados
 
