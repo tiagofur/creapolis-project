@@ -279,7 +279,7 @@ class _LegendItem extends StatelessWidget {
           width: 16,
           height: 16,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             border: Border.all(color: color),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -316,7 +316,7 @@ class _DayCell extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           border: Border.all(
-            color: hours > 0 ? color.withOpacity(0.5) : Colors.grey.shade300,
+            color: hours > 0 ? color.withValues(alpha: 0.5) : Colors.grey.shade300,
           ),
           borderRadius: BorderRadius.circular(8),
         ),

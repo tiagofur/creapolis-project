@@ -30,6 +30,24 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
   @override
   void initState() {
     super.initState();
+
+    // Validar que haya workspace activo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final workspaceContext = context.read<WorkspaceContext>();
+      if (!workspaceContext.hasActiveWorkspace) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Debes crear o seleccionar un workspace antes de crear proyectos',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+
     if (widget.project != null) {
       _selectedStatus = widget.project!.status;
       _startDate = widget.project!.startDate;
@@ -123,7 +141,7 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
 
               // Estado
               DropdownButtonFormField<ProjectStatus>(
-                value: _selectedStatus,
+                initialValue: _selectedStatus,
                 decoration: InputDecoration(
                   labelText: 'Estado',
                   prefixIcon: const Icon(Icons.flag),

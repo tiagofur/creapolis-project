@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
@@ -60,8 +61,16 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _showDiscardDialog();
+        if (shouldPop == true && mounted) {
+          // ignore: use_build_context_synchronously
+          context.pop();
+        }
+      },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Editar Workspace'),
@@ -291,32 +300,42 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
 
   /// Construir selector de tipo de workspace
   Widget _buildTypeSelector() {
-    return Column(
-      children: [
-        _buildTypeOption(
-          WorkspaceType.personal,
-          Icons.person,
-          'Personal',
-          'Para uso individual y proyectos personales',
-          Colors.blue,
-        ),
-        const SizedBox(height: 12),
-        _buildTypeOption(
-          WorkspaceType.team,
-          Icons.group,
-          'Equipo',
-          'Para colaborar con un equipo pequeño o mediano',
-          Colors.orange,
-        ),
-        const SizedBox(height: 12),
-        _buildTypeOption(
-          WorkspaceType.enterprise,
-          Icons.business,
-          'Empresa',
-          'Para organizaciones grandes con múltiples equipos',
-          Colors.purple,
-        ),
-      ],
+    final isEnabled = widget.workspace.canManageSettings;
+    return RadioGroup<WorkspaceType>(
+      groupValue: _selectedType,
+      onChanged: (value) {
+        if (isEnabled && value != null) {
+          setState(() => _selectedType = value);
+          _onFieldChanged();
+        }
+      },
+      child: Column(
+        children: [
+          _buildTypeOption(
+            WorkspaceType.personal,
+            Icons.person,
+            'Personal',
+            'Para uso individual y proyectos personales',
+            Colors.blue,
+          ),
+          const SizedBox(height: 12),
+          _buildTypeOption(
+            WorkspaceType.team,
+            Icons.group,
+            'Equipo',
+            'Para colaborar con un equipo pequeño o mediano',
+            Colors.orange,
+          ),
+          const SizedBox(height: 12),
+          _buildTypeOption(
+            WorkspaceType.enterprise,
+            Icons.business,
+            'Empresa',
+            'Para organizaciones grandes con múltiples equipos',
+            Colors.purple,
+          ),
+        ],
+      ),
     );
   }
 
@@ -350,7 +369,7 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected
-              ? color.withOpacity(0.1)
+              ? color.withValues(alpha: 0.1)
               : (isEnabled ? Colors.transparent : Colors.grey.shade50),
         ),
         child: Row(
@@ -358,27 +377,19 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
             // Radio button
             Radio<WorkspaceType>(
               value: type,
-              groupValue: _selectedType,
-              onChanged: isEnabled
-                  ? (value) {
-                      if (value != null) {
-                        setState(() => _selectedType = value);
-                        _onFieldChanged();
-                      }
-                    }
-                  : null,
+              toggleable: !isEnabled,
               activeColor: color,
             ),
             // Icono
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(isEnabled ? 0.2 : 0.1),
+                color: color.withValues(alpha: isEnabled ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: color.withOpacity(isEnabled ? 1.0 : 0.5),
+                color: color.withValues(alpha: isEnabled ? 1.0 : 0.5),
               ),
             ),
             const SizedBox(width: 16),
@@ -486,15 +497,6 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
         type: _selectedType != widget.workspace.type ? _selectedType : null,
       ),
     );
-  }
-
-  /// Manejar botón atrás
-  Future<bool> _onWillPop() async {
-    if (_hasChanges) {
-      final shouldPop = await _showDiscardDialog();
-      return shouldPop ?? false;
-    }
-    return true;
   }
 
   /// Mostrar diálogo de descartar cambios

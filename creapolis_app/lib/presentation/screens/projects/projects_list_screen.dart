@@ -11,11 +11,14 @@ import '../../bloc/auth/auth_state.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
+import '../../bloc/workspace/workspace_bloc.dart';
+import '../../bloc/workspace/workspace_event.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../../widgets/project/project_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
+import '../workspace/workspace_create_screen.dart';
 
 /// Pantalla de lista de proyectos
 class ProjectsListScreen extends StatefulWidget {
@@ -29,8 +32,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar proyectos filtrados por workspace activo
+    // Cargar workspaces primero
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Cargar lista de workspaces
+      context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
+
+      // Cargar proyectos filtrados por workspace activo
       final workspaceContext = context.read<WorkspaceContext>();
       final activeWorkspace = workspaceContext.activeWorkspace;
       context.read<ProjectBloc>().add(
@@ -126,10 +133,17 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           return const Center(child: CircularProgressIndicator());
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateProjectSheet(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo Proyecto'),
+      floatingActionButton: Consumer<WorkspaceContext>(
+        builder: (context, workspaceContext, _) {
+          final hasWorkspace = workspaceContext.hasActiveWorkspace;
+          return FloatingActionButton.extended(
+            onPressed: hasWorkspace
+                ? () => _showCreateProjectSheet(context)
+                : () => _showNoWorkspaceMessage(context),
+            icon: const Icon(Icons.add),
+            label: const Text('Nuevo Proyecto'),
+          );
+        },
       ),
     );
   }
@@ -142,7 +156,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     // Obtener el ID del usuario actual
     final authState = context.watch<AuthBloc>().state;
-    final currentUserId = authState is AuthAuthenticated ? authState.user.id : null;
+    final currentUserId = authState is AuthAuthenticated
+        ? authState.user.id
+        : null;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -190,35 +206,42 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final hasWorkspace = workspaceContext.hasActiveWorkspace;
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.folder_open,
+            hasWorkspace ? Icons.folder_open : Icons.workspaces_outlined,
             size: 80,
             color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 16),
           Text(
-            'No hay proyectos',
+            hasWorkspace ? 'No hay proyectos' : 'No hay workspace activo',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Crea tu primer proyecto para comenzar',
+            hasWorkspace
+                ? 'Crea tu primer proyecto para comenzar'
+                : 'Debes crear o seleccionar un workspace antes de crear proyectos',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: () => _showCreateProjectSheet(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Crear Proyecto'),
+            onPressed: hasWorkspace
+                ? () => _showCreateProjectSheet(context)
+                : () => _showCreateWorkspaceSheet(context),
+            icon: Icon(hasWorkspace ? Icons.add : Icons.add_business),
+            label: Text(hasWorkspace ? 'Crear Proyecto' : 'Crear Workspace'),
           ),
         ],
       ),
@@ -353,5 +376,40 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       }
       context.go('/login');
     }
+  }
+
+  /// Mostrar mensaje cuando no hay workspace activo
+  void _showNoWorkspaceMessage(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Debes crear o seleccionar un workspace antes de crear proyectos',
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        action: SnackBarAction(
+          label: 'Crear Workspace',
+          textColor: Colors.white,
+          onPressed: () => _showCreateWorkspaceSheet(context),
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  /// Mostrar sheet para crear workspace
+  void _showCreateWorkspaceSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.9,
+          child: const WorkspaceCreateScreen(),
+        ),
+      ),
+    );
   }
 }

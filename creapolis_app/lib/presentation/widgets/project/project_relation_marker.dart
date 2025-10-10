@@ -38,10 +38,10 @@ class ProjectRelationMarker extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: _getMarkerColor(relationType, colorScheme).withOpacity(0.1),
+        color: _getMarkerColor(relationType, colorScheme).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: _getMarkerColor(relationType, colorScheme).withOpacity(0.3),
+          color: _getMarkerColor(relationType, colorScheme).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -135,9 +135,9 @@ class ProjectRelationBorder extends StatelessWidget {
       case ProjectRelationType.personal:
         return Colors.transparent; // No se usa
       case ProjectRelationType.sharedByMe:
-        return colorScheme.secondary.withOpacity(0.5);
+        return colorScheme.secondary.withValues(alpha: 0.5);
       case ProjectRelationType.sharedWithMe:
-        return colorScheme.tertiary.withOpacity(0.5);
+        return colorScheme.tertiary.withValues(alpha: 0.5);
     }
   }
 }

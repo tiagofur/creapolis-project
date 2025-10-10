@@ -113,7 +113,7 @@ class WorkspaceCard extends StatelessWidget {
 
     return CircleAvatar(
       radius: 24,
-      backgroundColor: _getTypeColor(context).withOpacity(0.2),
+      backgroundColor: _getTypeColor(context).withValues(alpha: 0.2),
       child: Icon(_getTypeIcon(), color: _getTypeColor(context)),
     );
   }
@@ -123,7 +123,7 @@ class WorkspaceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.2),
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -153,7 +153,7 @@ class WorkspaceCard extends StatelessWidget {
     return Chip(
       label: Text(_getTypeLabel(), style: const TextStyle(fontSize: 12)),
       avatar: Icon(_getTypeIcon(), size: 16, color: _getTypeColor(context)),
-      backgroundColor: _getTypeColor(context).withOpacity(0.1),
+      backgroundColor: _getTypeColor(context).withValues(alpha: 0.1),
       padding: EdgeInsets.zero,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
@@ -166,7 +166,7 @@ class WorkspaceCard extends StatelessWidget {
         workspace.userRole.displayName,
         style: const TextStyle(fontSize: 12),
       ),
-      backgroundColor: _getRoleColor(context).withOpacity(0.1),
+      backgroundColor: _getRoleColor(context).withValues(alpha: 0.1),
       padding: EdgeInsets.zero,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );

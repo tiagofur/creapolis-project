@@ -1,8 +1,9 @@
-import 'package:creapolis_app/core/error/failures.dart';
+import 'package:creapolis_app/core/errors/failures.dart';
 import 'package:creapolis_app/domain/entities/workspace.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_user_workspaces.dart';
 import 'package:creapolis_app/presentation/bloc/workspace/workspace_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/workspace/workspace_event.dart';
 import 'package:creapolis_app/presentation/screens/workspace/workspace_list_screen.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
@@ -23,10 +24,7 @@ void main() {
     setUp(() {
       mockGetUserWorkspaces = MockGetUserWorkspacesUseCase();
       mockCreateWorkspace = MockCreateWorkspaceUseCase();
-      workspaceBloc = WorkspaceBloc(
-        getUserWorkspaces: mockGetUserWorkspaces,
-        createWorkspace: mockCreateWorkspace,
-      );
+      workspaceBloc = WorkspaceBloc(mockGetUserWorkspaces, mockCreateWorkspace);
     });
 
     tearDown(() {

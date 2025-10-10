@@ -128,7 +128,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                   // Estado
                   Expanded(
                     child: DropdownButtonFormField<TaskStatus>(
-                      value: _selectedStatus,
+                      initialValue: _selectedStatus,
                       decoration: InputDecoration(
                         labelText: 'Estado',
                         prefixIcon: const Icon(Icons.flag),
@@ -154,7 +154,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                   // Prioridad
                   Expanded(
                     child: DropdownButtonFormField<TaskPriority>(
-                      value: _selectedPriority,
+                      initialValue: _selectedPriority,
                       decoration: InputDecoration(
                         labelText: 'Prioridad',
                         prefixIcon: const Icon(Icons.priority_high),

@@ -13,12 +13,8 @@ import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/task_detail_screen.dart';
 import '../presentation/screens/workload/workload_screen.dart';
 import '../presentation/screens/workspace/workspace_create_screen.dart';
-import '../presentation/screens/workspace/workspace_detail_screen.dart';
-import '../presentation/screens/workspace/workspace_edit_screen.dart';
 import '../presentation/screens/workspace/workspace_invitations_screen.dart';
 import '../presentation/screens/workspace/workspace_list_screen.dart';
-import '../presentation/screens/workspace/workspace_members_screen.dart';
-import '../presentation/screens/workspace/workspace_settings_screen.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {

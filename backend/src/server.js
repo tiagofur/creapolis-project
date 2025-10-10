@@ -27,12 +27,34 @@ const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
   : ["http://localhost:5173"];
 
-app.use(
-  cors({
-    origin: corsOrigins,
-    credentials: true,
-  })
-);
+// Función para validar origen en desarrollo (permite cualquier puerto localhost)
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como Postman, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // En desarrollo, permitir cualquier puerto localhost
+    if (process.env.NODE_ENV === "development") {
+      const localhostPattern = /^http:\/\/localhost:\d+$/;
+      if (localhostPattern.test(origin) || origin === "http://localhost") {
+        return callback(null, true);
+      }
+    }
+
+    // Verificar si el origen está en la lista permitida
+    if (corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Rechazar origen no permitido
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({

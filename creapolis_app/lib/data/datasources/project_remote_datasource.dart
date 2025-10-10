@@ -133,19 +133,19 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     required int workspaceId,
   }) async {
     try {
-      // El backend actualmente solo maneja name y description
-      // Los campos startDate, endDate, status, managerId y workspaceId se ignorarán por ahora
+      // El backend actualmente solo maneja name, description y workspaceId
+      // Los campos startDate, endDate, status, managerId se ignorarán por ahora
       final response = await _dioClient.post(
         '/projects',
         data: {
           'name': name,
           'description': description,
+          'workspaceId': workspaceId,
           // TODO: Cuando el backend soporte estos campos, descomentarlos:
           // 'startDate': startDate.toIso8601String(),
           // 'endDate': endDate.toIso8601String(),
           // 'status': _statusToString(status),
           // if (managerId != null) 'managerId': managerId,
-          // 'workspaceId': workspaceId,
         },
       );
 

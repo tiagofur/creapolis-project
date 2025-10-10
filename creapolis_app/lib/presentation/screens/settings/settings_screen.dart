@@ -262,7 +262,7 @@ class _ThemeOption extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? colorScheme.primary.withOpacity(0.1)
+              ? colorScheme.primary.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(
@@ -326,7 +326,7 @@ class _LayoutOption extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? colorScheme.primary.withOpacity(0.1)
+              ? colorScheme.primary.withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Row(

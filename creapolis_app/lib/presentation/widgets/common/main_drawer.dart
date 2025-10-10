@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -55,7 +54,7 @@ class MainDrawer extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 colorScheme.primary,
-                colorScheme.primary.withOpacity(0.8),
+                colorScheme.primary.withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -80,7 +79,7 @@ class MainDrawer extends StatelessWidget {
                 Text(
                   'Workspace Activo:',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onPrimary.withOpacity(0.8),
+                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -115,7 +114,9 @@ class MainDrawer extends StatelessWidget {
                           Text(
                             activeWorkspace.userRole.displayName,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onPrimary.withOpacity(0.9),
+                              color: colorScheme.onPrimary.withValues(
+                                alpha: 0.9,
+                              ),
                             ),
                           ),
                         ],
@@ -157,7 +158,7 @@ class MainDrawer extends StatelessWidget {
                 Text(
                   'Sin workspace activo',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onPrimary.withOpacity(0.8),
+                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 8),

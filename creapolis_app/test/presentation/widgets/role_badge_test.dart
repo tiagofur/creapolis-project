@@ -173,7 +173,7 @@ void main() {
       final border = decoration.border as Border;
 
       // Owner color is red
-      expect(border.top.color, Colors.red.withOpacity(0.3));
+      expect(border.top.color, Colors.red.withValues(alpha: 0.3));
     });
 
     testWidgets('should display all role types correctly', (tester) async {

@@ -1,4 +1,4 @@
-import 'package:creapolis_app/core/error/failures.dart';
+import 'package:creapolis_app/core/errors/failures.dart';
 import 'package:creapolis_app/domain/entities/workspace.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
@@ -7,7 +7,9 @@ import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_pending_invitations.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_workspace_members.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/workspace_invitation/workspace_invitation_event.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_event.dart';
 import 'package:creapolis_app/presentation/screens/workspace/workspace_invitations_screen.dart';
 import 'package:creapolis_app/presentation/screens/workspace/workspace_members_screen.dart';
 import 'package:dartz/dartz.dart';
@@ -40,14 +42,12 @@ void main() {
       mockCreateInvitation = MockCreateInvitationUseCase();
       mockAcceptInvitation = MockAcceptInvitationUseCase();
 
-      memberBloc = WorkspaceMemberBloc(
-        getWorkspaceMembers: mockGetWorkspaceMembers,
-      );
+      memberBloc = WorkspaceMemberBloc(mockGetWorkspaceMembers);
 
       invitationBloc = WorkspaceInvitationBloc(
-        getPendingInvitations: mockGetPendingInvitations,
-        createInvitation: mockCreateInvitation,
-        acceptInvitation: mockAcceptInvitation,
+        mockGetPendingInvitations,
+        mockCreateInvitation,
+        mockAcceptInvitation,
       );
     });
 
@@ -55,6 +55,18 @@ void main() {
       memberBloc.close();
       invitationBloc.close();
     });
+
+    final tWorkspace = Workspace(
+      id: 1,
+      name: 'Test Workspace',
+      description: 'Test workspace description',
+      type: WorkspaceType.team,
+      ownerId: 1,
+      userRole: WorkspaceRole.owner,
+      settings: const WorkspaceSettings(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
     final tMembers = <WorkspaceMember>[
       WorkspaceMember(
@@ -123,7 +135,7 @@ void main() {
       return MaterialApp(
         home: BlocProvider<WorkspaceMemberBloc>(
           create: (_) => memberBloc,
-          child: const WorkspaceMembersScreen(workspaceId: 1),
+          child: WorkspaceMembersScreen(workspace: tWorkspace),
         ),
       );
     }
@@ -146,14 +158,18 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Assert
         expect(find.text('John Doe'), findsOneWidget);
         expect(find.text('Jane Smith'), findsOneWidget);
         expect(find.text('Bob Johnson'), findsOneWidget);
-        verify(mockGetWorkspaceMembers.call(1)).called(1);
+        verify(
+          mockGetWorkspaceMembers.call(
+            GetWorkspaceMembersParams(workspaceId: 1),
+          ),
+        ).called(1);
       });
 
       testWidgets('should show loading state while fetching members', (
@@ -166,7 +182,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pump();
 
         // Assert - Loading
@@ -187,7 +203,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Assert - Role badges displayed
@@ -206,7 +222,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Assert - Active indicators present
@@ -221,7 +237,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Assert - Empty state
@@ -238,7 +254,7 @@ void main() {
 
         // Act - Initial load
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Act - Pull to refresh
@@ -246,7 +262,11 @@ void main() {
         await tester.pumpAndSettle();
 
         // Assert - Called multiple times
-        verify(mockGetWorkspaceMembers.call(1)).called(greaterThan(1));
+        verify(
+          mockGetWorkspaceMembers.call(
+            GetWorkspaceMembersParams(workspaceId: 1),
+          ),
+        ).called(greaterThan(1));
       });
 
       testWidgets('should display member avatars and initials', (tester) async {
@@ -257,7 +277,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createMembersApp());
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pumpAndSettle();
 
         // Assert - Avatars present
@@ -355,7 +375,7 @@ void main() {
         ).thenAnswer((_) async => Right(tInvitations));
         when(
           mockAcceptInvitation.call(any),
-        ).thenAnswer((_) async => const Right(unit));
+        ).thenAnswer((_) async => Right(tWorkspace));
 
         // Act
         await tester.pumpWidget(createInvitationsApp());
@@ -456,7 +476,7 @@ void main() {
         await tester.pumpWidget(createMembersApp());
 
         // Step 1: Load members
-        memberBloc.add(const LoadWorkspaceMembersEvent(workspaceId: 1));
+        memberBloc.add(const LoadWorkspaceMembersEvent(1));
         await tester.pump();
 
         // Assert - Loading state
@@ -476,7 +496,11 @@ void main() {
 
         // Assert - Still showing members after refresh
         expect(find.text('John Doe'), findsOneWidget);
-        verify(mockGetWorkspaceMembers.call(1)).called(greaterThan(1));
+        verify(
+          mockGetWorkspaceMembers.call(
+            GetWorkspaceMembersParams(workspaceId: 1),
+          ),
+        ).called(greaterThan(1));
       });
 
       testWidgets('complete flow: load invitations → accept → verify update', (
@@ -488,7 +512,7 @@ void main() {
         ).thenAnswer((_) async => Right(tInvitations));
         when(
           mockAcceptInvitation.call(any),
-        ).thenAnswer((_) async => const Right(unit));
+        ).thenAnswer((_) async => Right(tWorkspace));
 
         // Act - Build widget
         await tester.pumpWidget(createInvitationsApp());

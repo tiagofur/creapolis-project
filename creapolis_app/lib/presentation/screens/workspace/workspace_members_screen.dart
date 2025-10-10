@@ -389,7 +389,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
               children: [
                 Chip(
                   label: Text(member.role.displayName),
-                  backgroundColor: _getRoleColor(member.role).withOpacity(0.1),
+                  backgroundColor: _getRoleColor(
+                    member.role,
+                  ).withValues(alpha: 0.1),
                   labelStyle: TextStyle(
                     fontSize: 12,
                     color: _getRoleColor(member.role),
@@ -525,25 +527,27 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Cambiar rol de ${member.userName}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: WorkspaceRole.values
-              .where((role) => role != WorkspaceRole.owner)
-              .map(
-                (role) => RadioListTile<WorkspaceRole>(
-                  title: Text(role.displayName),
-                  value: role,
-                  groupValue: member.role,
-                  onChanged: (value) {
-                    if (value != null) {
-                      Navigator.of(context).pop();
-                      _changeRole(member, value);
-                    }
-                  },
-                  activeColor: _getRoleColor(role),
-                ),
-              )
-              .toList(),
+        content: RadioGroup<WorkspaceRole>(
+          groupValue: member.role,
+          onChanged: (value) {
+            if (value != null) {
+              Navigator.of(context).pop();
+              _changeRole(member, value);
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: WorkspaceRole.values
+                .where((role) => role != WorkspaceRole.owner)
+                .map(
+                  (role) => RadioListTile<WorkspaceRole>(
+                    title: Text(role.displayName),
+                    value: role,
+                    activeColor: _getRoleColor(role),
+                  ),
+                )
+                .toList(),
+          ),
         ),
         actions: [
           TextButton(

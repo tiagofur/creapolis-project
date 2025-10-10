@@ -39,11 +39,12 @@ class ProjectController {
    * POST /api/projects
    */
   create = asyncHandler(async (req, res) => {
-    const { name, description, memberIds } = req.body;
+    const { name, description, workspaceId, memberIds } = req.body;
 
     const project = await projectService.createProject(req.user.id, {
       name,
       description,
+      workspaceId,
       memberIds,
     });
 

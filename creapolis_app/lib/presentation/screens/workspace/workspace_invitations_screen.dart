@@ -173,7 +173,7 @@ class _WorkspaceInvitationsScreenState
                             label: Text(invitation.role.displayName),
                             backgroundColor: _getRoleColor(
                               invitation.role,
-                            ).withOpacity(0.1),
+                            ).withValues(alpha: 0.1),
                             labelStyle: TextStyle(
                               fontSize: 12,
                               color: _getRoleColor(invitation.role),
@@ -238,7 +238,7 @@ class _WorkspaceInvitationsScreenState
                     decoration: BoxDecoration(
                       color: _getStatusColor(
                         invitation.status,
-                      ).withOpacity(0.1),
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

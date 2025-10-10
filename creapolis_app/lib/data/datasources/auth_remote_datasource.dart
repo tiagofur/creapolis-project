@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/network/dio_client.dart';
+import '../../core/utils/app_logger.dart';
 import '../models/user_model.dart';
 
 /// Interface para el data source remoto de autenticación
@@ -74,34 +75,42 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // La respuesta del backend tiene estructura: {success, message, data: {user, token}}
       final responseData = response.data as Map<String, dynamic>;
 
-      print('🔍 LOGIN - responseData type: ${responseData.runtimeType}');
-      print('🔍 LOGIN - responseData.keys: ${responseData.keys.toList()}');
-      print(
+      AppLogger.debug(
+        '🔍 LOGIN - responseData type: ${responseData.runtimeType}',
+      );
+      AppLogger.debug(
+        '🔍 LOGIN - responseData.keys: ${responseData.keys.toList()}',
+      );
+      AppLogger.debug(
         '🔍 LOGIN - responseData.containsKey("data"): ${responseData.containsKey("data")}',
       );
-      print(
+      AppLogger.debug(
         '🔍 LOGIN - responseData["data"] type: ${responseData["data"]?.runtimeType}',
       );
 
       // Extraer el objeto 'data' que contiene user y token
       final dataRaw = responseData['data'];
-      print('🔍 LOGIN - dataRaw: $dataRaw');
-      print('🔍 LOGIN - dataRaw is Map: ${dataRaw is Map}');
-      print(
+      AppLogger.debug('🔍 LOGIN - dataRaw: $dataRaw');
+      AppLogger.debug('🔍 LOGIN - dataRaw is Map: ${dataRaw is Map}');
+      AppLogger.debug(
         '🔍 LOGIN - dataRaw is Map<String, dynamic>: ${dataRaw is Map<String, dynamic>}',
       );
 
       final data = dataRaw as Map<String, dynamic>?;
 
-      print('🔍 LOGIN - data is null: ${data == null}');
+      AppLogger.debug('🔍 LOGIN - data is null: ${data == null}');
       if (data != null) {
-        print('🔍 LOGIN - data.keys: ${data.keys.toList()}');
-        print('🔍 LOGIN - data["token"] type: ${data["token"]?.runtimeType}');
-        print('🔍 LOGIN - data["user"] type: ${data["user"]?.runtimeType}');
-        print(
+        AppLogger.debug('🔍 LOGIN - data.keys: ${data.keys.toList()}');
+        AppLogger.debug(
+          '🔍 LOGIN - data["token"] type: ${data["token"]?.runtimeType}',
+        );
+        AppLogger.debug(
+          '🔍 LOGIN - data["user"] type: ${data["user"]?.runtimeType}',
+        );
+        AppLogger.debug(
           '🔍 LOGIN - data.containsKey("token"): ${data.containsKey("token")}',
         );
-        print(
+        AppLogger.debug(
           '🔍 LOGIN - data.containsKey("user"): ${data.containsKey("user")}',
         );
       }
@@ -119,7 +128,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
 
-      print('✅ LOGIN - Retornando data con token y user');
+      AppLogger.debug('✅ LOGIN - Retornando data con token y user');
       return data;
     } on DioException catch (e) {
       // Manejar errores de Dio (401, 409, etc.)

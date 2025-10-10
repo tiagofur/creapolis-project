@@ -7,8 +7,6 @@ import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../../routes/app_router.dart';
-import '../../bloc/project/project_bloc.dart';
-import '../../bloc/project/project_event.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';

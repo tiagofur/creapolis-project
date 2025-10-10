@@ -125,7 +125,35 @@ class ProjectService {
   /**
    * Create new project
    */
-  async createProject(userId, { name, description, memberIds = [] }) {
+  async createProject(
+    userId,
+    { name, description, workspaceId, memberIds = [] }
+  ) {
+    // Validate workspaceId is provided
+    if (!workspaceId) {
+      throw ErrorResponses.badRequest("Workspace ID is required");
+    }
+
+    // Verify workspace exists and user has access
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        members: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw ErrorResponses.notFound("Workspace not found");
+    }
+
+    if (workspace.members.length === 0) {
+      throw ErrorResponses.forbidden(
+        "You do not have access to this workspace"
+      );
+    }
+
     // Add creator to members if not included
     const uniqueMemberIds = Array.from(new Set([userId, ...memberIds]));
 
@@ -144,6 +172,7 @@ class ProjectService {
       data: {
         name,
         description,
+        workspaceId,
         members: {
           create: uniqueMemberIds.map((memberId) => ({
             userId: memberId,

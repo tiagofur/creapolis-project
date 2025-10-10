@@ -175,22 +175,28 @@ class _WorkspaceInviteMemberScreenState
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...WorkspaceRole.values.map((role) {
-          // No permitir invitar como owner
-          if (role == WorkspaceRole.owner) return const SizedBox.shrink();
+        RadioGroup<WorkspaceRole>(
+          groupValue: _selectedRole,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _selectedRole = value);
+            }
+          },
+          child: Column(
+            children: [
+              ...WorkspaceRole.values.map((role) {
+                // No permitir invitar como owner
+                if (role == WorkspaceRole.owner) return const SizedBox.shrink();
 
-          return RadioListTile<WorkspaceRole>(
-            title: Text(role.displayName),
-            subtitle: Text(_getRoleDescription(role)),
-            value: role,
-            groupValue: _selectedRole,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedRole = value);
-              }
-            },
-          );
-        }),
+                return RadioListTile<WorkspaceRole>(
+                  title: Text(role.displayName),
+                  subtitle: Text(_getRoleDescription(role)),
+                  value: role,
+                );
+              }),
+            ],
+          ),
+        ),
       ],
     );
   }

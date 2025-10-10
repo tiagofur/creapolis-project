@@ -66,8 +66,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         return [];
       }
 
-      final data = dataRaw as List;
-      return data
+      return dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on AuthException {
@@ -214,8 +213,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         return [];
       }
 
-      final data = dataRaw as List;
-      return data
+      return dataRaw
           .map(
             (json) =>
                 TaskDependencyModel.fromJson(json as Map<String, dynamic>),
@@ -287,8 +285,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         return [];
       }
 
-      final data = dataRaw as List;
-      return data
+      return dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on AuthException {
@@ -320,8 +317,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         return [];
       }
 
-      final data = dataRaw as List;
-      return data
+      return dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on AuthException {

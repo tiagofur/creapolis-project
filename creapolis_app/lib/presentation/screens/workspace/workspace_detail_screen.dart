@@ -143,7 +143,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             // Avatar o icono grande
             CircleAvatar(
               radius: 40,
-              backgroundColor: _getTypeColor().withOpacity(0.2),
+              backgroundColor: _getTypeColor().withValues(alpha: 0.2),
               child: widget.workspace.avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
@@ -191,12 +191,12 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
                     color: _getTypeColor(),
                   ),
                   label: Text(widget.workspace.type.displayName),
-                  backgroundColor: _getTypeColor().withOpacity(0.1),
+                  backgroundColor: _getTypeColor().withValues(alpha: 0.1),
                 ),
                 const SizedBox(width: 8),
                 Chip(
                   label: Text(widget.workspace.userRole.displayName),
-                  backgroundColor: _getRoleColor().withOpacity(0.1),
+                  backgroundColor: _getRoleColor().withValues(alpha: 0.1),
                 ),
               ],
             ),
@@ -287,7 +287,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
         subtitle: Text(owner.email),
         trailing: Chip(
           label: const Text('Propietario'),
-          backgroundColor: Colors.red.withOpacity(0.1),
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
           labelStyle: const TextStyle(fontSize: 12),
         ),
       ),
@@ -358,7 +358,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
                         label: Text(member.role.displayName),
                         backgroundColor: _getMemberRoleColor(
                           member.role,
-                        ).withOpacity(0.1),
+                        ).withValues(alpha: 0.1),
                         labelStyle: const TextStyle(fontSize: 12),
                       ),
                     );

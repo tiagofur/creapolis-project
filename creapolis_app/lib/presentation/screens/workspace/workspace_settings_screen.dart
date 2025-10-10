@@ -81,7 +81,7 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
       value: getIt<WorkspaceBloc>(),
       child: PopScope(
         canPop: !_hasChanges,
-        onPopInvoked: (didPop) async {
+        onPopInvokedWithResult: (didPop, result) async {
           if (!didPop && _hasChanges) {
             final shouldPop = await _confirmDiscard();
             if (shouldPop && context.mounted) {
@@ -372,43 +372,26 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Plantilla por defecto'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<String?>(
-              title: const Text('Ninguna'),
-              value: null,
-              groupValue: _settings.defaultProjectTemplate,
-              onChanged: (value) {
-                _updateSetting(
-                  _settings.copyWith(defaultProjectTemplate: value),
-                );
-                Navigator.of(context).pop();
-              },
-            ),
-            RadioListTile<String?>(
-              title: const Text('Desarrollo de Software'),
-              value: 'software_dev',
-              groupValue: _settings.defaultProjectTemplate,
-              onChanged: (value) {
-                _updateSetting(
-                  _settings.copyWith(defaultProjectTemplate: value),
-                );
-                Navigator.of(context).pop();
-              },
-            ),
-            RadioListTile<String?>(
-              title: const Text('Marketing'),
-              value: 'marketing',
-              groupValue: _settings.defaultProjectTemplate,
-              onChanged: (value) {
-                _updateSetting(
-                  _settings.copyWith(defaultProjectTemplate: value),
-                );
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        content: RadioGroup<String?>(
+          groupValue: _settings.defaultProjectTemplate,
+          onChanged: (value) {
+            _updateSetting(_settings.copyWith(defaultProjectTemplate: value));
+            Navigator.of(context).pop();
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String?>(title: const Text('Ninguna'), value: null),
+              RadioListTile<String?>(
+                title: const Text('Desarrollo de Software'),
+                value: 'software_dev',
+              ),
+              RadioListTile<String?>(
+                title: const Text('Marketing'),
+                value: 'marketing',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -429,25 +412,24 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Zona horaria'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: timezones.length,
-            itemBuilder: (context, index) {
-              final tz = timezones[index];
-              return RadioListTile<String>(
-                title: Text(tz),
-                value: tz,
-                groupValue: _settings.timezone,
-                onChanged: (value) {
-                  if (value != null) {
-                    _updateSetting(_settings.copyWith(timezone: value));
-                    Navigator.of(context).pop();
-                  }
-                },
-              );
-            },
+        content: RadioGroup<String>(
+          groupValue: _settings.timezone,
+          onChanged: (value) {
+            if (value != null) {
+              _updateSetting(_settings.copyWith(timezone: value));
+              Navigator.of(context).pop();
+            }
+          },
+          child: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: timezones.length,
+              itemBuilder: (context, index) {
+                final tz = timezones[index];
+                return RadioListTile<String>(title: Text(tz), value: tz);
+              },
+            ),
           ),
         ),
       ),
@@ -466,21 +448,23 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Idioma'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: languages.entries.map((entry) {
-            return RadioListTile<String>(
-              title: Text(entry.value),
-              value: entry.key,
-              groupValue: _settings.language,
-              onChanged: (value) {
-                if (value != null) {
-                  _updateSetting(_settings.copyWith(language: value));
-                  Navigator.of(context).pop();
-                }
-              },
-            );
-          }).toList(),
+        content: RadioGroup<String>(
+          groupValue: _settings.language,
+          onChanged: (value) {
+            if (value != null) {
+              _updateSetting(_settings.copyWith(language: value));
+              Navigator.of(context).pop();
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: languages.entries.map((entry) {
+              return RadioListTile<String>(
+                title: Text(entry.value),
+                value: entry.key,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

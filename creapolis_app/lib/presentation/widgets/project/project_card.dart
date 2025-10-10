@@ -4,7 +4,7 @@ import '../../../domain/entities/project.dart';
 import 'project_relation_marker.dart';
 
 /// Card widget para mostrar un proyecto
-/// 
+///
 /// **Personalización Visual:**
 /// - Todos los proyectos usan el color primario del tema para consistencia
 /// - Los proyectos compartidos tienen marcadores visuales adicionales:
@@ -16,10 +16,10 @@ class ProjectCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
-  
+
   /// ID del usuario actual para determinar el tipo de relación
   final int? currentUserId;
-  
+
   /// Si el proyecto tiene otros miembros además del manager
   final bool hasOtherMembers;
 
@@ -37,10 +37,13 @@ class ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Determinar el tipo de relación con el proyecto
     final relationType = currentUserId != null
-        ? project.getRelationType(currentUserId!, hasOtherMembers: hasOtherMembers)
+        ? project.getRelationType(
+            currentUserId!,
+            hasOtherMembers: hasOtherMembers,
+          )
         : ProjectRelationType.personal;
 
     return Card(
@@ -64,9 +67,12 @@ class ProjectCard extends StatelessWidget {
                       children: [
                         // Badge de estado
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -85,7 +91,10 @@ class ProjectCard extends StatelessWidget {
                               relationType: relationType,
                               iconSize: 12,
                               fontSize: 10,
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
                             ),
                           ),
                       ],
@@ -197,8 +206,9 @@ class ProjectCard extends StatelessWidget {
 
             // Acciones
             if (onEdit != null || onDelete != null)
-              ButtonBar(
-                buttonPadding: EdgeInsets.zero,
+              OverflowBar(
+                spacing: 8,
+                overflowSpacing: 8,
                 children: [
                   if (onEdit != null)
                     TextButton.icon(
