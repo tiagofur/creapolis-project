@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/animations/hero_tags.dart';
 import '../../../domain/entities/workspace.dart';
 
 /// Widget de tarjeta de workspace
@@ -21,89 +22,94 @@ class WorkspaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: isActive ? 8 : 2,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: isActive
-            ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
-            : BorderSide.none,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  // Avatar o icono
-                  _buildAvatar(context),
-                  const SizedBox(width: 12),
-                  // Información del workspace
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                workspace.name,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+    return Hero(
+      tag: HeroTags.workspace(workspace.id),
+      child: Card(
+        elevation: isActive ? 8 : 2,
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: isActive
+              ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
+              : BorderSide.none,
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Avatar o icono
+                    _buildAvatar(context),
+                    const SizedBox(width: 12),
+                    // Información del workspace
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  workspace.name,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            ),
-                            if (isActive) _buildActiveBadge(context),
-                          ],
-                        ),
-                        if (workspace.description != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            workspace.description!,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.grey[600]),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                              if (isActive) _buildActiveBadge(context),
+                            ],
                           ),
+                          if (workspace.description != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              workspace.description!,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.grey[600]),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Información adicional
-              Row(
-                children: [
-                  _buildTypeChip(context),
-                  const SizedBox(width: 8),
-                  _buildRoleChip(context),
-                  const Spacer(),
-                  if (!isActive && onSetActive != null)
-                    TextButton.icon(
-                      onPressed: isActivating ? null : onSetActive,
-                      icon: isActivating
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_circle_outline, size: 16),
-                      label: Text(isActivating ? 'Activando...' : 'Activar'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
                       ),
                     ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Información adicional
+                Row(
+                  children: [
+                    _buildTypeChip(context),
+                    const SizedBox(width: 8),
+                    _buildRoleChip(context),
+                    const Spacer(),
+                    if (!isActive && onSetActive != null)
+                      TextButton.icon(
+                        onPressed: isActivating ? null : onSetActive,
+                        icon: isActivating
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.check_circle_outline, size: 16),
+                        label: Text(isActivating ? 'Activando...' : 'Activar'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -113,16 +119,22 @@ class WorkspaceCard extends StatelessWidget {
   /// Construir avatar del workspace
   Widget _buildAvatar(BuildContext context) {
     if (workspace.avatarUrl != null) {
-      return CircleAvatar(
-        radius: 24,
-        backgroundImage: NetworkImage(workspace.avatarUrl!),
+      return Hero(
+        tag: HeroTags.workspaceIcon(workspace.id),
+        child: CircleAvatar(
+          radius: 24,
+          backgroundImage: NetworkImage(workspace.avatarUrl!),
+        ),
       );
     }
 
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: _getTypeColor(context).withValues(alpha: 0.2),
-      child: Icon(_getTypeIcon(), color: _getTypeColor(context)),
+    return Hero(
+      tag: HeroTags.workspaceIcon(workspace.id),
+      child: CircleAvatar(
+        radius: 24,
+        backgroundColor: _getTypeColor(context).withValues(alpha: 0.2),
+        child: Icon(_getTypeIcon(), color: _getTypeColor(context)),
+      ),
     );
   }
 

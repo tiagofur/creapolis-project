@@ -18,9 +18,12 @@ import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
+import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../../widgets/project/project_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
+import '../../widgets/error/friendly_error_widget.dart';
+import '../../widgets/feedback/feedback_widgets.dart';
 import '../workspace/workspace_create_screen.dart';
 
 /// Pantalla de lista de proyectos con Progressive Disclosure
@@ -192,9 +195,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
             icon: const Icon(Icons.search),
             onPressed: () {
               // TODO: Implementar búsqueda en siguiente iteración
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Búsqueda próximamente')),
-              );
+              context.showInfo('Búsqueda próximamente');
             },
           ),
           IconButton(
@@ -210,13 +211,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       body: BlocConsumer<ProjectBloc, ProjectState>(
         listener: (context, state) {
           if (state is ProjectCreated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Proyecto "${state.project.name}" creado exitosamente',
-                ),
-                backgroundColor: Colors.green,
-              ),
+            context.showSuccess(
+              'Proyecto "${state.project.name}" creado exitosamente',
             );
             // Recargar lista filtrada por workspace activo
             final workspaceContext = context.read<WorkspaceContext>();
@@ -225,12 +221,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
               LoadProjectsEvent(workspaceId: activeWorkspace?.id),
             );
           } else if (state is ProjectDeleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Proyecto eliminado exitosamente'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            context.showSuccess('Proyecto eliminado exitosamente');
             // Recargar lista filtrada por workspace activo
             final workspaceContext = context.read<WorkspaceContext>();
             final activeWorkspace = workspaceContext.activeWorkspace;
@@ -238,12 +229,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
               LoadProjectsEvent(workspaceId: activeWorkspace?.id),
             );
           } else if (state is ProjectError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: colorScheme.error,
-              ),
-            );
+            context.showError(state.message);
           }
         },
         builder: (context, state) {
@@ -258,7 +244,13 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
           // Si hay workspace activo, mostrar el estado normal
           if (state is ProjectLoading && state is! ProjectsLoaded) {
-            return const Center(child: CircularProgressIndicator());
+            // Mostrar skeleton grid para proyectos
+            return SkeletonGrid(
+              type: SkeletonType.project,
+              itemCount: 6,
+              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+              childAspectRatio: 1.2,
+            );
           }
 
           if (state is ProjectsLoaded) {
@@ -409,42 +401,15 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
   /// Estado de error
   Widget _buildErrorState(BuildContext context, String message) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final workspaceContext = context.read<WorkspaceContext>();
+    final activeWorkspace = workspaceContext.activeWorkspace;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 80, color: colorScheme.error),
-          const SizedBox(height: 16),
-          Text(
-            'Error al cargar proyectos',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () {
-              context.read<ProjectBloc>().add(const LoadProjectsEvent());
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
-          ),
-        ],
-      ),
+    return NoConnectionWidget(
+      onRetry: () {
+        context.read<ProjectBloc>().add(
+          LoadProjectsEvent(workspaceId: activeWorkspace?.id),
+        );
+      },
     );
   }
 
@@ -539,19 +504,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
   /// Mostrar mensaje cuando no hay workspace activo
   void _showNoWorkspaceMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Selecciona un workspace para comenzar a crear proyectos',
-        ),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        action: SnackBarAction(
-          label: 'Seleccionar Workspace',
-          textColor: Colors.white,
-          onPressed: () => _handleWorkspaceSelection(context),
-        ),
-        duration: const Duration(seconds: 4),
-      ),
+    context.showWarning(
+      'Selecciona un workspace para comenzar a crear proyectos',
     );
   }
 

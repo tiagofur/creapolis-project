@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../domain/entities/workspace.dart';
 import '../../../domain/usecases/workspace/create_workspace.dart';
 import '../../../domain/usecases/workspace/get_active_workspace.dart';
 import '../../../domain/usecases/workspace/get_user_workspaces.dart';
@@ -239,9 +240,28 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     );
 
     final currentState = state;
+    AppLogger.info(
+      'WorkspaceBloc: Estado actual: ${currentState.runtimeType}, '
+      'workspaces: ${currentState is WorkspacesLoaded ? currentState.workspaces.length : 0}',
+    );
+
+    // Obtener lista de workspaces dependiendo del estado actual
+    List<Workspace> workspaces = [];
     if (currentState is WorkspacesLoaded) {
+      workspaces = currentState.workspaces;
+    } else if (currentState is ActiveWorkspaceSet) {
+      // Si el estado es ActiveWorkspaceSet, intentar obtener workspaces del estado previo
+      // o esperar a que se complete la transición
+      AppLogger.warning(
+        'WorkspaceBloc: Estado intermedio ActiveWorkspaceSet detectado, '
+        'omitiendo cambio de workspace hasta que se complete la transición anterior',
+      );
+      return;
+    }
+
+    if (workspaces.isNotEmpty) {
       // Verificar que el workspace existe en la lista
-      final workspace = currentState.workspaces.cast<dynamic>().firstWhere(
+      final workspace = workspaces.cast<dynamic>().firstWhere(
         (w) => w.id == event.workspaceId,
         orElse: () => null,
       );
@@ -267,7 +287,13 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
             );
 
             // Luego actualizar estado general con workspace activo
-            emit(currentState.copyWith(activeWorkspaceId: event.workspaceId));
+            // Emitir WorkspacesLoaded con la lista de workspaces y el workspace activo
+            emit(
+              WorkspacesLoaded(
+                workspaces: workspaces,
+                activeWorkspaceId: event.workspaceId,
+              ),
+            );
             AppLogger.info(
               'WorkspaceBloc: Workspace activo establecido y guardado',
             );

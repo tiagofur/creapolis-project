@@ -140,6 +140,114 @@ router.get("/:taskId", taskIdValidation, validate, async (req, res, next) => {
   }
 });
 
+/**
+ * @route   PUT /api/tasks/:taskId
+ * @desc    Update task (without needing projectId)
+ * @access  Private
+ */
+router.put("/:taskId", taskIdValidation, validate, async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.user.userId;
+
+    // Import prisma to query directly
+    const { default: prisma } = await import("../config/database.js");
+
+    // Verify task exists and user has access
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id: parseInt(taskId),
+        project: {
+          members: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+    });
+
+    if (!existingTask) {
+      const { ErrorResponses } = await import("../utils/errors.js");
+      throw ErrorResponses.notFound("Task not found or you don't have access");
+    }
+
+    // Prepare update data
+    const updateData = {};
+
+    if (req.body.title !== undefined) updateData.title = req.body.title;
+    if (req.body.description !== undefined)
+      updateData.description = req.body.description;
+    if (req.body.status !== undefined) updateData.status = req.body.status;
+    if (req.body.priority !== undefined)
+      updateData.priority = req.body.priority;
+    if (req.body.startDate !== undefined)
+      updateData.startDate = req.body.startDate
+        ? new Date(req.body.startDate)
+        : null;
+    if (req.body.endDate !== undefined)
+      updateData.endDate = req.body.endDate ? new Date(req.body.endDate) : null;
+    if (req.body.estimatedHours !== undefined)
+      updateData.estimatedHours = req.body.estimatedHours;
+    if (req.body.actualHours !== undefined)
+      updateData.actualHours = req.body.actualHours;
+    if (req.body.assigneeId !== undefined)
+      updateData.assigneeId = req.body.assigneeId;
+
+    // Update task
+    const updatedTask = await prisma.task.update({
+      where: { id: parseInt(taskId) },
+      data: updateData,
+      include: {
+        assignee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        predecessors: {
+          include: {
+            predecessor: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+              },
+            },
+          },
+        },
+        successors: {
+          include: {
+            successor: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            timeLogs: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task updated successfully",
+      data: updatedTask,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // General timelog routes
 const timelogRouter = express.Router();
 timelogRouter.use(authenticate);

@@ -11,10 +11,13 @@ import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
 import '../../providers/workspace_context.dart';
+import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
 import '../../widgets/task/kanban_board_view.dart';
 import '../../widgets/task/task_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
+import '../../widgets/error/friendly_error_widget.dart';
+import '../../widgets/feedback/feedback_widgets.dart';
 
 /// Pantalla de lista de tareas de un proyecto
 class TasksListScreen extends StatefulWidget {
@@ -106,7 +109,6 @@ class _TasksListScreenState extends State<TasksListScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -200,52 +202,35 @@ class _TasksListScreenState extends State<TasksListScreen>
             child: BlocConsumer<TaskBloc, TaskState>(
               listener: (context, state) {
                 if (state is TaskCreated) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Tarea "${state.task.title}" creada exitosamente',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
+                  context.showSuccess(
+                    'Tarea "${state.task.title}" creada exitosamente',
                   );
                   // Recargar lista
                   context.read<TaskBloc>().add(
                     LoadTasksByProjectEvent(widget.projectId),
                   );
                 } else if (state is TaskUpdated) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tarea actualizada exitosamente'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  context.showSuccess('Tarea actualizada exitosamente');
                   // Recargar lista
                   context.read<TaskBloc>().add(
                     LoadTasksByProjectEvent(widget.projectId),
                   );
                 } else if (state is TaskDeleted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tarea eliminada exitosamente'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  context.showSuccess('Tarea eliminada exitosamente');
                   // Recargar lista
                   context.read<TaskBloc>().add(
                     LoadTasksByProjectEvent(widget.projectId),
                   );
                 } else if (state is TaskError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: colorScheme.error,
-                    ),
-                  );
+                  context.showError(state.message);
                 }
               },
               builder: (context, state) {
                 if (state is TaskLoading && state is! TasksLoaded) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonList(
+                    type: SkeletonType.task,
+                    itemCount: 8,
+                  );
                 }
 
                 if (state is TasksLoaded) {
@@ -355,44 +340,10 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   /// Estado de error
   Widget _buildErrorState(BuildContext context, String message) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 80, color: colorScheme.error),
-          const SizedBox(height: 16),
-          Text(
-            'Error al cargar tareas',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () {
-              context.read<TaskBloc>().add(
-                LoadTasksByProjectEvent(widget.projectId),
-              );
-            },
-            icon: const Icon(Icons.refresh),
-            label: const Text('Reintentar'),
-          ),
-        ],
-      ),
+    return NoConnectionWidget(
+      onRetry: () {
+        context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
+      },
     );
   }
 
@@ -402,13 +353,8 @@ class _TasksListScreenState extends State<TasksListScreen>
 
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No tienes permisos para crear tareas en este workspace',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      context.showError(
+        'No tienes permisos para crear tareas en este workspace',
       );
       return;
     }
@@ -426,13 +372,8 @@ class _TasksListScreenState extends State<TasksListScreen>
 
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No tienes permisos para editar tareas en este workspace',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      context.showError(
+        'No tienes permisos para editar tareas en este workspace',
       );
       return;
     }
@@ -461,39 +402,18 @@ class _TasksListScreenState extends State<TasksListScreen>
 
     // Verificar permisos
     if (!workspaceContext.hasActiveWorkspace || workspaceContext.isGuest) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No tienes permisos para eliminar tareas en este workspace',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      context.showError(
+        'No tienes permisos para eliminar tareas en este workspace',
       );
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Tarea'),
-        content: Text(
+    final confirmed = await context.showWarningDialog(
+      title: 'Eliminar Tarea',
+      message:
           '¿Estás seguro de que deseas eliminar la tarea "${task.title}"?\n\n'
           'Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+      confirmText: 'Eliminar',
     );
 
     if (confirmed == true && context.mounted) {

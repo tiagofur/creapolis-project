@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../../injection.dart';
 import '../../bloc/task/task_bloc.dart';
@@ -85,7 +86,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
             ],
           ),
         ),
-        body: BlocBuilder<TaskBloc, TaskState>(
+        body: BlocConsumer<TaskBloc, TaskState>(
+          listener: (context, state) {
+            // Cuando la tarea se actualiza, recargar los datos
+            if (state is TaskUpdated) {
+              AppLogger.info(
+                'TaskDetailScreen: Tarea actualizada, recargando datos',
+              );
+              _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
+            }
+          },
           builder: (context, state) {
             if (state is TaskLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -412,16 +422,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                 ),
               ),
             ),
-          const SizedBox(height: 16),
-
-          // Time Tracking Widget
-          TimeTrackerWidget(
-            task: task,
-            onTaskFinished: () {
-              // Recargar tarea después de finalizar
-              _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
-            },
-          ),
         ],
       ),
     );

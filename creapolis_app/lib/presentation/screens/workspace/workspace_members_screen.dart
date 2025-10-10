@@ -8,6 +8,7 @@ import '../../../domain/entities/workspace_member.dart';
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
+import '../../widgets/loading/skeleton_list.dart';
 
 /// Pantalla de gestión de miembros del workspace
 class WorkspaceMembersScreen extends StatefulWidget {
@@ -198,7 +199,7 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
         },
         builder: (context, state) {
           if (state is WorkspaceMemberLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonList(type: SkeletonType.member, itemCount: 8);
           }
 
           if (state is WorkspaceMembersLoaded) {

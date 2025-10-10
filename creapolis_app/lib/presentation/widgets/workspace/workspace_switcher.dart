@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 
@@ -184,10 +183,6 @@ class WorkspaceSwitcher extends StatelessWidget {
               );
               _selectWorkspace(context, workspaceId, workspaces);
             }
-          },
-          onOpened: () {
-            // Recargar workspaces al abrir el menú
-            context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
           },
         );
       },

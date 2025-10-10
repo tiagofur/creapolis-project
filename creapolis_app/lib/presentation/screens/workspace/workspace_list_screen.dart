@@ -8,7 +8,10 @@ import '../../bloc/workspace/workspace_bloc.dart';
 import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
 import '../../providers/workspace_context.dart';
+import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/workspace/workspace_card.dart';
+import '../../widgets/error/friendly_error_widget.dart';
+import '../../widgets/feedback/feedback_widgets.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import 'workspace_create_screen.dart';
@@ -73,34 +76,18 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                 setState(() {
                   _activatingWorkspaceId = null;
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                context.showError(state.message);
               } else if (state is WorkspaceCreated) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Workspace "${state.workspace.name}" creado'),
-                    backgroundColor: Colors.green,
-                  ),
+                context.showSuccess(
+                  'Workspace "${state.workspace.name}" creado',
                 );
               } else if (state is ActiveWorkspaceSet) {
                 // Cuando se establece el workspace activo, limpiar estado de activating
                 if (_activatingWorkspaceId == state.workspaceId) {
                   final workspace = state.workspace;
                   if (workspace != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Workspace "${workspace.name}" activado'),
-                        backgroundColor: Colors.green,
-                        action: SnackBarAction(
-                          label: 'Ver',
-                          onPressed: () =>
-                              _navigateToWorkspaceDetail(workspace),
-                        ),
-                      ),
+                    context.showSuccess(
+                      'Workspace "${workspace.name}" activado',
                     );
                   }
                   // Limpiar estado de activating
@@ -112,7 +99,18 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
             },
             builder: (context, state) {
               if (state is WorkspaceLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonList(
+                  type: SkeletonType.workspace,
+                  itemCount: 5,
+                );
+              }
+
+              if (state is WorkspaceError) {
+                return NoConnectionWidget(
+                  onRetry: () => context.read<WorkspaceBloc>().add(
+                    const LoadUserWorkspacesEvent(),
+                  ),
+                );
               }
 
               if (state is WorkspacesLoaded) {
@@ -323,12 +321,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
   /// Mostrar mensaje para seleccionar workspace
   void _scrollToWorkspaces() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Haz clic en "Activar" en el workspace que quieres usar'),
-        duration: Duration(seconds: 3),
-      ),
-    );
+    context.showInfo('Haz clic en "Activar" en el workspace que quieres usar');
   }
 
   /// Navegar a crear workspace

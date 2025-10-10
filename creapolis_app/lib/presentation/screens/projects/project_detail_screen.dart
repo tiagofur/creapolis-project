@@ -120,6 +120,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           SliverAppBar(
             pinned: true,
             expandedHeight: 120,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/projects'),
+              tooltip: 'Volver a proyectos',
+            ),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(project.name, style: const TextStyle(fontSize: 16)),
               background: Container(

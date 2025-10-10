@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/validators.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
 import '../../bloc/workspace/workspace_event.dart';
 import '../../bloc/workspace/workspace_state.dart';
+import '../../widgets/form/validated_text_field.dart';
 
 /// Pantalla para crear un nuevo workspace
 class WorkspaceCreateScreen extends StatefulWidget {
@@ -97,42 +99,27 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
                 const SizedBox(height: 24),
 
                 // Campo de nombre
-                TextFormField(
+                ValidatedTextField(
+                  label: 'Nombre del Workspace',
+                  hint: 'Ej: Mi Empresa, Equipo Frontend',
+                  prefixIcon: Icons.workspaces,
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del Workspace',
-                    hintText: 'Ej: Mi Empresa, Equipo Frontend',
-                    prefixIcon: Icon(Icons.workspaces),
-                    border: OutlineInputBorder(),
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'El nombre es requerido';
-                    }
-                    if (value.trim().length < 3) {
-                      return 'El nombre debe tener al menos 3 caracteres';
-                    }
-                    if (value.trim().length > 50) {
-                      return 'El nombre no puede tener más de 50 caracteres';
-                    }
-                    return null;
-                  },
+                  validator: Validators.compose([
+                    Validators.required,
+                    Validators.lengthRange(3, 50),
+                  ]),
                 ),
                 const SizedBox(height: 16),
 
                 // Campo de descripción
-                TextFormField(
+                ValidatedTextField(
+                  label: 'Descripción (opcional)',
+                  hint: 'Describe el propósito de este workspace',
+                  prefixIcon: Icons.description,
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción (opcional)',
-                    hintText: 'Describe el propósito de este workspace',
-                    prefixIcon: Icon(Icons.description),
-                    border: OutlineInputBorder(),
-                  ),
+                  validator: Validators.maxLength(200),
                   maxLines: 3,
                   maxLength: 200,
-                  textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 24),
 
