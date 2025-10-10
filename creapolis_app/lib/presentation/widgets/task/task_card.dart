@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/task.dart';
+import '../status_badge_widget.dart';
 
-/// Card widget para mostrar una tarea
-class TaskCard extends StatelessWidget {
+/// Card widget para mostrar una tarea con Progressive Disclosure
+class TaskCard extends StatefulWidget {
   final Task task;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool isCompact;
 
   const TaskCard({
     super.key,
@@ -15,211 +17,221 @@ class TaskCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.isCompact = false,
   });
+
+  @override
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard> {
+  bool _isHovering = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Título y badges
-              Row(
-                children: [
-                  // Badge de estado
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+        elevation: _isHovering ? 4 : 1,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.all(widget.isCompact ? 12 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Status badge clickeable + prioridad
+                Row(
+                  children: [
+                    // Status Badge Clickeable (FEATURE PRINCIPAL)
+                    StatusBadgeWidget(
+                      task: widget.task,
+                      showIcon: true,
                     ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(task.status),
-                      borderRadius: BorderRadius.circular(4),
+                    const SizedBox(width: 8),
+
+                    // Badge de prioridad
+                    PriorityBadgeWidget(
+                      task: widget.task,
+                      showIcon: true,
                     ),
+
+                    const Spacer(),
+
+                    // Icono de advertencia si está retrasada
+                    if (widget.task.isOverdue)
+                      Icon(Icons.warning, color: colorScheme.error, size: 20),
+                  ],
+                ),
+                
+                SizedBox(height: widget.isCompact ? 8 : 12),
+
+                // Título de la tarea
+                Text(
+                  widget.task.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                // Progressive Disclosure: Mostrar detalles en hover o vista cómoda
+                if (!widget.isCompact || _isHovering) ...[
+                  const SizedBox(height: 8),
+                  
+                  // Descripción
+                  AnimatedOpacity(
+                    opacity: (!widget.isCompact || _isHovering) ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
                     child: Text(
-                      task.status.displayName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      widget.task.description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
-
-                  // Badge de prioridad
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getPriorityColor(task.priority).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: _getPriorityColor(task.priority),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      task.priority.displayName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: _getPriorityColor(task.priority),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Icono de advertencia si está retrasada
-                  if (task.isOverdue)
-                    Icon(Icons.warning, color: colorScheme.error, size: 20),
                 ],
-              ),
-              const SizedBox(height: 8),
 
-              // Título de la tarea
-              Text(
-                task.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
+                SizedBox(height: widget.isCompact ? 8 : 12),
 
-              // Descripción
-              Text(
-                task.description,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-
-              // Progreso
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Progreso', style: theme.textTheme.labelSmall),
-                      Text(
-                        '${(task.progress * 100).toStringAsFixed(0)}%',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                // Progreso
+                if (!widget.isCompact || _isHovering)
+                  AnimatedOpacity(
+                    opacity: (!widget.isCompact || _isHovering) ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Progreso', style: theme.textTheme.labelSmall),
+                            Text(
+                              '${(widget.task.progress * 100).toStringAsFixed(0)}%',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: task.progress,
-                    minHeight: 6,
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getStatusColor(task.status),
-                    ),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Footer: Info adicional
-              Row(
-                children: [
-                  // Horas estimadas/actuales
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${task.actualHours.toStringAsFixed(1)}h / ${task.estimatedHours.toStringAsFixed(1)}h',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: task.isOvertime
-                          ? colorScheme.error
-                          : colorScheme.onSurfaceVariant,
-                      fontWeight: task.isOvertime ? FontWeight.bold : null,
+                        const SizedBox(height: 4),
+                        LinearProgressIndicator(
+                          value: widget.task.progress,
+                          minHeight: 6,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getStatusColor(widget.task.status),
+                          ),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ),
                   ),
-                  const Spacer(),
 
-                  // Asignado
-                  if (task.hasAssignee) ...[
+                // Footer: Info adicional
+                Row(
+                  children: [
+                    // Horas estimadas/actuales
                     Icon(
-                      Icons.person,
+                      Icons.schedule,
                       size: 16,
                       color: colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      task.assignee!.name,
+                      '${widget.task.actualHours.toStringAsFixed(1)}h / ${widget.task.estimatedHours.toStringAsFixed(1)}h',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-
-                  // Dependencias
-                  if (task.hasDependencies) ...[
-                    const SizedBox(width: 8),
-                    Icon(Icons.link, size: 16, color: colorScheme.primary),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${task.dependencyIds.length}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                        color: widget.task.isOvertime
+                            ? colorScheme.error
+                            : colorScheme.onSurfaceVariant,
+                        fontWeight: widget.task.isOvertime ? FontWeight.bold : null,
                       ),
                     ),
-                  ],
-                ],
-              ),
+                    const Spacer(),
 
-              // Botones de acción
-              if (onEdit != null || onDelete != null)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (onEdit != null)
-                      TextButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit, size: 16),
-                        label: const Text('Editar'),
-                      ),
-                    if (onDelete != null)
-                      TextButton.icon(
-                        onPressed: onDelete,
-                        icon: Icon(
-                          Icons.delete,
-                          size: 16,
-                          color: colorScheme.error,
+                    // Asignado (solo en hover o vista cómoda)
+                    if ((!widget.isCompact || _isHovering) && widget.task.hasAssignee)
+                      AnimatedOpacity(
+                        opacity: (!widget.isCompact || _isHovering) ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 16,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.task.assignee!.name,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        label: Text(
-                          'Eliminar',
-                          style: TextStyle(color: colorScheme.error),
+                      ),
+
+                    // Dependencias
+                    if (widget.task.hasDependencies) ...[
+                      const SizedBox(width: 8),
+                      Icon(Icons.link, size: 16, color: colorScheme.primary),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${widget.task.dependencyIds.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ],
                   ],
                 ),
-            ],
+
+                // Botones de acción (solo en hover)
+                if (_isHovering && (widget.onEdit != null || widget.onDelete != null))
+                  AnimatedOpacity(
+                    opacity: _isHovering ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (widget.onEdit != null)
+                          TextButton.icon(
+                            onPressed: widget.onEdit,
+                            icon: const Icon(Icons.edit, size: 16),
+                            label: const Text('Editar'),
+                          ),
+                        if (widget.onDelete != null)
+                          TextButton.icon(
+                            onPressed: widget.onDelete,
+                            icon: Icon(
+                              Icons.delete,
+                              size: 16,
+                              color: colorScheme.error,
+                            ),
+                            label: Text(
+                              'Eliminar',
+                              style: TextStyle(color: colorScheme.error),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -239,20 +251,6 @@ class TaskCard extends StatelessWidget {
         return Colors.red;
       case TaskStatus.cancelled:
         return Colors.grey.shade400;
-    }
-  }
-
-  /// Obtiene el color según la prioridad
-  Color _getPriorityColor(TaskPriority priority) {
-    switch (priority) {
-      case TaskPriority.low:
-        return Colors.green;
-      case TaskPriority.medium:
-        return Colors.orange;
-      case TaskPriority.high:
-        return Colors.deepOrange;
-      case TaskPriority.critical:
-        return Colors.red;
     }
   }
 }

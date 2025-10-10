@@ -11,8 +11,9 @@ import '../../bloc/time_tracking/time_tracking_event.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
 import '../../widgets/time_tracking/time_tracker_widget.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
+import '../../widgets/status_badge_widget.dart';
 
-/// Pantalla de detalle de tarea con time tracking
+/// Pantalla de detalle de tarea con time tracking y tabs
 class TaskDetailScreen extends StatefulWidget {
   final int taskId;
   final int projectId;
@@ -27,13 +28,16 @@ class TaskDetailScreen extends StatefulWidget {
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
-class _TaskDetailScreenState extends State<TaskDetailScreen> {
+class _TaskDetailScreenState extends State<TaskDetailScreen>
+    with SingleTickerProviderStateMixin {
   late final TimeTrackingBloc _timeTrackingBloc;
   late final TaskBloc _taskBloc;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _timeTrackingBloc = getIt<TimeTrackingBloc>();
     _taskBloc = getIt<TaskBloc>();
 
@@ -46,6 +50,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _taskBloc.close();
     _timeTrackingBloc.close();
     super.dispose();
@@ -71,6 +76,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               },
             ),
           ],
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
+              Tab(icon: Icon(Icons.access_time), text: 'Time Tracking'),
+              Tab(icon: Icon(Icons.link), text: 'Dependencies'),
+            ],
+          ),
         ),
         body: BlocBuilder<TaskBloc, TaskState>(
           builder: (context, state) {
@@ -113,7 +126,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             }
 
             if (state is TaskLoaded) {
-              return _buildTaskDetail(context, state.task);
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildOverviewTab(context, state.task),
+                  _buildTimeTrackingTab(context, state.task),
+                  _buildDependenciesTab(context, state.task),
+                ],
+              );
             }
 
             return const Center(child: CircularProgressIndicator());
@@ -123,7 +143,125 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
   }
 
-  /// Construir detalle de la tarea
+  /// Tab: Overview
+  Widget _buildOverviewTab(BuildContext context, Task task) {
+    return _buildTaskDetail(context, task);
+  }
+
+  /// Tab: Time Tracking
+  Widget _buildTimeTrackingTab(BuildContext context, Task task) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con quick status
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            StatusBadgeWidget(task: task),
+                            const SizedBox(width: 8),
+                            PriorityBadgeWidget(task: task),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TimeTrackerWidget(task: task),
+        ],
+      ),
+    );
+  }
+
+  /// Tab: Dependencies
+  Widget _buildDependenciesTab(BuildContext context, Task task) {
+    final theme = Theme.of(context);
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Dependencias',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (task.hasDependencies)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.link, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${task.dependencyIds.length} dependencias',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...task.dependencyIds.map((id) => ListTile(
+                          leading: const Icon(Icons.task_alt),
+                          title: Text('Tarea #$id'),
+                          dense: true,
+                        )),
+                  ],
+                ),
+              ),
+            )
+          else
+            Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  Icon(
+                    Icons.link_off,
+                    size: 64,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No hay dependencias',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Construir detalle de la tarea (Overview original)
   Widget _buildTaskDetail(BuildContext context, Task task) {
     final theme = Theme.of(context);
 

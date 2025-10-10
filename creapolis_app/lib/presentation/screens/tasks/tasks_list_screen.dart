@@ -27,10 +27,12 @@ class TasksListScreen extends StatefulWidget {
 }
 
 enum TaskViewMode { list, kanban }
+enum TaskDensity { compact, comfortable }
 
 class _TasksListScreenState extends State<TasksListScreen>
     with WidgetsBindingObserver {
   TaskViewMode _viewMode = TaskViewMode.list;
+  TaskDensity _density = TaskDensity.comfortable;
 
   @override
   void initState() {
@@ -109,6 +111,65 @@ class _TasksListScreenState extends State<TasksListScreen>
       appBar: AppBar(
         title: const Text('Tareas'),
         actions: [
+          // Toggle densidad
+          PopupMenuButton<TaskDensity>(
+            icon: const Icon(Icons.density_medium),
+            tooltip: 'Densidad de vista',
+            onSelected: (TaskDensity density) {
+              setState(() {
+                _density = density;
+              });
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: TaskDensity.compact,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.view_compact,
+                      size: 20,
+                      color: _density == TaskDensity.compact
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Compacta',
+                      style: TextStyle(
+                        fontWeight: _density == TaskDensity.compact
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TaskDensity.comfortable,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.view_comfortable,
+                      size: 20,
+                      color: _density == TaskDensity.comfortable
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Cómoda',
+                      style: TextStyle(
+                        fontWeight: _density == TaskDensity.comfortable
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
           // Toggle vista Lista/Kanban
           IconButton(
             icon: Icon(
@@ -245,6 +306,7 @@ class _TasksListScreenState extends State<TasksListScreen>
             duration: const Duration(milliseconds: 300),
             child: TaskCard(
               task: task,
+              isCompact: _density == TaskDensity.compact,
               onTap: () => _navigateToDetail(context, task.id),
               onEdit: () => _showEditTaskSheet(context, task),
               onDelete: () => _confirmDelete(context, task),
