@@ -58,116 +58,123 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () {
-                  context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
+                  context.read<WorkspaceBloc>().add(
+                    const RefreshWorkspacesEvent(),
+                  );
                 },
                 tooltip: 'Refrescar',
               ),
             ],
           ),
           body: BlocConsumer<WorkspaceBloc, WorkspaceState>(
-        listener: (context, state) {
-          if (state is WorkspaceError) {
-            // Limpiar estado de activating si hay error
-            setState(() {
-              _activatingWorkspaceId = null;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else if (state is WorkspaceCreated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Workspace "${state.workspace.name}" creado'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else if (state is ActiveWorkspaceSet) {
-            // Cuando se establece el workspace activo, limpiar estado de activating
-            if (_activatingWorkspaceId == state.workspaceId) {
-              final workspace = state.workspace;
-              if (workspace != null) {
+            listener: (context, state) {
+              if (state is WorkspaceError) {
+                // Limpiar estado de activating si hay error
+                setState(() {
+                  _activatingWorkspaceId = null;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Workspace "${workspace.name}" activado'),
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } else if (state is WorkspaceCreated) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Workspace "${state.workspace.name}" creado'),
                     backgroundColor: Colors.green,
-                    action: SnackBarAction(
-                      label: 'Ver',
-                      onPressed: () => _navigateToWorkspaceDetail(workspace),
-                    ),
+                  ),
+                );
+              } else if (state is ActiveWorkspaceSet) {
+                // Cuando se establece el workspace activo, limpiar estado de activating
+                if (_activatingWorkspaceId == state.workspaceId) {
+                  final workspace = state.workspace;
+                  if (workspace != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Workspace "${workspace.name}" activado'),
+                        backgroundColor: Colors.green,
+                        action: SnackBarAction(
+                          label: 'Ver',
+                          onPressed: () =>
+                              _navigateToWorkspaceDetail(workspace),
+                        ),
+                      ),
+                    );
+                  }
+                  // Limpiar estado de activating
+                  setState(() {
+                    _activatingWorkspaceId = null;
+                  });
+                }
+              }
+            },
+            builder: (context, state) {
+              if (state is WorkspaceLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is WorkspacesLoaded) {
+                final workspaces = state.workspaces;
+
+                if (workspaces.isEmpty) {
+                  return _buildEmptyState(context);
+                }
+
+                // Usar WorkspaceContext en lugar del state para determinar el workspace activo
+                final hasActiveWorkspace =
+                    workspaceContext.activeWorkspace != null;
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<WorkspaceBloc>().add(
+                      const RefreshWorkspacesEvent(),
+                    );
+                    // Esperar un poco para que se complete el refresh
+                    await Future.delayed(const Duration(milliseconds: 500));
+                  },
+                  child: Column(
+                    children: [
+                      // Mostrar mensaje si no hay workspace activo
+                      if (!hasActiveWorkspace)
+                        _buildSelectWorkspaceHeader(context),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: workspaces.length,
+                          itemBuilder: (context, index) {
+                            final workspace = workspaces[index];
+                            // Usar WorkspaceContext para verificar si es activo
+                            final isActive =
+                                workspaceContext.activeWorkspace?.id ==
+                                workspace.id;
+
+                            return StaggeredListAnimation(
+                              index: index,
+                              delay: const Duration(milliseconds: 50),
+                              duration: const Duration(milliseconds: 400),
+                              child: WorkspaceCard(
+                                workspace: workspace,
+                                isActive: isActive,
+                                isActivating:
+                                    _activatingWorkspaceId == workspace.id,
+                                onTap: () =>
+                                    _navigateToWorkspaceDetail(workspace),
+                                onSetActive: () =>
+                                    _setActiveWorkspace(workspace.id),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
-              // Limpiar estado de activating
-              setState(() {
-                _activatingWorkspaceId = null;
-              });
-            }
-          }
-        },
-        builder: (context, state) {
-          if (state is WorkspaceLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
 
-          if (state is WorkspacesLoaded) {
-            final workspaces = state.workspaces;
-
-            if (workspaces.isEmpty) {
               return _buildEmptyState(context);
-            }
-
-            // Usar WorkspaceContext en lugar del state para determinar el workspace activo
-            final hasActiveWorkspace = workspaceContext.activeWorkspace != null;
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<WorkspaceBloc>().add(
-                  const RefreshWorkspacesEvent(),
-                );
-                // Esperar un poco para que se complete el refresh
-                await Future.delayed(const Duration(milliseconds: 500));
-              },
-              child: Column(
-                children: [
-                  // Mostrar mensaje si no hay workspace activo
-                  if (!hasActiveWorkspace) _buildSelectWorkspaceHeader(context),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: workspaces.length,
-                      itemBuilder: (context, index) {
-                        final workspace = workspaces[index];
-                        // Usar WorkspaceContext para verificar si es activo
-                        final isActive =
-                            workspaceContext.activeWorkspace?.id == workspace.id;
-
-                        return StaggeredListAnimation(
-                          index: index,
-                          delay: const Duration(milliseconds: 50),
-                          duration: const Duration(milliseconds: 400),
-                          child: WorkspaceCard(
-                            workspace: workspace,
-                            isActive: isActive,
-                            isActivating:
-                                _activatingWorkspaceId == workspace.id,
-                            onTap: () => _navigateToWorkspaceDetail(workspace),
-                            onSetActive: () =>
-                                _setActiveWorkspace(workspace.id),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return _buildEmptyState(context);
-        },
+            },
           ),
           floatingActionButton: BlocBuilder<WorkspaceBloc, WorkspaceState>(
             builder: (context, state) {
