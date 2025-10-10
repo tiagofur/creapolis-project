@@ -1,5 +1,29 @@
 import 'package:equatable/equatable.dart';
 
+/// Tipo de relación del usuario con el proyecto
+enum ProjectRelationType {
+  /// Proyecto personal (usuario es el manager)
+  personal,
+  
+  /// Proyecto compartido por el usuario (manager y tiene otros miembros)
+  sharedByMe,
+  
+  /// Proyecto compartido con el usuario (no es el manager)
+  sharedWithMe;
+
+  /// Obtiene el label en español para el tipo de relación
+  String get label {
+    switch (this) {
+      case ProjectRelationType.personal:
+        return 'Personal';
+      case ProjectRelationType.sharedByMe:
+        return 'Compartido por mí';
+      case ProjectRelationType.sharedWithMe:
+        return 'Compartido conmigo';
+    }
+  }
+}
+
 /// Entidad de dominio para Proyecto
 class Project extends Equatable {
   final int id;
@@ -56,6 +80,24 @@ class Project extends Equatable {
     final elapsed = now.difference(startDate).inSeconds;
 
     return elapsed / totalDuration;
+  }
+
+  /// Determina el tipo de relación del usuario con el proyecto
+  /// 
+  /// [currentUserId] ID del usuario actual
+  /// [hasOtherMembers] Si el proyecto tiene otros miembros además del manager
+  ProjectRelationType getRelationType(int currentUserId, {bool hasOtherMembers = false}) {
+    if (managerId == currentUserId) {
+      // El usuario es el manager
+      if (hasOtherMembers) {
+        return ProjectRelationType.sharedByMe;
+      } else {
+        return ProjectRelationType.personal;
+      }
+    } else {
+      // El usuario no es el manager
+      return ProjectRelationType.sharedWithMe;
+    }
   }
 
   /// Copia el proyecto con nuevos valores
