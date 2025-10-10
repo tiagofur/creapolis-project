@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
+import '../../widgets/common/collapsible_section.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../tasks/tasks_list_screen.dart';
 
-/// Pantalla de detalle del proyecto
+/// Pantalla de detalle del proyecto con Progressive Disclosure y Tabs
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
 
@@ -20,15 +22,34 @@ class ProjectDetailScreen extends StatefulWidget {
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+class _ProjectDetailScreenState extends State<ProjectDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _viewPrefs = ViewPreferencesService.instance;
+
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar tab controller
+    _tabController = TabController(length: 3, vsync: this);
+    
+    // Inicializar servicio de preferencias si no está inicializado
+    if (!_viewPrefs.isInitialized) {
+      _viewPrefs.init();
+    }
+    
     // Cargar proyecto
     final id = int.tryParse(widget.projectId);
     if (id != null) {
       context.read<ProjectBloc>().add(LoadProjectByIdEvent(id));
     }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -92,245 +113,349 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return CustomScrollView(
-      slivers: [
-        // AppBar
-        SliverAppBar(
-          expandedHeight: 200,
-          pinned: true,
-          flexibleSpace: FlexibleSpaceBar(
-            title: Text(project.name),
-            background: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    _getStatusColor(project.status),
-                    _getStatusColor(project.status).withValues(alpha: 0.7),
-                  ],
+    return Scaffold(
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          // AppBar compacto con info crítica
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 120,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                project.name,
+                style: const TextStyle(fontSize: 16),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _getStatusColor(project.status),
+                      _getStatusColor(project.status).withValues(alpha: 0.7),
+                    ],
+                  ),
                 ),
               ),
-              child: Stack(
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _showEditSheet(context, project),
+                tooltip: 'Editar proyecto',
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _confirmDelete(context, project),
+                tooltip: 'Eliminar proyecto',
+              ),
+            ],
+          ),
+
+          // Barra de estado y progreso (siempre visible)
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    top: 60,
-                    right: 16,
-                    child: Icon(
-                      Icons.business,
-                      size: 100,
-                      color: Colors.white.withValues(alpha: 0.2),
+                  Row(
+                    children: [
+                      Chip(
+                        label: Text(
+                          project.status.label,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: _getStatusColor(project.status),
+                      ),
+                      const SizedBox(width: 8),
+                      if (project.isOverdue)
+                        const Chip(
+                          label: Text('Retrasado'),
+                          backgroundColor: Colors.red,
+                          labelStyle: TextStyle(color: Colors.white),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(
+                    value: project.progress,
+                    minHeight: 10,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _getStatusColor(project.status),
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(project.progress * 100).toStringAsFixed(0)}% completado',
+                    style: theme.textTheme.labelMedium,
                   ),
                 ],
               ),
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => _showEditSheet(context, project),
+
+          // TabBar
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverAppBarDelegate(
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
+                  Tab(icon: Icon(Icons.task_alt), text: 'Tareas'),
+                  Tab(icon: Icon(Icons.timeline), text: 'Timeline'),
+                ],
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () => _confirmDelete(context, project),
-            ),
+          ),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Tab 1: Overview
+            _buildOverviewTab(context, project),
+            
+            // Tab 2: Tareas
+            _buildTasksTab(context, project),
+            
+            // Tab 3: Timeline
+            _buildTimelineTab(context, project),
           ],
         ),
+      ),
+    );
+  }
 
-        // Contenido
-        SliverToBoxAdapter(
+  /// Tab de Overview con secciones colapsables
+  Widget _buildOverviewTab(BuildContext context, Project project) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Descripción (colapsable)
+        CollapsibleSection(
+          title: 'Descripción',
+          icon: Icons.description,
+          storageKey: 'project_${project.id}_description',
+          initiallyExpanded: project.description.length <= 150,
+          child: ExpandableDescription(
+            text: project.description,
+            textStyle: theme.textTheme.bodyMedium,
+          ),
+        ),
+
+        // Detalles del proyecto (colapsable)
+        CollapsibleSection(
+          title: 'Detalles del Proyecto',
+          icon: Icons.info,
+          storageKey: 'project_${project.id}_details',
+          initiallyExpanded: false,
+          itemCount: 4,
+          child: Column(
+            children: [
+              _buildInfoRow(
+                context,
+                Icons.calendar_today,
+                'Fecha Inicio',
+                _formatDate(project.startDate),
+              ),
+              const Divider(height: 24),
+              _buildInfoRow(
+                context,
+                Icons.event,
+                'Fecha Fin',
+                _formatDate(project.endDate),
+              ),
+              const Divider(height: 24),
+              _buildInfoRow(
+                context,
+                Icons.schedule,
+                'Duración',
+                '${project.durationInDays} días',
+              ),
+              if (project.managerName != null) ...[
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
+                  Icons.person,
+                  'Manager',
+                  project.managerName!,
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Estadísticas (expandido por defecto)
+        CollapsibleSection(
+          title: 'Estadísticas',
+          icon: Icons.bar_chart,
+          storageKey: 'project_${project.id}_stats',
+          initiallyExpanded: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatRow(
+                context,
+                Icons.check_circle,
+                'Progreso',
+                '${(project.progress * 100).toStringAsFixed(0)}%',
+                colorScheme.primary,
+              ),
+              const SizedBox(height: 12),
+              _buildStatRow(
+                context,
+                Icons.timelapse,
+                'Días restantes',
+                '${_calculateRemainingDays(project)} días',
+                _calculateRemainingDays(project) < 0
+                    ? colorScheme.error
+                    : colorScheme.tertiary,
+              ),
+              const SizedBox(height: 12),
+              _buildStatRow(
+                context,
+                Icons.trending_up,
+                'Estado',
+                project.status.label,
+                _getStatusColor(project.status),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tab de Tareas (más espacio que antes)
+  Widget _buildTasksTab(BuildContext context, Project project) {
+    return Column(
+      children: [
+        // Toolbar de acciones
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/projects/${project.id}/gantt');
+                },
+                icon: const Icon(Icons.view_timeline, size: 18),
+                label: const Text('Ver Gantt'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/projects/${project.id}/workload');
+                },
+                icon: const Icon(Icons.people, size: 18),
+                label: const Text('Workload'),
+              ),
+            ],
+          ),
+        ),
+        
+        // Lista de tareas (toma todo el espacio disponible)
+        Expanded(
+          child: TasksListScreen(projectId: project.id),
+        ),
+      ],
+    );
+  }
+
+  /// Tab de Timeline
+  Widget _buildTimelineTab(BuildContext context, Project project) {
+    final theme = Theme.of(context);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Estado y Progreso
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Chip(
-                              label: Text(
-                                project.status.label,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: _getStatusColor(project.status),
-                            ),
-                            if (project.isOverdue)
-                              const Chip(
-                                label: Text('Retrasado'),
-                                backgroundColor: Colors.red,
-                                labelStyle: TextStyle(color: Colors.white),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text('Progreso', style: theme.textTheme.titleMedium),
-                        const SizedBox(height: 8),
-                        LinearProgressIndicator(
-                          value: project.progress,
-                          minHeight: 10,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _getStatusColor(project.status),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${(project.progress * 100).toStringAsFixed(0)}%',
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
+                Text(
+                  'Línea de Tiempo',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Descripción
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Descripción',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          project.description,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
+                _buildTimelineItem(
+                  context,
+                  'Inicio del proyecto',
+                  _formatDate(project.startDate),
+                  Icons.play_circle,
+                  Colors.green,
+                ),
+                _buildTimelineItem(
+                  context,
+                  'Fecha actual',
+                  _formatDate(DateTime.now()),
+                  Icons.today,
+                  Colors.blue,
+                ),
+                _buildTimelineItem(
+                  context,
+                  'Fin del proyecto',
+                  _formatDate(project.endDate),
+                  Icons.flag,
+                  project.isOverdue ? Colors.red : Colors.orange,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Métricas de Tiempo',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Información
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Información',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          context,
-                          Icons.calendar_today,
-                          'Fecha Inicio',
-                          _formatDate(project.startDate),
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(
-                          context,
-                          Icons.event,
-                          'Fecha Fin',
-                          _formatDate(project.endDate),
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(
-                          context,
-                          Icons.schedule,
-                          'Duración',
-                          '${project.durationInDays} días',
-                        ),
-                        if (project.managerName != null) ...[
-                          const Divider(height: 24),
-                          _buildInfoRow(
-                            context,
-                            Icons.person,
-                            'Manager',
-                            project.managerName!,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                _buildInfoRow(
+                  context,
+                  Icons.calendar_month,
+                  'Duración Total',
+                  '${project.durationInDays} días',
                 ),
-                const SizedBox(height: 16),
-
-                // Tareas del proyecto
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Tareas',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    context.push(
-                                      '/projects/${project.id}/gantt',
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.view_timeline,
-                                    size: 18,
-                                  ),
-                                  label: const Text('Gantt'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    context.push(
-                                      '/projects/${project.id}/workload',
-                                    );
-                                  },
-                                  icon: const Icon(Icons.people, size: 18),
-                                  label: const Text('Workload'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Integrar TasksListScreen sin scaffold
-                        SizedBox(
-                          height: 400,
-                          child: TasksListScreen(projectId: project.id),
-                        ),
-                      ],
-                    ),
-                  ),
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
+                  Icons.access_time,
+                  'Días Transcurridos',
+                  '${_calculateElapsedDays(project)} días',
+                ),
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
+                  Icons.hourglass_empty,
+                  'Días Restantes',
+                  '${_calculateRemainingDays(project)} días',
                 ),
               ],
             ),
@@ -338,6 +463,110 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ),
       ],
     );
+  }
+
+  /// Construir item de timeline
+  Widget _buildTimelineItem(
+    BuildContext context,
+    String title,
+    String date,
+    IconData icon,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construir fila de estadística
+  Widget _buildStatRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                value,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Calcular días transcurridos
+  int _calculateElapsedDays(Project project) {
+    final now = DateTime.now();
+    return now.difference(project.startDate).inDays;
+  }
+
+  /// Calcular días restantes
+  int _calculateRemainingDays(Project project) {
+    final now = DateTime.now();
+    return project.endDate.difference(now).inDays;
   }
 
   /// Construir fila de información
@@ -471,5 +700,35 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   /// Formatea fecha
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+/// Delegate para mantener el TabBar sticky
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

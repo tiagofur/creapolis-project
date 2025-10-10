@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
+import 'core/services/view_preferences_service.dart';
 import 'injection.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/project/project_bloc.dart';
@@ -20,6 +21,9 @@ void main() async {
 
   // Inicializar dependencias (GetIt, SharedPreferences, etc.)
   await initializeDependencies();
+  
+  // Inicializar servicio de preferencias de vista
+  await ViewPreferencesService.instance.init();
 
   // Ejecutar app
   runApp(const CreopolisApp());

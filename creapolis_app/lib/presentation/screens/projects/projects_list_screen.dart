@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
+import '../../../core/constants/view_constants.dart';
+import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../bloc/auth/auth_bloc.dart';
@@ -21,7 +23,7 @@ import '../../widgets/project/project_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
 import '../workspace/workspace_create_screen.dart';
 
-/// Pantalla de lista de proyectos
+/// Pantalla de lista de proyectos con Progressive Disclosure
 class ProjectsListScreen extends StatefulWidget {
   const ProjectsListScreen({super.key});
 
@@ -31,10 +33,26 @@ class ProjectsListScreen extends StatefulWidget {
 
 class _ProjectsListScreenState extends State<ProjectsListScreen> {
   int? _lastLoadedWorkspaceId;
+  late ProjectViewDensity _currentDensity;
+  final _viewPrefs = ViewPreferencesService.instance;
 
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar servicio de preferencias si no está inicializado
+    if (!_viewPrefs.isInitialized) {
+      _viewPrefs.init().then((_) {
+        if (mounted) {
+          setState(() {
+            _currentDensity = _viewPrefs.getProjectViewDensity();
+          });
+        }
+      });
+    } else {
+      _currentDensity = _viewPrefs.getProjectViewDensity();
+    }
+    
     // Cargar workspaces y workspace activo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // IMPORTANTE: Cargar workspace activo ANTES que la lista de workspaces
@@ -94,6 +112,82 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           // Selector de workspace
           const WorkspaceSwitcher(compact: true),
           const SizedBox(width: 8),
+          
+          // Toggle de densidad de vista
+          PopupMenuButton<ProjectViewDensity>(
+            icon: Icon(
+              _currentDensity == ProjectViewDensity.compact
+                  ? Icons.view_compact
+                  : Icons.view_comfortable,
+            ),
+            tooltip: 'Cambiar densidad de vista',
+            onSelected: (density) {
+              setState(() {
+                _currentDensity = density;
+              });
+              _viewPrefs.setProjectViewDensity(density);
+              AppLogger.info(
+                'ProjectsListScreen: Densidad cambiada a ${density.label}',
+              );
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: ProjectViewDensity.compact,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.view_compact,
+                      size: 20,
+                      color: _currentDensity == ProjectViewDensity.compact
+                          ? colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      ProjectViewDensity.compact.label,
+                      style: TextStyle(
+                        color: _currentDensity == ProjectViewDensity.compact
+                            ? colorScheme.primary
+                            : null,
+                        fontWeight:
+                            _currentDensity == ProjectViewDensity.compact
+                                ? FontWeight.bold
+                                : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ProjectViewDensity.comfortable,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.view_comfortable,
+                      size: 20,
+                      color: _currentDensity == ProjectViewDensity.comfortable
+                          ? colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      ProjectViewDensity.comfortable.label,
+                      style: TextStyle(
+                        color: _currentDensity == ProjectViewDensity.comfortable
+                            ? colorScheme.primary
+                            : null,
+                        fontWeight:
+                            _currentDensity == ProjectViewDensity.comfortable
+                                ? FontWeight.bold
+                                : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -235,6 +329,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                   project: project,
                   currentUserId: currentUserId,
                   hasOtherMembers: false, // TODO: Obtener del backend
+                  density: _currentDensity,
                   onTap: () => _navigateToDetail(context, project.id),
                   onEdit: () => _showEditProjectSheet(context, project),
                   onDelete: () => _confirmDelete(context, project),
