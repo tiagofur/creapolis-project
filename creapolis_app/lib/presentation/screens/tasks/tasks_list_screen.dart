@@ -12,6 +12,7 @@ import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
+import '../../widgets/task/kanban_board_view.dart';
 import '../../widgets/task/task_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
 
@@ -25,9 +26,11 @@ class TasksListScreen extends StatefulWidget {
   State<TasksListScreen> createState() => _TasksListScreenState();
 }
 
+enum TaskViewMode { list, kanban }
+
 class _TasksListScreenState extends State<TasksListScreen>
     with WidgetsBindingObserver {
-  TaskStatus? _statusFilter;
+  TaskViewMode _viewMode = TaskViewMode.list;
 
   @override
   void initState() {
@@ -59,8 +62,12 @@ class _TasksListScreenState extends State<TasksListScreen>
     final activeWorkspace = workspaceContext.activeWorkspace;
 
     if (activeWorkspace == null) {
-      // Si no hay workspace activo, navegar a workspace list
-      AppLogger.warning('TasksListScreen: No hay workspace activo');
+      // Si no hay workspace activo, intentar cargar de todos modos
+      // El proyecto ya tiene un workspace asociado
+      AppLogger.info(
+        'TasksListScreen: Cargando tareas sin workspace context explícito',
+      );
+      _loadTasks();
       return;
     }
 
@@ -77,8 +84,18 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   void _loadTasks() {
     final currentState = context.read<TaskBloc>().state;
-    // Solo cargar si no estamos ya en TasksLoaded con el proyecto correcto
-    if (currentState is! TasksLoaded) {
+    // Cargar si no hay tareas o si son de un proyecto diferente
+    bool shouldLoad = true;
+    if (currentState is TasksLoaded) {
+      // Verificar si las tareas actuales son del proyecto correcto
+      final currentTasks = currentState.tasks;
+      if (currentTasks.isNotEmpty &&
+          currentTasks.first.projectId == widget.projectId) {
+        shouldLoad = false;
+      }
+    }
+
+    if (shouldLoad) {
       context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
     }
   }
@@ -91,13 +108,31 @@ class _TasksListScreenState extends State<TasksListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tareas'),
-        actions: const [WorkspaceSwitcher(compact: true), SizedBox(width: 8)],
+        actions: [
+          // Toggle vista Lista/Kanban
+          IconButton(
+            icon: Icon(
+              _viewMode == TaskViewMode.list
+                  ? Icons.view_column
+                  : Icons.view_list,
+            ),
+            onPressed: () {
+              setState(() {
+                _viewMode = _viewMode == TaskViewMode.list
+                    ? TaskViewMode.kanban
+                    : TaskViewMode.list;
+              });
+            },
+            tooltip: _viewMode == TaskViewMode.list
+                ? 'Vista Kanban'
+                : 'Vista Lista',
+          ),
+          const WorkspaceSwitcher(compact: true),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
-          // Filtros
-          _buildFilters(context),
-
           // Lista de tareas
           Expanded(
             child: BlocConsumer<TaskBloc, TaskState>(
@@ -182,69 +217,18 @@ class _TasksListScreenState extends State<TasksListScreen>
     );
   }
 
-  /// Construir barra de filtros
-  Widget _buildFilters(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Filtrar por estado', style: theme.textTheme.labelMedium),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                // Todos
-                FilterChip(
-                  label: const Text('Todos'),
-                  selected: _statusFilter == null,
-                  onSelected: (selected) {
-                    setState(() => _statusFilter = null);
-                    context.read<TaskBloc>().add(
-                      FilterTasksByStatusEvent(widget.projectId, null),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-
-                // Estados
-                ...TaskStatus.values.map((status) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(status.displayName),
-                      selected: _statusFilter == status,
-                      onSelected: (selected) {
-                        setState(
-                          () => _statusFilter = selected ? status : null,
-                        );
-                        context.read<TaskBloc>().add(
-                          FilterTasksByStatusEvent(
-                            widget.projectId,
-                            selected ? status : null,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Construir lista de tareas
   Widget _buildTasksList(BuildContext context, List<Task> tasks) {
     if (tasks.isEmpty) {
       return _buildEmptyState(context);
     }
 
+    // Vista Kanban
+    if (_viewMode == TaskViewMode.kanban) {
+      return KanbanBoardView(tasks: tasks, projectId: widget.projectId);
+    }
+
+    // Vista Lista (por defecto)
     return RefreshIndicator(
       onRefresh: () async {
         context.read<TaskBloc>().add(RefreshTasksEvent(widget.projectId));
