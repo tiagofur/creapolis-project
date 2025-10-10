@@ -167,9 +167,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                       children: [
                         Text(
                           task.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -196,7 +195,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
   /// Tab: Dependencies
   Widget _buildDependenciesTab(BuildContext context, Task task) {
     final theme = Theme.of(context);
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -227,11 +226,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ...task.dependencyIds.map((id) => ListTile(
-                          leading: const Icon(Icons.task_alt),
-                          title: Text('Tarea #$id'),
-                          dense: true,
-                        )),
+                    ...task.dependencyIds.map(
+                      (id) => ListTile(
+                        leading: const Icon(Icons.task_alt),
+                        title: Text('Tarea #$id'),
+                        dense: true,
+                      ),
+                    ),
                   ],
                 ),
               ),

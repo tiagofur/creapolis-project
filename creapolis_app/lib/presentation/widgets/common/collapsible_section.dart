@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/view_constants.dart';
 
 /// Widget reutilizable para crear secciones colapsables/expandibles
-/// 
+///
 /// Este widget implementa el patrón de Progressive Disclosure,
 /// permitiendo al usuario mostrar u ocultar contenido bajo demanda.
-/// 
+///
 /// Características:
 /// - Animación suave al expandir/colapsar
 /// - Estado persistente opcional (usando storageKey)
@@ -14,7 +14,7 @@ import '../../../core/constants/view_constants.dart';
 /// - Icono que rota al expandir/colapsar
 /// - Contador opcional de items
 /// - Estilo consistente con Material Design 3
-/// 
+///
 /// Ejemplo de uso:
 /// ```dart
 /// CollapsibleSection(
@@ -96,15 +96,16 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
     );
 
     // Animación de rotación del icono (0° a 180°)
-    _iconRotation = Tween<double>(
-      begin: 0.0,
-      end: 0.5, // 0.5 * 2π = 180°
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: ViewConstants.collapseCurve,
-      ),
-    );
+    _iconRotation =
+        Tween<double>(
+          begin: 0.0,
+          end: 0.5, // 0.5 * 2π = 180°
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: ViewConstants.collapseCurve,
+          ),
+        );
 
     // Animación de altura del contenido
     _heightFactor = CurvedAnimation(
@@ -235,7 +236,8 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
             sizeFactor: _heightFactor,
             axisAlignment: -1.0,
             child: Padding(
-              padding: widget.contentPadding ??
+              padding:
+                  widget.contentPadding ??
                   const EdgeInsets.all(ViewConstants.sectionContentPadding),
               child: widget.child,
             ),
@@ -247,7 +249,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
 }
 
 /// Widget simplificado para descripción expandible con "Ver más"
-/// 
+///
 /// Similar a CollapsibleSection pero optimizado para texto largo
 /// con botón "Ver más" / "Ver menos" en lugar de header clickeable.
 class ExpandableDescription extends StatefulWidget {

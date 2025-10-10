@@ -12,7 +12,7 @@ import 'project_relation_marker.dart';
 ///   - Compartido por mí: Badge con icono de compartir
 ///   - Compartido conmigo: Badge con icono de grupo
 /// - Los proyectos personales no tienen marcador adicional (diseño limpio)
-/// 
+///
 /// **Vistas:**
 /// - Compact: Solo nombre, estado y progreso (hover para ver más)
 /// - Comfortable: Info adicional siempre visible
@@ -251,10 +251,11 @@ class _ProjectCardState extends State<ProjectCard> {
                                     Expanded(
                                       child: Text(
                                         '${_formatDate(widget.project.startDate)} - ${_formatDate(widget.project.endDate)}',
-                                        style:
-                                            theme.textTheme.labelSmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -276,8 +277,9 @@ class _ProjectCardState extends State<ProjectCard> {
                                           widget.project.managerName!,
                                           style: theme.textTheme.labelSmall
                                               ?.copyWith(
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),

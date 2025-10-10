@@ -4,18 +4,17 @@ import '../constants/view_constants.dart';
 import '../utils/app_logger.dart';
 
 /// Servicio para gestionar preferencias de vista del usuario
-/// 
+///
 /// Maneja la persistencia de:
 /// - Densidad de vista de proyectos (compacta/cómoda)
 /// - Estado de secciones colapsables (expandidas/colapsadas)
 /// - Otras preferencias de UI
-/// 
+///
 /// Utiliza SharedPreferences para persistir datos localmente.
 class ViewPreferencesService {
   ViewPreferencesService._();
 
-  static final ViewPreferencesService _instance =
-      ViewPreferencesService._();
+  static final ViewPreferencesService _instance = ViewPreferencesService._();
 
   /// Instancia singleton del servicio
   static ViewPreferencesService get instance => _instance;
@@ -28,10 +27,7 @@ class ViewPreferencesService {
       _prefs = await SharedPreferences.getInstance();
       AppLogger.info('ViewPreferencesService: Inicializado correctamente');
     } catch (e) {
-      AppLogger.error(
-        'ViewPreferencesService: Error al inicializar',
-        e,
-      );
+      AppLogger.error('ViewPreferencesService: Error al inicializar', e);
     }
   }
 
@@ -41,7 +37,7 @@ class ViewPreferencesService {
   // ============== DENSIDAD DE VISTA ==============
 
   /// Obtiene la densidad de vista guardada
-  /// 
+  ///
   /// Por defecto retorna [ProjectViewDensity.compact]
   ProjectViewDensity getProjectViewDensity() {
     if (!isInitialized) {
@@ -53,7 +49,7 @@ class ViewPreferencesService {
 
     try {
       final value = _prefs!.getString(ViewConstants.prefKeyViewDensity);
-      
+
       if (value == null) {
         return ProjectViewDensity.compact;
       }
@@ -64,10 +60,7 @@ class ViewPreferencesService {
         orElse: () => ProjectViewDensity.compact,
       );
     } catch (e) {
-      AppLogger.error(
-        'ViewPreferencesService: Error al leer densidad',
-        e,
-      );
+      AppLogger.error('ViewPreferencesService: Error al leer densidad', e);
       return ProjectViewDensity.compact;
     }
   }
@@ -95,10 +88,7 @@ class ViewPreferencesService {
 
       return success;
     } catch (e) {
-      AppLogger.error(
-        'ViewPreferencesService: Error al guardar densidad',
-        e,
-      );
+      AppLogger.error('ViewPreferencesService: Error al guardar densidad', e);
       return false;
     }
   }
@@ -106,7 +96,7 @@ class ViewPreferencesService {
   // ============== SECCIONES COLAPSABLES ==============
 
   /// Obtiene si una sección está expandida
-  /// 
+  ///
   /// [key] identificador único de la sección
   /// [defaultValue] valor por defecto si no hay preferencia guardada
   bool getSectionExpanded(String key, {bool defaultValue = true}) {
@@ -117,7 +107,7 @@ class ViewPreferencesService {
     try {
       final storageKey = _getSectionStorageKey(key);
       final value = _prefs!.getBool(storageKey);
-      
+
       return value ?? defaultValue;
     } catch (e) {
       AppLogger.error(
@@ -129,7 +119,7 @@ class ViewPreferencesService {
   }
 
   /// Guarda si una sección está expandida
-  /// 
+  ///
   /// [key] identificador único de la sección
   /// [expanded] true si está expandida, false si está colapsada
   Future<bool> setSectionExpanded(String key, bool expanded) async {
@@ -178,16 +168,20 @@ class ViewPreferencesService {
       final keys = _prefs!.getKeys();
 
       // Filtrar solo las keys de preferencias de vista
-      final viewKeys = keys.where((key) =>
-          key == ViewConstants.prefKeyViewDensity ||
-          key.startsWith(ViewConstants.prefKeyCollapsedSectionPrefix));
+      final viewKeys = keys.where(
+        (key) =>
+            key == ViewConstants.prefKeyViewDensity ||
+            key.startsWith(ViewConstants.prefKeyCollapsedSectionPrefix),
+      );
 
       // Eliminar cada key
       for (final key in viewKeys) {
         await _prefs!.remove(key);
       }
 
-      AppLogger.info('ViewPreferencesService: Todas las preferencias limpiadas');
+      AppLogger.info(
+        'ViewPreferencesService: Todas las preferencias limpiadas',
+      );
       return true;
     } catch (e) {
       AppLogger.error(
@@ -222,10 +216,7 @@ class ViewPreferencesService {
       AppLogger.info('ViewPreferencesService: Secciones reseteadas');
       return true;
     } catch (e) {
-      AppLogger.error(
-        'ViewPreferencesService: Error al resetear secciones',
-        e,
-      );
+      AppLogger.error('ViewPreferencesService: Error al resetear secciones', e);
       return false;
     }
   }
@@ -238,9 +229,11 @@ class ViewPreferencesService {
 
     try {
       final keys = _prefs!.getKeys();
-      final viewKeys = keys.where((key) =>
-          key == ViewConstants.prefKeyViewDensity ||
-          key.startsWith(ViewConstants.prefKeyCollapsedSectionPrefix));
+      final viewKeys = keys.where(
+        (key) =>
+            key == ViewConstants.prefKeyViewDensity ||
+            key.startsWith(ViewConstants.prefKeyCollapsedSectionPrefix),
+      );
 
       final summary = <String, dynamic>{
         'initialized': true,
@@ -260,10 +253,7 @@ class ViewPreferencesService {
 
       return summary;
     } catch (e) {
-      AppLogger.error(
-        'ViewPreferencesService: Error al obtener resumen',
-        e,
-      );
+      AppLogger.error('ViewPreferencesService: Error al obtener resumen', e);
       return {'initialized': true, 'error': e.toString()};
     }
   }

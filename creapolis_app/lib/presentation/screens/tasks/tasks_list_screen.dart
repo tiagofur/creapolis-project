@@ -27,6 +27,7 @@ class TasksListScreen extends StatefulWidget {
 }
 
 enum TaskViewMode { list, kanban }
+
 enum TaskDensity { compact, comfortable }
 
 class _TasksListScreenState extends State<TasksListScreen>
@@ -169,7 +170,7 @@ class _TasksListScreenState extends State<TasksListScreen>
               ),
             ],
           ),
-          
+
           // Toggle vista Lista/Kanban
           IconButton(
             icon: Icon(

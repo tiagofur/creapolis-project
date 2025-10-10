@@ -21,7 +21,7 @@ void main() async {
 
   // Inicializar dependencias (GetIt, SharedPreferences, etc.)
   await initializeDependencies();
-  
+
   // Inicializar servicio de preferencias de vista
   await ViewPreferencesService.instance.init();
 

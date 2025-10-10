@@ -1,5 +1,5 @@
 /// Constantes para configuración de vistas y UX
-/// 
+///
 /// Este archivo define constantes utilizadas en el sistema de
 /// Progressive Disclosure para mantener consistencia en toda la app.
 library;

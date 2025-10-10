@@ -39,7 +39,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Inicializar servicio de preferencias si no está inicializado
     if (!_viewPrefs.isInitialized) {
       _viewPrefs.init().then((_) {
@@ -52,7 +52,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     } else {
       _currentDensity = _viewPrefs.getProjectViewDensity();
     }
-    
+
     // Cargar workspaces y workspace activo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // IMPORTANTE: Cargar workspace activo ANTES que la lista de workspaces
@@ -112,7 +112,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           // Selector de workspace
           const WorkspaceSwitcher(compact: true),
           const SizedBox(width: 8),
-          
+
           // Toggle de densidad de vista
           PopupMenuButton<ProjectViewDensity>(
             icon: Icon(
@@ -151,8 +151,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                             : null,
                         fontWeight:
                             _currentDensity == ProjectViewDensity.compact
-                                ? FontWeight.bold
-                                : null,
+                            ? FontWeight.bold
+                            : null,
                       ),
                     ),
                   ],
@@ -178,8 +178,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                             : null,
                         fontWeight:
                             _currentDensity == ProjectViewDensity.comfortable
-                                ? FontWeight.bold
-                                : null,
+                            ? FontWeight.bold
+                            : null,
                       ),
                     ),
                   ],
@@ -187,7 +187,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
               ),
             ],
           ),
-          
+
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {

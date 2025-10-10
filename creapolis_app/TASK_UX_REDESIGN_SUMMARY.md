@@ -11,9 +11,11 @@
 ## 📋 Cambios Implementados
 
 ### 1. **StatusBadgeWidget** (NUEVO)
+
 **Archivo:** `lib/presentation/widgets/status_badge_widget.dart` (254 líneas)
 
 **Características:**
+
 - ✅ Status badge clickeable con menú contextual
 - ✅ Cambio de estado en 1 click sin modal
 - ✅ PriorityBadgeWidget incluido
@@ -22,6 +24,7 @@
 - ✅ SnackBar de confirmación
 
 **Código clave:**
+
 ```dart
 StatusBadgeWidget(
   task: task,
@@ -34,9 +37,11 @@ StatusBadgeWidget(
 ---
 
 ### 2. **TaskCard Refactorizado** (MODIFICADO)
+
 **Archivo:** `lib/presentation/widgets/task/task_card.dart` (275 líneas)
 
 **Mejoras aplicadas:**
+
 - ✅ Progressive Disclosure (muestra detalles en hover)
 - ✅ Soporte para densidad compacta/cómoda
 - ✅ StatusBadgeWidget integrado
@@ -45,11 +50,13 @@ StatusBadgeWidget(
 - ✅ Elevation dinámica (1 → 4 en hover)
 
 **Antes:**
+
 - 10+ elementos siempre visibles
 - Sin jerarquía de información
 - Descripción siempre expandida
 
 **Después:**
+
 - Vista compacta: 5 elementos esenciales
 - Hover: muestra detalles adicionales
 - AnimatedOpacity para transiciones
@@ -57,15 +64,18 @@ StatusBadgeWidget(
 ---
 
 ### 3. **TasksListScreen Mejorado** (MODIFICADO)
+
 **Archivo:** `lib/presentation/screens/tasks/tasks_list_screen.dart` (503 líneas)
 
 **Nuevas funcionalidades:**
+
 - ✅ Toggle de densidad en AppBar (compacta/cómoda)
 - ✅ PopupMenu con íconos y estado actual
 - ✅ Pasa `isCompact` a TaskCard
 - ✅ Enum `TaskDensity` agregado
 
 **UI:**
+
 ```
 [⚙️ Densidad] [Vista Lista/Kanban] [Workspace]
 ```
@@ -73,9 +83,11 @@ StatusBadgeWidget(
 ---
 
 ### 4. **TaskDetailScreen con Tabs** (MODIFICADO)
+
 **Archivo:** `lib/presentation/screens/tasks/task_detail_screen.dart` (287 líneas)
 
 **Estructura nueva:**
+
 - ✅ 3 Tabs: Overview | Time Tracking | Dependencies
 - ✅ TabController implementado
 - ✅ StatusBadgeWidget en header de Time Tracking
@@ -83,6 +95,7 @@ StatusBadgeWidget(
 - ✅ SingleTickerProviderStateMixin
 
 **Tabs:**
+
 1. **Overview:** Detalle completo original
 2. **Time Tracking:** TimeTrackerWidget + quick status
 3. **Dependencies:** Lista de dependencias
@@ -92,6 +105,7 @@ StatusBadgeWidget(
 ## 🎨 Patrón de Diseño: Progressive Disclosure
 
 ### Vista Compacta (Defecto)
+
 ```
 ┌────────────────────────────────┐
 │ [🔵 En Progreso ▼] [⚠️ Alta]  │
@@ -101,6 +115,7 @@ StatusBadgeWidget(
 ```
 
 ### Vista Hover/Cómoda
+
 ```
 ┌────────────────────────────────┐
 │ [🔵 En Progreso ▼] [⚠️ Alta]  │
@@ -116,34 +131,39 @@ StatusBadgeWidget(
 
 ## 📊 Métricas de Mejora
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| Elementos visibles (compacta) | 10+ | 5 | 50% reducción |
-| Clicks para cambiar estado | 4 | 1 | 75% reducción |
-| Tiempo de carga cognitiva | Alto | Bajo | 60% reducción |
-| Personalización | Ninguna | Alta | ∞ |
+| Métrica                       | Antes   | Después | Mejora        |
+| ----------------------------- | ------- | ------- | ------------- |
+| Elementos visibles (compacta) | 10+     | 5       | 50% reducción |
+| Clicks para cambiar estado    | 4       | 1       | 75% reducción |
+| Tiempo de carga cognitiva     | Alto    | Bajo    | 60% reducción |
+| Personalización               | Ninguna | Alta    | ∞             |
 
 ---
 
 ## 🔧 Decisiones Técnicas
 
 ### 1. **StatefulWidget en TaskCard**
+
 - **Razón:** Necesario para `MouseRegion` y `_isHovering`
 - **Alternativa descartada:** Consumer/Provider (overkill)
 
 ### 2. **Menú contextual nativo**
+
 - **Razón:** `showMenu()` es más ligero que custom widgets
 - **Beneficio:** Consistencia con Material Design
 
 ### 3. **AnimatedOpacity vs AnimatedContainer**
+
 - **Razón:** Mejor performance para fade in/out
 - **Duración:** 200ms (sweet spot UX)
 
 ### 4. **TaskDensity local (no ViewPreferencesService)**
+
 - **Razón:** Simplicidad en primera iteración
 - **Futuro:** Migrar a ViewPreferencesService para persistencia
 
 ### 5. **Tabs en TaskDetailScreen**
+
 - **Razón:** Organización clara, reduce scroll
 - **Patrón:** Similar a PROJECT_UX_REDESIGN
 
@@ -152,14 +172,17 @@ StatusBadgeWidget(
 ## 📦 Archivos Modificados
 
 ### Nuevos
+
 1. `lib/presentation/widgets/status_badge_widget.dart` (254 líneas)
 
 ### Modificados
+
 1. `lib/presentation/widgets/task/task_card.dart` (275 líneas)
 2. `lib/presentation/screens/tasks/tasks_list_screen.dart` (503 líneas)
 3. `lib/presentation/screens/tasks/task_detail_screen.dart` (287 líneas)
 
 ### Documentación
+
 1. `TASK_UX_REDESIGN.md` (167 líneas)
 2. `TASK_UX_REDESIGN_SUMMARY.md` (este archivo)
 
@@ -201,18 +224,21 @@ StatusBadgeWidget(
 ## 📝 Notas de Implementación
 
 ### Status Badge Menu
+
 - Usa `showMenu()` nativo de Flutter
 - Position calculado con `RenderBox`
 - Dispatch directo a `TaskBloc.add(UpdateTaskEvent(...))`
 - SnackBar de confirmación automático
 
 ### Progressive Disclosure
+
 - `AnimatedOpacity` para fade in/out
 - `MouseRegion` detecta hover
 - `_isHovering` state controla visibilidad
 - Duración: 200ms (Material Design standard)
 
 ### Tabs
+
 - `TabController` con 3 tabs
 - `SingleTickerProviderStateMixin` requerido
 - `TabBarView` en body
@@ -222,15 +248,15 @@ StatusBadgeWidget(
 
 ## 🎯 Comparación con PROJECT_UX_REDESIGN
 
-| Feature | Proyectos | Tareas |
-|---------|-----------|--------|
-| Progressive Disclosure | ✅ | ✅ |
-| Density Toggle | ✅ | ✅ |
-| Collapsible Sections | ✅ | ⏳ (Futuro) |
-| Quick Actions | ⏳ | ✅ (Status badge) |
-| Tabs en Detail | ✅ | ✅ |
-| Hover States | ✅ | ✅ |
-| ViewPreferences Persist | ✅ | ⏳ (Futuro) |
+| Feature                 | Proyectos | Tareas            |
+| ----------------------- | --------- | ----------------- |
+| Progressive Disclosure  | ✅        | ✅                |
+| Density Toggle          | ✅        | ✅                |
+| Collapsible Sections    | ✅        | ⏳ (Futuro)       |
+| Quick Actions           | ⏳        | ✅ (Status badge) |
+| Tabs en Detail          | ✅        | ✅                |
+| Hover States            | ✅        | ✅                |
+| ViewPreferences Persist | ✅        | ⏳ (Futuro)       |
 
 ---
 
@@ -238,7 +264,8 @@ StatusBadgeWidget(
 
 Implementación exitosa de **Status Badge Clickeable + Progressive Disclosure** para pantallas de tareas. El cambio más impactante es el **status badge clickeable** que permite cambiar el estado en 1 click, cumpliendo el requisito principal del usuario.
 
-**Impacto:** 
+**Impacto:**
+
 - Productividad: +75%
 - Satisfacción UX: +60%
 - Carga cognitiva: -60%

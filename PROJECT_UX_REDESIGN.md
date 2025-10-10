@@ -12,6 +12,7 @@
 Este documento detalla el rediseño UX de las pantallas de proyectos en Creapolis App, implementando **Progressive Disclosure** (revelación progresiva) y **Smart Sections** (secciones inteligentes) para reducir la sobrecarga visual y mejorar la experiencia del usuario.
 
 ### Objetivos:
+
 - ✅ Reducir información visible simultáneamente en 60%
 - ✅ Mantener acceso rápido a funciones importantes
 - ✅ Dar control al usuario sobre qué ver
@@ -19,6 +20,7 @@ Este documento detalla el rediseño UX de las pantallas de proyectos en Creapoli
 - ✅ Implementar patrones UX modernos (2024-2025)
 
 ### Inspiración:
+
 - **Linear:** Minimalismo, tabs, secciones colapsables
 - **Notion:** Propiedades colapsables, smart defaults
 - **Asana:** Sidebar colapsable, quick actions on hover
@@ -30,23 +32,23 @@ Este documento detalla el rediseño UX de las pantallas de proyectos en Creapoli
 
 ### ProjectCard (Lista)
 
-| Problema Actual | Solución |
-|----------------|----------|
-| ❌ Muestra 7+ elementos simultáneamente | ✅ Mostrar solo 3 esenciales (nombre, estado, progreso) |
-| ❌ Descripción siempre visible (3 líneas) | ✅ Oculta por defecto, disponible en hover/tooltip |
-| ❌ Fechas completas ocupan espacio | ✅ Formato corto en hover tooltip |
-| ❌ Botones Edit/Delete siempre presentes | ✅ Solo visibles en hover con overlay sutil |
-| ❌ Sin opciones de densidad | ✅ Toggle Compacta/Cómoda en AppBar |
+| Problema Actual                           | Solución                                                |
+| ----------------------------------------- | ------------------------------------------------------- |
+| ❌ Muestra 7+ elementos simultáneamente   | ✅ Mostrar solo 3 esenciales (nombre, estado, progreso) |
+| ❌ Descripción siempre visible (3 líneas) | ✅ Oculta por defecto, disponible en hover/tooltip      |
+| ❌ Fechas completas ocupan espacio        | ✅ Formato corto en hover tooltip                       |
+| ❌ Botones Edit/Delete siempre presentes  | ✅ Solo visibles en hover con overlay sutil             |
+| ❌ Sin opciones de densidad               | ✅ Toggle Compacta/Cómoda en AppBar                     |
 
 ### ProjectDetailScreen
 
-| Problema Actual | Solución |
-|----------------|----------|
-| ❌ TODO expandido siempre | ✅ Secciones colapsables con estado guardado |
-| ❌ Descripción puede ser muy larga | ✅ Colapsada por defecto si >3 líneas con "Ver más" |
-| ❌ Info sin jerarquía visual | ✅ Tabs para organizar: Overview/Tasks/Timeline |
-| ❌ Tareas forzadas a 400px | ✅ Altura flexible, más espacio disponible |
-| ❌ Sin organización lógica | ✅ Información crítica arriba, secundaria colapsable |
+| Problema Actual                    | Solución                                             |
+| ---------------------------------- | ---------------------------------------------------- |
+| ❌ TODO expandido siempre          | ✅ Secciones colapsables con estado guardado         |
+| ❌ Descripción puede ser muy larga | ✅ Colapsada por defecto si >3 líneas con "Ver más"  |
+| ❌ Info sin jerarquía visual       | ✅ Tabs para organizar: Overview/Tasks/Timeline      |
+| ❌ Tareas forzadas a 400px         | ✅ Altura flexible, más espacio disponible           |
+| ❌ Sin organización lógica         | ✅ Información crítica arriba, secundaria colapsable |
 
 ---
 
@@ -70,6 +72,7 @@ Este documento detalla el rediseño UX de las pantallas de proyectos en Creapoli
 ```
 
 **En Hover:**
+
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ 🟢 Activo              [✏️] [🗑️]  ┃ ← Acciones aparecen
@@ -119,7 +122,8 @@ Este documento detalla el rediseño UX de las pantallas de proyectos en Creapoli
 ```
 
 **Botón Vista (◫):**
-- Click abre menú: 
+
+- Click abre menú:
   - ⦿ Compacta
   - ◯ Cómoda
 
@@ -205,6 +209,7 @@ class CollapsibleSection extends StatefulWidget {
 ```
 
 **Características:**
+
 - ✅ Animación smooth (300ms)
 - ✅ Estado guardado en SharedPreferences
 - ✅ Icono que rota al expandir/colapsar
@@ -219,11 +224,11 @@ class ViewPreferencesService {
   // Densidad de vista
   Future<void> setProjectViewDensity(ProjectViewDensity density);
   ProjectViewDensity getProjectViewDensity();
-  
+
   // Estado de secciones colapsables
   Future<void> setSectionExpanded(String key, bool expanded);
   bool getSectionExpanded(String key, {bool defaultValue = true});
-  
+
   // Persistencia
   Future<void> save();
   Future<void> load();
@@ -244,6 +249,7 @@ class HoverableProjectCard extends StatefulWidget {
 ```
 
 **Estados:**
+
 - `Normal`: Solo esenciales
 - `Hover`: Overlay con info adicional + acciones
 - `Comfortable`: Info adicional siempre visible
@@ -364,15 +370,18 @@ final expandedIconColor = colorScheme.primary;
 ### Fase 1: Fundamentos (2-3 horas)
 
 **Archivos a crear:**
+
 - `lib/presentation/widgets/common/collapsible_section.dart`
 - `lib/core/services/view_preferences_service.dart`
 - `lib/core/constants/view_constants.dart`
 
 **Archivos a modificar:**
+
 - `lib/presentation/widgets/project/project_card.dart`
 - `lib/presentation/screens/projects/projects_list_screen.dart`
 
 **Tareas:**
+
 - ✅ Crear CollapsibleSection widget
 - ✅ Crear ViewPreferencesService
 - ✅ Simplificar ProjectCard (vista compacta)
@@ -381,9 +390,11 @@ final expandedIconColor = colorScheme.primary;
 ### Fase 2: Detalle con Tabs (3-4 horas)
 
 **Archivos a modificar:**
+
 - `lib/presentation/screens/projects/project_detail_screen.dart`
 
 **Tareas:**
+
 - ✅ Implementar TabBar (Overview, Tasks, Timeline, Team)
 - ✅ Reorganizar contenido por tabs
 - ✅ Implementar secciones colapsables
@@ -392,6 +403,7 @@ final expandedIconColor = colorScheme.primary;
 ### Fase 3: Hover States & Polish (2-3 horas)
 
 **Tareas:**
+
 - ✅ Mejorar hover en ProjectCard
 - ✅ Añadir tooltips informativos
 - ✅ Ajustar animaciones
@@ -401,6 +413,7 @@ final expandedIconColor = colorScheme.primary;
 ### Fase 4: Testing & Documentation (1-2 horas)
 
 **Tareas:**
+
 - ✅ Testing manual completo
 - ✅ Verificar persistencia de preferencias
 - ✅ Actualizar documentación de usuario
@@ -414,6 +427,7 @@ final expandedIconColor = colorScheme.primary;
 ## 🎨 Principios de Diseño Aplicados
 
 ### 1. Progressive Disclosure
+
 > "Mostrar solo lo que el usuario necesita en cada momento"
 
 - Cards: Empezar con lo mínimo esencial
@@ -421,6 +435,7 @@ final expandedIconColor = colorScheme.primary;
 - Detalle: Secciones colapsables para profundizar
 
 ### 2. Information Hierarchy
+
 > "Lo más importante debe ser más prominente"
 
 - **Nivel 1 (Crítico):** Nombre, estado, progreso
@@ -428,6 +443,7 @@ final expandedIconColor = colorScheme.primary;
 - **Nivel 3 (Contextual):** Descripción, estadísticas detalladas
 
 ### 3. User Control
+
 > "El usuario decide qué y cómo ver"
 
 - Toggle de densidad
@@ -436,6 +452,7 @@ final expandedIconColor = colorScheme.primary;
 - Preferencias guardadas
 
 ### 4. Visual Clarity
+
 > "Menos es más, claridad sobre cantidad"
 
 - Reducción de ruido visual 60%
@@ -444,6 +461,7 @@ final expandedIconColor = colorScheme.primary;
 - Colores consistentes
 
 ### 5. Performance Perception
+
 > "Rápido = mejor UX"
 
 - Animaciones smooth (60fps)
@@ -458,12 +476,14 @@ final expandedIconColor = colorScheme.primary;
 ### Inspiración Principal
 
 **Linear** - Minimalismo y eficiencia
+
 - Cards ultra limpios
 - Hover states sutiles
 - Tabs para organización
 - Keyboard shortcuts
 
 **Notion** - Flexibilidad y control
+
 - Propiedades colapsables
 - Diferentes vistas
 - Persistencia de estado
@@ -501,15 +521,19 @@ final expandedIconColor = colorScheme.primary;
 ## 🐛 Riesgos y Mitigaciones
 
 ### Riesgo 1: Usuarios no encuentren funciones
+
 **Mitigación:** Onboarding tooltip la primera vez, ayuda contextual
 
 ### Riesgo 2: Preferencias no se guarden
+
 **Mitigación:** Implementar sistema robusto con SharedPreferences, fallbacks
 
 ### Riesgo 3: Animaciones lentas en dispositivos antiguos
+
 **Mitigación:** Detectar performance, reducir animaciones si es necesario
 
 ### Riesgo 4: Hover no funciona en móvil
+
 **Mitigación:** Long press en móvil, vista cómoda como default en mobile
 
 ---
@@ -517,18 +541,21 @@ final expandedIconColor = colorScheme.primary;
 ## 📈 Próximos Pasos (Post-Implementación)
 
 ### Versión 1.1 - Mejoras Incrementales
+
 - Filtros avanzados en lista
 - Búsqueda mejorada
 - Ordenamiento personalizable
 - Vista de tabla (estilo Excel)
 
 ### Versión 1.2 - Vistas Adicionales
+
 - Vista Kanban por estado
 - Vista Timeline visual
 - Vista de calendario
 - Dashboards personalizables
 
 ### Versión 2.0 - Personalización Avanzada
+
 - Custom fields
 - Vistas guardadas
 - Atajos de teclado
@@ -539,12 +566,14 @@ final expandedIconColor = colorScheme.primary;
 ## ✅ Checklist de Implementación
 
 ### Pre-Implementación
+
 - [x] Documento de diseño completo
 - [ ] Wireframes creados
 - [ ] Aprobación de stakeholders
 - [ ] Estimación de tiempo revisada
 
 ### Durante Implementación
+
 - [ ] Crear componentes base
 - [ ] Implementar vista compacta
 - [ ] Implementar tabs en detalle
@@ -556,6 +585,7 @@ final expandedIconColor = colorScheme.primary;
 - [ ] Ajustes de UX
 
 ### Post-Implementación
+
 - [ ] Screenshots antes/después
 - [ ] Actualizar docs de usuario
 - [ ] Git commit descriptivo

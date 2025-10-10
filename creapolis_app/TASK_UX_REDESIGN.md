@@ -11,6 +11,7 @@
 ## 1. Análisis Actual
 
 ### Problemas Identificados
+
 - Sobrecarga visual en TaskCard (10+ elementos siempre visibles)
 - Cambio de estado requiere abrir modal de edición
 - No hay acciones rápidas (quick actions)
@@ -19,6 +20,7 @@
 ---
 
 ## 2. Inspiración UX
+
 - **Linear:** Quick actions en hover, status dropdown inline
 - **Asana:** Checkbox para completar, status menu inline
 - **ClickUp:** Status button contextual, quick assignee change
@@ -31,16 +33,19 @@
 ### 3.1 TaskCard (Progresive Disclosure)
 
 #### Vista Compacta
+
 - Status badge **clickeable** (menu contextual para cambiar estado)
 - Título
 - Barra de progreso
 - Hover: muestra descripción, horas, asignado, acciones secundarias
 
 #### Vista Cómoda
+
 - Todo visible pero mejor organizado
 - Secciones colapsables para detalles
 
 #### Quick Actions
+
 - Status badge: click → menu contextual
 - Checkbox para completar rápido (opcional)
 - Priority badge clickeable (opcional)
@@ -48,6 +53,7 @@
 ---
 
 ### 3.2 TasksListScreen
+
 - Toggle densidad (compacta/cómoda)
 - Filtros rápidos por estado/prioridad
 - Quick actions toolbar
@@ -55,6 +61,7 @@
 ---
 
 ### 3.3 TaskDetailScreen
+
 - Tabs: Overview | Time Tracking | Dependencies | History
 - Secciones colapsables
 - Quick status/priority change en header
@@ -95,6 +102,7 @@
 ## 5. Especificaciones Técnicas
 
 ### 5.1 TaskCard
+
 - Status badge: Widget clickeable, abre menu contextual
 - Cambio de estado: Dispatch directo al Bloc, sin modal
 - Animación: 200-300ms para hover y menú
@@ -102,11 +110,13 @@
 - Densidad: Integrar con ViewPreferencesService
 
 ### 5.2 TasksListScreen
+
 - Toggle densidad en AppBar
 - Filtros rápidos (chips/buttons)
 - Quick actions toolbar (opcional)
 
 ### 5.3 TaskDetailScreen
+
 - Tabs con TabController
 - Secciones colapsables (CollapsibleSection)
 - Status/priority quick change en header
@@ -114,6 +124,7 @@
 ---
 
 ## 6. Ventajas
+
 - Reduce carga cognitiva
 - Permite cambio de estado en 1 click
 - UX consistente con pantallas de proyectos
@@ -122,6 +133,7 @@
 ---
 
 ## 7. Roadmap de Implementación
+
 1. Crear StatusBadgeWidget clickeable
 2. Integrar menú contextual para cambio de estado
 3. Refactorizar TaskCard con Progressive Disclosure
@@ -132,12 +144,14 @@
 ---
 
 ## 8. Referencias
+
 - [PROJECT_UX_REDESIGN.md](PROJECT_UX_REDESIGN.md)
 - Linear, Asana, ClickUp, Todoist UX patterns
 
 ---
 
 ## 9. Notas
+
 - No realizar cambios en código hasta aprobación final
 - Documentar feedback y ajustes antes de implementar
 

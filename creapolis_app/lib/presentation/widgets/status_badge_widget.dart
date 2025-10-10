@@ -71,8 +71,10 @@ class StatusBadgeWidget extends StatelessWidget {
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero),
-            ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
       ),
       Offset.zero & overlay.size,
     );
@@ -101,20 +103,14 @@ class StatusBadgeWidget extends StatelessWidget {
               ),
               if (isSelected) ...[
                 const Spacer(),
-                Icon(
-                  Icons.check,
-                  size: 18,
-                  color: _getStatusColor(status),
-                ),
+                Icon(Icons.check, size: 18, color: _getStatusColor(status)),
               ],
             ],
           ),
         );
       }).toList(),
       elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ).then((selectedStatus) {
       if (selectedStatus != null && selectedStatus != task.status) {
         _updateTaskStatus(context, selectedStatus);
@@ -124,11 +120,8 @@ class StatusBadgeWidget extends StatelessWidget {
 
   void _updateTaskStatus(BuildContext context, TaskStatus newStatus) {
     context.read<TaskBloc>().add(
-          UpdateTaskEvent(
-            id: task.id,
-            status: newStatus,
-          ),
-        );
+      UpdateTaskEvent(id: task.id, status: newStatus),
+    );
 
     // Mostrar confirmación
     ScaffoldMessenger.of(context).showSnackBar(

@@ -51,17 +51,11 @@ class _TaskCardState extends State<TaskCard> {
                 Row(
                   children: [
                     // Status Badge Clickeable (FEATURE PRINCIPAL)
-                    StatusBadgeWidget(
-                      task: widget.task,
-                      showIcon: true,
-                    ),
+                    StatusBadgeWidget(task: widget.task, showIcon: true),
                     const SizedBox(width: 8),
 
                     // Badge de prioridad
-                    PriorityBadgeWidget(
-                      task: widget.task,
-                      showIcon: true,
-                    ),
+                    PriorityBadgeWidget(task: widget.task, showIcon: true),
 
                     const Spacer(),
 
@@ -70,7 +64,7 @@ class _TaskCardState extends State<TaskCard> {
                       Icon(Icons.warning, color: colorScheme.error, size: 20),
                   ],
                 ),
-                
+
                 SizedBox(height: widget.isCompact ? 8 : 12),
 
                 // Título de la tarea
@@ -86,7 +80,7 @@ class _TaskCardState extends State<TaskCard> {
                 // Progressive Disclosure: Mostrar detalles en hover o vista cómoda
                 if (!widget.isCompact || _isHovering) ...[
                   const SizedBox(height: 8),
-                  
+
                   // Descripción
                   AnimatedOpacity(
                     opacity: (!widget.isCompact || _isHovering) ? 1.0 : 0.0,
@@ -155,13 +149,16 @@ class _TaskCardState extends State<TaskCard> {
                         color: widget.task.isOvertime
                             ? colorScheme.error
                             : colorScheme.onSurfaceVariant,
-                        fontWeight: widget.task.isOvertime ? FontWeight.bold : null,
+                        fontWeight: widget.task.isOvertime
+                            ? FontWeight.bold
+                            : null,
                       ),
                     ),
                     const Spacer(),
 
                     // Asignado (solo en hover o vista cómoda)
-                    if ((!widget.isCompact || _isHovering) && widget.task.hasAssignee)
+                    if ((!widget.isCompact || _isHovering) &&
+                        widget.task.hasAssignee)
                       AnimatedOpacity(
                         opacity: (!widget.isCompact || _isHovering) ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 200),
@@ -201,7 +198,8 @@ class _TaskCardState extends State<TaskCard> {
                 ),
 
                 // Botones de acción (solo en hover)
-                if (_isHovering && (widget.onEdit != null || widget.onDelete != null))
+                if (_isHovering &&
+                    (widget.onEdit != null || widget.onDelete != null))
                   AnimatedOpacity(
                     opacity: _isHovering ? 1.0 : 0.0,
                     duration: const Duration(milliseconds: 200),

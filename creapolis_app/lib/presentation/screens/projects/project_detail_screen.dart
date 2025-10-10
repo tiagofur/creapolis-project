@@ -30,15 +30,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Inicializar tab controller
     _tabController = TabController(length: 3, vsync: this);
-    
+
     // Inicializar servicio de preferencias si no está inicializado
     if (!_viewPrefs.isInitialized) {
       _viewPrefs.init();
     }
-    
+
     // Cargar proyecto
     final id = int.tryParse(widget.projectId);
     if (id != null) {
@@ -121,10 +121,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             pinned: true,
             expandedHeight: 120,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                project.name,
-                style: const TextStyle(fontSize: 16),
-              ),
+              title: Text(project.name, style: const TextStyle(fontSize: 16)),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -226,10 +223,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           children: [
             // Tab 1: Overview
             _buildOverviewTab(context, project),
-            
+
             // Tab 2: Tareas
             _buildTasksTab(context, project),
-            
+
             // Tab 3: Timeline
             _buildTimelineTab(context, project),
           ],
@@ -369,11 +366,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             ],
           ),
         ),
-        
+
         // Lista de tareas (toma todo el espacio disponible)
-        Expanded(
-          child: TasksListScreen(projectId: project.id),
-        ),
+        Expanded(child: TasksListScreen(projectId: project.id)),
       ],
     );
   }
