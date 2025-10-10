@@ -9,7 +9,7 @@ import '../bloc/workspace/workspace_state.dart';
 
 /// Provider para mantener el contexto global del workspace activo
 /// Sincroniza con SharedPreferences y notifica cambios a toda la app
-@injectable
+@singleton
 class WorkspaceContext extends ChangeNotifier {
   final WorkspaceBloc _workspaceBloc;
 
@@ -18,8 +18,21 @@ class WorkspaceContext extends ChangeNotifier {
   bool _isLoading = false;
 
   WorkspaceContext(this._workspaceBloc) {
+    AppLogger.info('[WorkspaceContext] Inicializando y suscribiéndose al BLoC');
     // Escuchar cambios del BLoC
     _workspaceBloc.stream.listen(_onWorkspaceStateChanged);
+
+    // Verificar si hay un estado inicial
+    final currentState = _workspaceBloc.state;
+    AppLogger.info(
+      '[WorkspaceContext] Estado inicial del BLoC: ${currentState.runtimeType}',
+    );
+    if (currentState is WorkspacesLoaded) {
+      AppLogger.info(
+        '[WorkspaceContext] Procesando estado inicial WorkspacesLoaded',
+      );
+      _onWorkspaceStateChanged(currentState);
+    }
   }
 
   // Getters
@@ -130,18 +143,33 @@ class WorkspaceContext extends ChangeNotifier {
 
   /// Listener de cambios del BLoC
   void _onWorkspaceStateChanged(WorkspaceState state) {
+    AppLogger.info(
+      '[WorkspaceContext] Estado del BLoC cambió: ${state.runtimeType}',
+    );
+
     if (state is WorkspacesLoaded) {
       _userWorkspaces = state.workspaces;
       _isLoading = false;
 
-      // Si hay workspace activo, actualizar con los datos frescos
-      if (_activeWorkspace != null && state.activeWorkspaceId != null) {
+      // Actualizar workspace activo basado en el estado
+      if (state.activeWorkspaceId != null) {
         _activeWorkspace = state.activeWorkspace;
+        AppLogger.info(
+          '[WorkspaceContext] Workspace activo actualizado desde WorkspacesLoaded: ${_activeWorkspace?.name}',
+        );
+      } else {
+        // Si no hay workspace activo, pero la instancia actual está marcada como activa, limpiarla
+        if (_activeWorkspace != null) {
+          AppLogger.info(
+            '[WorkspaceContext] Limpiando workspace activo - no coincide con el estado',
+          );
+          _activeWorkspace = null;
+        }
       }
 
       notifyListeners();
       AppLogger.info(
-        '[WorkspaceContext] Workspaces actualizados: ${_userWorkspaces.length}',
+        '[WorkspaceContext] Workspaces actualizados: ${_userWorkspaces.length}, activo: ${state.activeWorkspaceId}',
       );
     } else if (state is WorkspaceLoaded) {
       _activeWorkspace = state.workspace;

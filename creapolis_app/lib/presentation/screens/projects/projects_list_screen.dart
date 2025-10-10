@@ -13,6 +13,7 @@ import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
 import '../../bloc/workspace/workspace_event.dart';
+import '../../bloc/workspace/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
@@ -29,32 +30,66 @@ class ProjectsListScreen extends StatefulWidget {
 }
 
 class _ProjectsListScreenState extends State<ProjectsListScreen> {
+  int? _lastLoadedWorkspaceId;
+
   @override
   void initState() {
     super.initState();
-    // Cargar workspaces primero
+    // Cargar workspaces y workspace activo
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Cargar lista de workspaces
+      // IMPORTANTE: Cargar workspace activo ANTES que la lista de workspaces
+      // Esto permite que el BLoC use el ID pendiente cuando cargue los workspaces
+      context.read<WorkspaceBloc>().add(const LoadActiveWorkspaceEvent());
+
+      // Luego cargar lista de workspaces (que usará el ID activo si existe)
       context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
 
-      // Cargar proyectos filtrados por workspace activo
-      final workspaceContext = context.read<WorkspaceContext>();
-      final activeWorkspace = workspaceContext.activeWorkspace;
-      context.read<ProjectBloc>().add(
-        LoadProjectsEvent(workspaceId: activeWorkspace?.id),
-      );
+      // NO cargar proyectos aquí - se cargarán cuando se establezca el workspace activo
     });
+  }
+
+  /// Cargar proyectos cuando cambie el workspace activo
+  void _loadProjectsForActiveWorkspace(int? workspaceId) {
+    if (_lastLoadedWorkspaceId != workspaceId) {
+      _lastLoadedWorkspaceId = workspaceId;
+
+      // Solo cargar proyectos si hay un workspace activo
+      if (workspaceId != null) {
+        context.read<ProjectBloc>().add(
+          LoadProjectsEvent(workspaceId: workspaceId),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final activeWorkspace = workspaceContext.activeWorkspace;
+
+    // Cargar proyectos cuando cambie el workspace activo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProjectsForActiveWorkspace(activeWorkspace?.id);
+    });
 
     return Scaffold(
       drawer: const MainDrawer(),
       appBar: AppBar(
-        title: const Text('Proyectos'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Proyectos'),
+            if (activeWorkspace != null)
+              Text(
+                activeWorkspace.name,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+          ],
+        ),
         actions: [
           // Selector de workspace
           const WorkspaceSwitcher(compact: true),
@@ -118,6 +153,16 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           }
         },
         builder: (context, state) {
+          // SIEMPRE verificar primero si hay workspace activo
+          final workspaceContext = context.watch<WorkspaceContext>();
+          final hasActiveWorkspace = workspaceContext.hasActiveWorkspace;
+
+          // Si no hay workspace activo, mostrar estado vacío
+          if (!hasActiveWorkspace) {
+            return _buildEmptyState(context);
+          }
+
+          // Si hay workspace activo, mostrar el estado normal
           if (state is ProjectLoading && state is! ProjectsLoaded) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -208,6 +253,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     final colorScheme = theme.colorScheme;
     final workspaceContext = context.watch<WorkspaceContext>();
     final hasWorkspace = workspaceContext.hasActiveWorkspace;
+    final hasAvailableWorkspaces = workspaceContext.userWorkspaces.isNotEmpty;
 
     return Center(
       child: Column(
@@ -220,7 +266,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            hasWorkspace ? 'No hay proyectos' : 'No hay workspace activo',
+            hasWorkspace
+                ? 'No hay proyectos'
+                : hasAvailableWorkspaces
+                ? 'Selecciona un workspace'
+                : 'No hay workspace activo',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -229,7 +279,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           Text(
             hasWorkspace
                 ? 'Crea tu primer proyecto para comenzar'
-                : 'Debes crear o seleccionar un workspace antes de crear proyectos',
+                : hasAvailableWorkspaces
+                ? 'Selecciona un workspace para ver sus proyectos'
+                : 'Crea tu primer workspace para comenzar',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -239,9 +291,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           FilledButton.icon(
             onPressed: hasWorkspace
                 ? () => _showCreateProjectSheet(context)
-                : () => _showCreateWorkspaceSheet(context),
-            icon: Icon(hasWorkspace ? Icons.add : Icons.add_business),
-            label: Text(hasWorkspace ? 'Crear Proyecto' : 'Crear Workspace'),
+                : () => _handleWorkspaceSelection(context),
+            icon: Icon(
+              hasWorkspace
+                  ? Icons.add
+                  : hasAvailableWorkspaces
+                  ? Icons.workspaces
+                  : Icons.add_business,
+            ),
+            label: Text(
+              hasWorkspace
+                  ? 'Crear Proyecto'
+                  : hasAvailableWorkspaces
+                  ? 'Seleccionar Workspace'
+                  : 'Crear Workspace',
+            ),
           ),
         ],
       ),
@@ -383,13 +447,13 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text(
-          'Debes crear o seleccionar un workspace antes de crear proyectos',
+          'Selecciona un workspace para comenzar a crear proyectos',
         ),
         backgroundColor: Theme.of(context).colorScheme.error,
         action: SnackBarAction(
-          label: 'Crear Workspace',
+          label: 'Seleccionar Workspace',
           textColor: Colors.white,
-          onPressed: () => _showCreateWorkspaceSheet(context),
+          onPressed: () => _handleWorkspaceSelection(context),
         ),
         duration: const Duration(seconds: 4),
       ),
@@ -411,5 +475,28 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
         ),
       ),
     );
+  }
+
+  /// Lógica inteligente para seleccionar workspace
+  void _handleWorkspaceSelection(BuildContext context) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceBloc = context.read<WorkspaceBloc>();
+    final currentState = workspaceBloc.state;
+
+    // Verificar si hay workspaces disponibles
+    bool hasWorkspaces = false;
+    if (currentState is WorkspacesLoaded) {
+      hasWorkspaces = currentState.workspaces.isNotEmpty;
+    } else if (workspaceContext.userWorkspaces.isNotEmpty) {
+      hasWorkspaces = true;
+    }
+
+    if (hasWorkspaces) {
+      // Hay workspaces, ir a la pantalla de selección
+      context.push('/workspaces');
+    } else {
+      // No hay workspaces o no se han cargado, mostrar modal de crear
+      _showCreateWorkspaceSheet(context);
+    }
   }
 }

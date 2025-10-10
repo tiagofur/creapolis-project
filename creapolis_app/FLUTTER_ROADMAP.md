@@ -567,8 +567,8 @@ final goRouter = GoRouter(
 // lib/core/constants/api_constants.dart
 class ApiConstants {
   // TODO: Cambiar a IP de tu backend
-  static const String baseUrl = 'http://10.0.2.2:3000/api'; // Android emulator
-  // static const String baseUrl = 'http://localhost:3000/api'; // iOS simulator
+  static const String baseUrl = 'http://10.0.2.2:3001/api'; // Android emulator
+  // static const String baseUrl = 'http://localhost:3001/api'; // iOS simulator
   // static const String baseUrl = 'https://api.creapolis.com/api'; // Production
 
   // Endpoints

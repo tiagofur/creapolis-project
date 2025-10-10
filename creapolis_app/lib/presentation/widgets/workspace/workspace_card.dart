@@ -6,6 +6,7 @@ import '../../../domain/entities/workspace.dart';
 class WorkspaceCard extends StatelessWidget {
   final Workspace workspace;
   final bool isActive;
+  final bool isActivating;
   final VoidCallback? onTap;
   final VoidCallback? onSetActive;
 
@@ -13,6 +14,7 @@ class WorkspaceCard extends StatelessWidget {
     super.key,
     required this.workspace,
     this.isActive = false,
+    this.isActivating = false,
     this.onTap,
     this.onSetActive,
   });
@@ -83,9 +85,15 @@ class WorkspaceCard extends StatelessWidget {
                   const Spacer(),
                   if (!isActive && onSetActive != null)
                     TextButton.icon(
-                      onPressed: onSetActive,
-                      icon: const Icon(Icons.check_circle_outline, size: 16),
-                      label: const Text('Activar'),
+                      onPressed: isActivating ? null : onSetActive,
+                      icon: isActivating
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_outline, size: 16),
+                      label: Text(isActivating ? 'Activando...' : 'Activar'),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -120,26 +128,33 @@ class WorkspaceCard extends StatelessWidget {
 
   /// Construir badge de activo
   Widget _buildActiveBadge(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Use appropriate colors for dark/light theme with better contrast
+    final backgroundColor = colorScheme.primaryContainer;
+    final foregroundColor = colorScheme.onPrimaryContainer;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.check_circle,
-            size: 14,
-            color: Theme.of(context).primaryColor,
-          ),
+          Icon(Icons.check_circle, size: 14, color: foregroundColor),
           const SizedBox(width: 4),
           Text(
             'Activo',
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).primaryColor,
+              color: foregroundColor,
               fontWeight: FontWeight.bold,
             ),
           ),

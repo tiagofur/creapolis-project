@@ -296,12 +296,12 @@ Ahora que la base está lista, podemos implementar:
 Actualmente configurada en `api_constants.dart`:
 
 ```dart
-static const String baseUrl = 'http://localhost:3000/api';
+static const String baseUrl = 'http://localhost:3001/api';
 ```
 
-**Para Android Emulator**: Cambiar a `http://10.0.2.2:3000/api`  
-**Para iOS Simulator**: `http://localhost:3000/api` funciona  
-**Para dispositivo físico**: IP de la máquina (ej: `http://192.168.1.100:3000/api`)
+**Para Android Emulator**: Cambiar a `http://10.0.2.2:3001/api`  
+**Para iOS Simulator**: `http://localhost:3001/api` funciona  
+**Para dispositivo físico**: IP de la máquina (ej: `http://192.168.1.100:3001/api`)
 
 ### Injectable Warning
 

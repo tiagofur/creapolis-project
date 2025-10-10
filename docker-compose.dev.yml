@@ -17,7 +17,7 @@ services:
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5433}:5432" # Puerto diferente para no conflictuar
+      - "${POSTGRES_PORT:-5434}:5432" # Puerto diferente para no conflictuar
     networks:
       - creapolis-dev-network
     healthcheck:
@@ -39,7 +39,7 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: development
-      PORT: 3000
+      PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-database}?schema=public
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-not-for-production}
       JWT_EXPIRES_IN: 7d
@@ -48,7 +48,7 @@ services:
       GOOGLE_REDIRECT_URI: http://localhost:3001/api/integrations/google/callback
       CORS_ORIGIN: http://localhost:5173
     ports:
-      - "${BACKEND_PORT:-3001}:3000" # Puerto diferente para desarrollo
+      - "${BACKEND_PORT:-3001}:3001" # Puerto diferente para desarrollo
     networks:
       - creapolis-dev-network
     volumes:

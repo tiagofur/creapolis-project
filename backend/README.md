@@ -64,7 +64,7 @@ DATABASE_URL="postgresql://username:password@localhost:5432/creapolis_db"
 JWT_SECRET=your-secret-key
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/integrations/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:3001/api/integrations/google/callback
 ```
 
 3. Configurar base de datos:
@@ -86,12 +86,12 @@ npm run prisma:generate
 npm run dev
 ```
 
-El servidor estará disponible en `http://localhost:3000`
+El servidor estará disponible en `http://localhost:3001`
 
 ### Verificar Instalación
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ## 📁 Estructura del Proyecto
@@ -204,11 +204,11 @@ El scheduler utiliza **ordenamiento topológico (algoritmo de Kahn)** para:
 
 ```bash
 # Calcular cronograma inicial de proyecto
-curl -X POST http://localhost:3000/api/projects/1/schedule \
+curl -X POST http://localhost:3001/api/projects/1/schedule \
   -H "Authorization: Bearer <token>"
 
 # Replanificar desde tarea específica
-curl -X POST http://localhost:3000/api/projects/1/schedule/reschedule \
+curl -X POST http://localhost:3001/api/projects/1/schedule/reschedule \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -246,7 +246,7 @@ Authorization: Bearer <token>
 **Obtener token**:
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",

@@ -10,7 +10,7 @@
 | Servicio    | Puerto | Estado      | Health Check                     |
 | ----------- | ------ | ----------- | -------------------------------- |
 | PostgreSQL  | 5433   | ✅ Healthy  | N/A                              |
-| Backend API | 3000   | ✅ Healthy  | http://localhost:3000/api/health |
+| Backend API | 3001   | ✅ Healthy  | http://localhost:3001/api/health |
 | PgAdmin     | 5050   | ⏸️ Opcional | http://localhost:5050            |
 
 ---
@@ -264,7 +264,7 @@ Para conectar la app Flutter al backend Docker:
 
    ```dart
    // lib/core/constants/api_constants.dart
-   static const String baseUrl = 'http://localhost:3000';
+   static const String baseUrl = 'http://localhost:3001';
    ```
 
 2. Asegurarse de que el backend esté corriendo:
@@ -274,7 +274,7 @@ Para conectar la app Flutter al backend Docker:
    ```
 
 3. La app Flutter podrá hacer peticiones a:
-   - `http://localhost:3000/api/auth/register`
+   - `http://localhost:3001/api/auth/register`
    - `http://localhost:3000/api/auth/login`
    - `http://localhost:3000/api/projects`
    - etc.

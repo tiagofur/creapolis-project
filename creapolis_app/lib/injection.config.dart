@@ -67,9 +67,11 @@ import 'domain/usecases/update_task_usecase.dart' as _i1018;
 import 'domain/usecases/workspace/accept_invitation.dart' as _i927;
 import 'domain/usecases/workspace/create_invitation.dart' as _i359;
 import 'domain/usecases/workspace/create_workspace.dart' as _i225;
+import 'domain/usecases/workspace/get_active_workspace.dart' as _i890;
 import 'domain/usecases/workspace/get_pending_invitations.dart' as _i591;
 import 'domain/usecases/workspace/get_user_workspaces.dart' as _i820;
 import 'domain/usecases/workspace/get_workspace_members.dart' as _i517;
+import 'domain/usecases/workspace/set_active_workspace.dart' as _i245;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/project/project_bloc.dart' as _i190;
@@ -80,7 +82,7 @@ import 'presentation/bloc/workspace/workspace_bloc.dart' as _i754;
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart'
     as _i953;
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart' as _i53;
-import 'presentation/providers/theme_provider.dart' as _i999;
+import 'presentation/providers/theme_provider.dart' as _i971;
 import 'presentation/providers/workspace_context.dart' as _i34;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -90,6 +92,9 @@ extension GetItInjectableX on _i174.GetIt {
     _i526.EnvironmentFilter? environmentFilter,
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    gh.factory<_i971.ThemeProvider>(
+      () => _i971.ThemeProvider(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i268.WorkspaceLocalDataSource>(
       () => _i268.WorkspaceLocalDataSourceImpl(gh<_i460.SharedPreferences>()),
     );
@@ -166,6 +171,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i225.CreateWorkspaceUseCase>(
       () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
     );
+    gh.factory<_i890.GetActiveWorkspaceUseCase>(
+      () => _i890.GetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
+    );
     gh.factory<_i591.GetPendingInvitationsUseCase>(
       () => _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()),
     );
@@ -174,6 +182,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i517.GetWorkspaceMembersUseCase>(
       () => _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()),
+    );
+    gh.factory<_i245.SetActiveWorkspaceUseCase>(
+      () => _i245.SetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
     );
     gh.factory<_i53.WorkspaceMemberBloc>(
       () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()),
@@ -218,6 +229,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i808.LogoutUseCase>(),
       ),
     );
+    gh.factory<_i754.WorkspaceBloc>(
+      () => _i754.WorkspaceBloc(
+        gh<_i820.GetUserWorkspacesUseCase>(),
+        gh<_i225.CreateWorkspaceUseCase>(),
+        gh<_i245.SetActiveWorkspaceUseCase>(),
+        gh<_i890.GetActiveWorkspaceUseCase>(),
+      ),
+    );
     gh.factory<_i953.WorkspaceInvitationBloc>(
       () => _i953.WorkspaceInvitationBloc(
         gh<_i591.GetPendingInvitationsUseCase>(),
@@ -233,6 +252,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i587.GetCalendarEventsUseCase>(),
         gh<_i812.CompleteCalendarOAuthUseCase>(),
       ),
+    );
+    gh.singleton<_i34.WorkspaceContext>(
+      () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()),
     );
     gh.factory<_i654.GetResourceAllocationUseCase>(
       () => _i654.GetResourceAllocationUseCase(gh<_i42.WorkloadRepository>()),
@@ -291,12 +313,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i177.DeleteProjectUseCase>(),
       ),
     );
-    gh.factory<_i754.WorkspaceBloc>(
-      () => _i754.WorkspaceBloc(
-        gh<_i820.GetUserWorkspacesUseCase>(),
-        gh<_i225.CreateWorkspaceUseCase>(),
-      ),
-    );
     gh.factory<_i107.WorkloadBloc>(
       () => _i107.WorkloadBloc(
         gh<_i654.GetResourceAllocationUseCase>(),
@@ -313,12 +329,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i757.DeleteTaskUseCase>(),
         gh<_i449.TaskRepository>(),
       ),
-    );
-    gh.factory<_i34.WorkspaceContext>(
-      () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()),
-    );
-    gh.factory<_i999.ThemeProvider>(
-      () => _i999.ThemeProvider(gh<_i460.SharedPreferences>()),
     );
     return this;
   }

@@ -3,7 +3,9 @@ import 'package:injectable/injectable.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/usecases/workspace/create_workspace.dart';
+import '../../../domain/usecases/workspace/get_active_workspace.dart';
 import '../../../domain/usecases/workspace/get_user_workspaces.dart';
+import '../../../domain/usecases/workspace/set_active_workspace.dart';
 import 'workspace_event.dart';
 import 'workspace_state.dart';
 
@@ -12,9 +14,18 @@ import 'workspace_state.dart';
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   final GetUserWorkspacesUseCase _getUserWorkspacesUseCase;
   final CreateWorkspaceUseCase _createWorkspaceUseCase;
+  final SetActiveWorkspaceUseCase _setActiveWorkspaceUseCase;
+  final GetActiveWorkspaceUseCase _getActiveWorkspaceUseCase;
 
-  WorkspaceBloc(this._getUserWorkspacesUseCase, this._createWorkspaceUseCase)
-    : super(const WorkspaceInitial()) {
+  // Almacenar temporalmente el ID del workspace activo
+  int? _pendingActiveWorkspaceId;
+
+  WorkspaceBloc(
+    this._getUserWorkspacesUseCase,
+    this._createWorkspaceUseCase,
+    this._setActiveWorkspaceUseCase,
+    this._getActiveWorkspaceUseCase,
+  ) : super(const WorkspaceInitial()) {
     on<LoadUserWorkspacesEvent>(_onLoadUserWorkspaces);
     on<RefreshWorkspacesEvent>(_onRefreshWorkspaces);
     on<LoadWorkspaceByIdEvent>(_onLoadWorkspaceById);
@@ -36,19 +47,50 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
 
     final result = await _getUserWorkspacesUseCase();
 
-    result.fold(
-      (failure) {
-        AppLogger.error(
-          'WorkspaceBloc: Error al cargar workspaces - ${failure.message}',
-        );
-        emit(WorkspaceError(failure.message));
-      },
-      (workspaces) {
-        AppLogger.info(
-          'WorkspaceBloc: ${workspaces.length} workspaces cargados',
-        );
-        emit(WorkspacesLoaded(workspaces: workspaces));
-      },
+    if (result.isLeft()) {
+      final failure = result.fold((l) => l, (r) => null)!;
+      AppLogger.error(
+        'WorkspaceBloc: Error al cargar workspaces - ${failure.message}',
+      );
+      emit(WorkspaceError(failure.message));
+      return;
+    }
+
+    final workspaces = result.fold((l) => null, (r) => r)!;
+    AppLogger.info('WorkspaceBloc: ${workspaces.length} workspaces cargados');
+
+    // Determinar workspace activo (usar pendiente si existe, sino cargar)
+    int? activeWorkspaceId = _pendingActiveWorkspaceId;
+
+    if (activeWorkspaceId != null) {
+      AppLogger.info(
+        'WorkspaceBloc: Usando workspace activo pendiente: $activeWorkspaceId',
+      );
+      // Limpiar el ID pendiente una vez usado
+      _pendingActiveWorkspaceId = null;
+    } else {
+      // Cargar workspace activo si no hay pendiente
+      final activeResult = await _getActiveWorkspaceUseCase();
+      activeResult.fold(
+        (failure) {
+          AppLogger.warning(
+            'WorkspaceBloc: No se pudo cargar workspace activo - ${failure.message}',
+          );
+        },
+        (id) {
+          activeWorkspaceId = id;
+          if (id != null) {
+            AppLogger.info('WorkspaceBloc: Workspace activo cargado: $id');
+          }
+        },
+      );
+    }
+
+    emit(
+      WorkspacesLoaded(
+        workspaces: workspaces,
+        activeWorkspaceId: activeWorkspaceId,
+      ),
     );
   }
 
@@ -196,18 +238,41 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
       'WorkspaceBloc: Estableciendo workspace activo: ${event.workspaceId}',
     );
 
-    // TODO: Implementar cuando se cree el SaveActiveWorkspaceUseCase
-    // Por ahora solo actualizamos el estado local
     final currentState = state;
     if (currentState is WorkspacesLoaded) {
+      // Verificar que el workspace existe en la lista
       final workspace = currentState.workspaces.cast<dynamic>().firstWhere(
         (w) => w.id == event.workspaceId,
         orElse: () => null,
       );
 
       if (workspace != null) {
-        emit(currentState.copyWith(activeWorkspaceId: event.workspaceId));
-        AppLogger.info('WorkspaceBloc: Workspace activo establecido');
+        // Guardar workspace activo
+        final result = await _setActiveWorkspaceUseCase(event.workspaceId);
+
+        result.fold(
+          (failure) {
+            AppLogger.error(
+              'WorkspaceBloc: Error al guardar workspace activo - ${failure.message}',
+            );
+            emit(WorkspaceError(failure.message));
+          },
+          (_) {
+            // Emitir estado específico de workspace activo establecido
+            emit(
+              ActiveWorkspaceSet(
+                workspaceId: event.workspaceId,
+                workspace: workspace,
+              ),
+            );
+
+            // Luego actualizar estado general con workspace activo
+            emit(currentState.copyWith(activeWorkspaceId: event.workspaceId));
+            AppLogger.info(
+              'WorkspaceBloc: Workspace activo establecido y guardado',
+            );
+          },
+        );
       } else {
         AppLogger.error('WorkspaceBloc: Workspace no encontrado en la lista');
         emit(const WorkspaceError('Workspace no encontrado'));
@@ -225,8 +290,37 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   ) async {
     AppLogger.info('WorkspaceBloc: Cargando workspace activo');
 
-    // TODO: Implementar cuando se cree el GetActiveWorkspaceUseCase
-    AppLogger.warning('WorkspaceBloc: LoadActiveWorkspace no implementado aún');
+    final result = await _getActiveWorkspaceUseCase();
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'WorkspaceBloc: Error al cargar workspace activo - ${failure.message}',
+        );
+        // No emitir error, solo log
+      },
+      (activeWorkspaceId) {
+        if (activeWorkspaceId != null) {
+          AppLogger.info(
+            'WorkspaceBloc: Workspace activo cargado: $activeWorkspaceId',
+          );
+
+          // Actualizar estado si hay workspaces cargados
+          final currentState = state;
+          if (currentState is WorkspacesLoaded) {
+            emit(currentState.copyWith(activeWorkspaceId: activeWorkspaceId));
+          } else {
+            // Si los workspaces aún no se han cargado, guardar el ID pendiente
+            _pendingActiveWorkspaceId = activeWorkspaceId;
+            AppLogger.info(
+              'WorkspaceBloc: ID de workspace activo guardado como pendiente: $activeWorkspaceId',
+            );
+          }
+        } else {
+          AppLogger.info('WorkspaceBloc: No hay workspace activo guardado');
+        }
+      },
+    );
   }
 
   /// Manejar limpieza de workspace activo

@@ -16,7 +16,7 @@ class MainDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          // Header con workspace activo
+          // Header con workspace activo (flexible)
           _buildHeader(context),
 
           // Navegación principal
@@ -49,7 +49,9 @@ class MainDrawer extends StatelessWidget {
       builder: (context, workspaceContext, _) {
         final activeWorkspace = workspaceContext.activeWorkspace;
 
-        return DrawerHeader(
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -61,6 +63,7 @@ class MainDrawer extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // App title
@@ -72,7 +75,7 @@ class MainDrawer extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Workspace activo
               if (activeWorkspace != null) ...[
@@ -82,17 +85,17 @@ class MainDrawer extends StatelessWidget {
                     color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: 16,
+                      radius: 14,
                       backgroundColor: colorScheme.onPrimary,
                       child: Text(
                         activeWorkspace.initials,
                         style: TextStyle(
                           color: colorScheme.primary,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -125,33 +128,36 @@ class MainDrawer extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 // Botón cambiar workspace
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Cerrar drawer
-                    context.push('/workspaces');
-                  },
-                  icon: Icon(
-                    Icons.swap_horiz,
-                    size: 16,
-                    color: colorScheme.onPrimary,
-                  ),
-                  label: Text(
-                    'Cambiar Workspace',
-                    style: TextStyle(
+                SizedBox(
+                  height: 32,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Cerrar drawer
+                      context.push('/workspaces');
+                    },
+                    icon: Icon(
+                      Icons.swap_horiz,
+                      size: 16,
                       color: colorScheme.onPrimary,
-                      fontSize: 12,
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: colorScheme.onPrimary),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                    label: Text(
+                      'Cambiar Workspace',
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontSize: 11,
+                      ),
                     ),
-                    minimumSize: const Size(0, 32),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: colorScheme.onPrimary),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 0,
+                      ),
+                      minimumSize: const Size(0, 32),
+                    ),
                   ),
                 ),
               ] else ...[
@@ -161,27 +167,34 @@ class MainDrawer extends StatelessWidget {
                     color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    context.push('/workspaces');
-                  },
-                  icon: Icon(Icons.add, size: 16, color: colorScheme.onPrimary),
-                  label: Text(
-                    'Seleccionar Workspace',
-                    style: TextStyle(
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 32,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push('/workspaces');
+                    },
+                    icon: Icon(
+                      Icons.add,
+                      size: 16,
                       color: colorScheme.onPrimary,
-                      fontSize: 12,
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: colorScheme.onPrimary),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                    label: Text(
+                      'Seleccionar Workspace',
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontSize: 11,
+                      ),
                     ),
-                    minimumSize: const Size(0, 32),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: colorScheme.onPrimary),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 0,
+                      ),
+                      minimumSize: const Size(0, 32),
+                    ),
                   ),
                 ),
               ],

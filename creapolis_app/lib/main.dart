@@ -25,8 +25,24 @@ void main() async {
   runApp(const CreopolisApp());
 }
 
-class CreopolisApp extends StatelessWidget {
+class CreopolisApp extends StatefulWidget {
   const CreopolisApp({super.key});
+
+  @override
+  State<CreopolisApp> createState() => _CreopolisAppState();
+}
+
+class _CreopolisAppState extends State<CreopolisApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar workspace activo guardado al iniciar la app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final workspaceContext = getIt<WorkspaceContext>();
+      workspaceContext.loadActiveWorkspace();
+      workspaceContext.loadUserWorkspaces();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

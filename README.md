@@ -97,12 +97,12 @@ cp .env.docker .env
 docker-compose up -d
 
 # 3. Verificar
-curl http://localhost:3000/api/health
+curl http://localhost:3001/api/health
 ```
 
 ### Servicios Disponibles
 
-- **Backend API**: http://localhost:3000
+- **Backend API**: http://localhost:3001
 - **PostgreSQL**: localhost:5432
 - **PgAdmin**: http://localhost:5050 (con `--profile tools`)
 
@@ -140,6 +140,43 @@ docker-compose -f docker-compose.dev.yml up -d
 ```
 
 Ver documentación completa en [DOCKER_README.md](./DOCKER_README.md)
+
+---
+
+## 🛠️ Configuración Inicial de Base de Datos
+
+### ⚠️ Primera Vez en una Computadora Nueva
+
+Si es la primera vez que instalas Creapolis o ves el error:
+
+```
+The table `public.User` does not exist in the current database
+```
+
+**Solución Rápida - Ejecuta el script automático:**
+
+```powershell
+# Windows PowerShell
+.\setup-database.ps1
+```
+
+**Solución Manual:**
+
+```bash
+# 1. Iniciar PostgreSQL
+docker-compose -f docker-compose.dev.yml up postgres -d
+
+# 2. Ir al directorio backend
+cd backend
+
+# 3. Aplicar migraciones
+npx prisma migrate dev --name init
+
+# 4. Iniciar backend
+npm run dev
+```
+
+📖 **Guía completa**: [backend/DATABASE_SETUP_GUIDE.md](./backend/DATABASE_SETUP_GUIDE.md)
 
 ---
 

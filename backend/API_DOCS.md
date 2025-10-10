@@ -1,7 +1,7 @@
 # Creapolis API Documentation
 
 **Version**: 1.0.0  
-**Base URL**: `http://localhost:3000/api`
+**Base URL**: `http://localhost:3001/api`
 
 ## 📋 Table of Contents
 
@@ -525,7 +525,7 @@ All error responses follow this format:
 **Register:**
 
 ```powershell
-curl -X POST http://localhost:3000/api/auth/register `
+curl -X POST http://localhost:3001/api/auth/register `
   -H "Content-Type: application/json" `
   -d '{
     "email": "test@example.com",
@@ -538,7 +538,7 @@ curl -X POST http://localhost:3000/api/auth/register `
 
 ```powershell
 $token = "your-jwt-token"
-curl -X POST http://localhost:3000/api/projects `
+curl -X POST http://localhost:3001/api/projects `
   -H "Authorization: Bearer $token" `
   -H "Content-Type: application/json" `
   -d '{

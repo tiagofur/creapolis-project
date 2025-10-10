@@ -146,7 +146,7 @@ class WorkspaceSwitcher extends StatelessWidget {
                       Icon(Icons.add_circle_outline, color: Colors.blue[700]),
                       const SizedBox(width: 12),
                       Text(
-                        'Crear Workspace',
+                        'Seleccionar Workspace',
                         style: TextStyle(
                           color: Colors.blue[700],
                           fontWeight: FontWeight.w500,
@@ -199,10 +199,13 @@ class WorkspaceSwitcher extends StatelessWidget {
     BuildContext context,
     Workspace? currentWorkspace,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -213,9 +216,14 @@ class WorkspaceSwitcher extends StatelessWidget {
                 ? _getWorkspaceTypeIcon(currentWorkspace.type)
                 : Icons.workspaces,
             size: 20,
+            color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.arrow_drop_down, size: 20),
+          Icon(
+            Icons.arrow_drop_down,
+            size: 20,
+            color: colorScheme.onSurfaceVariant,
+          ),
         ],
       ),
     );
@@ -223,10 +231,13 @@ class WorkspaceSwitcher extends StatelessWidget {
 
   /// Botón completo (con nombre)
   Widget _buildFullButton(BuildContext context, Workspace? currentWorkspace) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -237,18 +248,26 @@ class WorkspaceSwitcher extends StatelessWidget {
                 ? _getWorkspaceTypeIcon(currentWorkspace.type)
                 : Icons.workspaces,
             size: 20,
+            color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 150),
             child: Text(
               currentWorkspace?.name ?? 'Seleccionar Workspace',
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurfaceVariant,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.arrow_drop_down, size: 20),
+          Icon(
+            Icons.arrow_drop_down,
+            size: 20,
+            color: colorScheme.onSurfaceVariant,
+          ),
         ],
       ),
     );
