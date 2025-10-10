@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
@@ -138,6 +140,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       return _buildEmptyState(context);
     }
 
+    // Obtener el ID del usuario actual
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated ? authState.user.id : null;
+
     return RefreshIndicator(
       onRefresh: () async {
         context.read<ProjectBloc>().add(const RefreshProjectsEvent());
@@ -166,6 +172,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                 duration: const Duration(milliseconds: 350),
                 child: ProjectCard(
                   project: project,
+                  currentUserId: currentUserId,
+                  hasOtherMembers: false, // TODO: Obtener del backend
                   onTap: () => _navigateToDetail(context, project.id),
                   onEdit: () => _showEditProjectSheet(context, project),
                   onDelete: () => _confirmDelete(context, project),

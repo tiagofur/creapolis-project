@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/project.dart';
+import 'project_relation_marker.dart';
 
 /// Card widget para mostrar un proyecto
+/// 
+/// **Personalización Visual:**
+/// - Todos los proyectos usan el color primario del tema para consistencia
+/// - Los proyectos compartidos tienen marcadores visuales adicionales:
+///   - Compartido por mí: Badge con icono de compartir
+///   - Compartido conmigo: Badge con icono de grupo
+/// - Los proyectos personales no tienen marcador adicional (diseño limpio)
 class ProjectCard extends StatelessWidget {
   final Project project;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  
+  /// ID del usuario actual para determinar el tipo de relación
+  final int? currentUserId;
+  
+  /// Si el proyecto tiene otros miembros además del manager
+  final bool hasOtherMembers;
 
   const ProjectCard({
     super.key,
@@ -15,12 +29,19 @@ class ProjectCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.currentUserId,
+    this.hasOtherMembers = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Determinar el tipo de relación con el proyecto
+    final relationType = currentUserId != null
+        ? project.getRelationType(currentUserId!, hasOtherMembers: hasOtherMembers)
+        : ProjectRelationType.personal;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -30,21 +51,44 @@ class ProjectCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header con estado
+            // Header con estado - SIEMPRE usa color primario del tema
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: _getStatusColor(project.status, colorScheme),
+              color: colorScheme.primary, // Color primario del tema para todos
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      project.status.label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      children: [
+                        // Badge de estado
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            project.status.label,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Marcador de relación (solo si no es personal)
+                        if (relationType != ProjectRelationType.personal)
+                          Flexible(
+                            child: ProjectRelationMarker(
+                              relationType: relationType,
+                              iconSize: 12,
+                              fontSize: 10,
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   if (project.isOverdue)
@@ -88,7 +132,7 @@ class ProjectCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // Barra de progreso
+                    // Barra de progreso - usa color primario del tema
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
@@ -96,7 +140,7 @@ class ProjectCard extends StatelessWidget {
                         minHeight: 6,
                         backgroundColor: colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          _getStatusColor(project.status, colorScheme),
+                          colorScheme.primary, // Color primario del tema
                         ),
                       ),
                     ),
@@ -177,22 +221,6 @@ class ProjectCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// Obtiene el color según el estado del proyecto
-  Color _getStatusColor(ProjectStatus status, ColorScheme colorScheme) {
-    switch (status) {
-      case ProjectStatus.planned:
-        return Colors.blue;
-      case ProjectStatus.active:
-        return Colors.green;
-      case ProjectStatus.paused:
-        return Colors.orange;
-      case ProjectStatus.completed:
-        return Colors.teal;
-      case ProjectStatus.cancelled:
-        return Colors.red;
-    }
   }
 
   /// Formatea fecha para mostrar

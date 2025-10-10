@@ -61,6 +61,8 @@ class AppTheme {
         onPrimary: AppColors.white,
         secondary: AppColors.secondary,
         onSecondary: AppColors.white,
+        tertiary: AppColors.success, // Verde para "compartido conmigo"
+        onTertiary: AppColors.white,
         error: AppColors.error,
         onError: AppColors.white,
         surface: AppColors.surface,
