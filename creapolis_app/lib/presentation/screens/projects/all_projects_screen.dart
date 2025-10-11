@@ -20,13 +20,12 @@ class AllProjectsScreen extends StatefulWidget {
 }
 
 class _AllProjectsScreenState extends State<AllProjectsScreen> {
-  String _searchQuery = '';
-  String _filterStatus = 'all'; // all, active, completed, paused
+  // TODO: Implementar búsqueda y filtros cuando se integre con backend
+  // String _searchQuery = '';
+  // String _filterStatus = 'all'; // all, active, completed, paused
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Proyectos'),
@@ -44,9 +43,10 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
             icon: const Icon(Icons.filter_list),
             tooltip: 'Filtrar proyectos',
             onSelected: (value) {
-              setState(() {
-                _filterStatus = value;
-              });
+              // TODO: Implementar filtrado cuando se integre con backend
+              // setState(() {
+              //   _filterStatus = value;
+              // });
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'all', child: Text('Todos')),
@@ -69,8 +69,6 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final theme = Theme.of(context);
-
     // TODO: Verificar si hay workspace activo
     final hasWorkspace = false; // Temporal
 
@@ -79,20 +77,16 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     }
 
     // TODO: Obtener proyectos del BLoC
-    final projects = <dynamic>[]; // Temporal: lista vacía
+    // final projects = <dynamic>[]; // Temporal: lista vacía
+    //
+    // if (projects.isEmpty) {
+    //   return _buildEmptyState(context);
+    // }
+    //
+    // return ListView.builder(...);
 
-    if (projects.isEmpty) {
-      return _buildEmptyState(context);
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: projects.length,
-      itemBuilder: (context, index) {
-        // TODO: Renderizar ProjectCard
-        return const Card(child: ListTile(title: Text('Proyecto placeholder')));
-      },
-    );
+    // Por ahora siempre mostramos empty state
+    return _buildEmptyState(context);
   }
 
   /// Estado cuando no hay workspace seleccionado
@@ -202,9 +196,10 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
             prefixIcon: Icon(Icons.search),
           ),
           onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
+            // TODO: Implementar búsqueda cuando se integre con backend
+            // setState(() {
+            //   _searchQuery = value;
+            // });
           },
         ),
         actions: [

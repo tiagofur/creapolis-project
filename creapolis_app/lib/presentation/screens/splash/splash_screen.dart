@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/constants/storage_keys.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
@@ -37,12 +39,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
-          AppLogger.info(
-            'SplashScreen: Usuario autenticado, navegando a /workspaces',
-          );
-          context.goToWorkspaces();
+          // Verificar si el usuario ya vio el onboarding
+          final prefs = await SharedPreferences.getInstance();
+          final hasSeenOnboarding =
+              prefs.getBool(StorageKeys.hasSeenOnboarding) ?? false;
+
+          if (!hasSeenOnboarding && mounted) {
+            AppLogger.info(
+              'SplashScreen: Primera vez del usuario, navegando a onboarding',
+            );
+            context.goToOnboarding();
+          } else if (mounted) {
+            AppLogger.info(
+              'SplashScreen: Usuario autenticado, navegando a dashboard (Home)',
+            );
+            context.goToDashboard();
+          }
         } else if (state is AuthUnauthenticated) {
           AppLogger.info(
             'SplashScreen: Usuario no autenticado, navegando a /login',

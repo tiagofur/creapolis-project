@@ -9,6 +9,9 @@ class RouteBuilder {
   static String login() => '/auth/login';
   static String register() => '/auth/register';
 
+  // Onboarding route
+  static String onboarding() => '/onboarding';
+
   // Dashboard route
   static String dashboard() => '/';
 
@@ -62,6 +65,9 @@ extension RouteNavigationExtension on BuildContext {
   // Auth navigation
   void goToLogin() => go(RouteBuilder.login());
   void goToRegister() => go(RouteBuilder.register());
+
+  // Onboarding navigation
+  void goToOnboarding() => go(RouteBuilder.onboarding());
 
   // Dashboard navigation
   void goToDashboard() => go(RouteBuilder.dashboard());

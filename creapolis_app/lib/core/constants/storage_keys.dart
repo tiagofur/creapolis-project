@@ -16,4 +16,5 @@ class StorageKeys {
   static const String layoutType = 'layout_type';
   static const String languageCode = 'language_code';
   static const String isFirstLaunch = 'is_first_launch';
+  static const String hasSeenOnboarding = 'has_seen_onboarding';
 }

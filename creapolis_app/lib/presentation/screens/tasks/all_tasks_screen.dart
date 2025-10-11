@@ -217,8 +217,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
   Widget _buildContent(BuildContext context, {required bool myTasksOnly}) {
     // TODO: Verificar si hay workspace activo
-    final hasWorkspace =
-        true; // Temporal: Cambiar a true para ver datos de prueba
+    final hasWorkspace = true; // Temporal: true para mostrar datos de prueba
 
     if (!hasWorkspace) {
       return _buildNoWorkspaceState(context);

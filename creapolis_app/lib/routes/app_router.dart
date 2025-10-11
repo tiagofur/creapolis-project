@@ -11,6 +11,7 @@ import '../presentation/screens/dashboard/dashboard_screen.dart';
 import '../presentation/screens/gantt/gantt_chart_screen.dart';
 import '../presentation/screens/main_shell/main_shell.dart';
 import '../presentation/screens/more/more_screen.dart';
+import '../presentation/screens/onboarding/onboarding_screen.dart';
 import '../presentation/screens/profile/profile_screen.dart';
 import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
@@ -52,6 +53,13 @@ class AppRouter {
         path: RoutePaths.register,
         name: RouteNames.register,
         builder: (context, state) => const RegisterScreen(),
+      ),
+
+      // Onboarding Route
+      GoRoute(
+        path: RoutePaths.onboarding,
+        name: RouteNames.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       // Settings Routes (global)
@@ -374,6 +382,7 @@ class RoutePaths {
   static const String more = '/more';
   static const String login = '/auth/login';
   static const String register = '/auth/register';
+  static const String onboarding = '/onboarding';
   static const String settings = '/settings';
   static const String profile = '/profile';
 
@@ -412,6 +421,7 @@ class RouteNames {
   static const String more = 'more';
   static const String login = 'login';
   static const String register = 'register';
+  static const String onboarding = 'onboarding';
   static const String projects = 'projects';
   static const String projectDetail = 'project-detail';
   static const String tasks = 'tasks';
