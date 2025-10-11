@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/storage_keys.dart';
+import '../core/services/last_route_service.dart';
+import '../core/utils/app_logger.dart';
 import '../injection.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
@@ -19,6 +21,7 @@ import '../presentation/screens/workspace/workspace_list_screen.dart';
 /// Configuración de rutas de la aplicación
 class AppRouter {
   static final _secureStorage = getIt<FlutterSecureStorage>();
+  static final _lastRouteService = getIt<LastRouteService>();
 
   /// Instancia de GoRouter
   static final GoRouter router = GoRouter(
@@ -45,111 +48,133 @@ class AppRouter {
         builder: (context, state) => const RegisterScreen(),
       ),
 
-      // Projects Routes
-      GoRoute(
-        path: RoutePaths.projects,
-        name: RouteNames.projects,
-        builder: (context, state) => const ProjectsListScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.projectDetail,
-        name: RouteNames.projectDetail,
-        builder: (context, state) {
-          final id = state.pathParameters['id'] ?? '0';
-          return ProjectDetailScreen(projectId: id);
-        },
-      ),
-
-      // Gantt Routes
-      GoRoute(
-        path: RoutePaths.gantt,
-        name: RouteNames.gantt,
-        builder: (context, state) {
-          final projectId = state.pathParameters['projectId'] ?? '0';
-          return GanttChartScreen(projectId: int.parse(projectId));
-        },
-      ),
-
-      // Task Detail Route
-      GoRoute(
-        path: RoutePaths.taskDetail,
-        name: RouteNames.taskDetail,
-        builder: (context, state) {
-          final projectId = state.pathParameters['projectId'] ?? '0';
-          final taskId = state.pathParameters['taskId'] ?? '0';
-          return TaskDetailScreen(
-            taskId: int.parse(taskId),
-            projectId: int.parse(projectId),
-          );
-        },
-      ),
-
-      // Workload Route
-      GoRoute(
-        path: RoutePaths.workload,
-        name: RouteNames.workload,
-        builder: (context, state) {
-          final projectId = state.pathParameters['projectId'] ?? '0';
-          return WorkloadScreen(projectId: int.parse(projectId));
-        },
-      ),
-
-      // Settings Routes
+      // Settings Routes (global)
       GoRoute(
         path: RoutePaths.settings,
         name: RouteNames.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
 
-      // Workspace Routes
+      // Workspace Routes con rutas anidadas
       GoRoute(
         path: RoutePaths.workspaces,
         name: RouteNames.workspaces,
         builder: (context, state) => const WorkspaceListScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.workspaceDetail,
-        name: RouteNames.workspaceDetail,
-        builder: (context, state) {
-          // TODO: Cargar workspace por ID
-          return const WorkspaceListScreen(); // Temporal
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.workspaceCreate,
-        name: RouteNames.workspaceCreate,
-        builder: (context, state) => const WorkspaceCreateScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.workspaceMembers,
-        name: RouteNames.workspaceMembers,
-        builder: (context, state) {
-          // TODO: Cargar workspace por ID y pasar a MembersScreen
-          return const WorkspaceListScreen(); // Temporal
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.workspaceSettings,
-        name: RouteNames.workspaceSettings,
-        builder: (context, state) {
-          // TODO: Cargar workspace por ID y pasar a SettingsScreen
-          return const WorkspaceListScreen(); // Temporal
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.invitations,
-        name: RouteNames.invitations,
-        builder: (context, state) => const WorkspaceInvitationsScreen(),
+        routes: [
+          // Create workspace (no requiere ID)
+          GoRoute(
+            path: 'create',
+            name: RouteNames.workspaceCreate,
+            builder: (context, state) => const WorkspaceCreateScreen(),
+          ),
+
+          // Invitations (global de workspaces)
+          GoRoute(
+            path: 'invitations',
+            name: RouteNames.invitations,
+            builder: (context, state) => const WorkspaceInvitationsScreen(),
+          ),
+
+          // Rutas específicas de un workspace (anidadas bajo :wId)
+          GoRoute(
+            path: ':wId',
+            name: RouteNames.workspaceDetail,
+            builder: (context, state) {
+              // TODO: Cargar workspace por ID
+              return const WorkspaceListScreen(); // Temporal
+            },
+            routes: [
+              // Members del workspace
+              GoRoute(
+                path: 'members',
+                name: RouteNames.workspaceMembers,
+                builder: (context, state) {
+                  // TODO: Cargar workspace por ID y pasar a MembersScreen
+                  return const WorkspaceListScreen(); // Temporal
+                },
+              ),
+
+              // Settings del workspace
+              GoRoute(
+                path: 'settings',
+                name: RouteNames.workspaceSettings,
+                builder: (context, state) {
+                  // TODO: Cargar workspace por ID y pasar a SettingsScreen
+                  return const WorkspaceListScreen(); // Temporal
+                },
+              ),
+
+              // Projects list dentro de un workspace
+              GoRoute(
+                path: 'projects',
+                name: RouteNames.projects,
+                builder: (context, state) => const ProjectsListScreen(),
+                routes: [
+                  // Project detail con todas sus sub-rutas
+                  GoRoute(
+                    path: ':pId',
+                    name: RouteNames.projectDetail,
+                    builder: (context, state) {
+                      final id = state.pathParameters['pId'] ?? '0';
+                      return ProjectDetailScreen(projectId: id);
+                    },
+                    routes: [
+                      // Gantt chart del proyecto
+                      GoRoute(
+                        path: 'gantt',
+                        name: RouteNames.gantt,
+                        builder: (context, state) {
+                          final projectId = state.pathParameters['pId'] ?? '0';
+                          return GanttChartScreen(
+                            projectId: int.parse(projectId),
+                          );
+                        },
+                      ),
+
+                      // Workload del proyecto
+                      GoRoute(
+                        path: 'workload',
+                        name: RouteNames.workload,
+                        builder: (context, state) {
+                          final projectId = state.pathParameters['pId'] ?? '0';
+                          return WorkloadScreen(
+                            projectId: int.parse(projectId),
+                          );
+                        },
+                      ),
+
+                      // Tasks dentro del proyecto
+                      GoRoute(
+                        path: 'tasks/:tId',
+                        name: RouteNames.taskDetail,
+                        builder: (context, state) {
+                          final projectId = state.pathParameters['pId'] ?? '0';
+                          final taskId = state.pathParameters['tId'] ?? '0';
+                          return TaskDetailScreen(
+                            taskId: int.parse(taskId),
+                            projectId: int.parse(projectId),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
 
-  /// Manejar redirecciones basadas en autenticación
+  /// Manejar redirecciones basadas en autenticación y permisos
   static Future<String?> _handleRedirect(
     BuildContext context,
     GoRouterState state,
   ) async {
     final currentPath = state.matchedLocation;
+
+    AppLogger.info('AppRouter: Evaluando redirect para: $currentPath');
 
     // Si está en splash, permitir
     if (currentPath == RoutePaths.splash) {
@@ -158,17 +183,71 @@ class AppRouter {
 
     // Verificar si tiene token de autenticación
     final hasToken = await _hasValidToken();
-
     final isAuthRoute = currentPath.startsWith('/auth');
 
-    // Si no tiene token y no está en ruta de auth, redirigir a login
+    // **Caso 1: Sin token y no en ruta de auth**
     if (!hasToken && !isAuthRoute) {
+      AppLogger.info(
+        'AppRouter: Sin token, guardando ruta y redirigiendo a login',
+      );
+
+      // Guardar la ruta que intentaba visitar para restaurar después del login
+      if (_lastRouteService.isValidRoute(currentPath)) {
+        await _lastRouteService.saveLastRoute(currentPath);
+
+        // Guardar workspace ID si la ruta lo contiene
+        final workspaceId = _lastRouteService.extractWorkspaceId(currentPath);
+        if (workspaceId != null) {
+          await _lastRouteService.saveLastWorkspace(workspaceId);
+        }
+      }
+
       return RoutePaths.login;
     }
 
-    // Si tiene token y está en ruta de auth, redirigir a projects
+    // **Caso 2: Con token y en ruta de auth**
     if (hasToken && isAuthRoute) {
-      return RoutePaths.projects;
+      AppLogger.info(
+        'AppRouter: Con token en ruta de auth, intentando restaurar última ruta',
+      );
+
+      // Intentar restaurar la última ruta visitada
+      final lastRoute = await _lastRouteService.getLastRoute();
+
+      if (lastRoute != null && _lastRouteService.isValidRoute(lastRoute)) {
+        AppLogger.info('AppRouter: Restaurando última ruta: $lastRoute');
+
+        // TODO: Aquí se podría validar permisos de workspace antes de restaurar
+        // Por ahora, simplemente restauramos la ruta
+
+        return lastRoute;
+      }
+
+      // Si no hay ruta guardada, ir a workspaces
+      AppLogger.info(
+        'AppRouter: No hay ruta guardada, redirigiendo a workspaces',
+      );
+      return RoutePaths.workspaces;
+    }
+
+    // **Caso 3: Con token y en ruta protegida con workspace**
+    if (hasToken && _lastRouteService.requiresWorkspace(currentPath)) {
+      // Guardar la ruta actual como última visitada
+      await _lastRouteService.saveLastRoute(currentPath);
+
+      // Guardar workspace ID
+      final workspaceId = _lastRouteService.extractWorkspaceId(currentPath);
+      if (workspaceId != null) {
+        await _lastRouteService.saveLastWorkspace(workspaceId);
+      }
+
+      // TODO: Aquí se podría validar si el usuario tiene acceso al workspace
+      // Por ahora, permitimos el acceso y dejamos que el screen maneje el error
+    }
+
+    // **Caso 4: Guardar ruta válida para futuras referencias**
+    if (hasToken && _lastRouteService.isValidRoute(currentPath)) {
+      await _lastRouteService.saveLastRoute(currentPath);
     }
 
     // No redirigir
@@ -190,15 +269,28 @@ class AppRouter {
     context.go(RoutePaths.login);
   }
 
-  /// Navegar a projects y limpiar stack
-  static void goToProjects(BuildContext context) {
-    context.go(RoutePaths.projects);
+  /// Navegar a workspaces y limpiar stack
+  static void goToWorkspaces(BuildContext context) {
+    context.go(RoutePaths.workspaces);
+  }
+
+  /// Navegar a projects de un workspace
+  static void goToProjects(BuildContext context, int workspaceId) {
+    context.go(RoutePaths.projects(workspaceId));
   }
 
   /// Logout y limpiar token
   static Future<void> logout(BuildContext context) async {
+    AppLogger.info('AppRouter: Ejecutando logout y limpiando datos');
+
+    // Limpiar tokens de autenticación
     await _secureStorage.delete(key: StorageKeys.accessToken);
     await _secureStorage.delete(key: StorageKeys.refreshToken);
+
+    // Limpiar rutas guardadas
+    await _lastRouteService.clearAll();
+
+    // Redirigir a login si el context está montado
     if (context.mounted) {
       goToLogin(context);
     }
@@ -210,23 +302,32 @@ class RoutePaths {
   static const String splash = '/splash';
   static const String login = '/auth/login';
   static const String register = '/auth/register';
-  static const String projects = '/projects';
-  static const String projectDetail = '/projects/:id';
-  static const String tasks = '/projects/:projectId/tasks';
-  static const String taskDetail = '/projects/:projectId/tasks/:taskId';
-  static const String gantt = '/projects/:projectId/gantt';
-  static const String workload = '/projects/:projectId/workload';
-  static const String timeTracking = '/time-tracking';
   static const String settings = '/settings';
 
   // Workspace routes
   static const String workspaces = '/workspaces';
-  static const String workspaceDetail = '/workspaces/:id';
   static const String workspaceCreate = '/workspaces/create';
-  static const String workspaceEdit = '/workspaces/:id/edit';
-  static const String workspaceMembers = '/workspaces/:id/members';
-  static const String workspaceSettings = '/workspaces/:id/settings';
-  static const String invitations = '/invitations';
+  static const String invitations = '/workspaces/invitations';
+
+  // Dynamic workspace routes (requieren workspaceId)
+  static String workspaceDetail(int wId) => '/workspaces/$wId';
+  static String workspaceMembers(int wId) => '/workspaces/$wId/members';
+  static String workspaceSettings(int wId) => '/workspaces/$wId/settings';
+
+  // Project routes (requieren workspaceId)
+  static String projects(int wId) => '/workspaces/$wId/projects';
+  static String projectDetail(int wId, int pId) =>
+      '/workspaces/$wId/projects/$pId';
+
+  // Project views (requieren workspaceId y projectId)
+  static String gantt(int wId, int pId) =>
+      '/workspaces/$wId/projects/$pId/gantt';
+  static String workload(int wId, int pId) =>
+      '/workspaces/$wId/projects/$pId/workload';
+
+  // Task routes (requieren workspaceId, projectId y taskId)
+  static String taskDetail(int wId, int pId, int tId) =>
+      '/workspaces/$wId/projects/$pId/tasks/$tId';
 }
 
 /// Nombres de rutas para navegación con nombre

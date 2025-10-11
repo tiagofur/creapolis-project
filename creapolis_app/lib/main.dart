@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
@@ -18,6 +20,11 @@ import 'routes/app_router.dart';
 void main() async {
   // Asegurar inicialización de Flutter
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Eliminar hash (#) de las URLs en web
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   // Inicializar dependencias (GetIt, SharedPreferences, etc.)
   await initializeDependencies();

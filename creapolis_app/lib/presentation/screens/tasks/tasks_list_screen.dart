@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
-import '../../../routes/app_router.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
@@ -388,12 +387,19 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   /// Navegar a detalle de la tarea
   void _navigateToDetail(BuildContext context, int taskId) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId == null) {
+      AppLogger.warning(
+        'TasksListScreen: No hay workspace activo, redirigiendo a lista de workspaces',
+      );
+      context.goToWorkspaces();
+      return;
+    }
+
     AppLogger.info('TasksListScreen: Navegando a detalle de tarea $taskId');
-    context.push(
-      RoutePaths.taskDetail
-          .replaceFirst(':projectId', widget.projectId.toString())
-          .replaceFirst(':taskId', taskId.toString()),
-    );
+    context.pushToTask(workspaceId, widget.projectId, taskId);
   }
 
   /// Confirmar eliminación de tarea

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../providers/workspace_context.dart';
@@ -136,7 +136,7 @@ class MainDrawer extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop(); // Cerrar drawer
-                      context.push('/workspaces');
+                      context.goToWorkspaces();
                     },
                     icon: Icon(
                       Icons.swap_horiz,
@@ -173,7 +173,7 @@ class MainDrawer extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.push('/workspaces');
+                      context.goToWorkspaces();
                     },
                     icon: Icon(
                       Icons.add,
@@ -213,13 +213,13 @@ class MainDrawer extends StatelessWidget {
           context,
           icon: Icons.dashboard_outlined,
           title: 'Dashboard',
-          onTap: () => _navigateTo(context, '/projects'),
+          onTap: () => _navigateToProjects(context),
         ),
         _buildDrawerItem(
           context,
           icon: Icons.folder_outlined,
           title: 'Proyectos',
-          onTap: () => _navigateTo(context, '/projects'),
+          onTap: () => _navigateToProjects(context),
         ),
         _buildDrawerItem(
           context,
@@ -277,30 +277,34 @@ class MainDrawer extends StatelessWidget {
                 context,
                 icon: Icons.people_outline,
                 title: 'Miembros del Workspace',
-                onTap: () => _navigateTo(
-                  context,
-                  '/workspace/${workspaceContext.activeWorkspace!.id}/members',
-                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.goToWorkspaceMembers(
+                    workspaceContext.activeWorkspace!.id,
+                  );
+                },
               ),
               if (workspaceContext.canInviteMembers)
                 _buildDrawerItem(
                   context,
                   icon: Icons.person_add_outlined,
                   title: 'Invitar Miembros',
-                  onTap: () => _navigateTo(
-                    context,
-                    '/workspace/${workspaceContext.activeWorkspace!.id}/invite',
-                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.goToInvitations();
+                  },
                 ),
               if (workspaceContext.canManageSettings)
                 _buildDrawerItem(
                   context,
                   icon: Icons.settings_outlined,
                   title: 'Configuración Workspace',
-                  onTap: () => _navigateTo(
-                    context,
-                    '/workspace/${workspaceContext.activeWorkspace!.id}/settings',
-                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.goToWorkspaceSettings(
+                      workspaceContext.activeWorkspace!.id,
+                    );
+                  },
                 ),
             ] else ...[
               Padding(
@@ -405,7 +409,32 @@ class MainDrawer extends StatelessWidget {
   /// Navegar y cerrar drawer
   void _navigateTo(BuildContext context, String route) {
     Navigator.of(context).pop(); // Cerrar drawer
-    context.push(route);
+
+    // Para rutas simples que no requieren workspace
+    if (route == '/settings') {
+      context.goToSettings();
+    } else if (route == '/invitations' || route == '/workspaces/invitations') {
+      context.goToInvitations();
+    } else {
+      // Para otras rutas, mostrar mensaje (no implementadas aún)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Navegación a $route próximamente')),
+      );
+    }
+  }
+
+  /// Navegar a projects con workspace context
+  void _navigateToProjects(BuildContext context) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    Navigator.of(context).pop(); // Cerrar drawer
+
+    if (workspaceId != null) {
+      context.goToProjects(workspaceId);
+    } else {
+      context.goToWorkspaces();
+    }
   }
 
   /// Logout

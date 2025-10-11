@@ -36,9 +36,7 @@ class _TaskCardState extends State<TaskCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
-      child: Hero(
-        tag: HeroTags.task(widget.task.id),
-        child: Card(
+      child: Card(
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
           elevation: _isHovering ? 4 : 1,
           child: InkWell(
@@ -242,7 +240,6 @@ class _TaskCardState extends State<TaskCard> {
             ),
           ),
         ),
-      ),
     );
   }
 

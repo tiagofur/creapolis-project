@@ -68,9 +68,7 @@ class _ProjectCardState extends State<ProjectCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Hero(
-        tag: HeroTags.project(widget.project.id),
-        child: AnimatedContainer(
+      child: AnimatedContainer(
           duration: ViewConstants.hoverTransition,
           curve: ViewConstants.hoverCurve,
           child: Card(
@@ -303,7 +301,6 @@ class _ProjectCardState extends State<ProjectCard> {
             ),
           ),
         ),
-      ),
     );
   }
 

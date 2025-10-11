@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -31,9 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             AppLogger.info(
-              'LoginScreen: Usuario autenticado, navegando a /projects',
+              'LoginScreen: Usuario autenticado, navegando a /workspaces',
             );
-            context.go('/projects');
+            context.goToWorkspaces();
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           TextButton(
-                            onPressed: () => context.go('/auth/register'),
+                            onPressed: () => context.goToRegister(),
                             child: const Text('Regístrate'),
                           ),
                         ],

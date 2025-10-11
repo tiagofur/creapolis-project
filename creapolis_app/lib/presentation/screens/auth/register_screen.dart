@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -32,16 +32,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: const Text('Crear Cuenta'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/auth/login'),
+          onPressed: () => context.goToLogin(),
         ),
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             AppLogger.info(
-              'RegisterScreen: Usuario registrado, navegando a /projects',
+              'RegisterScreen: Usuario registrado, navegando a /workspaces',
             );
-            context.go('/projects');
+            context.goToWorkspaces();
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -287,7 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           TextButton(
-                            onPressed: () => context.go('/auth/login'),
+                            onPressed: () => context.goToLogin(),
                             child: const Text('Inicia Sesión'),
                           ),
                         ],

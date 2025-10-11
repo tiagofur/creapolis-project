@@ -3,6 +3,8 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/services/last_route_service.dart';
+
 // Este archivo será generado por build_runner
 import 'injection.config.dart';
 
@@ -30,6 +32,11 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 3. Inicializar dependencias generadas por injectable
+  // 3. Registrar LastRouteService
+  getIt.registerLazySingleton<LastRouteService>(
+    () => LastRouteService(getIt<FlutterSecureStorage>()),
+  );
+
+  // 4. Inicializar dependencias generadas por injectable
   _configureInjectable();
 }

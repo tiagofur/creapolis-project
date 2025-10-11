@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
+import '../../providers/workspace_context.dart';
 import '../../widgets/common/collapsible_section.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
 import '../tasks/tasks_list_screen.dart';
@@ -52,6 +54,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     super.dispose();
   }
 
+  /// Navegar de vuelta a la lista de proyectos
+  void _navigateToProjects() {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId != null) {
+      context.goToProjects(workspaceId);
+    } else {
+      // Si no hay workspace activo, ir a la lista de workspaces
+      context.goToWorkspaces();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -79,7 +94,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 backgroundColor: Colors.green,
               ),
             );
-            context.go('/projects');
+            _navigateToProjects();
           } else if (state is ProjectError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -122,7 +137,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             expandedHeight: 120,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/projects'),
+              onPressed: _navigateToProjects,
               tooltip: 'Volver a proyectos',
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -345,6 +360,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   /// Tab de Tareas (más espacio que antes)
   Widget _buildTasksTab(BuildContext context, Project project) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
     return Column(
       children: [
         // Toolbar de acciones
@@ -354,17 +372,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               ElevatedButton.icon(
-                onPressed: () {
-                  context.push('/projects/${project.id}/gantt');
-                },
+                onPressed: workspaceId != null
+                    ? () => context.goToGantt(workspaceId, project.id)
+                    : null,
                 icon: const Icon(Icons.view_timeline, size: 18),
                 label: const Text('Ver Gantt'),
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
-                onPressed: () {
-                  context.push('/projects/${project.id}/workload');
-                },
+                onPressed: workspaceId != null
+                    ? () => context.goToWorkload(workspaceId, project.id)
+                    : null,
                 icon: const Icon(Icons.people, size: 18),
                 label: const Text('Workload'),
               ),
@@ -630,7 +648,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => context.go('/projects'),
+              onPressed: _navigateToProjects,
               icon: const Icon(Icons.arrow_back),
               label: const Text('Volver a Proyectos'),
             ),

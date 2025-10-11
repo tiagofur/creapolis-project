@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
@@ -8,6 +7,7 @@ import '../../../core/constants/view_constants.dart';
 import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../bloc/project/project_bloc.dart';
@@ -200,7 +200,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
+            onPressed: () => context.goToSettings(),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -433,10 +433,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
   /// Navegar a detalle del proyecto
   void _navigateToDetail(BuildContext context, int projectId) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId == null) {
+      AppLogger.warning(
+        'ProjectsListScreen: No hay workspace activo, redirigiendo a lista de workspaces',
+      );
+      context.goToWorkspaces();
+      return;
+    }
+
     AppLogger.info(
-      'ProjectsListScreen: Navegando a detalle del proyecto $projectId',
+      'ProjectsListScreen: Navegando a detalle del proyecto $projectId en workspace $workspaceId',
     );
-    context.go('/projects/$projectId');
+    context.goToProject(workspaceId, projectId);
   }
 
   /// Confirmar eliminación de proyecto
@@ -498,7 +509,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       if (authBloc.runtimeType.toString() == 'AuthBloc') {
         // authBloc.add(const LogoutEvent());
       }
-      context.go('/login');
+      context.goToLogin();
     }
   }
 
@@ -542,7 +553,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     if (hasWorkspaces) {
       // Hay workspaces, ir a la pantalla de selección
-      context.push('/workspaces');
+      context.goToWorkspaces();
     } else {
       // No hay workspaces o no se han cargado, mostrar modal de crear
       _showCreateWorkspaceSheet(context);

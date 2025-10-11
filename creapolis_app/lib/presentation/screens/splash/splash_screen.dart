@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../routes/app_router.dart';
+import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
@@ -41,14 +40,14 @@ class _SplashScreenState extends State<SplashScreen> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           AppLogger.info(
-            'SplashScreen: Usuario autenticado, navegando a /projects',
+            'SplashScreen: Usuario autenticado, navegando a /workspaces',
           );
-          context.go(RoutePaths.projects);
+          context.goToWorkspaces();
         } else if (state is AuthUnauthenticated) {
           AppLogger.info(
             'SplashScreen: Usuario no autenticado, navegando a /login',
           );
-          context.go(RoutePaths.login);
+          context.goToLogin();
         }
         // Si está en AuthLoading, mantener splash visible
       },
