@@ -31,9 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             AppLogger.info(
-              'LoginScreen: Usuario autenticado, navegando a /workspaces',
+              'LoginScreen: Usuario autenticado, navegando al dashboard',
             );
-            context.goToWorkspaces();
+            context.goToDashboard();
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

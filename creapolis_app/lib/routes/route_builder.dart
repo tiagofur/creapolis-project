@@ -9,6 +9,14 @@ class RouteBuilder {
   static String login() => '/auth/login';
   static String register() => '/auth/register';
 
+  // Dashboard route
+  static String dashboard() => '/';
+
+  // Bottom Navigation routes
+  static String allProjects() => '/projects';
+  static String allTasks() => '/tasks';
+  static String more() => '/more';
+
   // Workspace routes
   static String workspaces() => '/workspaces';
 
@@ -54,6 +62,14 @@ extension RouteNavigationExtension on BuildContext {
   // Auth navigation
   void goToLogin() => go(RouteBuilder.login());
   void goToRegister() => go(RouteBuilder.register());
+
+  // Dashboard navigation
+  void goToDashboard() => go(RouteBuilder.dashboard());
+
+  // Bottom Navigation
+  void goToAllProjects() => go(RouteBuilder.allProjects());
+  void goToAllTasks() => go(RouteBuilder.allTasks());
+  void goToMore() => go(RouteBuilder.more());
 
   // Workspace navigation
   void goToWorkspaces() => go(RouteBuilder.workspaces());

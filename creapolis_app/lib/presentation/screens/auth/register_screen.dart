@@ -39,9 +39,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         listener: (context, state) {
           if (state is AuthAuthenticated) {
             AppLogger.info(
-              'RegisterScreen: Usuario registrado, navegando a /workspaces',
+              'RegisterScreen: Usuario registrado, navegando al dashboard',
             );
-            context.goToWorkspaces();
+            context.goToDashboard();
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

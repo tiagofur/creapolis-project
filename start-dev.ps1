@@ -139,7 +139,7 @@ try {
 }
 
 # Paso 3: Iniciar Backend en segundo plano
-Write-Step "Iniciando Backend (puerto 3000)..."
+Write-Step "Iniciando Backend (puerto 3001)..."
 $backendJob = Start-Job -ScriptBlock {
     Set-Location $using:PWD
     npm start
@@ -154,7 +154,7 @@ $maxAttempts = 20
 $attempt = 0
 while ($attempt -lt $maxAttempts) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -Method GET -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
+        $response = Invoke-WebRequest -Uri "http://localhost:3001/api/health" -Method GET -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
         if ($response.StatusCode -eq 200) {
             Write-Success "Backend está listo y respondiendo"
             break
@@ -216,7 +216,7 @@ Write-ColorOutput Green @"
 ║                  ENTORNO INICIADO                     ║
 ╠═══════════════════════════════════════════════════════╣
 ║  PostgreSQL:     http://localhost:5432                ║
-║  Backend API:    http://localhost:3000/api            ║
+║  Backend API:    http://localhost:3001/api            ║
 ║  Flutter Web:    http://localhost:8080                ║
 ╠═══════════════════════════════════════════════════════╣
 ║  CORS configurado para: http://localhost:8080         ║

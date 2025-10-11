@@ -7,11 +7,17 @@ import '../core/utils/app_logger.dart';
 import '../injection.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
+import '../presentation/screens/dashboard/dashboard_screen.dart';
 import '../presentation/screens/gantt/gantt_chart_screen.dart';
+import '../presentation/screens/main_shell/main_shell.dart';
+import '../presentation/screens/more/more_screen.dart';
+import '../presentation/screens/profile/profile_screen.dart';
+import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
 import '../presentation/screens/projects/projects_list_screen.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
+import '../presentation/screens/tasks/all_tasks_screen.dart';
 import '../presentation/screens/tasks/task_detail_screen.dart';
 import '../presentation/screens/workload/workload_screen.dart';
 import '../presentation/screens/workspace/workspace_create_screen.dart';
@@ -53,6 +59,68 @@ class AppRouter {
         path: RoutePaths.settings,
         name: RouteNames.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Profile Route (global)
+      GoRoute(
+        path: RoutePaths.profile,
+        name: RouteNames.profile,
+        builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // Main Shell con Bottom Navigation (4 tabs)
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainShell(
+            navigationShell: navigationShell,
+            child: navigationShell,
+          );
+        },
+        branches: [
+          // Branch 0: Dashboard (Home)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.dashboard,
+                name: RouteNames.dashboard,
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
+          ),
+
+          // Branch 1: All Projects
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.allProjects,
+                name: RouteNames.allProjects,
+                builder: (context, state) => const AllProjectsScreen(),
+              ),
+            ],
+          ),
+
+          // Branch 2: All Tasks
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.allTasks,
+                name: RouteNames.allTasks,
+                builder: (context, state) => const AllTasksScreen(),
+              ),
+            ],
+          ),
+
+          // Branch 3: More (Menu)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.more,
+                name: RouteNames.more,
+                builder: (context, state) => const MoreScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
 
       // Workspace Routes con rutas anidadas
@@ -223,11 +291,11 @@ class AppRouter {
         return lastRoute;
       }
 
-      // Si no hay ruta guardada, ir a workspaces
+      // Si no hay ruta guardada, ir a dashboard
       AppLogger.info(
-        'AppRouter: No hay ruta guardada, redirigiendo a workspaces',
+        'AppRouter: No hay ruta guardada, redirigiendo a dashboard',
       );
-      return RoutePaths.workspaces;
+      return RoutePaths.dashboard;
     }
 
     // **Caso 3: Con token y en ruta protegida con workspace**
@@ -300,9 +368,14 @@ class AppRouter {
 /// Rutas de la aplicación
 class RoutePaths {
   static const String splash = '/splash';
+  static const String dashboard = '/';
+  static const String allProjects = '/projects';
+  static const String allTasks = '/tasks';
+  static const String more = '/more';
   static const String login = '/auth/login';
   static const String register = '/auth/register';
   static const String settings = '/settings';
+  static const String profile = '/profile';
 
   // Workspace routes
   static const String workspaces = '/workspaces';
@@ -333,6 +406,10 @@ class RoutePaths {
 /// Nombres de rutas para navegación con nombre
 class RouteNames {
   static const String splash = 'splash';
+  static const String dashboard = 'dashboard';
+  static const String allProjects = 'all-projects';
+  static const String allTasks = 'all-tasks';
+  static const String more = 'more';
   static const String login = 'login';
   static const String register = 'register';
   static const String projects = 'projects';
@@ -343,6 +420,7 @@ class RouteNames {
   static const String timeTracking = 'time-tracking';
   static const String workload = 'workload';
   static const String settings = 'settings';
+  static const String profile = 'profile';
 
   // Workspace route names
   static const String workspaces = 'workspaces';
