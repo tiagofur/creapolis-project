@@ -9,7 +9,7 @@ abstract class TaskRepository {
   Future<Either<Failure, List<Task>>> getTasksByProject(int projectId);
 
   /// Obtener una tarea por ID
-  Future<Either<Failure, Task>> getTaskById(int id);
+  Future<Either<Failure, Task>> getTaskById(int projectId, int taskId);
 
   /// Crear una nueva tarea
   Future<Either<Failure, Task>> createTask({
@@ -27,7 +27,8 @@ abstract class TaskRepository {
 
   /// Actualizar una tarea existente
   Future<Either<Failure, Task>> updateTask({
-    required int id,
+    required int projectId,
+    required int taskId,
     String? title,
     String? description,
     TaskStatus? status,
@@ -41,19 +42,28 @@ abstract class TaskRepository {
   });
 
   /// Eliminar una tarea
-  Future<Either<Failure, void>> deleteTask(int id);
+  Future<Either<Failure, void>> deleteTask(int projectId, int taskId);
 
   /// Obtener dependencias de una tarea
-  Future<Either<Failure, List<TaskDependency>>> getTaskDependencies(int taskId);
+  Future<Either<Failure, List<TaskDependency>>> getTaskDependencies(
+    int projectId,
+    int taskId,
+  );
 
   /// Crear dependencia entre tareas
   Future<Either<Failure, TaskDependency>> createDependency({
-    required int predecessorTaskId,
-    required int successorTaskId,
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+    required String type,
   });
 
   /// Eliminar dependencia
-  Future<Either<Failure, void>> deleteDependency(int dependencyId);
+  Future<Either<Failure, void>> deleteDependency({
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+  });
 
   /// Calcular cronograma inicial del proyecto
   Future<Either<Failure, List<Task>>> calculateSchedule(int projectId);

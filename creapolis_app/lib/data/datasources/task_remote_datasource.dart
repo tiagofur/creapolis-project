@@ -7,7 +7,7 @@ import '../models/task_model.dart';
 /// Data source remoto para tareas
 abstract class TaskRemoteDataSource {
   Future<List<TaskModel>> getTasksByProject(int projectId);
-  Future<TaskModel> getTaskById(int id);
+  Future<TaskModel> getTaskById(int projectId, int taskId);
   Future<TaskModel> createTask({
     required String title,
     required String description,
@@ -21,7 +21,8 @@ abstract class TaskRemoteDataSource {
     List<int>? dependencyIds,
   });
   Future<TaskModel> updateTask({
-    required int id,
+    required int projectId,
+    required int taskId,
     String? title,
     String? description,
     TaskStatus? status,
@@ -33,13 +34,22 @@ abstract class TaskRemoteDataSource {
     int? assignedUserId,
     List<int>? dependencyIds,
   });
-  Future<void> deleteTask(int id);
-  Future<List<TaskDependencyModel>> getTaskDependencies(int taskId);
+  Future<void> deleteTask(int projectId, int taskId);
+  Future<List<TaskDependencyModel>> getTaskDependencies(
+    int projectId,
+    int taskId,
+  );
   Future<TaskDependencyModel> createDependency({
-    required int predecessorTaskId,
-    required int successorTaskId,
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+    required String type,
   });
-  Future<void> deleteDependency(int dependencyId);
+  Future<void> deleteDependency({
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+  });
   Future<List<TaskModel>> calculateSchedule(int projectId);
   Future<List<TaskModel>> rescheduleProject(int projectId, int triggerTaskId);
 }
@@ -89,12 +99,14 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   }
 
   @override
-  Future<TaskModel> getTaskById(int id) async {
+  Future<TaskModel> getTaskById(int projectId, int taskId) async {
     try {
-      AppLogger.info('TaskRemoteDataSource: Obteniendo tarea $id');
+      AppLogger.info('TaskRemoteDataSource: Obteniendo tarea $taskId del proyecto $projectId');
 
-      // Usar la ruta /api/tasks/:id que no requiere projectId
-      final response = await _apiClient.get<Map<String, dynamic>>('/tasks/$id');
+      // GET /projects/:projectId/tasks/:taskId
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/projects/$projectId/tasks/$taskId',
+      );
 
       // Extraer el campo 'data' de la respuesta Dio
       final responseBody = response.data;
@@ -167,7 +179,8 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
 
   @override
   Future<TaskModel> updateTask({
-    required int id,
+    required int projectId,
+    required int taskId,
     String? title,
     String? description,
     TaskStatus? status,
@@ -185,20 +198,21 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       if (title != null) data['title'] = title;
       if (description != null) data['description'] = description;
       if (status != null) data['status'] = TaskModel.statusToString(status);
-      if (priority != null) {
-        data['priority'] = TaskModel.priorityToString(priority);
-      }
+      // Note: Backend no soporta priority aún
       if (startDate != null) data['startDate'] = startDate.toIso8601String();
       if (endDate != null) data['endDate'] = endDate.toIso8601String();
       if (estimatedHours != null) data['estimatedHours'] = estimatedHours;
-      if (actualHours != null) data['actualHours'] = actualHours;
+      // Note: Backend no soporta actualizar actualHours directamente
       if (assignedUserId != null) data['assigneeId'] = assignedUserId;
-      if (dependencyIds != null) data['predecessorIds'] = dependencyIds;
+      // Note: Dependencies se manejan con endpoints separados
 
-      AppLogger.info('TaskRemoteDataSource: Actualizando tarea $id');
+      AppLogger.info(
+        'TaskRemoteDataSource: Actualizando tarea $taskId del proyecto $projectId',
+      );
 
+      // PUT /projects/:projectId/tasks/:taskId
       final response = await _apiClient.put<Map<String, dynamic>>(
-        '/tasks/$id',
+        '/projects/$projectId/tasks/$taskId',
         data: data,
       );
 
@@ -225,10 +239,15 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   }
 
   @override
-  Future<void> deleteTask(int id) async {
+  Future<void> deleteTask(int projectId, int taskId) async {
     try {
-      AppLogger.info('TaskRemoteDataSource: Eliminando tarea $id');
-      await _apiClient.delete('/tasks/$id');
+      AppLogger.info(
+        'TaskRemoteDataSource: Eliminando tarea $taskId del proyecto $projectId',
+      );
+      
+      // DELETE /projects/:projectId/tasks/:taskId
+      await _apiClient.delete('/projects/$projectId/tasks/$taskId');
+      
       AppLogger.info('TaskRemoteDataSource: Tarea eliminada exitosamente');
     } on AuthException {
       rethrow;
@@ -241,26 +260,37 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   }
 
   @override
-  Future<List<TaskDependencyModel>> getTaskDependencies(int taskId) async {
+  Future<List<TaskDependencyModel>> getTaskDependencies(
+    int projectId,
+    int taskId,
+  ) async {
     try {
       AppLogger.info(
         'TaskRemoteDataSource: Obteniendo dependencias de tarea $taskId',
       );
 
+      // Backend incluye dependencies en GET task by ID
+      // Obtenemos la tarea completa y extraemos las dependencias
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/tasks/$taskId/dependencies',
+        '/projects/$projectId/tasks/$taskId',
       );
 
       // Extraer el campo 'data' de la respuesta Dio
       final responseBody = response.data;
-      final dataRaw = responseBody?['data'];
+      final taskData = responseBody?['data'] as Map<String, dynamic>?;
 
-      // Si data es null o no es una lista, retornar lista vacía
-      if (dataRaw == null || dataRaw is! List) {
+      if (taskData == null) {
         return [];
       }
 
-      return dataRaw
+      // Extraer predecessors y successors
+      final predecessorsRaw = taskData['predecessors'] as List<dynamic>?;
+      
+      if (predecessorsRaw == null || predecessorsRaw.isEmpty) {
+        return [];
+      }
+
+      return predecessorsRaw
           .map(
             (json) =>
                 TaskDependencyModel.fromJson(json as Map<String, dynamic>),
@@ -280,17 +310,20 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
 
   @override
   Future<TaskDependencyModel> createDependency({
-    required int predecessorTaskId,
-    required int successorTaskId,
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+    required String type,
   }) async {
     try {
       AppLogger.info('TaskRemoteDataSource: Creando dependencia entre tareas');
 
+      // POST /projects/:projectId/tasks/:taskId/dependencies
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '/tasks/dependencies',
+        '/projects/$projectId/tasks/$taskId/dependencies',
         data: {
-          'predecessor_task_id': predecessorTaskId,
-          'successor_task_id': successorTaskId,
+          'predecessorId': predecessorId,
+          'type': type, // "FINISH_TO_START" or "START_TO_START"
         },
       );
 
@@ -315,12 +348,21 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   }
 
   @override
-  Future<void> deleteDependency(int dependencyId) async {
+  Future<void> deleteDependency({
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+  }) async {
     try {
       AppLogger.info(
-        'TaskRemoteDataSource: Eliminando dependencia $dependencyId',
+        'TaskRemoteDataSource: Eliminando dependencia tarea $taskId → predecesora $predecessorId',
       );
-      await _apiClient.delete('/tasks/dependencies/$dependencyId');
+      
+      // DELETE /projects/:projectId/tasks/:taskId/dependencies/:predecessorId
+      await _apiClient.delete(
+        '/projects/$projectId/tasks/$taskId/dependencies/$predecessorId',
+      );
+      
       AppLogger.info(
         'TaskRemoteDataSource: Dependencia eliminada exitosamente',
       );

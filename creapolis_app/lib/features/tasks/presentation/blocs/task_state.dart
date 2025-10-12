@@ -21,6 +21,7 @@ class TaskLoading extends TaskState {
 
 /// Tareas cargadas exitosamente
 class TasksLoaded extends TaskState {
+  final int projectId;
   final List<Task> tasks;
   final List<Task> filteredTasks;
   final Task? selectedTask;
@@ -29,6 +30,7 @@ class TasksLoaded extends TaskState {
   final String? searchQuery;
 
   const TasksLoaded({
+    required this.projectId,
     required this.tasks,
     required this.filteredTasks,
     this.selectedTask,
@@ -39,6 +41,7 @@ class TasksLoaded extends TaskState {
 
   @override
   List<Object?> get props => [
+    projectId,
     tasks,
     filteredTasks,
     selectedTask,
@@ -49,6 +52,7 @@ class TasksLoaded extends TaskState {
 
   /// Copia el estado con nuevos valores
   TasksLoaded copyWith({
+    int? projectId,
     List<Task>? tasks,
     List<Task>? filteredTasks,
     Task? selectedTask,
@@ -61,6 +65,7 @@ class TasksLoaded extends TaskState {
     bool clearSearchQuery = false,
   }) {
     return TasksLoaded(
+      projectId: projectId ?? this.projectId,
       tasks: tasks ?? this.tasks,
       filteredTasks: filteredTasks ?? this.filteredTasks,
       selectedTask: clearSelectedTask

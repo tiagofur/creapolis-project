@@ -87,15 +87,13 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Either<Failure, Task>> getTaskById(int id) async {
+  Future<Either<Failure, Task>> getTaskById(int projectId, int taskId) async {
     try {
       // 1. Intentar obtener del caché primero
-      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      final cachedTask = await _cacheDataSource.getCachedTaskById(taskId);
       if (cachedTask != null) {
         // Verificar si el caché del proyecto de esta tarea es válido
-        final hasValidCache = await _cacheDataSource.hasValidCache(
-          cachedTask.projectId,
-        );
+        final hasValidCache = await _cacheDataSource.hasValidCache(projectId);
         if (hasValidCache) {
           return Right(cachedTask);
         }
@@ -106,7 +104,7 @@ class TaskRepositoryImpl implements TaskRepository {
 
       if (isOnline) {
         // 3a. Online: obtener de API y actualizar caché
-        final task = await _remoteDataSource.getTaskById(id);
+        final task = await _remoteDataSource.getTaskById(projectId, taskId);
 
         // Cachear la tarea obtenida
         await _cacheDataSource.cacheTask(task);
@@ -131,14 +129,14 @@ class TaskRepositoryImpl implements TaskRepository {
       return Left(NotFoundFailure(e.message));
     } on NetworkException catch (e) {
       // En caso de error de red, usar caché
-      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      final cachedTask = await _cacheDataSource.getCachedTaskById(taskId);
       if (cachedTask != null) {
         return Right(cachedTask);
       }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
       // En caso de error del servidor, intentar usar caché
-      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      final cachedTask = await _cacheDataSource.getCachedTaskById(taskId);
       if (cachedTask != null) {
         return Right(cachedTask);
       }
@@ -190,7 +188,8 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<Either<Failure, Task>> updateTask({
-    required int id,
+    required int projectId,
+    required int taskId,
     String? title,
     String? description,
     TaskStatus? status,
@@ -204,7 +203,8 @@ class TaskRepositoryImpl implements TaskRepository {
   }) async {
     try {
       final task = await _remoteDataSource.updateTask(
-        id: id,
+        projectId: projectId,
+        taskId: taskId,
         title: title,
         description: description,
         status: status,
@@ -233,9 +233,9 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteTask(int id) async {
+  Future<Either<Failure, void>> deleteTask(int projectId, int taskId) async {
     try {
-      await _remoteDataSource.deleteTask(id);
+      await _remoteDataSource.deleteTask(projectId, taskId);
       return const Right(null);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
@@ -252,10 +252,14 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<Either<Failure, List<TaskDependency>>> getTaskDependencies(
+    int projectId,
     int taskId,
   ) async {
     try {
-      final dependencies = await _remoteDataSource.getTaskDependencies(taskId);
+      final dependencies = await _remoteDataSource.getTaskDependencies(
+        projectId,
+        taskId,
+      );
       return Right(dependencies);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
@@ -272,13 +276,17 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<Either<Failure, TaskDependency>> createDependency({
-    required int predecessorTaskId,
-    required int successorTaskId,
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+    required String type,
   }) async {
     try {
       final dependency = await _remoteDataSource.createDependency(
-        predecessorTaskId: predecessorTaskId,
-        successorTaskId: successorTaskId,
+        projectId: projectId,
+        taskId: taskId,
+        predecessorId: predecessorId,
+        type: type,
       );
       return Right(dependency);
     } on AuthException catch (e) {
@@ -295,9 +303,17 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteDependency(int dependencyId) async {
+  Future<Either<Failure, void>> deleteDependency({
+    required int projectId,
+    required int taskId,
+    required int predecessorId,
+  }) async {
     try {
-      await _remoteDataSource.deleteDependency(dependencyId);
+      await _remoteDataSource.deleteDependency(
+        projectId: projectId,
+        taskId: taskId,
+        predecessorId: predecessorId,
+      );
       return const Right(null);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));

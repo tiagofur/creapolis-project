@@ -4,7 +4,6 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/database/cache_manager.dart';
 import 'core/network/api_client.dart';
 import 'core/network/interceptors/auth_interceptor.dart';
 import 'core/services/last_route_service.dart';
@@ -39,18 +38,15 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 3. Registrar CacheManager para datasources locales
-  getIt.registerLazySingleton<CacheManager>(() => CacheManager());
-
-  // 4. Registrar Connectivity para ConnectivityService
+  // 3. Registrar Connectivity para ConnectivityService
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  // 5. Registrar LastRouteService
+  // 4. Registrar LastRouteService
   getIt.registerLazySingleton<LastRouteService>(
     () => LastRouteService(getIt<FlutterSecureStorage>()),
   );
 
-  // 6. Registrar Networking Layer
+  // 5. Registrar Networking Layer
   // AuthInterceptor (singleton)
   getIt.registerSingleton<AuthInterceptor>(
     AuthInterceptor(storage: getIt<FlutterSecureStorage>()),
@@ -64,24 +60,25 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 7. Registrar Data Sources
+  // 6. Registrar Data Sources
   // WorkspaceRemoteDataSource (usa ApiClient)
   getIt.registerLazySingleton<WorkspaceRemoteDataSource>(
     () => WorkspaceRemoteDataSource(),
   );
 
-  // ProjectRemoteDataSource (usa ApiClient - override manual)
-  getIt.registerLazySingleton<ProjectRemoteDataSourceImpl>(
+  // ProjectRemoteDataSource (usa ApiClient - registrar por interfaz)
+  getIt.registerLazySingleton<ProjectRemoteDataSource>(
     () => ProjectRemoteDataSourceImpl(getIt<ApiClient>()),
   );
 
-  // TaskRemoteDataSource (usa ApiClient - override manual)
-  getIt.registerLazySingleton<TaskRemoteDataSourceImpl>(
+  // TaskRemoteDataSource (usa ApiClient - registrar por interfaz)
+  getIt.registerLazySingleton<TaskRemoteDataSource>(
     () => TaskRemoteDataSourceImpl(getIt<ApiClient>()),
   );
 
-  // 8. Inicializar dependencias generadas por injectable
+  // 7. Inicializar dependencias generadas por injectable
   // Esto registrará automáticamente:
+  // - CacheManager (con @injectable)
   // - ConnectivityService
   // - WorkspaceCacheDataSource
   // - ProjectCacheDataSource
