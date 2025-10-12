@@ -13,7 +13,7 @@ class GetTaskByIdUseCase {
   GetTaskByIdUseCase(this._repository);
 
   /// Ejecuta el caso de uso
-  Future<Either<Failure, Task>> call(int id) async {
-    return await _repository.getTaskById(id);
+  Future<Either<Failure, Task>> call(int projectId, int taskId) async {
+    return await _repository.getTaskById(projectId, taskId);
   }
 }

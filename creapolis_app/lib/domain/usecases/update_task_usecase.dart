@@ -56,7 +56,8 @@ class UpdateTaskUseCase {
     }
 
     return await _repository.updateTask(
-      id: params.id,
+      projectId: params.projectId,
+      taskId: params.id,
       title: params.title,
       description: params.description,
       status: params.status,
@@ -73,6 +74,7 @@ class UpdateTaskUseCase {
 
 /// Parámetros para actualizar una tarea
 class UpdateTaskParams extends Equatable {
+  final int projectId;
   final int id;
   final String? title;
   final String? description;
@@ -86,6 +88,7 @@ class UpdateTaskParams extends Equatable {
   final List<int>? dependencyIds;
 
   const UpdateTaskParams({
+    required this.projectId,
     required this.id,
     this.title,
     this.description,
@@ -101,6 +104,7 @@ class UpdateTaskParams extends Equatable {
 
   @override
   List<Object?> get props => [
+    projectId,
     id,
     title,
     description,

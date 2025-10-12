@@ -98,7 +98,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     AppLogger.info('TaskBloc: Cargando tarea ${event.id}');
     emit(const TaskLoading());
 
-    final result = await _getTaskByIdUseCase(event.id);
+    // TODO: Necesitamos projectId aquí - por ahora usamos 1 como placeholder
+    final result = await _getTaskByIdUseCase(1, event.id);
 
     result.fold(
       (failure) {
@@ -158,6 +159,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     emit(const TaskLoading());
 
     final params = UpdateTaskParams(
+      projectId: 1, // TODO: Pasar projectId correcto
       id: event.id,
       title: event.title,
       description: event.description,
@@ -195,7 +197,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     AppLogger.info('TaskBloc: Eliminando tarea ${event.id}');
     emit(const TaskLoading());
 
-    final result = await _deleteTaskUseCase(event.id);
+    // TODO: Necesitamos projectId aquí - por ahora usamos 1 como placeholder
+    final result = await _deleteTaskUseCase(1, event.id);
 
     result.fold(
       (failure) {

@@ -12,7 +12,7 @@ class DeleteTaskUseCase {
   DeleteTaskUseCase(this._repository);
 
   /// Ejecuta el caso de uso
-  Future<Either<Failure, void>> call(int id) async {
-    return await _repository.deleteTask(id);
+  Future<Either<Failure, void>> call(int projectId, int taskId) async {
+    return await _repository.deleteTask(projectId, taskId);
   }
 }
