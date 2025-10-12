@@ -41,7 +41,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         },
         (tasks) {
           logger.i('Tasks loaded successfully: ${tasks.length} tasks');
-          emit(TasksLoaded(tasks: tasks, filteredTasks: tasks));
+          emit(TasksLoaded(
+            projectId: event.projectId,
+            tasks: tasks,
+            filteredTasks: tasks,
+          ));
         },
       );
     } catch (e) {
@@ -62,7 +66,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       // TODO: Implementar método getAllTasks en el repository
       // Por ahora, emitimos lista vacía
       logger.w('getAllTasks not implemented yet');
-      emit(const TasksLoaded(tasks: [], filteredTasks: []));
+      emit(const TasksLoaded(
+        projectId: 0, // Sin proyecto específico
+        tasks: [],
+        filteredTasks: [],
+      ));
     } catch (e) {
       logger.e('Exception loading all tasks: $e');
       emit(TaskError('Error inesperado al cargar todas las tareas: $e'));
@@ -77,7 +85,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     try {
       logger.i('Loading task by ID: ${event.taskId}');
 
-      final result = await taskRepository.getTaskById(event.taskId);
+      // Obtener projectId del state actual si existe
+      int projectId = 0;
+      if (state is TasksLoaded) {
+        projectId = (state as TasksLoaded).projectId;
+      }
+
+      final result = await taskRepository.getTaskById(projectId, event.taskId);
 
       result.fold(
         (failure) {
@@ -117,6 +131,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           } else {
             emit(
               TasksLoaded(
+                projectId: task.projectId, // Usar projectId de la tarea
                 tasks: [task],
                 filteredTasks: [task],
                 selectedTask: task,
@@ -172,7 +187,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
               ),
             );
           } else {
-            emit(TasksLoaded(tasks: [task], filteredTasks: [task]));
+            emit(TasksLoaded(
+              projectId: task.projectId,
+              tasks: [task],
+              filteredTasks: [task],
+            ));
           }
         },
       );
@@ -188,8 +207,17 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(const TaskOperationInProgress('Actualizando tarea...'));
       logger.i('Updating task: ${event.id}');
 
+      // Obtener projectId del state actual
+      if (state is! TasksLoaded) {
+        emit(const TaskError('No hay contexto de proyecto para actualizar tarea'));
+        return;
+      }
+      
+      final currentState = state as TasksLoaded;
+
       final result = await taskRepository.updateTask(
-        id: event.id,
+        projectId: currentState.projectId,
+        taskId: event.id,
         title: event.title,
         description: event.description,
         priority: event.priority,
@@ -243,7 +271,18 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(const TaskOperationInProgress('Eliminando tarea...'));
       logger.i('Deleting task: ${event.taskId}');
 
-      final result = await taskRepository.deleteTask(event.taskId);
+      // Obtener projectId del state actual
+      if (state is! TasksLoaded) {
+        emit(const TaskError('No hay contexto de proyecto para eliminar tarea'));
+        return;
+      }
+      
+      final currentState = state as TasksLoaded;
+
+      final result = await taskRepository.deleteTask(
+        currentState.projectId,
+        event.taskId,
+      );
 
       result.fold(
         (failure) {
@@ -406,8 +445,17 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     try {
       logger.i('Updating task status: ${event.taskId} -> ${event.newStatus}');
 
+      // Obtener projectId del state actual
+      if (state is! TasksLoaded) {
+        emit(const TaskError('No hay contexto de proyecto para actualizar estado'));
+        return;
+      }
+      
+      final currentState = state as TasksLoaded;
+
       final result = await taskRepository.updateTask(
-        id: event.taskId,
+        projectId: currentState.projectId,
+        taskId: event.taskId,
         status: event.newStatus,
       );
 

@@ -101,7 +101,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<TaskModel> getTaskById(int projectId, int taskId) async {
     try {
-      AppLogger.info('TaskRemoteDataSource: Obteniendo tarea $taskId del proyecto $projectId');
+      AppLogger.info(
+        'TaskRemoteDataSource: Obteniendo tarea $taskId del proyecto $projectId',
+      );
 
       // GET /projects/:projectId/tasks/:taskId
       final response = await _apiClient.get<Map<String, dynamic>>(
@@ -244,10 +246,10 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       AppLogger.info(
         'TaskRemoteDataSource: Eliminando tarea $taskId del proyecto $projectId',
       );
-      
+
       // DELETE /projects/:projectId/tasks/:taskId
       await _apiClient.delete('/projects/$projectId/tasks/$taskId');
-      
+
       AppLogger.info('TaskRemoteDataSource: Tarea eliminada exitosamente');
     } on AuthException {
       rethrow;
@@ -285,7 +287,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
 
       // Extraer predecessors y successors
       final predecessorsRaw = taskData['predecessors'] as List<dynamic>?;
-      
+
       if (predecessorsRaw == null || predecessorsRaw.isEmpty) {
         return [];
       }
@@ -357,12 +359,12 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       AppLogger.info(
         'TaskRemoteDataSource: Eliminando dependencia tarea $taskId → predecesora $predecessorId',
       );
-      
+
       // DELETE /projects/:projectId/tasks/:taskId/dependencies/:predecessorId
       await _apiClient.delete(
         '/projects/$projectId/tasks/$taskId/dependencies/$predecessorId',
       );
-      
+
       AppLogger.info(
         'TaskRemoteDataSource: Dependencia eliminada exitosamente',
       );

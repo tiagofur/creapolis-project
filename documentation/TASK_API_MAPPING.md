@@ -14,13 +14,13 @@ Documentar el mapeo entre los endpoints del backend (Express/Prisma) y los méto
 
 ## ✅ Endpoints Implementados (CRUD Básico)
 
-| # | Método Frontend | Backend Route | Status |
-|---|----------------|---------------|--------|
-| 1 | `getTasksByProject(projectId)` | `GET /api/projects/:projectId/tasks` | ✅ MAPPED |
-| 2 | `getTaskById(id)` | `GET /api/projects/:projectId/tasks/:taskId` | ⚠️ NEEDS FIX |
-| 3 | `createTask(...)` | `POST /api/projects/:projectId/tasks` | ✅ MAPPED |
-| 4 | `updateTask(...)` | `PUT /api/projects/:projectId/tasks/:taskId` | ⚠️ NEEDS FIX |
-| 5 | `deleteTask(id)` | `DELETE /api/projects/:projectId/tasks/:taskId` | ⚠️ NEEDS FIX |
+| #   | Método Frontend                | Backend Route                                   | Status       |
+| --- | ------------------------------ | ----------------------------------------------- | ------------ |
+| 1   | `getTasksByProject(projectId)` | `GET /api/projects/:projectId/tasks`            | ✅ MAPPED    |
+| 2   | `getTaskById(id)`              | `GET /api/projects/:projectId/tasks/:taskId`    | ⚠️ NEEDS FIX |
+| 3   | `createTask(...)`              | `POST /api/projects/:projectId/tasks`           | ✅ MAPPED    |
+| 4   | `updateTask(...)`              | `PUT /api/projects/:projectId/tasks/:taskId`    | ⚠️ NEEDS FIX |
+| 5   | `deleteTask(id)`               | `DELETE /api/projects/:projectId/tasks/:taskId` | ⚠️ NEEDS FIX |
 
 ---
 
@@ -29,6 +29,7 @@ Documentar el mapeo entre los endpoints del backend (Express/Prisma) y los méto
 ### Problema 1: projectId faltante en métodos update/delete/getById
 
 **Frontend actual:**
+
 ```dart
 Future<TaskModel> getTaskById(int id) async {
   // ❌ Usa /tasks/:id (no existe en backend)
@@ -47,6 +48,7 @@ Future<void> deleteTask(int id) async {
 ```
 
 **Backend esperado:**
+
 - `GET /api/projects/:projectId/tasks/:taskId`
 - `PUT /api/projects/:projectId/tasks/:taskId`
 - `DELETE /api/projects/:projectId/tasks/:taskId`
@@ -56,6 +58,7 @@ Future<void> deleteTask(int id) async {
 El TaskRepository necesita pasar `projectId` a estos métodos. Hay 2 opciones:
 
 **Opción A: Cambiar firma de métodos (RECOMENDADA)**
+
 ```dart
 // En TaskRepository
 Future<Either<Failure, Task>> getTaskById(int projectId, int taskId);
@@ -64,13 +67,14 @@ Future<Either<Failure, void>> deleteTask(int projectId, int taskId);
 ```
 
 **Opción B: Obtener projectId del Task cacheado (ACTUAL - TEMPORAL)**
+
 ```dart
 // En TaskRemoteDataSource
 Future<TaskModel> getTaskById(int id) async {
   // 1. Buscar tarea en caché para obtener projectId
   final cachedTask = await _cacheDataSource.getCachedTaskById(id);
   final projectId = cachedTask?.projectId ?? 0;
-  
+
   // 2. Usar endpoint correcto
   final response = await _apiClient.get('/projects/$projectId/tasks/$id');
 }
@@ -82,17 +86,18 @@ Future<TaskModel> getTaskById(int id) async {
 
 ## ❌ Endpoints NO Implementados en Backend
 
-| # | Método Frontend | Endpoint Esperado | Alternativa Backend |
-|---|----------------|-------------------|---------------------|
-| 6 | `getTaskDependencies(taskId)` | `GET /tasks/:taskId/dependencies` | ✅ Incluido en `GET /projects/:projectId/tasks/:taskId` (campo `predecessors` y `successors`) |
-| 7 | `createDependency(...)` | `POST /tasks/dependencies` | ✅ `POST /projects/:projectId/tasks/:taskId/dependencies` |
-| 8 | `deleteDependency(dependencyId)` | `DELETE /tasks/dependencies/:id` | ✅ `DELETE /projects/:projectId/tasks/:taskId/dependencies/:predecessorId` |
-| 9 | `calculateSchedule(projectId)` | `POST /projects/:projectId/schedule/calculate` | ❌ NO EXISTE (Feature futura - Scheduler CPM) |
-| 10 | `rescheduleProject(projectId, taskId)` | `POST /projects/:projectId/schedule/reschedule` | ❌ NO EXISTE (Feature futura - Scheduler CPM) |
+| #   | Método Frontend                        | Endpoint Esperado                               | Alternativa Backend                                                                           |
+| --- | -------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 6   | `getTaskDependencies(taskId)`          | `GET /tasks/:taskId/dependencies`               | ✅ Incluido en `GET /projects/:projectId/tasks/:taskId` (campo `predecessors` y `successors`) |
+| 7   | `createDependency(...)`                | `POST /tasks/dependencies`                      | ✅ `POST /projects/:projectId/tasks/:taskId/dependencies`                                     |
+| 8   | `deleteDependency(dependencyId)`       | `DELETE /tasks/dependencies/:id`                | ✅ `DELETE /projects/:projectId/tasks/:taskId/dependencies/:predecessorId`                    |
+| 9   | `calculateSchedule(projectId)`         | `POST /projects/:projectId/schedule/calculate`  | ❌ NO EXISTE (Feature futura - Scheduler CPM)                                                 |
+| 10  | `rescheduleProject(projectId, taskId)` | `POST /projects/:projectId/schedule/reschedule` | ❌ NO EXISTE (Feature futura - Scheduler CPM)                                                 |
 
 ### Endpoints de Dependencias
 
 **Frontend actual:**
+
 ```dart
 // ❌ Endpoints incorrectos
 GET /tasks/:taskId/dependencies
@@ -101,6 +106,7 @@ DELETE /tasks/dependencies/:dependencyId
 ```
 
 **Backend real:**
+
 ```javascript
 // ✅ Endpoints correctos
 POST   /api/projects/:projectId/tasks/:taskId/dependencies
@@ -143,7 +149,7 @@ DELETE /api/projects/:projectId/tasks/:taskId/dependencies/:predecessorId
 **Cambios necesarios:**
 
 1. **getTaskById:** Agregar parámetro `projectId` o obtenerlo del caché
-2. **updateTask:** Agregar parámetro `projectId` o obtenerlo del caché  
+2. **updateTask:** Agregar parámetro `projectId` o obtenerlo del caché
 3. **deleteTask:** Agregar parámetro `projectId` o obtenerlo del caché
 4. **getTaskDependencies:** Cambiar para obtener de task detail
 5. **createDependency:** Actualizar ruta a `/projects/:projectId/tasks/:taskId/dependencies`
@@ -159,37 +165,39 @@ Agregar `projectId` a las firmas de métodos para evitar dependencia del caché.
 
 ### Campos que coinciden ✅
 
-| Backend (Prisma) | Frontend (Dart) | Tipo |
-|------------------|-----------------|------|
-| `id` | `id` | int |
-| `title` | `title` | String |
-| `description` | `description` | String? |
-| `status` | `status` | enum (PLANNED, IN_PROGRESS, COMPLETED) |
-| `estimatedHours` | `estimatedHours` | double |
-| `actualHours` | `actualHours` | double |
-| `startDate` | `startDate` | DateTime? |
-| `endDate` | `endDate` | DateTime? |
-| `projectId` | `projectId` | int |
-| `assigneeId` | `assignedUserId` | int? |
-| `createdAt` | `createdAt` | DateTime |
-| `updatedAt` | `updatedAt` | DateTime |
+| Backend (Prisma) | Frontend (Dart)  | Tipo                                   |
+| ---------------- | ---------------- | -------------------------------------- |
+| `id`             | `id`             | int                                    |
+| `title`          | `title`          | String                                 |
+| `description`    | `description`    | String?                                |
+| `status`         | `status`         | enum (PLANNED, IN_PROGRESS, COMPLETED) |
+| `estimatedHours` | `estimatedHours` | double                                 |
+| `actualHours`    | `actualHours`    | double                                 |
+| `startDate`      | `startDate`      | DateTime?                              |
+| `endDate`        | `endDate`        | DateTime?                              |
+| `projectId`      | `projectId`      | int                                    |
+| `assigneeId`     | `assignedUserId` | int?                                   |
+| `createdAt`      | `createdAt`      | DateTime                               |
+| `updatedAt`      | `updatedAt`      | DateTime                               |
 
 ### Campos diferentes ⚠️
 
-| Backend (Prisma) | Frontend (Dart) | Acción |
-|------------------|-----------------|--------|
-| `assigneeId` | `assignedUserId` | ✅ TaskModel mapea correctamente |
-| (no existe) | `priority` | ⚠️ Backend no tiene prioridad, Frontend sí |
+| Backend (Prisma) | Frontend (Dart)  | Acción                                     |
+| ---------------- | ---------------- | ------------------------------------------ |
+| `assigneeId`     | `assignedUserId` | ✅ TaskModel mapea correctamente           |
+| (no existe)      | `priority`       | ⚠️ Backend no tiene prioridad, Frontend sí |
 
 ### Campo Priority - Discrepancia
 
 **Frontend Task:**
+
 ```dart
 enum TaskPriority { low, medium, high, critical }
 final TaskPriority priority;
 ```
 
 **Backend Task (Prisma):**
+
 ```prisma
 model Task {
   // NO tiene campo priority
@@ -199,6 +207,7 @@ model Task {
 **Soluciones:**
 
 1. **Agregar priority al backend** (RECOMENDADO)
+
 ```prisma
 enum TaskPriority {
   LOW
@@ -255,6 +264,7 @@ model Task {
 ### Autenticación
 
 Todos los endpoints requieren token JWT en header:
+
 ```
 Authorization: Bearer <token>
 ```
@@ -262,6 +272,7 @@ Authorization: Bearer <token>
 ### Formato de respuesta
 
 Backend usa formato estándar:
+
 ```json
 {
   "success": true,
@@ -275,6 +286,7 @@ TaskRemoteDataSource extrae correctamente con `response.data?['data']`.
 ### Manejo de errores
 
 Backend retorna errores HTTP:
+
 - `400` - Validación fallida
 - `401` - No autenticado
 - `403` - Sin permisos

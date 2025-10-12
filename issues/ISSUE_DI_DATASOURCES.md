@@ -12,6 +12,7 @@
 Al ejecutar la aplicación, se produce un error en la inicialización debido a que `ProjectRemoteDataSource` y `TaskRemoteDataSource` no están correctamente registrados en GetIt antes de ser solicitados por otros servicios.
 
 ### Error completo:
+
 ```
 Bad state: GetIt: Object/factory with type ProjectRemoteDataSource is not registered inside GetIt.
 (Did you accidentally do GetIt sl=GetIt.instance(); instead of GetIt sl=GetIt.instance;
@@ -19,6 +20,7 @@ Did you forget to register it?)
 ```
 
 ### Stack trace relevante:
+
 ```dart
 #4   GetItHelper.call (package:injectable/src/get_it_helper.dart:45:13)
 #5   GetItInjectableX.init.<anonymous closure> (package:creapolis_app/injection.config.dart:155:13)
@@ -36,29 +38,30 @@ Did you forget to register it?)
 **Archivo:** `lib/injection.dart`
 
 **Orden actual (INCORRECTO):**
+
 ```dart
 Future<void> initializeDependencies() async {
   // 1. SharedPreferences
   getIt.registerLazySingleton<SharedPreferences>(...);
-  
+
   // 2. FlutterSecureStorage
   getIt.registerLazySingleton<FlutterSecureStorage>(...);
-  
+
   // 3. Connectivity
   getIt.registerLazySingleton<Connectivity>(...);
-  
+
   // 4. LastRouteService
   getIt.registerLazySingleton<LastRouteService>(...);
-  
+
   // 5. Networking Layer
   getIt.registerSingleton<AuthInterceptor>(...);
   getIt.registerSingleton<ApiClient>(...);
-  
+
   // 6. Registrar Data Sources MANUALMENTE
   getIt.registerLazySingleton<WorkspaceRemoteDataSource>(...);
   getIt.registerLazySingleton<ProjectRemoteDataSource>(...);  // ⚠️
   getIt.registerLazySingleton<TaskRemoteDataSource>(...);     // ⚠️
-  
+
   // 7. Inicializar dependencias generadas
   _configureInjectable();  // ❌ AQUÍ SE BUSCA ProjectRemoteDataSource
                            //    pero NO ESTÁ registrado aún porque
@@ -92,18 +95,21 @@ Porque aunque se registró en el paso 3, el código generado en `injection.confi
 ### Solución 1: Usar @injectable en DataSources ⭐ RECOMENDADA
 
 **Ventajas:**
+
 - ✅ Consistente con el resto del código
 - ✅ Build runner maneja las dependencias automáticamente
 - ✅ Menos código manual
 - ✅ Type-safe
 
 **Desventajas:**
+
 - ⏱️ Requiere modificar 3 archivos (Project, Task, Workspace DataSources)
 - 🔄 Requiere ejecutar `build_runner`
 
 **Implementación:**
 
 1. **Modificar `ProjectRemoteDataSource`:**
+
 ```dart
 // lib/data/datasources/project_remote_datasource.dart
 
@@ -114,12 +120,13 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   final ApiClient _apiClient;
 
   ProjectRemoteDataSourceImpl(this._apiClient);  // Injectable inyecta automáticamente
-  
+
   // ... resto del código
 }
 ```
 
 2. **Modificar `TaskRemoteDataSource`:**
+
 ```dart
 // lib/data/datasources/task_remote_datasource.dart
 
@@ -130,12 +137,13 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   final ApiClient _apiClient;
 
   TaskRemoteDataSourceImpl(this._apiClient);  // Injectable inyecta automáticamente
-  
+
   // ... resto del código
 }
 ```
 
 3. **Modificar `WorkspaceRemoteDataSource`:**
+
 ```dart
 // lib/features/workspace/data/datasources/workspace_remote_datasource.dart
 
@@ -148,25 +156,27 @@ class WorkspaceRemoteDataSource {
 ```
 
 4. **Actualizar `injection.dart`:**
+
 ```dart
 Future<void> initializeDependencies() async {
   // 1-4. Dependencias básicas (sin cambios)
   // ...
-  
+
   // 5. Networking Layer (sin cambios)
   // ...
-  
+
   // 6. ELIMINAR registros manuales de DataSources
   // ❌ getIt.registerLazySingleton<WorkspaceRemoteDataSource>(...)
   // ❌ getIt.registerLazySingleton<ProjectRemoteDataSource>(...)
   // ❌ getIt.registerLazySingleton<TaskRemoteDataSource>(...)
-  
+
   // 7. Inicializar dependencias generadas (ahora incluye DataSources)
   _configureInjectable();  // ✅ Build runner registró los DataSources
 }
 ```
 
 5. **Ejecutar build_runner:**
+
 ```bash
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
@@ -176,10 +186,12 @@ flutter pub run build_runner build --delete-conflicting-outputs
 ### Solución 2: Registrar como Abstract Type
 
 **Ventajas:**
+
 - 🚀 No requiere modificar DataSources
 - 📝 Solo cambios en `injection.dart`
 
 **Desventajas:**
+
 - ⚠️ Más código manual
 - ⚠️ Menos type-safe
 - ⚠️ Puede confundir con el patrón de injectable
@@ -191,17 +203,17 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 Future<void> initializeDependencies() async {
   // ... dependencias básicas
-  
+
   // Registrar DataSources ANTES de _configureInjectable()
   // Y usando registerFactory en lugar de registerLazySingleton
   getIt.registerFactory<ProjectRemoteDataSource>(
     () => ProjectRemoteDataSourceImpl(getIt<ApiClient>()),
   );
-  
+
   getIt.registerFactory<TaskRemoteDataSource>(
     () => TaskRemoteDataSourceImpl(getIt<ApiClient>()),
   );
-  
+
   // Ahora sí, inicializar injectable
   _configureInjectable();
 }
@@ -214,17 +226,20 @@ Future<void> initializeDependencies() async {
 ### Solución 3: Mover Registros a Módulo de Injectable
 
 **Ventajas:**
+
 - ✅ Muy limpio y organizado
 - ✅ Todo manejado por injectable
 - ✅ Permite configuración avanzada
 
 **Desventajas:**
+
 - ⏱️ Requiere crear nuevo archivo
 - 📚 Más complejo de entender
 
 **Implementación:**
 
 1. **Crear módulo de DI:**
+
 ```dart
 // lib/core/di/datasource_module.dart
 
@@ -240,12 +255,12 @@ abstract class DataSourceModule {
   ProjectRemoteDataSource projectRemoteDataSource(ApiClient apiClient) {
     return ProjectRemoteDataSourceImpl(apiClient);
   }
-  
+
   @lazySingleton
   TaskRemoteDataSource taskRemoteDataSource(ApiClient apiClient) {
     return TaskRemoteDataSourceImpl(apiClient);
   }
-  
+
   @lazySingleton
   WorkspaceRemoteDataSource workspaceRemoteDataSource() {
     return WorkspaceRemoteDataSource();
@@ -254,24 +269,26 @@ abstract class DataSourceModule {
 ```
 
 2. **Limpiar `injection.dart`:**
+
 ```dart
 Future<void> initializeDependencies() async {
   // Solo dependencias que NO pueden ser manejadas por injectable
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
-  
+
   getIt.registerLazySingleton<FlutterSecureStorage>(...);
   getIt.registerLazySingleton<Connectivity>(...);
   getIt.registerLazySingleton<LastRouteService>(...);
   getIt.registerSingleton<AuthInterceptor>(...);
   getIt.registerSingleton<ApiClient>(...);
-  
+
   // Injectable maneja todo lo demás (incluye DataSourceModule)
   _configureInjectable();
 }
 ```
 
 3. **Ejecutar build_runner:**
+
 ```bash
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
@@ -280,14 +297,14 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 ## 📊 Comparación de Soluciones
 
-| Criterio | Solución 1 (@injectable) | Solución 2 (registerFactory) | Solución 3 (@module) |
-|----------|-------------------------|------------------------------|----------------------|
-| **Complejidad** | 🟢 Baja | 🟡 Media | 🔴 Alta |
-| **Mantenibilidad** | 🟢 Excelente | 🟡 Buena | 🟢 Excelente |
-| **Consistencia** | 🟢 Total | 🔴 Mixta | 🟢 Total |
-| **Type Safety** | 🟢 Completo | 🟡 Parcial | 🟢 Completo |
-| **Tiempo impl.** | 🟢 10 min | 🟢 5 min | 🟡 20 min |
-| **Escalabilidad** | 🟢 Excelente | 🔴 Limitada | 🟢 Excelente |
+| Criterio           | Solución 1 (@injectable) | Solución 2 (registerFactory) | Solución 3 (@module) |
+| ------------------ | ------------------------ | ---------------------------- | -------------------- |
+| **Complejidad**    | 🟢 Baja                  | 🟡 Media                     | 🔴 Alta              |
+| **Mantenibilidad** | 🟢 Excelente             | 🟡 Buena                     | 🟢 Excelente         |
+| **Consistencia**   | 🟢 Total                 | 🔴 Mixta                     | 🟢 Total             |
+| **Type Safety**    | 🟢 Completo              | 🟡 Parcial                   | 🟢 Completo          |
+| **Tiempo impl.**   | 🟢 10 min                | 🟢 5 min                     | 🟡 20 min            |
+| **Escalabilidad**  | 🟢 Excelente             | 🔴 Limitada                  | 🟢 Excelente         |
 
 **Recomendación:** **Solución 1** - Es la más simple y consistente con el resto del código.
 
@@ -296,27 +313,32 @@ flutter pub run build_runner build --delete-conflicting-outputs
 ## 🔧 Plan de Implementación (Solución 1)
 
 ### Paso 1: Actualizar DataSources
+
 - [ ] Agregar `@injectable` a `ProjectRemoteDataSourceImpl`
-- [ ] Agregar `@injectable` a `TaskRemoteDataSourceImpl`  
+- [ ] Agregar `@injectable` a `TaskRemoteDataSourceImpl`
 - [ ] Agregar `@injectable` a `WorkspaceRemoteDataSource`
 - [ ] Agregar import `package:injectable/injectable.dart` en cada uno
 
 ### Paso 2: Limpiar injection.dart
+
 - [ ] Eliminar registro manual de `WorkspaceRemoteDataSource`
 - [ ] Eliminar registro manual de `ProjectRemoteDataSource`
 - [ ] Eliminar registro manual de `TaskRemoteDataSource`
 - [ ] Actualizar comentarios en la sección 7
 
 ### Paso 3: Regenerar código DI
+
 - [ ] Ejecutar `flutter pub run build_runner build --delete-conflicting-outputs`
 - [ ] Verificar que `injection.config.dart` incluya los DataSources
 
 ### Paso 4: Testing
+
 - [ ] Ejecutar `flutter run -d windows`
 - [ ] Verificar que no hay errores de DI
 - [ ] Confirmar que la app inicia correctamente
 
 ### Paso 5: Commit
+
 - [ ] Commit con mensaje: "fix(di): Register DataSources with @injectable annotation"
 - [ ] Push a GitHub
 
@@ -343,6 +365,7 @@ Por eso cuando eliminamos el registro manual, funcionó correctamente. Los DataS
 ### Otros DataSources afectados
 
 Revisar si hay más DataSources que necesitan `@injectable`:
+
 - ✅ `WorkspaceCacheDataSourceImpl` - Ya tiene `@injectable`
 - ✅ `ProjectCacheDataSourceImpl` - Ya tiene `@injectable`
 - ✅ `TaskCacheDataSourceImpl` - Ya tiene `@injectable`
@@ -359,6 +382,7 @@ Revisar si hay más DataSources que necesitan `@injectable`:
 **Razón:** Bloquea testing de Fase 4.3 (Tasks CRUD) que está 100% implementado.
 
 **Dependencias bloqueadas:**
+
 - Testing manual de TasksScreen
 - Testing de flujo Dashboard → Projects → Tasks
 - Testing de CRUD completo de Tasks
