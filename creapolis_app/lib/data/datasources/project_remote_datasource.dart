@@ -55,9 +55,10 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     );
 
     try {
-      // GET /workspaces/:workspaceId/projects
+      // GET /projects?workspaceId=X
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '/workspaces/$workspaceId/projects',
+        '/projects',
+        queryParameters: {'workspaceId': workspaceId},
       );
 
       AppLogger.debug('ProjectRemoteDataSource: Response - ${response.data}');
@@ -153,7 +154,7 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     );
 
     try {
-      // POST /workspaces/:workspaceId/projects
+      // POST /projects
       final requestData = {
         'name': name,
         'description': description,
@@ -166,7 +167,7 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       };
 
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '/workspaces/$workspaceId/projects',
+        '/projects',
         data: requestData,
       );
 
