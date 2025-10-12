@@ -41,11 +41,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         },
         (tasks) {
           logger.i('Tasks loaded successfully: ${tasks.length} tasks');
-          emit(TasksLoaded(
-            projectId: event.projectId,
-            tasks: tasks,
-            filteredTasks: tasks,
-          ));
+          emit(
+            TasksLoaded(
+              projectId: event.projectId,
+              tasks: tasks,
+              filteredTasks: tasks,
+            ),
+          );
         },
       );
     } catch (e) {
@@ -66,11 +68,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       // TODO: Implementar método getAllTasks en el repository
       // Por ahora, emitimos lista vacía
       logger.w('getAllTasks not implemented yet');
-      emit(const TasksLoaded(
-        projectId: 0, // Sin proyecto específico
-        tasks: [],
-        filteredTasks: [],
-      ));
+      emit(
+        const TasksLoaded(
+          projectId: 0, // Sin proyecto específico
+          tasks: [],
+          filteredTasks: [],
+        ),
+      );
     } catch (e) {
       logger.e('Exception loading all tasks: $e');
       emit(TaskError('Error inesperado al cargar todas las tareas: $e'));
@@ -187,11 +191,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
               ),
             );
           } else {
-            emit(TasksLoaded(
-              projectId: task.projectId,
-              tasks: [task],
-              filteredTasks: [task],
-            ));
+            emit(
+              TasksLoaded(
+                projectId: task.projectId,
+                tasks: [task],
+                filteredTasks: [task],
+              ),
+            );
           }
         },
       );
@@ -209,10 +215,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       // Obtener projectId del state actual
       if (state is! TasksLoaded) {
-        emit(const TaskError('No hay contexto de proyecto para actualizar tarea'));
+        emit(
+          const TaskError('No hay contexto de proyecto para actualizar tarea'),
+        );
         return;
       }
-      
+
       final currentState = state as TasksLoaded;
 
       final result = await taskRepository.updateTask(
@@ -273,10 +281,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       // Obtener projectId del state actual
       if (state is! TasksLoaded) {
-        emit(const TaskError('No hay contexto de proyecto para eliminar tarea'));
+        emit(
+          const TaskError('No hay contexto de proyecto para eliminar tarea'),
+        );
         return;
       }
-      
+
       final currentState = state as TasksLoaded;
 
       final result = await taskRepository.deleteTask(
@@ -447,10 +457,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       // Obtener projectId del state actual
       if (state is! TasksLoaded) {
-        emit(const TaskError('No hay contexto de proyecto para actualizar estado'));
+        emit(
+          const TaskError('No hay contexto de proyecto para actualizar estado'),
+        );
         return;
       }
-      
+
       final currentState = state as TasksLoaded;
 
       final result = await taskRepository.updateTask(
