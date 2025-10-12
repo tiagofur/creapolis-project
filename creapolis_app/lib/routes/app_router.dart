@@ -15,7 +15,7 @@ import '../presentation/screens/onboarding/onboarding_screen.dart';
 import '../presentation/screens/profile/profile_screen.dart';
 import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
-import '../presentation/screens/projects/projects_list_screen.dart';
+import '../features/projects/presentation/screens/projects_screen.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
@@ -184,7 +184,10 @@ class AppRouter {
               GoRoute(
                 path: 'projects',
                 name: RouteNames.projects,
-                builder: (context, state) => const ProjectsListScreen(),
+                builder: (context, state) {
+                  final wId = state.pathParameters['wId'] ?? '0';
+                  return ProjectsScreen(workspaceId: int.parse(wId));
+                },
                 routes: [
                   // Project detail con todas sus sub-rutas
                   GoRoute(
