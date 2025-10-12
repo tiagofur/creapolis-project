@@ -5,10 +5,7 @@ import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_st
 class StatsOverviewCard extends StatelessWidget {
   final DashboardStats stats;
 
-  const StatsOverviewCard({
-    super.key,
-    required this.stats,
-  });
+  const StatsOverviewCard({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -81,8 +78,8 @@ class StatsOverviewCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: stats.totalTasks > 0 
-                        ? stats.completedTasks / stats.totalTasks 
+                    value: stats.totalTasks > 0
+                        ? stats.completedTasks / stats.totalTasks
                         : 0.0,
                     minHeight: 8,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -108,9 +105,10 @@ class StatsOverviewCard extends StatelessWidget {
                     ),
                     _TaskStatusItem(
                       label: 'Pendientes',
-                      value: stats.totalTasks - 
-                             stats.completedTasks - 
-                             stats.inProgressTasks,
+                      value:
+                          stats.totalTasks -
+                          stats.completedTasks -
+                          stats.inProgressTasks,
                       color: Colors.grey,
                     ),
                   ],
@@ -193,10 +191,7 @@ class _TaskStatusItem extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(height: 4),
         Text(

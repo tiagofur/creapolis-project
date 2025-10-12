@@ -8,10 +8,7 @@ import 'package:creapolis_app/domain/entities/project.dart';
 class EditProjectDialog extends StatefulWidget {
   final Project project;
 
-  const EditProjectDialog({
-    super.key,
-    required this.project,
-  });
+  const EditProjectDialog({super.key, required this.project});
 
   @override
   State<EditProjectDialog> createState() => _EditProjectDialogState();
@@ -30,8 +27,9 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.project.name);
-    _descriptionController =
-        TextEditingController(text: widget.project.description);
+    _descriptionController = TextEditingController(
+      text: widget.project.description,
+    );
     _startDate = widget.project.startDate;
     _endDate = widget.project.endDate;
     _status = widget.project.status;
@@ -81,15 +79,15 @@ class _EditProjectDialogState extends State<EditProjectDialog> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       context.read<ProjectBloc>().add(
-            UpdateProject(
-              id: widget.project.id,
-              name: _nameController.text.trim(),
-              description: _descriptionController.text.trim(),
-              startDate: _startDate,
-              endDate: _endDate,
-              status: _status,
-            ),
-          );
+        UpdateProject(
+          id: widget.project.id,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          startDate: _startDate,
+          endDate: _endDate,
+          status: _status,
+        ),
+      );
       Navigator.pop(context);
     }
   }

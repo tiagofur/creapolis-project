@@ -49,6 +49,7 @@ lib/features/dashboard/
 ## 🎨 Funcionalidades Implementadas
 
 ### 1. **DashboardBloc**
+
 - ✅ Cargar workspaces del usuario
 - ✅ Cargar proyectos de cada workspace
 - ✅ Cargar tareas de cada proyecto
@@ -63,6 +64,7 @@ lib/features/dashboard/
 - ✅ Soporte para refresh
 
 ### 2. **Dashboard Screen**
+
 - ✅ AppBar con saludo contextual (buenos días/tardes/noches)
 - ✅ Avatar del usuario con iniciales
 - ✅ Pull-to-refresh
@@ -71,6 +73,7 @@ lib/features/dashboard/
 ### 3. **Widgets Personalizados**
 
 #### WorkspaceSummaryCard
+
 - Avatar del workspace (con fallback)
 - Nombre y descripción
 - Badge de tipo (Personal/Equipo/Empresa)
@@ -78,6 +81,7 @@ lib/features/dashboard/
 - Contador de tareas pendientes
 
 #### QuickActionsGrid
+
 - Grid 2x2 de acciones rápidas:
   - 🟦 Nuevo Proyecto (placeholder)
   - 🟩 Nueva Tarea (placeholder)
@@ -85,6 +89,7 @@ lib/features/dashboard/
   - 🟧 Ver Tareas (funcional → `/tasks`)
 
 #### StatsOverviewCard
+
 - Total de workspaces/proyectos/tareas
 - Barra de progreso visual coloreada
 - Desglose por estado:
@@ -93,6 +98,7 @@ lib/features/dashboard/
   - ● Pendientes (gris)
 
 #### RecentItemsList
+
 - Últimos 5 items actualizados (tareas + proyectos mezclados)
 - Ordenamiento por fecha descendente
 - Status chips colorizados
@@ -102,6 +108,7 @@ lib/features/dashboard/
 ### 4. **Empty States**
 
 #### Estado 1: Sin Workspaces
+
 ```
 🏢 (icono grande)
 
@@ -112,9 +119,11 @@ Un workspace es un espacio de trabajo...
 
 [+ Crear Mi Primer Workspace]
 ```
+
 - Redirige a `/workspaces`
 
 #### Estado 2: Sin Proyectos/Tareas
+
 ```
 🚀 (icono grande)
 
@@ -125,9 +134,11 @@ Ahora puedes crear tu primer proyecto...
 
 [Crear Proyecto]  [Crear Tarea]
 ```
+
 - Botones con placeholder (próximamente)
 
 #### Estado 3: Error
+
 ```
 ⚠️ (icono de error)
 
@@ -137,6 +148,7 @@ Error al cargar datos
 
 [Reintentar]
 ```
+
 - Botón reintentar dispara RefreshDashboardData
 
 ---
@@ -211,39 +223,42 @@ class DashboardStats {
 
 ## 🎯 Casos de Uso Cubiertos
 
-| Escenario | Estado | Comportamiento |
-|-----------|--------|----------------|
-| Usuario nuevo sin workspace | ✅ | Muestra empty state → CTA crear workspace |
-| Usuario con workspace pero sin proyectos | ✅ | Muestra empty state → CTA crear proyecto/tarea |
-| Usuario con datos completos | ✅ | Muestra dashboard full con stats |
-| Error de red | ✅ | Muestra error state → botón reintentar |
-| Offline con cache | ✅ | Carga datos desde cache (híbrido) |
+| Escenario                                | Estado | Comportamiento                                 |
+| ---------------------------------------- | ------ | ---------------------------------------------- |
+| Usuario nuevo sin workspace              | ✅     | Muestra empty state → CTA crear workspace      |
+| Usuario con workspace pero sin proyectos | ✅     | Muestra empty state → CTA crear proyecto/tarea |
+| Usuario con datos completos              | ✅     | Muestra dashboard full con stats               |
+| Error de red                             | ✅     | Muestra error state → botón reintentar         |
+| Offline con cache                        | ✅     | Carga datos desde cache (híbrido)              |
 
 ---
 
 ## 🔗 Integraciones
 
 ### Router
+
 - ✅ Ruta `/` configurada en `app_router.dart`
 - ✅ Import actualizado: `features/dashboard/presentation/screens/dashboard_screen.dart`
 - ✅ Primera tab del BottomNav (ya existía)
 
 ### BLoCs
+
 - ✅ AuthBloc: Para obtener usuario actual
 - ✅ WorkspaceRepository: getUserWorkspaces()
 - ✅ ProjectRepository: getProjects(workspaceId)
 - ✅ TaskRepository: getTasksByProject(projectId)
 
 ### Navegación Implementada
-| Origen | Destino | Estado |
-|--------|---------|--------|
-| Empty workspace | `/workspaces` | ✅ Funcional |
-| Ver Tareas | `/tasks` | ✅ Funcional |
-| Tarea reciente | `/tasks/:id` | ✅ Funcional |
-| Nuevo Proyecto | Placeholder | ⏳ Fase 4.2 |
-| Nueva Tarea | Placeholder | ⏳ Fase 4.3 |
-| Ver Proyectos | Placeholder | ⏳ Fase 4.2 |
-| Proyecto reciente | Placeholder | ⏳ Fase 4.2 |
+
+| Origen            | Destino       | Estado       |
+| ----------------- | ------------- | ------------ |
+| Empty workspace   | `/workspaces` | ✅ Funcional |
+| Ver Tareas        | `/tasks`      | ✅ Funcional |
+| Tarea reciente    | `/tasks/:id`  | ✅ Funcional |
+| Nuevo Proyecto    | Placeholder   | ⏳ Fase 4.2  |
+| Nueva Tarea       | Placeholder   | ⏳ Fase 4.3  |
+| Ver Proyectos     | Placeholder   | ⏳ Fase 4.2  |
+| Proyecto reciente | Placeholder   | ⏳ Fase 4.2  |
 
 ---
 
@@ -274,6 +289,7 @@ onProjectTap: (project) {
 ### Dependencias de Fase 4.2
 
 La siguiente tarea **4.2: ProjectBloc + ProjectsScreen** desbloqueará:
+
 - ✅ Crear nuevos proyectos desde dashboard
 - ✅ Ver lista completa de proyectos
 - ✅ Ver detalle de proyecto al tocar item reciente
@@ -295,7 +311,7 @@ La siguiente tarea **4.2: ProjectBloc + ProjectsScreen** desbloqueará:
 
 Todos los archivos compilan sin errores críticos.
 
-### Warnings: 
+### Warnings:
 
 ```
 [WARNING] injectable_generator: Missing dependencies
@@ -329,12 +345,12 @@ Todos los archivos compilan sin errores críticos.
 
 **Fase 4: CRUD Básico** → 16.7% completado (1/6 tareas)
 
-| Tarea | Estado | Progreso |
-|-------|--------|----------|
-| 4.1 Dashboard | ✅ COMPLETADA | 100% |
-| 4.2 Projects CRUD | ⏳ Pendiente | 0% |
-| 4.3 Tasks CRUD | ⏳ Pendiente | 0% |
-| 4.4 Integration | ⏳ Pendiente | 0% |
+| Tarea             | Estado        | Progreso |
+| ----------------- | ------------- | -------- |
+| 4.1 Dashboard     | ✅ COMPLETADA | 100%     |
+| 4.2 Projects CRUD | ⏳ Pendiente  | 0%       |
+| 4.3 Tasks CRUD    | ⏳ Pendiente  | 0%       |
+| 4.4 Integration   | ⏳ Pendiente  | 0%       |
 
 ---
 
@@ -343,6 +359,7 @@ Todos los archivos compilan sin errores críticos.
 **Tarea**: ProjectBloc + ProjectsScreen (8 horas)
 
 **Subtareas**:
+
 1. ProjectBloc (events, states, lógica)
 2. ProjectsScreen (lista de proyectos)
 3. CreateProjectDialog

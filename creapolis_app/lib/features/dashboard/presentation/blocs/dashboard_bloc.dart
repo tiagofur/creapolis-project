@@ -33,7 +33,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       // Cargar workspaces
       final workspacesResult = await workspaceRepository.getUserWorkspaces();
-      
+
       await workspacesResult.fold(
         (failure) {
           logger.e('Error loading workspaces: ${failure.message}');
@@ -42,20 +42,22 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         (workspaces) async {
           if (workspaces.isEmpty) {
             // Sin workspaces, mostrar estado vacío
-            emit(DashboardLoaded(
-              workspaces: [],
-              activeProjects: [],
-              pendingTasks: [],
-              recentTasks: [],
-              stats: const DashboardStats(
-                totalWorkspaces: 0,
-                totalProjects: 0,
-                totalTasks: 0,
-                completedTasks: 0,
-                inProgressTasks: 0,
-                completionRate: 0.0,
+            emit(
+              DashboardLoaded(
+                workspaces: [],
+                activeProjects: [],
+                pendingTasks: [],
+                recentTasks: [],
+                stats: const DashboardStats(
+                  totalWorkspaces: 0,
+                  totalProjects: 0,
+                  totalTasks: 0,
+                  completedTasks: 0,
+                  inProgressTasks: 0,
+                  completionRate: 0.0,
+                ),
               ),
-            ));
+            );
             return;
           }
 
@@ -71,7 +73,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
             await projectsResult.fold(
               (failure) {
-                logger.w('Error loading projects for workspace ${workspace.id}: ${failure.message}');
+                logger.w(
+                  'Error loading projects for workspace ${workspace.id}: ${failure.message}',
+                );
               },
               (projects) async {
                 allProjects.addAll(projects);
@@ -84,7 +88,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
                   tasksResult.fold(
                     (failure) {
-                      logger.w('Error loading tasks for project ${project.id}: ${failure.message}');
+                      logger.w(
+                        'Error loading tasks for project ${project.id}: ${failure.message}',
+                      );
                     },
                     (tasks) {
                       allTasks.addAll(tasks);
@@ -102,8 +108,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
           // Filtrar tareas pendientes (status != COMPLETED && != CANCELLED)
           final pendingTasks = allTasks.where((t) {
-            return t.status != TaskStatus.completed && 
-                   t.status != TaskStatus.cancelled;
+            return t.status != TaskStatus.completed &&
+                t.status != TaskStatus.cancelled;
           }).toList();
 
           // Ordenar tareas por fecha de actualización (más recientes primero)
@@ -112,10 +118,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           final top5RecentTasks = recentTasks.take(5).toList();
 
           // Calcular estadísticas
-          final completedTasks = allTasks.where((t) => t.status == TaskStatus.completed).length;
-          final inProgressTasks = allTasks.where((t) => t.status == TaskStatus.inProgress).length;
-          final completionRate = allTasks.isEmpty 
-              ? 0.0 
+          final completedTasks = allTasks
+              .where((t) => t.status == TaskStatus.completed)
+              .length;
+          final inProgressTasks = allTasks
+              .where((t) => t.status == TaskStatus.inProgress)
+              .length;
+          final completionRate = allTasks.isEmpty
+              ? 0.0
               : (completedTasks / allTasks.length) * 100;
 
           final stats = DashboardStats(
@@ -127,19 +137,25 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
             completionRate: completionRate,
           );
 
-          emit(DashboardLoaded(
-            workspaces: workspaces,
-            activeProjects: activeProjects.cast(),
-            pendingTasks: pendingTasks.cast(),
-            recentTasks: top5RecentTasks.cast(),
-            stats: stats,
-          ));
+          emit(
+            DashboardLoaded(
+              workspaces: workspaces,
+              activeProjects: activeProjects.cast(),
+              pendingTasks: pendingTasks.cast(),
+              recentTasks: top5RecentTasks.cast(),
+              stats: stats,
+            ),
+          );
 
           logger.i('Dashboard data loaded successfully');
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error loading dashboard', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error loading dashboard',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(DashboardError('Error inesperado: ${e.toString()}'));
     }
   }

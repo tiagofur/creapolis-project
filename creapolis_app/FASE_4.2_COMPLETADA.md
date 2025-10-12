@@ -11,7 +11,9 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
 ## ✨ Funcionalidades Implementadas
 
 ### 1. **ProjectBloc - State Management**
+
 - ✅ **8 eventos** para todas las operaciones CRUD:
+
   - `LoadProjects(workspaceId)` - Cargar proyectos de un workspace
   - `LoadProjectById(projectId)` - Cargar proyecto individual
   - `CreateProject(...)` - Crear nuevo proyecto
@@ -22,6 +24,7 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
   - `SearchProjects(query)` - Buscar proyectos (local)
 
 - ✅ **6 estados** para el ciclo de vida:
+
   - `ProjectInitial` - Estado inicial
   - `ProjectLoading` - Cargando datos
   - `ProjectsLoaded` - Lista cargada con filtros aplicados
@@ -34,17 +37,21 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
 - ✅ **Inyección de dependencias** con `@injectable`
 
 ### 2. **ProjectsScreen - Main UI**
+
 - ✅ **AppBar interactivo**:
+
   - Búsqueda en tiempo real
   - Filtros por estado (Bottom Sheet)
   - Badge indicador de filtro activo
 
 - ✅ **Lista de proyectos**:
+
   - Pull-to-refresh
   - Scroll infinito
   - ProjectCard para cada proyecto
 
 - ✅ **3 estados de UI**:
+
   - **Empty State**: Sin proyectos o sin resultados con filtros
   - **Loading State**: Indicador de carga
   - **Error State**: Con botón de reintentar
@@ -54,7 +61,9 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
 - ✅ **BlocConsumer**: Maneja estados y muestra SnackBars
 
 ### 3. **ProjectCard Widget**
+
 - ✅ **Información completa**:
+
   - Nombre del proyecto
   - Descripción (truncada a 2 líneas)
   - Badge de estado con colores
@@ -62,6 +71,7 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
   - Duración calculada (días/semanas/meses/años)
 
 - ✅ **3 botones de acción**:
+
   - Ver detalles
   - Editar
   - Eliminar
@@ -69,7 +79,9 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
 - ✅ **Diseño responsive** con Material 3
 
 ### 4. **CreateProjectDialog**
+
 - ✅ **Formulario completo**:
+
   - Nombre (obligatorio, 3-100 caracteres)
   - Descripción (opcional, max 500 caracteres)
   - Fecha de inicio (DatePicker)
@@ -77,6 +89,7 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
   - Estado (Dropdown con todos los estados)
 
 - ✅ **Validaciones**:
+
   - Nombre obligatorio
   - Fecha fin >= fecha inicio
   - Contador de caracteres
@@ -84,16 +97,19 @@ Se ha completado exitosamente la **Fase 4.2: ProjectBloc + ProjectsScreen** del 
 - ✅ **Integración** con ProjectBloc
 
 ### 5. **EditProjectDialog**
+
 - ✅ **Pre-llenado** con datos existentes
 - ✅ **Mismo formulario** que CreateProjectDialog
 - ✅ **Actualización** vía `UpdateProject` event
 
 ### 6. **DeleteProjectDialog**
+
 - ✅ **Confirmación** antes de eliminar
 - ✅ **Advertencia** sobre pérdida de datos
 - ✅ **Botones**: Cancelar / Eliminar (rojo)
 
 ### 7. **Router Integration**
+
 - ✅ **Ruta actualizada**: `/workspaces/:wId/projects`
 - ✅ **Extracción automática** del workspaceId
 - ✅ **Navegación** desde dashboard y quick actions
@@ -127,15 +143,18 @@ lib/routes/app_router.dart
 ## 🔧 Cambios Técnicos
 
 ### Inyección de Dependencias
+
 - ✅ `ProjectBloc` marcado con `@injectable`
 - ✅ `build_runner` ejecutado para regenerar código
 - ✅ Dependencias automáticas con `ProjectRepository`
 
 ### Tipos de Datos
+
 - ✅ `workspaceId` como `int` (no String)
 - ✅ Consistencia con tipos del backend
 
 ### Integración con BLoC
+
 - ✅ `BlocProvider.value` para dialogs
 - ✅ `BlocConsumer` para UI + listeners
 - ✅ Estados separados para operaciones y carga
@@ -143,7 +162,9 @@ lib/routes/app_router.dart
 ## 🎨 UI/UX Highlights
 
 ### Status Badges
+
 Colores consistentes para cada estado:
+
 - **Planificado**: Gris
 - **Activo**: Verde
 - **En Pausa**: Naranja
@@ -151,17 +172,20 @@ Colores consistentes para cada estado:
 - **Cancelado**: Rojo
 
 ### Filtros Bottom Sheet
+
 - Lista completa de estados
 - Indicador visual (círculo de color)
 - Checkmark para estado activo
 - Opción "Todos" para limpiar filtros
 
 ### DatePickers
+
 - Fecha inicio: desde 2020
 - Fecha fin: automáticamente >= fecha inicio
 - Formato: dd/MM/yyyy
 
 ### Validaciones
+
 - Tiempo real en formularios
 - Mensajes claros de error
 - Contadores de caracteres
@@ -181,6 +205,7 @@ flutter build windows --debug
 ## 🔗 Integración con Dashboard
 
 El dashboard ya tiene los quick actions preparados:
+
 - `onProjectTap()` → Navega a ProjectsScreen
 - `onNewProject()` → Muestra CreateProjectDialog
 - Los proyectos se cargan automáticamente al entrar
@@ -188,6 +213,7 @@ El dashboard ya tiene los quick actions preparados:
 ## 📊 Estado del MASTER_DEVELOPMENT_PLAN
 
 ### Fase 4: CRUD Básico - **40% Completado**
+
 - ✅ **Fase 4.1**: Dashboard Screen (100%)
 - ✅ **Fase 4.2**: ProjectBloc + ProjectsScreen (100%) **← ACTUAL**
 - ⏳ **Fase 4.3**: TaskBloc + TasksScreen (0%)
@@ -196,6 +222,7 @@ El dashboard ya tiene los quick actions preparados:
 ## 🚀 Próximos Pasos
 
 ### Fase 4.3: TaskBloc + TasksScreen (8 horas)
+
 1. Crear TaskBloc con 8 eventos (Load, Create, Update, Delete, etc)
 2. Implementar TasksScreen con lista y filtros
 3. Crear TaskCard widget
@@ -206,6 +233,7 @@ El dashboard ya tiene los quick actions preparados:
 8. Integrar con Dashboard
 
 ### Mejoras Futuras (Post-Fase 4)
+
 - [ ] Project detail screen con gráficos
 - [ ] Estadísticas de progreso del proyecto
 - [ ] Asignación de miembros del equipo

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_bloc.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_event.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_state.dart';
@@ -12,10 +13,7 @@ import 'package:creapolis_app/domain/entities/project.dart';
 class ProjectsScreen extends StatefulWidget {
   final int workspaceId;
 
-  const ProjectsScreen({
-    super.key,
-    required this.workspaceId,
-  });
+  const ProjectsScreen({super.key, required this.workspaceId});
 
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
@@ -51,9 +49,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           setState(() {
             _currentFilter = filter;
           });
-          context.read<ProjectBloc>().add(
-                FilterProjectsByStatus(filter),
-              );
+          context.read<ProjectBloc>().add(FilterProjectsByStatus(filter));
           Navigator.pop(context);
         },
       ),
@@ -183,9 +179,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         },
         builder: (context, state) {
           if (state is ProjectLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state is ProjectsLoaded) {
@@ -193,16 +187,15 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
             if (projects.isEmpty) {
               return _EmptyState(
-                hasFilter: _currentFilter != null ||
+                hasFilter:
+                    _currentFilter != null ||
                     (state.searchQuery?.isNotEmpty ?? false),
                 onClearFilters: () {
                   setState(() {
                     _currentFilter = null;
                     _searchController.clear();
                   });
-                  context.read<ProjectBloc>().add(
-                        FilterProjectsByStatus(null),
-                      );
+                  context.read<ProjectBloc>().add(FilterProjectsByStatus(null));
                   context.read<ProjectBloc>().add(SearchProjects(''));
                 },
               );
@@ -210,9 +203,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
             return RefreshIndicator(
               onRefresh: () async {
-                context
-                    .read<ProjectBloc>()
-                    .add(RefreshProjects(widget.workspaceId));
+                context.read<ProjectBloc>().add(
+                  RefreshProjects(widget.workspaceId),
+                );
                 await Future.delayed(const Duration(seconds: 1));
               },
               child: ListView.builder(
@@ -230,6 +223,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         ),
                       );
                     },
+                    onViewTasks: () {
+                      // Navegar a tasks del proyecto
+                      context.go(
+                        '/workspaces/${widget.workspaceId}/projects/${project.id}/tasks',
+                      );
+                    },
                     onEdit: () => _showEditProjectDialog(project),
                     onDelete: () => _showDeleteProjectDialog(project),
                   );
@@ -239,10 +238,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           }
 
           if (state is ProjectError) {
-            return _ErrorState(
-              message: state.message,
-              onRetry: _loadProjects,
-            );
+            return _ErrorState(message: state.message, onRetry: _loadProjects);
           }
 
           return const SizedBox();
@@ -262,10 +258,7 @@ class _EmptyState extends StatelessWidget {
   final bool hasFilter;
   final VoidCallback onClearFilters;
 
-  const _EmptyState({
-    required this.hasFilter,
-    required this.onClearFilters,
-  });
+  const _EmptyState({required this.hasFilter, required this.onClearFilters});
 
   @override
   Widget build(BuildContext context) {
@@ -322,10 +315,7 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -337,11 +327,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 80, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               'Error al cargar proyectos',
@@ -468,10 +454,7 @@ class _FilterOption extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color!.withOpacity(0.2),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: color!,
-                  width: 2,
-                ),
+                border: Border.all(color: color!, width: 2),
               ),
               child: Center(
                 child: Container(
@@ -487,10 +470,7 @@ class _FilterOption extends StatelessWidget {
           : null,
       title: Text(label),
       trailing: isSelected
-          ? Icon(
-              Icons.check_circle,
-              color: theme.colorScheme.primary,
-            )
+          ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
           : null,
       onTap: onTap,
     );

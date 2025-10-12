@@ -80,6 +80,7 @@ import 'domain/usecases/workspace/get_user_workspaces.dart' as _i820;
 import 'domain/usecases/workspace/get_workspace_members.dart' as _i517;
 import 'domain/usecases/workspace/set_active_workspace.dart' as _i245;
 import 'features/projects/presentation/blocs/project_bloc.dart' as _i328;
+import 'features/tasks/presentation/blocs/task_bloc.dart' as _i100;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/project/project_bloc.dart' as _i190;
@@ -219,6 +220,8 @@ extension GetItInjectableX on _i174.GetIt {
         _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()));
     gh.factory<_i328.ProjectBloc>(() =>
         _i328.ProjectBloc(projectRepository: gh<_i17.ProjectRepository>()));
+    gh.factory<_i100.TaskBloc>(
+        () => _i100.TaskBloc(taskRepository: gh<_i449.TaskRepository>()));
     gh.factory<_i190.ProjectBloc>(() => _i190.ProjectBloc(
           gh<_i32.GetProjectsUseCase>(),
           gh<_i356.GetProjectByIdUseCase>(),

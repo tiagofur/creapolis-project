@@ -39,12 +39,12 @@ class DashboardLoaded extends DashboardState {
 
   @override
   List<Object?> get props => [
-        workspaces,
-        activeProjects,
-        pendingTasks,
-        recentTasks,
-        stats,
-      ];
+    workspaces,
+    activeProjects,
+    pendingTasks,
+    recentTasks,
+    stats,
+  ];
 }
 
 /// Estado de error

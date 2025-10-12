@@ -24,21 +24,21 @@ class RecentItemsList extends StatelessWidget {
 
     // Combinar y ordenar items por fecha de actualización
     final allItems = <_RecentItem>[];
-    
+
     for (final task in recentTasks) {
-      allItems.add(_RecentItem(
-        isTask: true,
-        task: task,
-        updatedAt: task.updatedAt,
-      ));
+      allItems.add(
+        _RecentItem(isTask: true, task: task, updatedAt: task.updatedAt),
+      );
     }
-    
+
     for (final project in recentProjects) {
-      allItems.add(_RecentItem(
-        isTask: false,
-        project: project,
-        updatedAt: project.updatedAt,
-      ));
+      allItems.add(
+        _RecentItem(
+          isTask: false,
+          project: project,
+          updatedAt: project.updatedAt,
+        ),
+      );
     }
 
     allItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -91,19 +91,19 @@ class RecentItemsList extends StatelessWidget {
               separatorBuilder: (context, index) => const Divider(height: 24),
               itemBuilder: (context, index) {
                 final item = top5Items[index];
-                
+
                 if (item.isTask) {
                   return _TaskListItem(
                     task: item.task!,
-                    onTap: onTaskTap != null 
-                        ? () => onTaskTap!(item.task!) 
+                    onTap: onTaskTap != null
+                        ? () => onTaskTap!(item.task!)
                         : null,
                   );
                 } else {
                   return _ProjectListItem(
                     project: item.project!,
-                    onTap: onProjectTap != null 
-                        ? () => onProjectTap!(item.project!) 
+                    onTap: onProjectTap != null
+                        ? () => onProjectTap!(item.project!)
                         : null,
                   );
                 }
@@ -121,10 +121,7 @@ class _TaskListItem extends StatelessWidget {
   final Task task;
   final VoidCallback? onTap;
 
-  const _TaskListItem({
-    required this.task,
-    this.onTap,
-  });
+  const _TaskListItem({required this.task, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -217,10 +214,7 @@ class _ProjectListItem extends StatelessWidget {
   final Project project;
   final VoidCallback? onTap;
 
-  const _ProjectListItem({
-    required this.project,
-    this.onTap,
-  });
+  const _ProjectListItem({required this.project, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +296,7 @@ class _TaskStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -359,7 +353,7 @@ class _ProjectStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

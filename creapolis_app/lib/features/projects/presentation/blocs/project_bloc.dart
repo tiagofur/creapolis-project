@@ -12,9 +12,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   final ProjectRepository projectRepository;
   final Logger logger = Logger();
 
-  ProjectBloc({
-    required this.projectRepository,
-  }) : super(const ProjectInitial()) {
+  ProjectBloc({required this.projectRepository})
+    : super(const ProjectInitial()) {
     on<LoadProjects>(_onLoadProjects);
     on<LoadProjectById>(_onLoadProjectById);
     on<CreateProject>(_onCreateProject);
@@ -44,14 +43,15 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         },
         (projects) {
           logger.i('Projects loaded successfully: ${projects.length}');
-          emit(ProjectsLoaded(
-            projects: projects,
-            filteredProjects: projects,
-          ));
+          emit(ProjectsLoaded(projects: projects, filteredProjects: projects));
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error loading projects', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error loading projects',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -78,30 +78,38 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         },
         (project) {
           logger.i('Project loaded successfully: ${project.name}');
-          
+
           if (currentProjects != null) {
             // Actualizar el proyecto en la lista si ya existe
             final updatedProjects = currentProjects.map((p) {
               return p.id == project.id ? project : p;
             }).toList();
 
-            emit(ProjectsLoaded(
-              projects: updatedProjects,
-              filteredProjects: updatedProjects,
-              selectedProject: project,
-            ));
+            emit(
+              ProjectsLoaded(
+                projects: updatedProjects,
+                filteredProjects: updatedProjects,
+                selectedProject: project,
+              ),
+            );
           } else {
             // Si no hay lista, crear una nueva con solo este proyecto
-            emit(ProjectsLoaded(
-              projects: [project],
-              filteredProjects: [project],
-              selectedProject: project,
-            ));
+            emit(
+              ProjectsLoaded(
+                projects: [project],
+                filteredProjects: [project],
+                selectedProject: project,
+              ),
+            );
           }
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error loading project', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error loading project',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -119,10 +127,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         currentProjects = currentState.projects;
       }
 
-      emit(ProjectOperationInProgress(
-        'Creando proyecto...',
-        currentProjects: currentProjects,
-      ));
+      emit(
+        ProjectOperationInProgress(
+          'Creando proyecto...',
+          currentProjects: currentProjects,
+        ),
+      );
 
       final result = await projectRepository.createProject(
         name: event.name,
@@ -141,27 +151,35 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         },
         (newProject) {
           logger.i('Project created successfully: ${newProject.name}');
-          
+
           // Agregar el nuevo proyecto a la lista
-          final updatedProjects = currentProjects != null 
+          final updatedProjects = currentProjects != null
               ? [...currentProjects, newProject]
               : [newProject];
 
-          emit(ProjectOperationSuccess(
-            'Proyecto creado exitosamente',
-            project: newProject,
-          ));
+          emit(
+            ProjectOperationSuccess(
+              'Proyecto creado exitosamente',
+              project: newProject,
+            ),
+          );
 
           // Emitir el estado actualizado con la lista completa
-          emit(ProjectsLoaded(
-            projects: updatedProjects,
-            filteredProjects: updatedProjects,
-            selectedProject: newProject,
-          ));
+          emit(
+            ProjectsLoaded(
+              projects: updatedProjects,
+              filteredProjects: updatedProjects,
+              selectedProject: newProject,
+            ),
+          );
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error creating project', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error creating project',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -179,10 +197,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         currentProjects = currentState.projects;
       }
 
-      emit(ProjectOperationInProgress(
-        'Actualizando proyecto...',
-        currentProjects: currentProjects,
-      ));
+      emit(
+        ProjectOperationInProgress(
+          'Actualizando proyecto...',
+          currentProjects: currentProjects,
+        ),
+      );
 
       final result = await projectRepository.updateProject(
         id: event.id,
@@ -201,26 +221,36 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         },
         (updatedProject) {
           logger.i('Project updated successfully: ${updatedProject.name}');
-          
+
           // Actualizar el proyecto en la lista
-          final updatedProjects = currentProjects?.map((p) {
-            return p.id == updatedProject.id ? updatedProject : p;
-          }).toList() ?? [updatedProject];
+          final updatedProjects =
+              currentProjects?.map((p) {
+                return p.id == updatedProject.id ? updatedProject : p;
+              }).toList() ??
+              [updatedProject];
 
-          emit(ProjectOperationSuccess(
-            'Proyecto actualizado exitosamente',
-            project: updatedProject,
-          ));
+          emit(
+            ProjectOperationSuccess(
+              'Proyecto actualizado exitosamente',
+              project: updatedProject,
+            ),
+          );
 
-          emit(ProjectsLoaded(
-            projects: updatedProjects,
-            filteredProjects: updatedProjects,
-            selectedProject: updatedProject,
-          ));
+          emit(
+            ProjectsLoaded(
+              projects: updatedProjects,
+              filteredProjects: updatedProjects,
+              selectedProject: updatedProject,
+            ),
+          );
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error updating project', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error updating project',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -238,10 +268,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         currentProjects = currentState.projects;
       }
 
-      emit(ProjectOperationInProgress(
-        'Eliminando proyecto...',
-        currentProjects: currentProjects,
-      ));
+      emit(
+        ProjectOperationInProgress(
+          'Eliminando proyecto...',
+          currentProjects: currentProjects,
+        ),
+      );
 
       final result = await projectRepository.deleteProject(event.projectId);
 
@@ -252,22 +284,30 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         },
         (_) {
           logger.i('Project deleted successfully');
-          
+
           // Eliminar el proyecto de la lista
-          final updatedProjects = currentProjects
-              ?.where((p) => p.id != event.projectId)
-              .toList() ?? [];
+          final updatedProjects =
+              currentProjects?.where((p) => p.id != event.projectId).toList() ??
+              [];
 
-          emit(const ProjectOperationSuccess('Proyecto eliminado exitosamente'));
+          emit(
+            const ProjectOperationSuccess('Proyecto eliminado exitosamente'),
+          );
 
-          emit(ProjectsLoaded(
-            projects: updatedProjects,
-            filteredProjects: updatedProjects,
-          ));
+          emit(
+            ProjectsLoaded(
+              projects: updatedProjects,
+              filteredProjects: updatedProjects,
+            ),
+          );
         },
       );
     } catch (e, stackTrace) {
-      logger.e('Unexpected error deleting project', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Unexpected error deleting project',
+        error: e,
+        stackTrace: stackTrace,
+      );
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -291,22 +331,25 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     if (currentState is ProjectsLoaded) {
       final filtered = event.status == null
           ? currentState.projects
-          : currentState.projects.where((p) => p.status == event.status).toList();
+          : currentState.projects
+                .where((p) => p.status == event.status)
+                .toList();
 
-      emit(currentState.copyWith(
-        filteredProjects: filtered,
-        currentFilter: event.status,
-      ));
+      emit(
+        currentState.copyWith(
+          filteredProjects: filtered,
+          currentFilter: event.status,
+        ),
+      );
 
-      logger.i('Projects filtered by status: ${event.status} (${filtered.length} results)');
+      logger.i(
+        'Projects filtered by status: ${event.status} (${filtered.length} results)',
+      );
     }
   }
 
   /// Maneja el evento de buscar proyectos
-  void _onSearchProjects(
-    SearchProjects event,
-    Emitter<ProjectState> emit,
-  ) {
+  void _onSearchProjects(SearchProjects event, Emitter<ProjectState> emit) {
     final currentState = state;
 
     if (currentState is ProjectsLoaded) {
@@ -315,32 +358,41 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         final filtered = currentState.currentFilter == null
             ? currentState.projects
             : currentState.projects
-                .where((p) => p.status == currentState.currentFilter)
-                .toList();
+                  .where((p) => p.status == currentState.currentFilter)
+                  .toList();
 
-        emit(currentState.copyWith(
-          filteredProjects: filtered,
-          searchQuery: '',
-          clearSearch: true,
-        ));
+        emit(
+          currentState.copyWith(
+            filteredProjects: filtered,
+            searchQuery: '',
+            clearSearch: true,
+          ),
+        );
       } else {
         // Buscar en nombre y descripción
         final query = event.query.toLowerCase();
         final filtered = currentState.projects.where((p) {
           final matchesName = p.name.toLowerCase().contains(query);
-          final matchesDescription = p.description.toLowerCase().contains(query);
-          final matchesFilter = currentState.currentFilter == null ||
+          final matchesDescription = p.description.toLowerCase().contains(
+            query,
+          );
+          final matchesFilter =
+              currentState.currentFilter == null ||
               p.status == currentState.currentFilter;
 
           return (matchesName || matchesDescription) && matchesFilter;
         }).toList();
 
-        emit(currentState.copyWith(
-          filteredProjects: filtered,
-          searchQuery: event.query,
-        ));
+        emit(
+          currentState.copyWith(
+            filteredProjects: filtered,
+            searchQuery: event.query,
+          ),
+        );
 
-        logger.i('Projects searched: "${event.query}" (${filtered.length} results)');
+        logger.i(
+          'Projects searched: "${event.query}" (${filtered.length} results)',
+        );
       }
     }
   }

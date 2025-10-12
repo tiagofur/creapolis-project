@@ -37,10 +37,10 @@ class _DashboardView extends StatelessWidget {
     final theme = Theme.of(context);
     final authBloc = context.read<AuthBloc>();
     final authState = authBloc.state;
-    
+
     // Obtener el usuario actual del auth state
-    final userName = authState is AuthAuthenticated 
-        ? authState.user.name 
+    final userName = authState is AuthAuthenticated
+        ? authState.user.name
         : 'Usuario';
 
     return Scaffold(
@@ -48,10 +48,7 @@ class _DashboardView extends StatelessWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _getGreeting(),
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(_getGreeting(), style: theme.textTheme.titleMedium),
             Text(
               userName,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -80,9 +77,7 @@ class _DashboardView extends StatelessWidget {
       body: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           if (state is DashboardLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state is DashboardError) {
@@ -112,8 +107,8 @@ class _DashboardView extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: () {
                       context.read<DashboardBloc>().add(
-                            const RefreshDashboardData(),
-                          );
+                        const RefreshDashboardData(),
+                      );
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Reintentar'),
@@ -148,9 +143,7 @@ class _DashboardView extends StatelessWidget {
                 onCreateTask: () {
                   // TODO: Navegar a crear tarea
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Crear tarea próximamente'),
-                    ),
+                    const SnackBar(content: Text('Crear tarea próximamente')),
                   );
                 },
               );
@@ -272,9 +265,7 @@ class _DashboardView extends StatelessWidget {
 class _EmptyWorkspaceState extends StatelessWidget {
   final VoidCallback onCreateWorkspace;
 
-  const _EmptyWorkspaceState({
-    required this.onCreateWorkspace,
-  });
+  const _EmptyWorkspaceState({required this.onCreateWorkspace});
 
   @override
   Widget build(BuildContext context) {

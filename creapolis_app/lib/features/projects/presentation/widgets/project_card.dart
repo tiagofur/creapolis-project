@@ -8,6 +8,7 @@ class ProjectCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onViewTasks;
   final bool showActions;
 
   const ProjectCard({
@@ -16,6 +17,7 @@ class ProjectCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onViewTasks,
     this.showActions = true,
   });
 
@@ -112,6 +114,14 @@ class ProjectCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    if (onViewTasks != null) ...[
+                      TextButton.icon(
+                        onPressed: onViewTasks,
+                        icon: const Icon(Icons.task_alt, size: 18),
+                        label: const Text('Tareas'),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     TextButton.icon(
                       onPressed: onTap,
                       icon: const Icon(Icons.visibility, size: 18),
@@ -182,10 +192,7 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: _getColor().withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _getColor().withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: _getColor().withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

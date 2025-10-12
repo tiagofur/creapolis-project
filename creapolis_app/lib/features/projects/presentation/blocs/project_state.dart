@@ -37,12 +37,12 @@ class ProjectsLoaded extends ProjectState {
 
   @override
   List<Object?> get props => [
-        projects,
-        filteredProjects,
-        selectedProject,
-        currentFilter,
-        searchQuery,
-      ];
+    projects,
+    filteredProjects,
+    selectedProject,
+    currentFilter,
+    searchQuery,
+  ];
 
   ProjectsLoaded copyWith({
     List<Project>? projects,
@@ -57,7 +57,9 @@ class ProjectsLoaded extends ProjectState {
     return ProjectsLoaded(
       projects: projects ?? this.projects,
       filteredProjects: filteredProjects ?? this.filteredProjects,
-      selectedProject: clearSelectedProject ? null : (selectedProject ?? this.selectedProject),
+      selectedProject: clearSelectedProject
+          ? null
+          : (selectedProject ?? this.selectedProject),
       currentFilter: clearFilter ? null : (currentFilter ?? this.currentFilter),
       searchQuery: clearSearch ? null : (searchQuery ?? this.searchQuery),
     );

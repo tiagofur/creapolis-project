@@ -51,14 +51,14 @@ class CreateProject extends ProjectEvent {
 
   @override
   List<Object?> get props => [
-        name,
-        description,
-        startDate,
-        endDate,
-        status,
-        managerId,
-        workspaceId,
-      ];
+    name,
+    description,
+    startDate,
+    endDate,
+    status,
+    managerId,
+    workspaceId,
+  ];
 }
 
 /// Evento para actualizar un proyecto existente
@@ -83,14 +83,14 @@ class UpdateProject extends ProjectEvent {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        description,
-        startDate,
-        endDate,
-        status,
-        managerId,
-      ];
+    id,
+    name,
+    description,
+    startDate,
+    endDate,
+    status,
+    managerId,
+  ];
 }
 
 /// Evento para eliminar un proyecto

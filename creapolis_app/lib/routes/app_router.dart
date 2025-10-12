@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/storage_keys.dart';
@@ -16,6 +17,9 @@ import '../presentation/screens/profile/profile_screen.dart';
 import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
 import '../features/projects/presentation/screens/projects_screen.dart';
+import '../features/tasks/presentation/screens/tasks_screen.dart';
+import '../features/tasks/presentation/blocs/task_bloc.dart';
+import '../features/tasks/presentation/blocs/task_event.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
@@ -198,6 +202,21 @@ class AppRouter {
                       return ProjectDetailScreen(projectId: id);
                     },
                     routes: [
+                      // Tasks list del proyecto
+                      GoRoute(
+                        path: 'tasks',
+                        name: RouteNames.tasks,
+                        builder: (context, state) {
+                          final pId = state.pathParameters['pId'] ?? '0';
+                          return BlocProvider(
+                            create: (context) =>
+                                getIt<TaskBloc>()
+                                  ..add(LoadTasks(int.parse(pId))),
+                            child: TasksScreen(projectId: int.parse(pId)),
+                          );
+                        },
+                      ),
+
                       // Gantt chart del proyecto
                       GoRoute(
                         path: 'gantt',
@@ -222,7 +241,7 @@ class AppRouter {
                         },
                       ),
 
-                      // Tasks dentro del proyecto
+                      // Task detail dentro del proyecto
                       GoRoute(
                         path: 'tasks/:tId',
                         name: RouteNames.taskDetail,

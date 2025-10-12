@@ -8,10 +8,7 @@ import 'package:creapolis_app/domain/entities/project.dart';
 class CreateProjectDialog extends StatefulWidget {
   final int workspaceId;
 
-  const CreateProjectDialog({
-    super.key,
-    required this.workspaceId,
-  });
+  const CreateProjectDialog({super.key, required this.workspaceId});
 
   @override
   State<CreateProjectDialog> createState() => _CreateProjectDialogState();
@@ -70,15 +67,15 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       context.read<ProjectBloc>().add(
-            CreateProject(
-              name: _nameController.text.trim(),
-              description: _descriptionController.text.trim(),
-              startDate: _startDate,
-              endDate: _endDate,
-              status: _status,
-              workspaceId: widget.workspaceId,
-            ),
-          );
+        CreateProject(
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          startDate: _startDate,
+          endDate: _endDate,
+          status: _status,
+          workspaceId: widget.workspaceId,
+        ),
+      );
       Navigator.pop(context);
     }
   }
