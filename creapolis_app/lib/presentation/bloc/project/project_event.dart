@@ -10,21 +10,21 @@ abstract class ProjectEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Evento para cargar lista de proyectos
+/// Evento para cargar lista de proyectos de un workspace
 class LoadProjectsEvent extends ProjectEvent {
-  final int? workspaceId;
+  final int workspaceId;
 
-  const LoadProjectsEvent({this.workspaceId});
+  const LoadProjectsEvent({required this.workspaceId});
 
   @override
   List<Object?> get props => [workspaceId];
 }
 
-/// Evento para refrescar lista de proyectos
+/// Evento para refrescar lista de proyectos de un workspace
 class RefreshProjectsEvent extends ProjectEvent {
-  final int? workspaceId;
+  final int workspaceId;
 
-  const RefreshProjectsEvent({this.workspaceId});
+  const RefreshProjectsEvent({required this.workspaceId});
 
   @override
   List<Object?> get props => [workspaceId];

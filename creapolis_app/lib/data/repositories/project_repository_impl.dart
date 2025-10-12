@@ -3,36 +3,86 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/project_repository.dart';
+import '../datasources/local/project_cache_datasource.dart';
 import '../datasources/project_remote_datasource.dart';
 
-/// Implementación del repositorio de proyectos
+/// Implementación del repositorio de proyectos con soporte offline
 @LazySingleton(as: ProjectRepository)
 class ProjectRepositoryImpl implements ProjectRepository {
   final ProjectRemoteDataSource _remoteDataSource;
+  final ProjectCacheDataSource _cacheDataSource;
+  final ConnectivityService _connectivityService;
 
-  ProjectRepositoryImpl(this._remoteDataSource);
+  ProjectRepositoryImpl(
+    this._remoteDataSource,
+    this._cacheDataSource,
+    this._connectivityService,
+  );
 
   @override
-  Future<Either<Failure, List<Project>>> getProjects({int? workspaceId}) async {
+  Future<Either<Failure, List<Project>>> getProjects({
+    required int workspaceId,
+  }) async {
     try {
-      final projects = await _remoteDataSource.getProjects();
-
-      // Filtrar por workspace si se proporciona
-      if (workspaceId != null) {
-        final filtered = projects
-            .where((p) => p.workspaceId == workspaceId)
-            .toList();
-        return Right(filtered);
+      // 1. Verificar si el caché tiene datos válidos para este workspace
+      final hasValidCache = await _cacheDataSource.hasValidCache(workspaceId);
+      if (hasValidCache) {
+        final cachedProjects = await _cacheDataSource.getCachedProjects(
+          workspaceId: workspaceId,
+        );
+        return Right(cachedProjects);
       }
 
-      return Right(projects);
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final projects = await _remoteDataSource.getProjects(workspaceId);
+
+        // Cachear los proyectos obtenidos
+        await _cacheDataSource.cacheProjects(
+          projects,
+          workspaceId: workspaceId,
+        );
+
+        return Right(projects);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado
+        final cachedProjects = await _cacheDataSource.getCachedProjects(
+          workspaceId: workspaceId,
+        );
+        if (cachedProjects.isNotEmpty) {
+          return Right(cachedProjects);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure('Sin conexión a internet y sin datos en caché'),
+        );
+      }
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on NetworkException catch (e) {
+      // En caso de error de red, usar caché
+      final cachedProjects = await _cacheDataSource.getCachedProjects(
+        workspaceId: workspaceId,
+      );
+      if (cachedProjects.isNotEmpty) {
+        return Right(cachedProjects);
+      }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedProjects = await _cacheDataSource.getCachedProjects(
+        workspaceId: workspaceId,
+      );
+      if (cachedProjects.isNotEmpty) {
+        return Right(cachedProjects);
+      }
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure('Error inesperado al obtener proyectos: $e'));
@@ -42,13 +92,52 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<Either<Failure, Project>> getProjectById(int id) async {
     try {
-      final project = await _remoteDataSource.getProjectById(id);
-      return Right(project);
+      // 1. Intentar obtener del caché primero
+      final cachedProject = await _cacheDataSource.getCachedProjectById(id);
+      if (cachedProject != null) {
+        // Verificar si el caché del workspace de este proyecto es válido
+        final hasValidCache = await _cacheDataSource.hasValidCache(
+          cachedProject.workspaceId,
+        );
+        if (hasValidCache) {
+          return Right(cachedProject);
+        }
+      }
+
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final project = await _remoteDataSource.getProjectById(id);
+
+        // Cachear el proyecto obtenido
+        await _cacheDataSource.cacheProject(project);
+
+        return Right(project);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado si existe
+        if (cachedProject != null) {
+          return Right(cachedProject);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure(
+            'Sin conexión a internet y sin datos en caché para este proyecto',
+          ),
+        );
+      }
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedProject = await _cacheDataSource.getCachedProjectById(id);
+      if (cachedProject != null) {
+        return Right(cachedProject);
+      }
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure('Error inesperado al obtener proyecto: $e'));

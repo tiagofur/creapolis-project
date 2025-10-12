@@ -7,12 +7,14 @@ import '../entities/project.dart';
 ///
 /// Define los contratos para operaciones con proyectos.
 abstract class ProjectRepository {
-  /// Obtener lista de proyectos
+  /// Obtener lista de proyectos de un workspace
   ///
-  /// Si se proporciona [workspaceId], filtra por ese workspace.
+  /// [workspaceId] ID del workspace (requerido para filtrar proyectos)
   /// Retorna `Right(List<Project>)` si es exitoso.
   /// Retorna `Left(Failure)` si hay error.
-  Future<Either<Failure, List<Project>>> getProjects({int? workspaceId});
+  Future<Either<Failure, List<Project>>> getProjects({
+    required int workspaceId,
+  });
 
   /// Obtener proyecto por ID
   ///

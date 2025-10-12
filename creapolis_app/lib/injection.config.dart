@@ -1,4 +1,3 @@
-// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // **************************************************************************
@@ -9,14 +8,22 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
+import 'core/database/cache_manager.dart' as _i454;
 import 'core/network/dio_client.dart' as _i45;
+import 'core/services/connectivity_service.dart' as _i524;
+import 'core/sync/sync_manager.dart' as _i223;
+import 'core/sync/sync_operation_executor.dart' as _i203;
 import 'data/datasources/auth_remote_datasource.dart' as _i127;
 import 'data/datasources/calendar_remote_datasource.dart' as _i318;
+import 'data/datasources/local/project_cache_datasource.dart' as _i255;
+import 'data/datasources/local/task_cache_datasource.dart' as _i314;
+import 'data/datasources/local/workspace_cache_datasource.dart' as _i618;
 import 'data/datasources/project_remote_datasource.dart' as _i922;
 import 'data/datasources/task_remote_datasource.dart' as _i1007;
 import 'data/datasources/time_log_remote_datasource.dart' as _i714;
@@ -86,250 +93,206 @@ import 'presentation/providers/theme_provider.dart' as _i971;
 import 'presentation/providers/workspace_context.dart' as _i34;
 
 extension GetItInjectableX on _i174.GetIt {
-  // initializes the registration of main-scope dependencies inside of GetIt
+// initializes the registration of main-scope dependencies inside of GetIt
   _i174.GetIt init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
   }) {
-    final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    final gh = _i526.GetItHelper(
+      this,
+      environment,
+      environmentFilter,
+    );
+    gh.lazySingleton<_i454.CacheManager>(() => _i454.CacheManager());
+    gh.lazySingleton<_i618.WorkspaceCacheDataSource>(
+        () => _i618.WorkspaceCacheDataSourceImpl(gh<_i454.CacheManager>()));
     gh.factory<_i971.ThemeProvider>(
-      () => _i971.ThemeProvider(gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i268.WorkspaceLocalDataSource>(
-      () => _i268.WorkspaceLocalDataSourceImpl(gh<_i460.SharedPreferences>()),
-    );
+        () => _i971.ThemeProvider(gh<_i460.SharedPreferences>()));
+    gh.lazySingleton<_i255.ProjectCacheDataSource>(
+        () => _i255.ProjectCacheDataSourceImpl(gh<_i454.CacheManager>()));
+    gh.lazySingleton<_i314.TaskCacheDataSource>(
+        () => _i314.TaskCacheDataSourceImpl(gh<_i454.CacheManager>()));
+    gh.lazySingleton<_i268.WorkspaceLocalDataSource>(() =>
+        _i268.WorkspaceLocalDataSourceImpl(gh<_i460.SharedPreferences>()));
     gh.singleton<_i45.DioClient>(
-      () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()),
-    );
+        () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()));
     gh.lazySingleton<_i391.WorkspaceRemoteDataSource>(
-      () => _i391.WorkspaceRemoteDataSourceImpl(gh<_i45.DioClient>()),
-    );
+        () => _i391.WorkspaceRemoteDataSourceImpl(gh<_i45.DioClient>()));
     gh.lazySingleton<_i127.AuthRemoteDataSource>(
-      () => _i127.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()),
-    );
+        () => _i127.AuthRemoteDataSourceImpl(gh<_i45.DioClient>()));
+    gh.lazySingleton<_i524.ConnectivityService>(
+        () => _i524.ConnectivityService(gh<_i895.Connectivity>()));
     gh.factory<_i318.CalendarRemoteDataSource>(
-      () => _i318.CalendarRemoteDataSource(gh<_i45.DioClient>()),
-    );
+        () => _i318.CalendarRemoteDataSource(gh<_i45.DioClient>()));
     gh.factory<_i233.WorkloadRemoteDataSource>(
-      () => _i233.WorkloadRemoteDataSource(gh<_i45.DioClient>()),
-    );
-    gh.lazySingleton<_i922.ProjectRemoteDataSource>(
-      () => _i922.ProjectRemoteDataSourceImpl(gh<_i45.DioClient>()),
-    );
-    gh.lazySingleton<_i716.AuthRepository>(
-      () => _i145.AuthRepositoryImpl(
-        gh<_i127.AuthRemoteDataSource>(),
-        gh<_i558.FlutterSecureStorage>(),
-        gh<_i460.SharedPreferences>(),
-      ),
-    );
-    gh.lazySingleton<_i714.TimeLogRemoteDataSource>(
-      () => _i714.TimeLogRemoteDataSourceImpl(gh<_i45.DioClient>()),
-    );
-    gh.factory<_i916.CalendarRepository>(
-      () => _i365.CalendarRepositoryImpl(gh<_i318.CalendarRemoteDataSource>()),
-    );
-    gh.lazySingleton<_i1007.TaskRemoteDataSource>(
-      () => _i1007.TaskRemoteDataSourceImpl(gh<_i45.DioClient>()),
-    );
-    gh.factory<_i889.GetProfileUseCase>(
-      () => _i889.GetProfileUseCase(gh<_i716.AuthRepository>()),
-    );
-    gh.factory<_i883.LoginUseCase>(
-      () => _i883.LoginUseCase(gh<_i716.AuthRepository>()),
-    );
-    gh.factory<_i808.LogoutUseCase>(
-      () => _i808.LogoutUseCase(gh<_i716.AuthRepository>()),
-    );
-    gh.factory<_i784.RegisterUseCase>(
-      () => _i784.RegisterUseCase(gh<_i716.AuthRepository>()),
-    );
+        () => _i233.WorkloadRemoteDataSource(gh<_i45.DioClient>()));
     gh.lazySingleton<_i713.WorkspaceRepository>(
-      () => _i753.WorkspaceRepositoryImpl(
-        gh<_i391.WorkspaceRemoteDataSource>(),
-        gh<_i268.WorkspaceLocalDataSource>(),
-      ),
-    );
-    gh.lazySingleton<_i17.ProjectRepository>(
-      () => _i40.ProjectRepositoryImpl(gh<_i922.ProjectRemoteDataSource>()),
-    );
-    gh.lazySingleton<_i657.TimeLogRepository>(
-      () => _i384.TimeLogRepositoryImpl(gh<_i714.TimeLogRemoteDataSource>()),
-    );
-    gh.lazySingleton<_i449.TaskRepository>(
-      () => _i221.TaskRepositoryImpl(gh<_i1007.TaskRemoteDataSource>()),
-    );
-    gh.factory<_i42.WorkloadRepository>(
-      () => _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()),
-    );
+        () => _i753.WorkspaceRepositoryImpl(
+              gh<_i391.WorkspaceRemoteDataSource>(),
+              gh<_i268.WorkspaceLocalDataSource>(),
+              gh<_i618.WorkspaceCacheDataSource>(),
+              gh<_i524.ConnectivityService>(),
+            ));
     gh.factory<_i927.AcceptInvitationUseCase>(
-      () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i359.CreateInvitationUseCase>(
-      () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i225.CreateWorkspaceUseCase>(
-      () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i890.GetActiveWorkspaceUseCase>(
-      () => _i890.GetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
-    );
-    gh.factory<_i591.GetPendingInvitationsUseCase>(
-      () => _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i890.GetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i591.GetPendingInvitationsUseCase>(() =>
+        _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i820.GetUserWorkspacesUseCase>(
-      () => _i820.GetUserWorkspacesUseCase(gh<_i713.WorkspaceRepository>()),
-    );
-    gh.factory<_i517.GetWorkspaceMembersUseCase>(
-      () => _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i820.GetUserWorkspacesUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i517.GetWorkspaceMembersUseCase>(() =>
+        _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i245.SetActiveWorkspaceUseCase>(
-      () => _i245.SetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()),
-    );
+        () => _i245.SetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.lazySingleton<_i17.ProjectRepository>(() => _i40.ProjectRepositoryImpl(
+          gh<_i922.ProjectRemoteDataSource>(),
+          gh<_i255.ProjectCacheDataSource>(),
+          gh<_i524.ConnectivityService>(),
+        ));
     gh.factory<_i53.WorkspaceMemberBloc>(
-      () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()),
-    );
+        () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()));
+    gh.lazySingleton<_i716.AuthRepository>(() => _i145.AuthRepositoryImpl(
+          gh<_i127.AuthRemoteDataSource>(),
+          gh<_i558.FlutterSecureStorage>(),
+          gh<_i460.SharedPreferences>(),
+        ));
     gh.factory<_i1015.CreateProjectUseCase>(
-      () => _i1015.CreateProjectUseCase(gh<_i17.ProjectRepository>()),
-    );
+        () => _i1015.CreateProjectUseCase(gh<_i17.ProjectRepository>()));
     gh.factory<_i177.DeleteProjectUseCase>(
-      () => _i177.DeleteProjectUseCase(gh<_i17.ProjectRepository>()),
-    );
+        () => _i177.DeleteProjectUseCase(gh<_i17.ProjectRepository>()));
     gh.factory<_i32.GetProjectsUseCase>(
-      () => _i32.GetProjectsUseCase(gh<_i17.ProjectRepository>()),
-    );
+        () => _i32.GetProjectsUseCase(gh<_i17.ProjectRepository>()));
     gh.factory<_i356.GetProjectByIdUseCase>(
-      () => _i356.GetProjectByIdUseCase(gh<_i17.ProjectRepository>()),
-    );
+        () => _i356.GetProjectByIdUseCase(gh<_i17.ProjectRepository>()));
     gh.factory<_i589.UpdateProjectUseCase>(
-      () => _i589.UpdateProjectUseCase(gh<_i17.ProjectRepository>()),
-    );
-    gh.factory<_i812.CompleteCalendarOAuthUseCase>(
-      () => _i812.CompleteCalendarOAuthUseCase(gh<_i916.CalendarRepository>()),
-    );
-    gh.factory<_i913.ConnectCalendarUseCase>(
-      () => _i913.ConnectCalendarUseCase(gh<_i916.CalendarRepository>()),
-    );
-    gh.factory<_i566.DisconnectCalendarUseCase>(
-      () => _i566.DisconnectCalendarUseCase(gh<_i916.CalendarRepository>()),
-    );
-    gh.factory<_i649.GetCalendarConnectionStatusUseCase>(
-      () => _i649.GetCalendarConnectionStatusUseCase(
-        gh<_i916.CalendarRepository>(),
-      ),
-    );
-    gh.factory<_i587.GetCalendarEventsUseCase>(
-      () => _i587.GetCalendarEventsUseCase(gh<_i916.CalendarRepository>()),
-    );
-    gh.factory<_i605.AuthBloc>(
-      () => _i605.AuthBloc(
-        gh<_i883.LoginUseCase>(),
-        gh<_i784.RegisterUseCase>(),
-        gh<_i889.GetProfileUseCase>(),
-        gh<_i808.LogoutUseCase>(),
-      ),
-    );
-    gh.factory<_i754.WorkspaceBloc>(
-      () => _i754.WorkspaceBloc(
-        gh<_i820.GetUserWorkspacesUseCase>(),
-        gh<_i225.CreateWorkspaceUseCase>(),
-        gh<_i245.SetActiveWorkspaceUseCase>(),
-        gh<_i890.GetActiveWorkspaceUseCase>(),
-      ),
-    );
+        () => _i589.UpdateProjectUseCase(gh<_i17.ProjectRepository>()));
+    gh.lazySingleton<_i714.TimeLogRemoteDataSource>(
+        () => _i714.TimeLogRemoteDataSourceImpl(gh<_i45.DioClient>()));
+    gh.factory<_i916.CalendarRepository>(() =>
+        _i365.CalendarRepositoryImpl(gh<_i318.CalendarRemoteDataSource>()));
+    gh.factory<_i754.WorkspaceBloc>(() => _i754.WorkspaceBloc(
+          gh<_i820.GetUserWorkspacesUseCase>(),
+          gh<_i225.CreateWorkspaceUseCase>(),
+          gh<_i245.SetActiveWorkspaceUseCase>(),
+          gh<_i890.GetActiveWorkspaceUseCase>(),
+        ));
+    gh.factory<_i889.GetProfileUseCase>(
+        () => _i889.GetProfileUseCase(gh<_i716.AuthRepository>()));
+    gh.factory<_i883.LoginUseCase>(
+        () => _i883.LoginUseCase(gh<_i716.AuthRepository>()));
+    gh.factory<_i808.LogoutUseCase>(
+        () => _i808.LogoutUseCase(gh<_i716.AuthRepository>()));
+    gh.factory<_i784.RegisterUseCase>(
+        () => _i784.RegisterUseCase(gh<_i716.AuthRepository>()));
     gh.factory<_i953.WorkspaceInvitationBloc>(
-      () => _i953.WorkspaceInvitationBloc(
-        gh<_i591.GetPendingInvitationsUseCase>(),
-        gh<_i359.CreateInvitationUseCase>(),
-        gh<_i927.AcceptInvitationUseCase>(),
-      ),
-    );
-    gh.factory<_i659.CalendarBloc>(
-      () => _i659.CalendarBloc(
-        gh<_i913.ConnectCalendarUseCase>(),
-        gh<_i566.DisconnectCalendarUseCase>(),
-        gh<_i649.GetCalendarConnectionStatusUseCase>(),
-        gh<_i587.GetCalendarEventsUseCase>(),
-        gh<_i812.CompleteCalendarOAuthUseCase>(),
-      ),
-    );
+        () => _i953.WorkspaceInvitationBloc(
+              gh<_i591.GetPendingInvitationsUseCase>(),
+              gh<_i359.CreateInvitationUseCase>(),
+              gh<_i927.AcceptInvitationUseCase>(),
+            ));
+    gh.lazySingleton<_i449.TaskRepository>(() => _i221.TaskRepositoryImpl(
+          gh<_i1007.TaskRemoteDataSource>(),
+          gh<_i314.TaskCacheDataSource>(),
+          gh<_i524.ConnectivityService>(),
+        ));
     gh.singleton<_i34.WorkspaceContext>(
-      () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()),
-    );
-    gh.factory<_i654.GetResourceAllocationUseCase>(
-      () => _i654.GetResourceAllocationUseCase(gh<_i42.WorkloadRepository>()),
-    );
-    gh.factory<_i971.GetUserWorkloadUseCase>(
-      () => _i971.GetUserWorkloadUseCase(gh<_i42.WorkloadRepository>()),
-    );
-    gh.factory<_i353.GetWorkloadStatsUseCase>(
-      () => _i353.GetWorkloadStatsUseCase(gh<_i42.WorkloadRepository>()),
-    );
-    gh.factory<_i339.FinishTaskUseCase>(
-      () => _i339.FinishTaskUseCase(gh<_i657.TimeLogRepository>()),
-    );
-    gh.factory<_i987.GetActiveTimeLogUseCase>(
-      () => _i987.GetActiveTimeLogUseCase(gh<_i657.TimeLogRepository>()),
-    );
-    gh.factory<_i630.GetTimeLogsByTaskUseCase>(
-      () => _i630.GetTimeLogsByTaskUseCase(gh<_i657.TimeLogRepository>()),
-    );
-    gh.factory<_i137.StartTimerUseCase>(
-      () => _i137.StartTimerUseCase(gh<_i657.TimeLogRepository>()),
-    );
-    gh.factory<_i838.StopTimerUseCase>(
-      () => _i838.StopTimerUseCase(gh<_i657.TimeLogRepository>()),
-    );
-    gh.factory<_i808.TimeTrackingBloc>(
-      () => _i808.TimeTrackingBloc(
-        gh<_i137.StartTimerUseCase>(),
-        gh<_i838.StopTimerUseCase>(),
-        gh<_i339.FinishTaskUseCase>(),
-        gh<_i630.GetTimeLogsByTaskUseCase>(),
-        gh<_i987.GetActiveTimeLogUseCase>(),
-      ),
-    );
+        () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()));
+    gh.lazySingleton<_i657.TimeLogRepository>(
+        () => _i384.TimeLogRepositoryImpl(gh<_i714.TimeLogRemoteDataSource>()));
     gh.factory<_i612.CreateTaskUseCase>(
-      () => _i612.CreateTaskUseCase(gh<_i449.TaskRepository>()),
-    );
+        () => _i612.CreateTaskUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i757.DeleteTaskUseCase>(
-      () => _i757.DeleteTaskUseCase(gh<_i449.TaskRepository>()),
-    );
+        () => _i757.DeleteTaskUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i725.GetTasksByProjectUseCase>(
-      () => _i725.GetTasksByProjectUseCase(gh<_i449.TaskRepository>()),
-    );
+        () => _i725.GetTasksByProjectUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i199.GetTaskByIdUseCase>(
-      () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()),
-    );
+        () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i1018.UpdateTaskUseCase>(
-      () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()),
-    );
-    gh.factory<_i190.ProjectBloc>(
-      () => _i190.ProjectBloc(
-        gh<_i32.GetProjectsUseCase>(),
-        gh<_i356.GetProjectByIdUseCase>(),
-        gh<_i1015.CreateProjectUseCase>(),
-        gh<_i589.UpdateProjectUseCase>(),
-        gh<_i177.DeleteProjectUseCase>(),
-      ),
-    );
-    gh.factory<_i107.WorkloadBloc>(
-      () => _i107.WorkloadBloc(
-        gh<_i654.GetResourceAllocationUseCase>(),
-        gh<_i971.GetUserWorkloadUseCase>(),
-        gh<_i353.GetWorkloadStatsUseCase>(),
-      ),
-    );
-    gh.factory<_i944.TaskBloc>(
-      () => _i944.TaskBloc(
-        gh<_i725.GetTasksByProjectUseCase>(),
-        gh<_i199.GetTaskByIdUseCase>(),
-        gh<_i612.CreateTaskUseCase>(),
-        gh<_i1018.UpdateTaskUseCase>(),
-        gh<_i757.DeleteTaskUseCase>(),
-        gh<_i449.TaskRepository>(),
-      ),
-    );
+        () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i42.WorkloadRepository>(() =>
+        _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()));
+    gh.factory<_i190.ProjectBloc>(() => _i190.ProjectBloc(
+          gh<_i32.GetProjectsUseCase>(),
+          gh<_i356.GetProjectByIdUseCase>(),
+          gh<_i1015.CreateProjectUseCase>(),
+          gh<_i589.UpdateProjectUseCase>(),
+          gh<_i177.DeleteProjectUseCase>(),
+        ));
+    gh.lazySingleton<_i203.SyncOperationExecutor>(
+        () => _i203.SyncOperationExecutor(
+              gh<_i713.WorkspaceRepository>(),
+              gh<_i17.ProjectRepository>(),
+              gh<_i449.TaskRepository>(),
+            ));
+    gh.factory<_i812.CompleteCalendarOAuthUseCase>(() =>
+        _i812.CompleteCalendarOAuthUseCase(gh<_i916.CalendarRepository>()));
+    gh.factory<_i913.ConnectCalendarUseCase>(
+        () => _i913.ConnectCalendarUseCase(gh<_i916.CalendarRepository>()));
+    gh.factory<_i566.DisconnectCalendarUseCase>(
+        () => _i566.DisconnectCalendarUseCase(gh<_i916.CalendarRepository>()));
+    gh.factory<_i649.GetCalendarConnectionStatusUseCase>(() =>
+        _i649.GetCalendarConnectionStatusUseCase(
+            gh<_i916.CalendarRepository>()));
+    gh.factory<_i587.GetCalendarEventsUseCase>(
+        () => _i587.GetCalendarEventsUseCase(gh<_i916.CalendarRepository>()));
+    gh.factory<_i605.AuthBloc>(() => _i605.AuthBloc(
+          gh<_i883.LoginUseCase>(),
+          gh<_i784.RegisterUseCase>(),
+          gh<_i889.GetProfileUseCase>(),
+          gh<_i808.LogoutUseCase>(),
+        ));
+    gh.factory<_i944.TaskBloc>(() => _i944.TaskBloc(
+          gh<_i725.GetTasksByProjectUseCase>(),
+          gh<_i199.GetTaskByIdUseCase>(),
+          gh<_i612.CreateTaskUseCase>(),
+          gh<_i1018.UpdateTaskUseCase>(),
+          gh<_i757.DeleteTaskUseCase>(),
+          gh<_i449.TaskRepository>(),
+        ));
+    gh.factory<_i659.CalendarBloc>(() => _i659.CalendarBloc(
+          gh<_i913.ConnectCalendarUseCase>(),
+          gh<_i566.DisconnectCalendarUseCase>(),
+          gh<_i649.GetCalendarConnectionStatusUseCase>(),
+          gh<_i587.GetCalendarEventsUseCase>(),
+          gh<_i812.CompleteCalendarOAuthUseCase>(),
+        ));
+    gh.factory<_i654.GetResourceAllocationUseCase>(() =>
+        _i654.GetResourceAllocationUseCase(gh<_i42.WorkloadRepository>()));
+    gh.factory<_i971.GetUserWorkloadUseCase>(
+        () => _i971.GetUserWorkloadUseCase(gh<_i42.WorkloadRepository>()));
+    gh.factory<_i353.GetWorkloadStatsUseCase>(
+        () => _i353.GetWorkloadStatsUseCase(gh<_i42.WorkloadRepository>()));
+    gh.factory<_i339.FinishTaskUseCase>(
+        () => _i339.FinishTaskUseCase(gh<_i657.TimeLogRepository>()));
+    gh.factory<_i987.GetActiveTimeLogUseCase>(
+        () => _i987.GetActiveTimeLogUseCase(gh<_i657.TimeLogRepository>()));
+    gh.factory<_i630.GetTimeLogsByTaskUseCase>(
+        () => _i630.GetTimeLogsByTaskUseCase(gh<_i657.TimeLogRepository>()));
+    gh.factory<_i137.StartTimerUseCase>(
+        () => _i137.StartTimerUseCase(gh<_i657.TimeLogRepository>()));
+    gh.factory<_i838.StopTimerUseCase>(
+        () => _i838.StopTimerUseCase(gh<_i657.TimeLogRepository>()));
+    gh.factory<_i808.TimeTrackingBloc>(() => _i808.TimeTrackingBloc(
+          gh<_i137.StartTimerUseCase>(),
+          gh<_i838.StopTimerUseCase>(),
+          gh<_i339.FinishTaskUseCase>(),
+          gh<_i630.GetTimeLogsByTaskUseCase>(),
+          gh<_i987.GetActiveTimeLogUseCase>(),
+        ));
+    gh.lazySingleton<_i223.SyncManager>(() => _i223.SyncManager(
+          gh<_i524.ConnectivityService>(),
+          gh<_i203.SyncOperationExecutor>(),
+        ));
+    gh.factory<_i107.WorkloadBloc>(() => _i107.WorkloadBloc(
+          gh<_i654.GetResourceAllocationUseCase>(),
+          gh<_i971.GetUserWorkloadUseCase>(),
+          gh<_i353.GetWorkloadStatsUseCase>(),
+        ));
     return this;
   }
 }

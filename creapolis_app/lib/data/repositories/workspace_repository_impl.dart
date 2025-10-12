@@ -3,34 +3,81 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../domain/entities/workspace.dart';
 import '../../domain/entities/workspace_invitation.dart';
 import '../../domain/entities/workspace_member.dart';
 import '../../domain/repositories/workspace_repository.dart';
+import '../datasources/local/workspace_cache_datasource.dart';
 import '../datasources/workspace_local_datasource.dart';
 import '../datasources/workspace_remote_datasource.dart';
 
-/// Implementación del repositorio de workspaces
+/// Implementación del repositorio de workspaces con soporte offline
 @LazySingleton(as: WorkspaceRepository)
 class WorkspaceRepositoryImpl implements WorkspaceRepository {
   final WorkspaceRemoteDataSource _remoteDataSource;
   final WorkspaceLocalDataSource _localDataSource;
+  final WorkspaceCacheDataSource _cacheDataSource;
+  final ConnectivityService _connectivityService;
 
-  WorkspaceRepositoryImpl(this._remoteDataSource, this._localDataSource);
+  WorkspaceRepositoryImpl(
+    this._remoteDataSource,
+    this._localDataSource,
+    this._cacheDataSource,
+    this._connectivityService,
+  );
 
   @override
   Future<Either<Failure, List<Workspace>>> getUserWorkspaces() async {
     try {
-      final workspaceModels = await _remoteDataSource.getUserWorkspaces();
-      final workspaces = workspaceModels
-          .map((model) => model.toEntity())
-          .toList();
-      return Right(workspaces);
+      // 1. Verificar si el caché tiene datos válidos
+      final hasValidCache = await _cacheDataSource.hasValidCache();
+      if (hasValidCache) {
+        final cachedWorkspaces = await _cacheDataSource.getCachedWorkspaces();
+        return Right(cachedWorkspaces);
+      }
+
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final workspaceModels = await _remoteDataSource.getUserWorkspaces();
+
+        // Convertir a entities y cachear
+        final workspaces = workspaceModels
+            .map((model) => model.toEntity())
+            .toList();
+        await _cacheDataSource.cacheWorkspaces(workspaces);
+
+        return Right(workspaces);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado
+        final cachedWorkspaces = await _cacheDataSource.getCachedWorkspaces();
+        if (cachedWorkspaces.isNotEmpty) {
+          return Right(cachedWorkspaces);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure('Sin conexión a internet y sin datos en caché'),
+        );
+      }
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedWorkspaces = await _cacheDataSource.getCachedWorkspaces();
+      if (cachedWorkspaces.isNotEmpty) {
+        return Right(cachedWorkspaces);
+      }
       return Left(ServerFailure(e.message));
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on NetworkException catch (e) {
+      // En caso de error de red, usar caché
+      final cachedWorkspaces = await _cacheDataSource.getCachedWorkspaces();
+      if (cachedWorkspaces.isNotEmpty) {
+        return Right(cachedWorkspaces);
+      }
       return Left(NetworkFailure(e.message));
     } catch (e) {
       return Left(ServerFailure('Error inesperado: ${e.toString()}'));
@@ -40,13 +87,64 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   @override
   Future<Either<Failure, Workspace>> getWorkspace(int workspaceId) async {
     try {
-      final workspaceModel = await _remoteDataSource.getWorkspace(workspaceId);
-      return Right(workspaceModel.toEntity());
+      // 1. Intentar obtener del caché primero
+      final cachedWorkspace = await _cacheDataSource.getCachedWorkspaceById(
+        workspaceId,
+      );
+      if (cachedWorkspace != null) {
+        // Verificar si el caché es válido
+        final hasValidCache = await _cacheDataSource.hasValidCache();
+        if (hasValidCache) {
+          return Right(cachedWorkspace);
+        }
+      }
+
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final workspaceModel = await _remoteDataSource.getWorkspace(
+          workspaceId,
+        );
+
+        // Convertir a entity y cachear
+        final workspace = workspaceModel.toEntity();
+        await _cacheDataSource.cacheWorkspace(workspace);
+
+        return Right(workspace);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado si existe
+        if (cachedWorkspace != null) {
+          return Right(cachedWorkspace);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure(
+            'Sin conexión a internet y sin datos en caché para este workspace',
+          ),
+        );
+      }
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedWorkspace = await _cacheDataSource.getCachedWorkspaceById(
+        workspaceId,
+      );
+      if (cachedWorkspace != null) {
+        return Right(cachedWorkspace);
+      }
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
+      // En caso de error de red, usar caché
+      final cachedWorkspace = await _cacheDataSource.getCachedWorkspaceById(
+        workspaceId,
+      );
+      if (cachedWorkspace != null) {
+        return Right(cachedWorkspace);
+      }
       return Left(NetworkFailure(e.message));
     } catch (e) {
       return Left(ServerFailure('Error inesperado: ${e.toString()}'));

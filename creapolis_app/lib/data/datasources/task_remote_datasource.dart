@@ -1,7 +1,6 @@
-import 'package:injectable/injectable.dart';
-
 import '../../core/errors/exceptions.dart';
-import '../../core/network/dio_client.dart';
+import '../../core/network/api_client.dart';
+import '../../core/utils/app_logger.dart';
 import '../../domain/entities/task.dart';
 import '../models/task_model.dart';
 
@@ -46,34 +45,45 @@ abstract class TaskRemoteDataSource {
 }
 
 /// Implementación del data source remoto de tareas
-@LazySingleton(as: TaskRemoteDataSource)
 class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
-  final DioClient _client;
+  final ApiClient _apiClient;
 
-  TaskRemoteDataSourceImpl(this._client);
+  TaskRemoteDataSourceImpl(this._apiClient);
 
   @override
   Future<List<TaskModel>> getTasksByProject(int projectId) async {
     try {
-      final response = await _client.get('/projects/$projectId/tasks');
+      AppLogger.info(
+        'TaskRemoteDataSource: Obteniendo tareas del proyecto $projectId',
+      );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final dataRaw = responseData['data'];
+      // GET /projects/:projectId/tasks
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/projects/$projectId/tasks',
+      );
+
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final dataRaw = responseBody?['data'];
 
       // Si data es null o no es una lista, retornar lista vacía
       if (dataRaw == null || dataRaw is! List) {
+        AppLogger.warning('TaskRemoteDataSource: No se encontraron tareas');
         return [];
       }
 
-      return dataRaw
+      final tasks = dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
+
+      AppLogger.info('TaskRemoteDataSource: ${tasks.length} tareas obtenidas');
+      return tasks;
     } on AuthException {
       rethrow;
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al obtener tareas - $e');
       throw ServerException('Error al obtener tareas: ${e.toString()}');
     }
   }
@@ -81,12 +91,18 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<TaskModel> getTaskById(int id) async {
     try {
-      // Usar la ruta /api/tasks/:id que no requiere projectId
-      final response = await _client.get('/tasks/$id');
+      AppLogger.info('TaskRemoteDataSource: Obteniendo tarea $id');
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>;
+      // Usar la ruta /api/tasks/:id que no requiere projectId
+      final response = await _apiClient.get<Map<String, dynamic>>('/tasks/$id');
+
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final data = responseBody?['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException('Respuesta inválida del servidor');
+      }
 
       return TaskModel.fromJson(data);
     } on AuthException {
@@ -94,6 +110,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al obtener tarea - $e');
       throw ServerException('Error al obtener tarea: ${e.toString()}');
     }
   }
@@ -112,7 +129,11 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     List<int>? dependencyIds,
   }) async {
     try {
-      final response = await _client.post(
+      AppLogger.info(
+        'TaskRemoteDataSource: Creando tarea en proyecto $projectId',
+      );
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
         '/projects/$projectId/tasks',
         data: {
           'title': title,
@@ -124,16 +145,22 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         },
       );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>;
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final data = responseBody?['data'] as Map<String, dynamic>?;
 
+      if (data == null) {
+        throw ServerException('Respuesta inválida del servidor');
+      }
+
+      AppLogger.info('TaskRemoteDataSource: Tarea creada exitosamente');
       return TaskModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on ValidationException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al crear tarea - $e');
       throw ServerException('Error al crear tarea: ${e.toString()}');
     }
   }
@@ -168,12 +195,22 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       if (assignedUserId != null) data['assigneeId'] = assignedUserId;
       if (dependencyIds != null) data['predecessorIds'] = dependencyIds;
 
-      final response = await _client.put('/tasks/$id', data: data);
+      AppLogger.info('TaskRemoteDataSource: Actualizando tarea $id');
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final taskData = responseData['data'] as Map<String, dynamic>;
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '/tasks/$id',
+        data: data,
+      );
 
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final taskData = responseBody?['data'] as Map<String, dynamic>?;
+
+      if (taskData == null) {
+        throw ServerException('Respuesta inválida del servidor');
+      }
+
+      AppLogger.info('TaskRemoteDataSource: Tarea actualizada exitosamente');
       return TaskModel.fromJson(taskData);
     } on AuthException {
       rethrow;
@@ -182,6 +219,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     } on ValidationException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al actualizar tarea - $e');
       throw ServerException('Error al actualizar tarea: ${e.toString()}');
     }
   }
@@ -189,12 +227,15 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<void> deleteTask(int id) async {
     try {
-      await _client.delete('/tasks/$id');
+      AppLogger.info('TaskRemoteDataSource: Eliminando tarea $id');
+      await _apiClient.delete('/tasks/$id');
+      AppLogger.info('TaskRemoteDataSource: Tarea eliminada exitosamente');
     } on AuthException {
       rethrow;
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al eliminar tarea - $e');
       throw ServerException('Error al eliminar tarea: ${e.toString()}');
     }
   }
@@ -202,11 +243,17 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<List<TaskDependencyModel>> getTaskDependencies(int taskId) async {
     try {
-      final response = await _client.get('/tasks/$taskId/dependencies');
+      AppLogger.info(
+        'TaskRemoteDataSource: Obteniendo dependencias de tarea $taskId',
+      );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final dataRaw = responseData['data'];
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/tasks/$taskId/dependencies',
+      );
+
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final dataRaw = responseBody?['data'];
 
       // Si data es null o no es una lista, retornar lista vacía
       if (dataRaw == null || dataRaw is! List) {
@@ -224,6 +271,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error(
+        'TaskRemoteDataSource: Error al obtener dependencias - $e',
+      );
       throw ServerException('Error al obtener dependencias: ${e.toString()}');
     }
   }
@@ -234,7 +284,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     required int successorTaskId,
   }) async {
     try {
-      final response = await _client.post(
+      AppLogger.info('TaskRemoteDataSource: Creando dependencia entre tareas');
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
         '/tasks/dependencies',
         data: {
           'predecessor_task_id': predecessorTaskId,
@@ -242,16 +294,22 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         },
       );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>;
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final data = responseBody?['data'] as Map<String, dynamic>?;
 
+      if (data == null) {
+        throw ServerException('Respuesta inválida del servidor');
+      }
+
+      AppLogger.info('TaskRemoteDataSource: Dependencia creada exitosamente');
       return TaskDependencyModel.fromJson(data);
     } on AuthException {
       rethrow;
     } on ValidationException {
       rethrow;
     } catch (e) {
+      AppLogger.error('TaskRemoteDataSource: Error al crear dependencia - $e');
       throw ServerException('Error al crear dependencia: ${e.toString()}');
     }
   }
@@ -259,12 +317,21 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<void> deleteDependency(int dependencyId) async {
     try {
-      await _client.delete('/tasks/dependencies/$dependencyId');
+      AppLogger.info(
+        'TaskRemoteDataSource: Eliminando dependencia $dependencyId',
+      );
+      await _apiClient.delete('/tasks/dependencies/$dependencyId');
+      AppLogger.info(
+        'TaskRemoteDataSource: Dependencia eliminada exitosamente',
+      );
     } on AuthException {
       rethrow;
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error(
+        'TaskRemoteDataSource: Error al eliminar dependencia - $e',
+      );
       throw ServerException('Error al eliminar dependencia: ${e.toString()}');
     }
   }
@@ -272,19 +339,24 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   @override
   Future<List<TaskModel>> calculateSchedule(int projectId) async {
     try {
-      final response = await _client.post(
+      AppLogger.info(
+        'TaskRemoteDataSource: Calculando cronograma del proyecto $projectId',
+      );
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
         '/projects/$projectId/schedule/calculate',
       );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final dataRaw = responseData['data'];
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final dataRaw = responseBody?['data'];
 
       // Si data es null o no es una lista, retornar lista vacía
       if (dataRaw == null || dataRaw is! List) {
         return [];
       }
 
+      AppLogger.info('TaskRemoteDataSource: Cronograma calculado exitosamente');
       return dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -293,6 +365,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error(
+        'TaskRemoteDataSource: Error al calcular cronograma - $e',
+      );
       throw ServerException('Error al calcular cronograma: ${e.toString()}');
     }
   }
@@ -303,20 +378,27 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     int triggerTaskId,
   ) async {
     try {
-      final response = await _client.post(
+      AppLogger.info(
+        'TaskRemoteDataSource: Replanificando proyecto $projectId',
+      );
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
         '/projects/$projectId/schedule/reschedule',
         data: {'triggerTaskId': triggerTaskId},
       );
 
-      // Extraer el campo 'data' de la respuesta anidada
-      final responseData = response.data as Map<String, dynamic>;
-      final dataRaw = responseData['data'];
+      // Extraer el campo 'data' de la respuesta Dio
+      final responseBody = response.data;
+      final dataRaw = responseBody?['data'];
 
       // Si data es null o no es una lista, retornar lista vacía
       if (dataRaw == null || dataRaw is! List) {
         return [];
       }
 
+      AppLogger.info(
+        'TaskRemoteDataSource: Proyecto replanificado exitosamente',
+      );
       return dataRaw
           .map((json) => TaskModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -325,6 +407,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     } on NotFoundException {
       rethrow;
     } catch (e) {
+      AppLogger.error(
+        'TaskRemoteDataSource: Error al replanificar proyecto - $e',
+      );
       throw ServerException('Error al replanificar proyecto: ${e.toString()}');
     }
   }

@@ -1,9 +1,16 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/database/cache_manager.dart';
+import 'core/network/api_client.dart';
+import 'core/network/interceptors/auth_interceptor.dart';
 import 'core/services/last_route_service.dart';
+import 'data/datasources/project_remote_datasource.dart';
+import 'data/datasources/task_remote_datasource.dart';
+import 'features/workspace/data/datasources/workspace_remote_datasource.dart';
 
 // Este archivo será generado por build_runner
 import 'injection.config.dart';
@@ -32,11 +39,53 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 3. Registrar LastRouteService
+  // 3. Registrar CacheManager para datasources locales
+  getIt.registerLazySingleton<CacheManager>(() => CacheManager());
+
+  // 4. Registrar Connectivity para ConnectivityService
+  getIt.registerLazySingleton<Connectivity>(() => Connectivity());
+
+  // 5. Registrar LastRouteService
   getIt.registerLazySingleton<LastRouteService>(
     () => LastRouteService(getIt<FlutterSecureStorage>()),
   );
 
-  // 4. Inicializar dependencias generadas por injectable
+  // 6. Registrar Networking Layer
+  // AuthInterceptor (singleton)
+  getIt.registerSingleton<AuthInterceptor>(
+    AuthInterceptor(storage: getIt<FlutterSecureStorage>()),
+  );
+
+  // ApiClient (singleton)
+  getIt.registerSingleton<ApiClient>(
+    ApiClient(
+      baseUrl: 'http://localhost:3001/api', // TODO: Move to env config
+      authInterceptor: getIt<AuthInterceptor>(),
+    ),
+  );
+
+  // 7. Registrar Data Sources
+  // WorkspaceRemoteDataSource (usa ApiClient)
+  getIt.registerLazySingleton<WorkspaceRemoteDataSource>(
+    () => WorkspaceRemoteDataSource(),
+  );
+
+  // ProjectRemoteDataSource (usa ApiClient - override manual)
+  getIt.registerLazySingleton<ProjectRemoteDataSourceImpl>(
+    () => ProjectRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+
+  // TaskRemoteDataSource (usa ApiClient - override manual)
+  getIt.registerLazySingleton<TaskRemoteDataSourceImpl>(
+    () => TaskRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+
+  // 8. Inicializar dependencias generadas por injectable
+  // Esto registrará automáticamente:
+  // - ConnectivityService
+  // - WorkspaceCacheDataSource
+  // - ProjectCacheDataSource
+  // - TaskCacheDataSource
+  // Y todos los demás servicios marcados con @injectable
   _configureInjectable();
 }

@@ -5,7 +5,10 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
+import 'core/database/hive_manager.dart';
 import 'core/services/view_preferences_service.dart';
+import 'core/sync/sync_manager.dart';
+import 'core/utils/app_logger.dart';
 import 'injection.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/project/project_bloc.dart';
@@ -26,14 +29,56 @@ void main() async {
     usePathUrlStrategy();
   }
 
-  // Inicializar dependencias (GetIt, SharedPreferences, etc.)
-  await initializeDependencies();
+  try {
+    // Inicializar Hive (base de datos local para soporte offline)
+    AppLogger.info('main: Inicializando Hive...');
+    await HiveManager.init();
+    AppLogger.info('main: ✅ Hive inicializado correctamente');
 
-  // Inicializar servicio de preferencias de vista
-  await ViewPreferencesService.instance.init();
+    // Inicializar dependencias (GetIt, SharedPreferences, etc.)
+    await initializeDependencies();
 
-  // Ejecutar app
-  runApp(const CreopolisApp());
+    // Inicializar servicio de preferencias de vista
+    await ViewPreferencesService.instance.init();
+
+    // Inicializar SyncManager para auto-sincronización offline
+    AppLogger.info('main: Inicializando SyncManager...');
+    final syncManager = getIt<SyncManager>();
+    syncManager.startAutoSync();
+    AppLogger.info('main: ✅ SyncManager inicializado y escuchando conectividad');
+
+    // Ejecutar app
+    runApp(const CreopolisApp());
+  } catch (e, stackTrace) {
+    AppLogger.error('main: ❌ Error crítico en inicialización', e, stackTrace);
+
+    // En caso de error, mostrar pantalla de error
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error al inicializar la aplicación',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  e.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CreopolisApp extends StatefulWidget {

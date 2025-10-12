@@ -1,28 +1,19 @@
-import 'package:injectable/injectable.dart';
-
-import '../../core/errors/exceptions.dart';
-import '../../core/network/dio_client.dart';
+import '../../core/network/api_client.dart';
+import '../../core/utils/app_logger.dart';
 import '../../domain/entities/project.dart';
 import '../models/project_model.dart';
 
 /// Interface para el data source remoto de proyectos
 abstract class ProjectRemoteDataSource {
-  /// Obtener lista de proyectos
+  /// Obtener lista de proyectos de un workspace
   ///
-  /// Lanza [ServerException] si hay error en el servidor
-  /// Lanza [AuthException] si no hay token válido
-  Future<List<ProjectModel>> getProjects();
+  /// [workspaceId] ID del workspace (requerido)
+  Future<List<ProjectModel>> getProjects(int workspaceId);
 
   /// Obtener proyecto por ID
-  ///
-  /// Lanza [NotFoundException] si el proyecto no existe
-  /// Lanza [ServerException] si hay error en el servidor
   Future<ProjectModel> getProjectById(int id);
 
   /// Crear nuevo proyecto
-  ///
-  /// Lanza [ValidationException] si los datos son inválidos
-  /// Lanza [ServerException] si hay error en el servidor
   Future<ProjectModel> createProject({
     required String name,
     required String description,
@@ -34,10 +25,6 @@ abstract class ProjectRemoteDataSource {
   });
 
   /// Actualizar proyecto existente
-  ///
-  /// Lanza [NotFoundException] si el proyecto no existe
-  /// Lanza [ValidationException] si los datos son inválidos
-  /// Lanza [ServerException] si hay error en el servidor
   Future<ProjectModel> updateProject({
     required int id,
     String? name,
@@ -49,76 +36,102 @@ abstract class ProjectRemoteDataSource {
   });
 
   /// Eliminar proyecto
-  ///
-  /// Lanza [NotFoundException] si el proyecto no existe
-  /// Lanza [ServerException] si hay error en el servidor
   Future<void> deleteProject(int id);
 }
 
-/// Implementación del data source remoto de proyectos
-@LazySingleton(as: ProjectRemoteDataSource)
+/// Implementación del data source remoto de proyectos usando ApiClient
 class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
-  final DioClient _dioClient;
+  final ApiClient _apiClient;
 
-  ProjectRemoteDataSourceImpl(this._dioClient);
+  ProjectRemoteDataSourceImpl(this._apiClient);
 
   @override
-  Future<List<ProjectModel>> getProjects() async {
+  Future<List<ProjectModel>> getProjects(int workspaceId) async {
+    AppLogger.info(
+      'ProjectRemoteDataSource: Obteniendo proyectos del workspace $workspaceId',
+    );
+
     try {
-      final response = await _dioClient.get('/projects');
+      // GET /workspaces/:workspaceId/projects
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/workspaces/$workspaceId/projects',
+      );
 
-      // La respuesta del backend tiene estructura: {success, message, data: {projects, pagination}}
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>?;
+      AppLogger.debug('ProjectRemoteDataSource: Response - ${response.data}');
 
+      // El backend devuelve {success, data: [...]}
+      final responseBody = response.data;
+      if (responseBody == null) {
+        AppLogger.warning('ProjectRemoteDataSource: Respuesta sin datos');
+        return [];
+      }
+
+      // Extraer datos
+      final data = responseBody['data'];
       if (data == null) {
-        throw ServerException(
-          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
-        );
+        AppLogger.warning('ProjectRemoteDataSource: Campo data no encontrado');
+        return [];
       }
 
-      final projectsJson = data['projects'] as List<dynamic>?;
-
-      if (projectsJson == null) {
-        throw ServerException(
-          'Lista de proyectos no encontrada en respuesta. Data recibida: $data',
+      // El backend puede devolver la lista directamente o en un campo 'projects'
+      List<dynamic> projectsJson;
+      if (data is List) {
+        projectsJson = data;
+      } else if (data is Map && data.containsKey('projects')) {
+        projectsJson = data['projects'] as List<dynamic>;
+      } else {
+        AppLogger.warning(
+          'ProjectRemoteDataSource: Estructura de respuesta inesperada - $data',
         );
+        return [];
       }
 
-      return projectsJson
+      final projects = projectsJson
           .map((json) => ProjectModel.fromJson(json as Map<String, dynamic>))
           .toList();
-    } on ServerException {
-      rethrow;
-    } on AuthException {
-      rethrow;
+
+      AppLogger.info(
+        'ProjectRemoteDataSource: ${projects.length} proyectos obtenidos',
+      );
+
+      return projects;
     } catch (e) {
-      throw ServerException('Error al obtener proyectos: $e');
+      AppLogger.error(
+        'ProjectRemoteDataSource: Error al obtener proyectos - $e',
+      );
+      rethrow; // ApiClient ya manejó las excepciones específicas
     }
   }
 
   @override
   Future<ProjectModel> getProjectById(int id) async {
+    AppLogger.info('ProjectRemoteDataSource: Obteniendo proyecto $id');
+
     try {
-      final response = await _dioClient.get('/projects/$id');
+      // GET /projects/:id
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/projects/$id',
+      );
 
-      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>?;
-
-      if (data == null) {
-        throw ServerException(
-          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
-        );
+      final responseBody = response.data;
+      if (responseBody == null || responseBody['data'] == null) {
+        throw Exception('Proyecto no encontrado');
       }
 
-      return ProjectModel.fromJson(data);
-    } on NotFoundException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+      final project = ProjectModel.fromJson(
+        responseBody['data'] as Map<String, dynamic>,
+      );
+
+      AppLogger.info(
+        'ProjectRemoteDataSource: Proyecto ${project.name} obtenido',
+      );
+
+      return project;
     } catch (e) {
-      throw ServerException('Error al obtener proyecto: $e');
+      AppLogger.error(
+        'ProjectRemoteDataSource: Error al obtener proyecto $id - $e',
+      );
+      rethrow;
     }
   }
 
@@ -132,40 +145,45 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     int? managerId,
     required int workspaceId,
   }) async {
+    AppLogger.info(
+      'ProjectRemoteDataSource: Creando proyecto "$name" en workspace $workspaceId',
+    );
+
     try {
-      // El backend actualmente solo maneja name, description y workspaceId
-      // Los campos startDate, endDate, status, managerId se ignorarán por ahora
-      final response = await _dioClient.post(
-        '/projects',
-        data: {
-          'name': name,
-          'description': description,
-          'workspaceId': workspaceId,
-          // TODO: Cuando el backend soporte estos campos, descomentarlos:
-          // 'startDate': startDate.toIso8601String(),
-          // 'endDate': endDate.toIso8601String(),
-          // 'status': _statusToString(status),
-          // if (managerId != null) 'managerId': managerId,
-        },
+      // POST /workspaces/:workspaceId/projects
+      final requestData = {
+        'name': name,
+        'description': description,
+        'workspaceId': workspaceId,
+        // TODO: El backend actual no soporta estos campos, agregar cuando esté disponible
+        // 'startDate': startDate.toIso8601String(),
+        // 'endDate': endDate.toIso8601String(),
+        // 'status': _statusToString(status),
+        // if (managerId != null) 'managerId': managerId,
+      };
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/workspaces/$workspaceId/projects',
+        data: requestData,
       );
 
-      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>?;
-
-      if (data == null) {
-        throw ServerException(
-          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
-        );
+      final responseBody = response.data;
+      if (responseBody == null || responseBody['data'] == null) {
+        throw Exception('Error al crear proyecto');
       }
 
-      return ProjectModel.fromJson(data);
-    } on ValidationException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+      final project = ProjectModel.fromJson(
+        responseBody['data'] as Map<String, dynamic>,
+      );
+
+      AppLogger.info(
+        'ProjectRemoteDataSource: Proyecto ${project.name} creado exitosamente',
+      );
+
+      return project;
     } catch (e) {
-      throw ServerException('Error al crear proyecto: $e');
+      AppLogger.error('ProjectRemoteDataSource: Error al crear proyecto - $e');
+      rethrow;
     }
   }
 
@@ -179,51 +197,60 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     ProjectStatus? status,
     int? managerId,
   }) async {
+    AppLogger.info('ProjectRemoteDataSource: Actualizando proyecto $id');
+
     try {
       final requestData = <String, dynamic>{};
       if (name != null) requestData['name'] = name;
       if (description != null) requestData['description'] = description;
-      // El backend actualmente solo maneja name y description
-      // TODO: Cuando el backend soporte estos campos, descomentarlos:
+      // TODO: El backend actual no soporta estos campos, agregar cuando esté disponible
       // if (startDate != null) requestData['startDate'] = startDate.toIso8601String();
       // if (endDate != null) requestData['endDate'] = endDate.toIso8601String();
       // if (status != null) requestData['status'] = _statusToString(status);
       // if (managerId != null) requestData['managerId'] = managerId;
 
-      final response = await _dioClient.put('/projects/$id', data: requestData);
+      // PUT /projects/:id
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '/projects/$id',
+        data: requestData,
+      );
 
-      // La respuesta del backend tiene estructura: {success, message, data: {project data}}
-      final responseData = response.data as Map<String, dynamic>;
-      final data = responseData['data'] as Map<String, dynamic>?;
-
-      if (data == null) {
-        throw ServerException(
-          'Datos no encontrados en respuesta. Respuesta recibida: $responseData',
-        );
+      final responseBody = response.data;
+      if (responseBody == null || responseBody['data'] == null) {
+        throw Exception('Error al actualizar proyecto');
       }
 
-      return ProjectModel.fromJson(data);
-    } on NotFoundException {
-      rethrow;
-    } on ValidationException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+      final project = ProjectModel.fromJson(
+        responseBody['data'] as Map<String, dynamic>,
+      );
+
+      AppLogger.info(
+        'ProjectRemoteDataSource: Proyecto ${project.name} actualizado',
+      );
+
+      return project;
     } catch (e) {
-      throw ServerException('Error al actualizar proyecto: $e');
+      AppLogger.error(
+        'ProjectRemoteDataSource: Error al actualizar proyecto $id - $e',
+      );
+      rethrow;
     }
   }
 
   @override
   Future<void> deleteProject(int id) async {
+    AppLogger.info('ProjectRemoteDataSource: Eliminando proyecto $id');
+
     try {
-      await _dioClient.delete('/projects/$id');
-    } on NotFoundException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+      // DELETE /projects/:id
+      await _apiClient.delete<void>('/projects/$id');
+
+      AppLogger.info('ProjectRemoteDataSource: Proyecto $id eliminado');
     } catch (e) {
-      throw ServerException('Error al eliminar proyecto: $e');
+      AppLogger.error(
+        'ProjectRemoteDataSource: Error al eliminar proyecto $id - $e',
+      );
+      rethrow;
     }
   }
 

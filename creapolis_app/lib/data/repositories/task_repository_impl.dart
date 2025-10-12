@@ -3,29 +3,83 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/repositories/task_repository.dart';
+import '../datasources/local/task_cache_datasource.dart';
 import '../datasources/task_remote_datasource.dart';
 
-/// Implementación del repositorio de tareas
+/// Implementación del repositorio de tareas con soporte offline
 @LazySingleton(as: TaskRepository)
 class TaskRepositoryImpl implements TaskRepository {
   final TaskRemoteDataSource _remoteDataSource;
+  final TaskCacheDataSource _cacheDataSource;
+  final ConnectivityService _connectivityService;
 
-  TaskRepositoryImpl(this._remoteDataSource);
+  TaskRepositoryImpl(
+    this._remoteDataSource,
+    this._cacheDataSource,
+    this._connectivityService,
+  );
 
   @override
   Future<Either<Failure, List<Task>>> getTasksByProject(int projectId) async {
     try {
-      final tasks = await _remoteDataSource.getTasksByProject(projectId);
-      return Right(tasks);
+      // 1. Verificar si el caché tiene datos válidos para este proyecto
+      final hasValidCache = await _cacheDataSource.hasValidCache(projectId);
+      if (hasValidCache) {
+        final cachedTasks = await _cacheDataSource.getCachedTasks(
+          projectId: projectId,
+        );
+        return Right(cachedTasks);
+      }
+
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final tasks = await _remoteDataSource.getTasksByProject(projectId);
+
+        // Cachear las tareas obtenidas
+        await _cacheDataSource.cacheTasks(tasks, projectId: projectId);
+
+        return Right(tasks);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado
+        final cachedTasks = await _cacheDataSource.getCachedTasks(
+          projectId: projectId,
+        );
+        if (cachedTasks.isNotEmpty) {
+          return Right(cachedTasks);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure('Sin conexión a internet y sin datos en caché'),
+        );
+      }
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on NetworkException catch (e) {
+      // En caso de error de red, usar caché
+      final cachedTasks = await _cacheDataSource.getCachedTasks(
+        projectId: projectId,
+      );
+      if (cachedTasks.isNotEmpty) {
+        return Right(cachedTasks);
+      }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedTasks = await _cacheDataSource.getCachedTasks(
+        projectId: projectId,
+      );
+      if (cachedTasks.isNotEmpty) {
+        return Right(cachedTasks);
+      }
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure(e.toString()));
@@ -35,15 +89,59 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, Task>> getTaskById(int id) async {
     try {
-      final task = await _remoteDataSource.getTaskById(id);
-      return Right(task);
+      // 1. Intentar obtener del caché primero
+      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      if (cachedTask != null) {
+        // Verificar si el caché del proyecto de esta tarea es válido
+        final hasValidCache = await _cacheDataSource.hasValidCache(
+          cachedTask.projectId,
+        );
+        if (hasValidCache) {
+          return Right(cachedTask);
+        }
+      }
+
+      // 2. Verificar conectividad
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        // 3a. Online: obtener de API y actualizar caché
+        final task = await _remoteDataSource.getTaskById(id);
+
+        // Cachear la tarea obtenida
+        await _cacheDataSource.cacheTask(task);
+
+        return Right(task);
+      } else {
+        // 3b. Offline: usar caché aunque esté expirado si existe
+        if (cachedTask != null) {
+          return Right(cachedTask);
+        }
+
+        // No hay caché y no hay conexión
+        return const Left(
+          NetworkFailure(
+            'Sin conexión a internet y sin datos en caché para esta tarea',
+          ),
+        );
+      }
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on NetworkException catch (e) {
+      // En caso de error de red, usar caché
+      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      if (cachedTask != null) {
+        return Right(cachedTask);
+      }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
+      // En caso de error del servidor, intentar usar caché
+      final cachedTask = await _cacheDataSource.getCachedTaskById(id);
+      if (cachedTask != null) {
+        return Right(cachedTask);
+      }
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure(e.toString()));

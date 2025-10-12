@@ -217,17 +217,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
             // Recargar lista filtrada por workspace activo
             final workspaceContext = context.read<WorkspaceContext>();
             final activeWorkspace = workspaceContext.activeWorkspace;
-            context.read<ProjectBloc>().add(
-              LoadProjectsEvent(workspaceId: activeWorkspace?.id),
-            );
+            if (activeWorkspace != null) {
+              context.read<ProjectBloc>().add(
+                LoadProjectsEvent(workspaceId: activeWorkspace.id),
+              );
+            }
           } else if (state is ProjectDeleted) {
             context.showSuccess('Proyecto eliminado exitosamente');
             // Recargar lista filtrada por workspace activo
             final workspaceContext = context.read<WorkspaceContext>();
             final activeWorkspace = workspaceContext.activeWorkspace;
-            context.read<ProjectBloc>().add(
-              LoadProjectsEvent(workspaceId: activeWorkspace?.id),
-            );
+            if (activeWorkspace != null) {
+              context.read<ProjectBloc>().add(
+                LoadProjectsEvent(workspaceId: activeWorkspace.id),
+              );
+            }
           } else if (state is ProjectError) {
             context.showError(state.message);
           }
@@ -293,9 +297,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<ProjectBloc>().add(const RefreshProjectsEvent());
-        // Esperar a que se complete
-        await Future.delayed(const Duration(seconds: 1));
+        final workspace = context.read<WorkspaceContext>().activeWorkspace;
+        if (workspace != null) {
+          context.read<ProjectBloc>().add(
+            RefreshProjectsEvent(workspaceId: workspace.id),
+          );
+          // Esperar a que se complete
+          await Future.delayed(const Duration(seconds: 1));
+        }
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -406,9 +415,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     return NoConnectionWidget(
       onRetry: () {
-        context.read<ProjectBloc>().add(
-          LoadProjectsEvent(workspaceId: activeWorkspace?.id),
-        );
+        if (activeWorkspace != null) {
+          context.read<ProjectBloc>().add(
+            LoadProjectsEvent(workspaceId: activeWorkspace.id),
+          );
+        }
       },
     );
   }

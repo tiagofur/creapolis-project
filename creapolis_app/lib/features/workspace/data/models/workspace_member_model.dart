@@ -1,0 +1,219 @@
+import 'package:equatable/equatable.dart';
+
+import 'workspace_model.dart';
+
+/// Modelo de miembro del workspace
+class WorkspaceMember extends Equatable {
+  final int id;
+  final int workspaceId;
+  final int userId;
+  final String userName;
+  final String userEmail;
+  final String? userAvatarUrl;
+  final WorkspaceRole role;
+  final DateTime joinedAt;
+  final DateTime? lastActiveAt;
+  final bool isActive;
+
+  const WorkspaceMember({
+    required this.id,
+    required this.workspaceId,
+    required this.userId,
+    required this.userName,
+    required this.userEmail,
+    this.userAvatarUrl,
+    required this.role,
+    required this.joinedAt,
+    this.lastActiveAt,
+    required this.isActive,
+  });
+
+  factory WorkspaceMember.fromJson(Map<String, dynamic> json) {
+    return WorkspaceMember(
+      id: json['id'] as int,
+      workspaceId: json['workspaceId'] as int,
+      userId: json['userId'] as int,
+      userName: json['userName'] as String,
+      userEmail: json['userEmail'] as String,
+      userAvatarUrl: json['userAvatarUrl'] as String?,
+      role: WorkspaceRole.fromString(json['role'] as String),
+      joinedAt: DateTime.parse(json['joinedAt'] as String),
+      lastActiveAt: json['lastActiveAt'] != null
+          ? DateTime.parse(json['lastActiveAt'] as String)
+          : null,
+      isActive: json['isActive'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'workspaceId': workspaceId,
+      'userId': userId,
+      'userName': userName,
+      'userEmail': userEmail,
+      'userAvatarUrl': userAvatarUrl,
+      'role': role.value,
+      'joinedAt': joinedAt.toIso8601String(),
+      'lastActiveAt': lastActiveAt?.toIso8601String(),
+      'isActive': isActive,
+    };
+  }
+
+  WorkspaceMember copyWith({
+    int? id,
+    int? workspaceId,
+    int? userId,
+    String? userName,
+    String? userEmail,
+    String? userAvatarUrl,
+    WorkspaceRole? role,
+    DateTime? joinedAt,
+    DateTime? lastActiveAt,
+    bool? isActive,
+  }) {
+    return WorkspaceMember(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
+      userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
+      role: role ?? this.role,
+      joinedAt: joinedAt ?? this.joinedAt,
+      lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    id,
+    workspaceId,
+    userId,
+    userName,
+    userEmail,
+    userAvatarUrl,
+    role,
+    joinedAt,
+    lastActiveAt,
+    isActive,
+  ];
+}
+
+/// Modelo de invitación a workspace
+class WorkspaceInvitation extends Equatable {
+  final int id;
+  final int workspaceId;
+  final String workspaceName;
+  final String? workspaceDescription;
+  final String? workspaceAvatarUrl;
+  final WorkspaceType workspaceType;
+  final String inviterName;
+  final String inviterEmail;
+  final String? inviterAvatarUrl;
+  final String inviteeEmail;
+  final WorkspaceRole role;
+  final String token;
+  final InvitationStatus status;
+  final DateTime createdAt;
+  final DateTime expiresAt;
+
+  const WorkspaceInvitation({
+    required this.id,
+    required this.workspaceId,
+    required this.workspaceName,
+    this.workspaceDescription,
+    this.workspaceAvatarUrl,
+    required this.workspaceType,
+    required this.inviterName,
+    required this.inviterEmail,
+    this.inviterAvatarUrl,
+    required this.inviteeEmail,
+    required this.role,
+    required this.token,
+    required this.status,
+    required this.createdAt,
+    required this.expiresAt,
+  });
+
+  factory WorkspaceInvitation.fromJson(Map<String, dynamic> json) {
+    return WorkspaceInvitation(
+      id: json['id'] as int,
+      workspaceId: json['workspaceId'] as int,
+      workspaceName: json['workspaceName'] as String,
+      workspaceDescription: json['workspaceDescription'] as String?,
+      workspaceAvatarUrl: json['workspaceAvatarUrl'] as String?,
+      workspaceType: WorkspaceType.fromString(json['workspaceType'] as String),
+      inviterName: json['inviterName'] as String,
+      inviterEmail: json['inviterEmail'] as String,
+      inviterAvatarUrl: json['inviterAvatarUrl'] as String?,
+      inviteeEmail: json['inviteeEmail'] as String,
+      role: WorkspaceRole.fromString(json['role'] as String),
+      token: json['token'] as String,
+      status: InvitationStatus.fromString(json['status'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      expiresAt: DateTime.parse(json['expiresAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'workspaceId': workspaceId,
+      'workspaceName': workspaceName,
+      'workspaceDescription': workspaceDescription,
+      'workspaceAvatarUrl': workspaceAvatarUrl,
+      'workspaceType': workspaceType.value,
+      'inviterName': inviterName,
+      'inviterEmail': inviterEmail,
+      'inviterAvatarUrl': inviterAvatarUrl,
+      'inviteeEmail': inviteeEmail,
+      'role': role.value,
+      'token': token,
+      'status': status.value,
+      'createdAt': createdAt.toIso8601String(),
+      'expiresAt': expiresAt.toIso8601String(),
+    };
+  }
+
+  /// Verifica si la invitación ha expirado
+  bool get isExpired => DateTime.now().isAfter(expiresAt);
+
+  @override
+  List<Object?> get props => [
+    id,
+    workspaceId,
+    workspaceName,
+    workspaceDescription,
+    workspaceAvatarUrl,
+    workspaceType,
+    inviterName,
+    inviterEmail,
+    inviterAvatarUrl,
+    inviteeEmail,
+    role,
+    token,
+    status,
+    createdAt,
+    expiresAt,
+  ];
+}
+
+/// Estado de la invitación
+enum InvitationStatus {
+  pending('PENDING'),
+  accepted('ACCEPTED'),
+  declined('DECLINED'),
+  expired('EXPIRED');
+
+  final String value;
+  const InvitationStatus(this.value);
+
+  static InvitationStatus fromString(String value) {
+    return InvitationStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => InvitationStatus.pending,
+    );
+  }
+}

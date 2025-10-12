@@ -34,15 +34,14 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<DeleteProjectEvent>(_onDeleteProject);
   }
 
-  /// Manejar carga de proyectos
+  /// Manejar carga de proyectos de un workspace
   Future<void> _onLoadProjects(
     LoadProjectsEvent event,
     Emitter<ProjectState> emit,
   ) async {
-    final workspaceInfo = event.workspaceId != null
-        ? ' del workspace ${event.workspaceId}'
-        : '';
-    AppLogger.info('ProjectBloc: Cargando proyectos$workspaceInfo');
+    AppLogger.info(
+      'ProjectBloc: Cargando proyectos del workspace ${event.workspaceId}',
+    );
     emit(const ProjectLoading());
 
     final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
@@ -56,22 +55,21 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       },
       (projects) {
         AppLogger.info(
-          'ProjectBloc: ${projects.length} proyectos cargados$workspaceInfo',
+          'ProjectBloc: ${projects.length} proyectos cargados del workspace ${event.workspaceId}',
         );
         emit(ProjectsLoaded(projects));
       },
     );
   }
 
-  /// Manejar refresco de proyectos
+  /// Manejar refresco de proyectos de un workspace
   Future<void> _onRefreshProjects(
     RefreshProjectsEvent event,
     Emitter<ProjectState> emit,
   ) async {
-    final workspaceInfo = event.workspaceId != null
-        ? ' del workspace ${event.workspaceId}'
-        : '';
-    AppLogger.info('ProjectBloc: Refrescando proyectos$workspaceInfo');
+    AppLogger.info(
+      'ProjectBloc: Refrescando proyectos del workspace ${event.workspaceId}',
+    );
     // No emitir loading para refresh
 
     final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
@@ -85,7 +83,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       },
       (projects) {
         AppLogger.info(
-          'ProjectBloc: ${projects.length} proyectos refrescados$workspaceInfo',
+          'ProjectBloc: ${projects.length} proyectos refrescados del workspace ${event.workspaceId}',
         );
         emit(ProjectsLoaded(projects));
       },
