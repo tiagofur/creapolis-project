@@ -4,10 +4,10 @@ import '../../injection.dart';
 import 'package:logger/logger.dart';
 
 /// Widget que muestra el estado de sincronización
-/// 
+///
 /// Escucha el stream de SyncManager y muestra una barra/snackbar
 /// cuando hay sincronización en progreso.
-/// 
+///
 /// Uso:
 /// ```dart
 /// Scaffold(
@@ -22,7 +22,7 @@ import 'package:logger/logger.dart';
 class SyncStatusIndicator extends StatefulWidget {
   /// Mostrar como barra permanente o como notificación temporal
   final bool persistent;
-  
+
   /// Altura de la barra
   final double height;
 
@@ -197,7 +197,9 @@ class SyncProgressDialog extends StatelessWidget {
         final failedCount = syncManager.failedOperationsCount;
 
         // Auto-cerrar cuando termine
-        if (status != null && status.state == SyncState.completed && pendingCount == 0) {
+        if (status != null &&
+            status.state == SyncState.completed &&
+            pendingCount == 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).pop();
           });

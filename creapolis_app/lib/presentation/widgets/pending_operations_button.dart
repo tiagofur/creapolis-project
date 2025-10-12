@@ -5,10 +5,10 @@ import 'package:logger/logger.dart';
 import 'sync_status_indicator.dart';
 
 /// Botón que muestra el número de operaciones pendientes de sincronización
-/// 
+///
 /// Muestra un badge con el número de operaciones pendientes.
 /// Al presionar, muestra un diálogo con detalles y opción de sincronizar manualmente.
-/// 
+///
 /// Uso:
 /// ```dart
 /// AppBar(
@@ -20,10 +20,10 @@ import 'sync_status_indicator.dart';
 class PendingOperationsButton extends StatelessWidget {
   /// Color del badge
   final Color? badgeColor;
-  
+
   /// Color del icono
   final Color? iconColor;
-  
+
   /// Tamaño del icono
   final double iconSize;
 
@@ -73,10 +73,7 @@ class PendingOperationsButton extends StatelessWidget {
                   color: defaultBadgeColor,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Center(
                   child: Text(
                     '$pendingCount',
@@ -133,7 +130,9 @@ class PendingOperationsButton extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 await syncManager.clearFailedOperations();
-                Logger().i('PendingOperationsButton: Operaciones fallidas eliminadas');
+                Logger().i(
+                  'PendingOperationsButton: Operaciones fallidas eliminadas',
+                );
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +152,9 @@ class PendingOperationsButton extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                Logger().i('PendingOperationsButton: Sincronización manual iniciada');
+                Logger().i(
+                  'PendingOperationsButton: Sincronización manual iniciada',
+                );
                 SyncProgressDialog.show(context);
                 await syncManager.syncPendingOperations();
               },

@@ -7,7 +7,7 @@ import '../core/utils/app_logger.dart';
 import '../injection.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
-import '../presentation/screens/dashboard/dashboard_screen.dart';
+import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../presentation/screens/gantt/gantt_chart_screen.dart';
 import '../presentation/screens/main_shell/main_shell.dart';
 import '../presentation/screens/more/more_screen.dart';

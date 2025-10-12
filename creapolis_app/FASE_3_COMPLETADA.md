@@ -14,9 +14,11 @@ La Fase 3 implementa un **sistema completo de soporte offline** para Creapolis, 
 ## 🎯 Objetivos Cumplidos
 
 ### ✅ Objetivo Principal
+
 Permitir que usuarios trabajen sin conexión y sincronicen automáticamente al recuperar la red.
 
 ### ✅ Objetivos Específicos
+
 1. ✅ **Base de datos local**: Persistencia con Hive (TypeAdapter para todos los modelos)
 2. ✅ **Cache datasources**: Implementación de cache para Workspace, Project, Task
 3. ✅ **Hybrid repositories**: Estrategia offline/online con fallback automático
@@ -28,15 +30,15 @@ Permitir que usuarios trabajen sin conexión y sincronicen automáticamente al r
 
 ## 📊 Resumen de Tareas
 
-| Tarea | Nombre | Duración | Estado | Archivos | Líneas |
-|-------|--------|----------|--------|----------|--------|
-| **3.1** | Local Database Setup | 2-3h | ✅ | 15 | ~1,900 |
-| **3.2** | Local Cache Datasources | 1-2h | ✅ | 3 | ~800 |
-| **3.3** | Hybrid Repositories | 2-3h | ✅ | 4 | ~1,000 |
-| **3.4** | Sync Manager | 2-3h | ✅ | 3 | ~865 |
-| **3.5** | UI Indicators | 1-2h | ✅ | 4 | ~600 |
-| **3.6** | Testing & Polish | 1h | ✅ | 2 | ~1,000 |
-| **TOTAL** | **Fase 3** | **~10h** | ✅ | **31** | **~6,165** |
+| Tarea     | Nombre                  | Duración | Estado | Archivos | Líneas     |
+| --------- | ----------------------- | -------- | ------ | -------- | ---------- |
+| **3.1**   | Local Database Setup    | 2-3h     | ✅     | 15       | ~1,900     |
+| **3.2**   | Local Cache Datasources | 1-2h     | ✅     | 3        | ~800       |
+| **3.3**   | Hybrid Repositories     | 2-3h     | ✅     | 4        | ~1,000     |
+| **3.4**   | Sync Manager            | 2-3h     | ✅     | 3        | ~865       |
+| **3.5**   | UI Indicators           | 1-2h     | ✅     | 4        | ~600       |
+| **3.6**   | Testing & Polish        | 1h       | ✅     | 2        | ~1,000     |
+| **TOTAL** | **Fase 3**              | **~10h** | ✅     | **31**   | **~6,165** |
 
 ---
 
@@ -101,6 +103,7 @@ Documentación:
 ```
 
 **Leyenda**:
+
 - ✅ = Archivo nuevo creado
 - 🔧 = Archivo existente modificado
 
@@ -178,6 +181,7 @@ Documentación:
 ### Componentes Clave
 
 #### 1. **HiveManager** (Tarea 3.1)
+
 - **Propósito**: Gestor centralizado de base de datos local
 - **Capacidades**:
   - Inicialización de boxes (workspace, project, task, operationQueue)
@@ -187,6 +191,7 @@ Documentación:
 - **Uso**: `getIt<HiveManager>().workspaceBox.get(id)`
 
 #### 2. **Cache Datasources** (Tarea 3.2)
+
 - **Propósito**: Capa de abstracción sobre HiveManager
 - **Capacidades**:
   - CRUD específico por entidad
@@ -195,6 +200,7 @@ Documentación:
 - **Uso**: `_cacheDataSource.getWorkspaces()`
 
 #### 3. **Hybrid Repositories** (Tarea 3.3)
+
 - **Propósito**: Estrategia offline-first con fallback automático
 - **Capacidades**:
   - Detectar conectividad con ConnectivityService
@@ -204,6 +210,7 @@ Documentación:
 - **Uso**: Transparente para BLoC/Cubit
 
 #### 4. **SyncManager** (Tarea 3.4)
+
 - **Propósito**: Sincronización automática de operaciones pendientes
 - **Capacidades**:
   - Auto-detección de conectividad
@@ -213,6 +220,7 @@ Documentación:
 - **Uso**: Auto-start en `main.dart`
 
 #### 5. **UI Indicators** (Tarea 3.5)
+
 - **Propósito**: Feedback visual de estado de sync
 - **Capacidades**:
   - ConnectivityIndicator (online/offline)
@@ -323,111 +331,129 @@ Documentación:
 
 ### Código Generado
 
-| Métrica | Valor |
-|---------|-------|
-| **Archivos creados** | 25 |
-| **Archivos modificados** | 6 |
-| **Total líneas de código** | ~6,165 |
-| **Widgets públicos** | 8 |
-| **Repositorios híbridos** | 3 |
-| **Cache datasources** | 3 |
-| **Modelos Hive** | 4 |
-| **TypeAdapters** | 5 |
-| **Servicios** | 2 (ConnectivityService, SyncManager) |
+| Métrica                    | Valor                                |
+| -------------------------- | ------------------------------------ |
+| **Archivos creados**       | 25                                   |
+| **Archivos modificados**   | 6                                    |
+| **Total líneas de código** | ~6,165                               |
+| **Widgets públicos**       | 8                                    |
+| **Repositorios híbridos**  | 3                                    |
+| **Cache datasources**      | 3                                    |
+| **Modelos Hive**           | 4                                    |
+| **TypeAdapters**           | 5                                    |
+| **Servicios**              | 2 (ConnectivityService, SyncManager) |
 
 ### Tareas Completadas
 
-| Tarea | Archivos | Líneas | Duración Real |
-|-------|----------|--------|---------------|
-| 3.1 | 15 | ~1,900 | 2.5h |
-| 3.2 | 3 | ~800 | 1.5h |
-| 3.3 | 4 | ~1,000 | 2h |
-| 3.4 | 3 | ~865 | 2h |
-| 3.5 | 4 | ~600 | 1h |
-| 3.6 | 2 | ~1,000 | 0.5h |
-| **TOTAL** | **31** | **~6,165** | **~10h** |
+| Tarea     | Archivos | Líneas     | Duración Real |
+| --------- | -------- | ---------- | ------------- |
+| 3.1       | 15       | ~1,900     | 2.5h          |
+| 3.2       | 3        | ~800       | 1.5h          |
+| 3.3       | 4        | ~1,000     | 2h            |
+| 3.4       | 3        | ~865       | 2h            |
+| 3.5       | 4        | ~600       | 1h            |
+| 3.6       | 2        | ~1,000     | 0.5h          |
+| **TOTAL** | **31**   | **~6,165** | **~10h**      |
 
 ### Errores y Warnings
 
-| Tipo | Cantidad | Estado |
-|------|----------|--------|
-| **Errores de compilación** | 0 | ✅ Resuelto |
-| **Warnings (analyzer version)** | 1 | ⚠️ Esperado |
-| **Warnings (unregistered deps)** | 8 | ⚠️ Esperado |
+| Tipo                             | Cantidad | Estado      |
+| -------------------------------- | -------- | ----------- |
+| **Errores de compilación**       | 0        | ✅ Resuelto |
+| **Warnings (analyzer version)**  | 1        | ⚠️ Esperado |
+| **Warnings (unregistered deps)** | 8        | ⚠️ Esperado |
 
 ---
 
 ## 🎯 Decisiones de Arquitectura Clave
 
 ### 1. **Offline-First Strategy**
+
 **Decisión**: Intentar remote primero, fallback automático a cache si falla.
 
 **Razones**:
+
 - ✅ **Datos frescos**: Prioriza datos del servidor cuando hay conexión
 - ✅ **Resiliente**: Funciona siempre, incluso con fallos del servidor
 - ✅ **Transparente**: BLoC no necesita saber si es cache o remote
 
 **Alternativas consideradas**:
+
 - ❌ **Cache-First**: Datos desactualizados, solo sincroniza en background
 - ❌ **Remote-Only**: No funciona offline, mala UX
 
 ### 2. **FIFO Execution Order**
+
 **Decisión**: Sincronizar operaciones en orden cronológico (timestamp).
 
 **Razones**:
+
 - ✅ **Mantiene causalidad**: Crear workspace antes que proyectos dentro de él
 - ✅ **Intuitive**: Usuario espera que se ejecuten en orden creado
 - ✅ **Simple**: No requiere resolver dependencias complejas
 
 **Alternativas consideradas**:
+
 - ❌ **Priority Queue**: Más complejo, puede romper causalidad
 - ❌ **Random**: Puede intentar crear proyecto antes que workspace padre
 
 ### 3. **Retry Logic (max 3)**
+
 **Decisión**: Reintentar operaciones hasta 3 veces, luego marcar como fallida.
 
 **Razones**:
+
 - ✅ **Evita loops infinitos**: No reintenta eternamente
 - ✅ **Da tiempo a resolver**: Suficiente para errores transitorios
 - ✅ **Permite manual retry**: Usuario puede limpiar o reintentar después
 
 **Alternativas consideradas**:
+
 - ❌ **Sin retry**: Fallaría operaciones con errores transitorios
 - ❌ **Infinito retry**: Bloquea queue con operaciones malas
 
 ### 4. **No Conflict Resolution**
+
 **Decisión**: Last-write-wins, sin UI de resolución de conflictos.
 
 **Razones**:
+
 - ✅ **Simplicity**: Evita complejidad de CRDT o mergeo manual
 - ✅ **API decide**: Backend es fuente de verdad
 - ✅ **Scope adecuado**: Para MVP, conflictos son raros
 
 **Alternativas consideradas**:
+
 - ❌ **CRDT**: Muy complejo para MVP, overkill
 - ❌ **Manual resolution**: Requiere UI compleja, más desarrollo
 
 ### 5. **Executor + Manager Separation**
+
 **Decisión**: Separar ejecución (Executor) de coordinación (Manager).
 
 **Razones**:
+
 - ✅ **Single Responsibility**: Cada clase tiene una responsabilidad clara
 - ✅ **Testeable**: Fácil de mockear y testear individualmente
 - ✅ **Extensible**: Agregar nuevo tipo de operación solo toca Executor
 
 **Alternativas consideradas**:
+
 - ❌ **Monolith**: Manager con toda la lógica, difícil de mantener
 - ❌ **Command Pattern**: Over-engineering para este caso
 
 ### 6. **Stream<SyncStatus> for UI**
+
 **Decisión**: Usar BroadcastStream para notificar cambios de estado.
 
 **Razones**:
+
 - ✅ **Reactive**: UI actualiza automáticamente sin polling
 - ✅ **Efficient**: Solo emite cuando cambia estado
 - ✅ **Type-safe**: SyncStatus es sealed class con estados claros
 
 **Alternativas consideradas**:
+
 - ❌ **Polling**: Ineficiente, consume recursos
 - ❌ **Callbacks**: Difícil de gestionar múltiples listeners
 - ❌ **ChangeNotifier**: Menos type-safe que Stream
@@ -437,22 +463,27 @@ Documentación:
 ## 🚧 Limitaciones Conocidas
 
 ### 1. **Sin Resolución de Conflictos**
+
 - **Impacto**: Si dos usuarios editan mismo recurso offline, last-write-wins
 - **Workaround**: API debe implementar versioning o timestamps
 
 ### 2. **Sin ID Mapping**
+
 - **Impacto**: IDs temporales locales no se mapean a IDs reales del servidor
 - **Workaround**: Fase futura, requiere tabla de mapeo ID temp → ID real
 
 ### 3. **Operaciones Dependientes**
+
 - **Impacto**: Si crear workspace falla, crear proyecto dentro de él también falla
 - **Workaround**: Usuario debe reintentar/eliminar operaciones fallidas manualmente
 
 ### 4. **Sin Cleanup Automático de Fallidas**
+
 - **Impacto**: Operaciones con 3 fallos quedan en queue indefinidamente
 - **Workaround**: Usuario debe limpiarlas manualmente desde diálogo
 
 ### 5. **Sin Notificaciones Background**
+
 - **Impacto**: Usuario no recibe alertas de sync si app está cerrada
 - **Workaround**: Fase futura, agregar background sync con workmanager
 
@@ -461,6 +492,7 @@ Documentación:
 ## 🔮 Roadmap Futuro
 
 ### Fase 4 (Siguientes Pasos)
+
 1. **ID Mapping**: Tabla de mapeo para IDs temporales → reales
 2. **Conflict Resolution UI**: Diálogo para resolver conflictos manualmente
 3. **Background Sync**: Sincronizar incluso con app cerrada
@@ -468,11 +500,13 @@ Documentación:
 5. **Operation Prioritization**: Prioridad alta/media/baja
 
 ### Mejoras de Performance
+
 6. **Batch Sync**: Sincronizar múltiples operaciones en un solo request
 7. **Differential Sync**: Solo sincronizar campos modificados
 8. **Compression**: Comprimir datos en queue para ahorrar espacio
 
 ### Mejoras de UX
+
 9. **Progress Individual**: Mostrar "Operación X de Y" en UI
 10. **Undo/Redo**: Deshacer operaciones antes de sincronizar
 11. **Sync Schedule**: Permitir elegir cuándo sincronizar (manual/auto/scheduled)
@@ -482,6 +516,7 @@ Documentación:
 ## ✅ Checklist Global de Fase 3
 
 ### Tarea 3.1: Local Database Setup
+
 - [x] Crear HiveManager
 - [x] Crear 4 modelos Hive (Workspace, Project, Task, OperationQueue)
 - [x] Crear 5 TypeAdapters para enums
@@ -491,6 +526,7 @@ Documentación:
 - [x] Documentar (TAREA_3.1_COMPLETADA.md)
 
 ### Tarea 3.2: Local Cache Datasources
+
 - [x] Crear WorkspaceCacheDataSource
 - [x] Crear ProjectCacheDataSource
 - [x] Crear TaskCacheDataSource
@@ -501,6 +537,7 @@ Documentación:
 - [x] Documentar (TAREA_3.2_COMPLETADA.md)
 
 ### Tarea 3.3: Hybrid Repositories
+
 - [x] Crear ConnectivityService
 - [x] Modificar WorkspaceRepositoryImpl (hybrid strategy)
 - [x] Modificar ProjectRepositoryImpl (hybrid strategy)
@@ -512,6 +549,7 @@ Documentación:
 - [x] Documentar (TAREA_3.3_COMPLETADA.md)
 
 ### Tarea 3.4: Sync Manager
+
 - [x] Crear SyncOperationExecutor (9 tipos de operaciones)
 - [x] Crear SyncManager (auto-sync + retry logic)
 - [x] Implementar auto-detección de conectividad
@@ -523,6 +561,7 @@ Documentación:
 - [x] Documentar (TAREA_3.4_COMPLETADA.md)
 
 ### Tarea 3.5: UI Indicators
+
 - [x] Crear ConnectivityIndicator widget
 - [x] Crear SyncStatusIndicator widget
 - [x] Crear PendingOperationsButton widget
@@ -533,6 +572,7 @@ Documentación:
 - [x] Documentar (TAREA_3.5_COMPLETADA.md)
 
 ### Tarea 3.6: Testing & Polish
+
 - [x] Verificar logging en todos los componentes
 - [x] Crear FASE_3_COMPLETADA.md (resumen completo)
 - [x] Verificar 0 errores finales
@@ -543,6 +583,7 @@ Documentación:
 ## 📝 Comandos Ejecutados
 
 ### Build Runner
+
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 # Resultado: 119 outputs, 254 actions, 27.4s
@@ -550,6 +591,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Verificación de Errores
+
 ```bash
 # Via get_errors tool
 # Archivos verificados: 31
@@ -562,26 +604,31 @@ dart run build_runner build --delete-conflicting-outputs
 ## 🎓 Lecciones Aprendidas
 
 ### 1. **TypeAdapters Son Necesarios**
+
 Hive requiere TypeAdapters para todos los enums y clases custom. Sin ellos, falla en runtime.
 
 **Solución**: Crear adapter para cada enum usado en modelos Hive.
 
 ### 2. **Injectable Auto-Registra**
+
 No es necesario registrar manualmente servicios con @lazySingleton.
 
 **Solución**: build_runner genera código automático si hay @injectable.
 
 ### 3. **ConnectivityService es Async**
+
 `isConnected` es Future<bool>, no bool directo.
 
 **Solución**: Usar stream para estado reactivo, no initialData en StreamBuilder.
 
 ### 4. **SyncStatus con Factory Constructors**
+
 Dart 3 permite factories simples en lugar de sealed classes complejas.
 
 **Solución**: `SyncStatus.idle()`, `.syncing()`, `.completed()` son más simples que sealed classes.
 
 ### 5. **FIFO Mantiene Causalidad**
+
 Sincronizar en orden de creación evita dependencias rotas.
 
 **Solución**: Ordenar por timestamp antes de ejecutar.
@@ -604,6 +651,7 @@ Sincronizar en orden de creación evita dependencias rotas.
 ## 🚀 Siguiente Fase
 
 ### Fase 4 (Próximo):
+
 - **Tema**: Implementación de Features Principales
 - **Tareas**:
   - 4.1: Dashboard con métricas
@@ -626,7 +674,7 @@ La **Fase 3 está 100% completada** con un sistema robusto de soporte offline qu
 ✅ **Repositorios híbridos** con fallback automático  
 ✅ **Sincronización automática** con detección de conectividad  
 ✅ **Widgets UI** para feedback visual en tiempo real  
-✅ **Documentación completa** de arquitectura y decisiones  
+✅ **Documentación completa** de arquitectura y decisiones
 
 El sistema permite a los usuarios de Creapolis trabajar completamente offline y sincronizar automáticamente cuando recuperan conexión, con reintentos automáticos y gestión de fallos.
 

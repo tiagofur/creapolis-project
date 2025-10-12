@@ -45,7 +45,9 @@ void main() async {
     AppLogger.info('main: Inicializando SyncManager...');
     final syncManager = getIt<SyncManager>();
     syncManager.startAutoSync();
-    AppLogger.info('main: ✅ SyncManager inicializado y escuchando conectividad');
+    AppLogger.info(
+      'main: ✅ SyncManager inicializado y escuchando conectividad',
+    );
 
     // Ejecutar app
     runApp(const CreopolisApp());

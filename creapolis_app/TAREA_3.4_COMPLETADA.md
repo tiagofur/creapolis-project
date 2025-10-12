@@ -18,6 +18,7 @@ Se implementó **SyncManager**, el sistema de sincronización automática que:
 - ✅ **Auto-inicialización** en main.dart al arrancar la app
 
 El sistema está **listo para usar** y se activará automáticamente cuando:
+
 1. Usuario trabaje offline y se encolen operaciones
 2. Se detecte conexión → Sincronización automática
 
@@ -32,6 +33,7 @@ El sistema está **listo para usar** y se activará automáticamente cuando:
 **Responsabilidad:** Ejecutar operaciones encoladas contra repositorios apropiados
 
 **Operaciones soportadas:**
+
 ```dart
 // WORKSPACE (3 operaciones)
 - create_workspace  → WorkspaceRepository.createWorkspace()
@@ -50,11 +52,13 @@ El sistema está **listo para usar** y se activará automáticamente cuando:
 ```
 
 **Métodos públicos:**
+
 ```dart
 Future<bool> executeOperation(HiveOperationQueue operation)
 ```
 
 **Características:**
+
 - ✅ **Decodifica JSON** de HiveOperationQueue.data
 - ✅ **Parsea enums** (WorkspaceType, ProjectStatus, TaskStatus, TaskPriority)
 - ✅ **Valida campos requeridos** antes de ejecutar
@@ -62,6 +66,7 @@ Future<bool> executeOperation(HiveOperationQueue operation)
 - ✅ **Retorna success** (true/false) para control de SyncManager
 
 **Ejemplo de ejecución:**
+
 ```dart
 final operation = HiveOperationQueue.create(
   type: 'create_task',
@@ -89,6 +94,7 @@ final success = await syncOperationExecutor.executeOperation(operation);
 **Responsabilidad:** Coordinar sincronización automática de operaciones offline
 
 **Métodos públicos:**
+
 ```dart
 // Auto-sync
 void startAutoSync()                                    // Iniciar escucha de conectividad
@@ -112,6 +118,7 @@ int get failedOperationsCount                           // # operaciones fallida
 **Características clave:**
 
 1. **Auto-detección de conexión:**
+
 ```dart
 // En main.dart (ya implementado):
 syncManager.startAutoSync();
@@ -125,6 +132,7 @@ _connectivityService.connectionStream.listen((isConnected) {
 ```
 
 2. **Gestión de reintentos:**
+
 ```dart
 // Cada operación puede fallar hasta 3 veces
 if (operation.retries < 3) {
@@ -136,6 +144,7 @@ if (operation.retries < 3) {
 ```
 
 3. **Stream de estado para UI:**
+
 ```dart
 syncManager.syncStatusStream.listen((status) {
   switch (status.state) {
@@ -154,6 +163,7 @@ syncManager.syncStatusStream.listen((status) {
 ```
 
 4. **Ordenamiento de operaciones:**
+
 ```dart
 // Por timestamp (FIFO - First In First Out)
 operations.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -167,6 +177,7 @@ operations.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 #### 1. `lib/main.dart` (+5 líneas)
 
 **Cambios:**
+
 ```dart
 // ➕ Import agregado
 import 'core/sync/sync_manager.dart';
@@ -185,23 +196,25 @@ AppLogger.info('main: ✅ SyncManager inicializado y escuchando conectividad');
 ## 📊 Métricas de Código
 
 ### Resumen General
-| Métrica | Valor |
-|---------|-------|
-| **Archivos creados** | 2 |
-| **Archivos modificados** | 1 |
-| **Líneas de código agregadas** | ~865 líneas |
-| **Operaciones soportadas** | 9 (3 por entidad) |
-| **Métodos públicos (SyncManager)** | 9 métodos |
-| **Métodos públicos (Executor)** | 1 método + 9 privados |
-| **Build runner outputs** | 376 outputs (761 actions) |
-| **Errores de compilación** | 0 ✅ |
+
+| Métrica                            | Valor                     |
+| ---------------------------------- | ------------------------- |
+| **Archivos creados**               | 2                         |
+| **Archivos modificados**           | 1                         |
+| **Líneas de código agregadas**     | ~865 líneas               |
+| **Operaciones soportadas**         | 9 (3 por entidad)         |
+| **Métodos públicos (SyncManager)** | 9 métodos                 |
+| **Métodos públicos (Executor)**    | 1 método + 9 privados     |
+| **Build runner outputs**           | 376 outputs (761 actions) |
+| **Errores de compilación**         | 0 ✅                      |
 
 ### Desglose por Archivo
-| Archivo | Líneas | Responsabilidad |
-|---------|--------|-----------------|
-| `sync_operation_executor.dart` | ~440 | Ejecutar operaciones contra repositorios |
-| `sync_manager.dart` | ~420 | Coordinar sincronización y auto-sync |
-| `main.dart` | +5 | Inicializar SyncManager al arranque |
+
+| Archivo                        | Líneas | Responsabilidad                          |
+| ------------------------------ | ------ | ---------------------------------------- |
+| `sync_operation_executor.dart` | ~440   | Ejecutar operaciones contra repositorios |
+| `sync_manager.dart`            | ~420   | Coordinar sincronización y auto-sync     |
+| `main.dart`                    | +5     | Inicializar SyncManager al arranque      |
 
 ---
 
@@ -212,11 +225,13 @@ AppLogger.info('main: ✅ SyncManager inicializado y escuchando conectividad');
 **Decisión:** Operaciones se sincronizan en orden de timestamp (más antiguas primero)
 
 **Razón:**
+
 - ✅ **Mantiene causalidad:** Operaciones más antiguas probablemente son prerrequisito de las nuevas
 - ✅ **Intuitivo:** Usuario espera que sus primeras acciones offline se procesen primero
 - ✅ **Simple:** No requiere análisis de dependencias complejas
 
 **Alternativas consideradas:**
+
 - ❌ **Por prioridad:** Requeriría asignar prioridades manualmente (complejo)
 - ❌ **Por tipo:** CREATE antes que UPDATE (puede fallar si UPDATE depende de CREATE diferente)
 
@@ -227,11 +242,13 @@ AppLogger.info('main: ✅ SyncManager inicializado y escuchando conectividad');
 **Decisión:** Cada operación puede fallar 3 veces antes de marcarse como failed
 
 **Razón:**
+
 - ✅ **Evita loops infinitos:** Operaciones que siempre fallan (ej: validación) no bloquean la cola
 - ✅ **Da tiempo para resolver:** Errores transitorios (red intermitente) tienen oportunidad
 - ✅ **Notifica al usuario:** Después de 3 fallos, se muestra en UI para acción manual
 
 **Implementación:**
+
 ```dart
 // En HiveOperationQueue
 bool get shouldRetry => retries < 3 && !isCompleted;
@@ -253,11 +270,13 @@ if (success) {
 **Decisión:** No implementar resolución automática de conflictos (CRDT, vector clocks, etc.)
 
 **Razón:**
+
 - ✅ **Simplicidad:** CRDT requiere semanas de implementación
 - ✅ **API decide:** Si dos usuarios modifican lo mismo, el servidor retorna error
 - ✅ **Último gana:** Operación más reciente sobrescribe (comportamiento estándar REST)
 
 **Manejo actual de conflictos:**
+
 ```dart
 // Si una operación falla por conflicto (409 Conflict):
 // 1. Se incrementa retryCount
@@ -267,6 +286,7 @@ if (success) {
 ```
 
 **Mejora futura (Fase 4+):**
+
 - Detectar 409 Conflict específicamente
 - Mostrar diálogo "¿Sobrescribir cambios del servidor?"
 - Permitir merge manual
@@ -278,12 +298,14 @@ if (success) {
 **Decisión:** Separar ejecución (Executor) de coordinación (Manager)
 
 **Razón:**
+
 - ✅ **Single Responsibility:** Cada clase tiene una responsabilidad clara
 - ✅ **Testeable:** Fácil hacer mock de Executor para tests de Manager
 - ✅ **Extensible:** Agregar nuevas operaciones solo modifica Executor
 - ✅ **Reutilizable:** Executor puede usarse standalone sin Manager
 
 **Ventajas:**
+
 ```dart
 // Manager: Coordina CUÁNDO y EN QUÉ ORDEN sincronizar
 // Executor: Ejecuta CÓMO sincronizar cada operación
@@ -301,19 +323,21 @@ if (success) {
 **Decisión:** SyncManager expone `Stream<SyncStatus>` para que UI reaccione
 
 **Razón:**
+
 - ✅ **Reactivo:** UI se actualiza automáticamente sin polling
 - ✅ **Eficiente:** Solo emite cuando hay cambios
 - ✅ **Broadcast:** Múltiples widgets pueden escuchar el mismo stream
 - ✅ **Tipo seguro:** SyncStatus es un sealed class con estados claros
 
 **Uso en UI:**
+
 ```dart
 // En un widget de sincronización (barra superior):
 StreamBuilder<SyncStatus>(
   stream: syncManager.syncStatusStream,
   builder: (context, snapshot) {
     if (!snapshot.hasData) return SizedBox.shrink();
-    
+
     final status = snapshot.data!;
     switch (status.state) {
       case SyncState.syncing:
@@ -338,11 +362,13 @@ StreamBuilder<SyncStatus>(
 **Decisión:** Iniciar SyncManager automáticamente al arrancar la app
 
 **Razón:**
+
 - ✅ **Transparente:** Desarrollador no necesita recordar inicializar
 - ✅ **Siempre activo:** Sincronización funciona desde el primer momento
 - ✅ **No blocking:** startAutoSync() solo suscribe listener (instantáneo)
 
 **Ciclo de vida:**
+
 ```dart
 // En main.dart:
 await initializeDependencies();  // Registra SyncManager en DI
@@ -369,7 +395,7 @@ final isOnline = await _connectivityService.isConnected;
 if (!isOnline) {
   // Guardar en caché local
   await _taskCacheDataSource.cacheTask(newTask);
-  
+
   // Encolar para sincronización
   await _syncManager.queueOperation(
     type: 'create_task',
@@ -384,7 +410,7 @@ if (!isOnline) {
       'projectId': 123,
     },
   );
-  
+
   // Usuario ve tarea inmediatamente en UI (desde caché)
   // Indicador muestra "⏳ 1 operación pendiente"
 }
@@ -558,14 +584,14 @@ class SyncProgressBar extends StatelessWidget {
       stream: syncManager.syncStatusStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return SizedBox.shrink();
-        
+
         final status = snapshot.data!;
-        
+
         switch (status.state) {
           case SyncState.idle:
             // No mostrar nada
             return SizedBox.shrink();
-            
+
           case SyncState.syncing:
             // Barra de progreso
             final progress = status.current! / status.total!;
@@ -575,7 +601,7 @@ class SyncProgressBar extends StatelessWidget {
                 Text('Sincronizando ${status.current}/${status.total}...'),
               ],
             );
-            
+
           case SyncState.completed:
             // Notificación de éxito (auto-desaparece en 3s)
             return Container(
@@ -586,7 +612,7 @@ class SyncProgressBar extends StatelessWidget {
                 style: TextStyle(color: Colors.white),
               ),
             );
-            
+
           case SyncState.error:
             // Error (botón para reintentar)
             return Container(
@@ -603,7 +629,7 @@ class SyncProgressBar extends StatelessWidget {
                 ],
               ),
             );
-            
+
           case SyncState.operationQueued:
             // Feedback de operación encolada
             return SnackBar(
@@ -722,6 +748,7 @@ class SyncProgressBar extends StatelessWidget {
 ## ✅ Checklist de Completitud
 
 ### Implementación Core
+
 - [x] ✅ Crear `SyncOperationExecutor` con 9 tipos de operaciones
 - [x] ✅ Crear `SyncManager` con auto-sync y gestión de cola
 - [x] ✅ Registrar en DI (injectable detecta @lazySingleton)
@@ -729,6 +756,7 @@ class SyncProgressBar extends StatelessWidget {
 - [x] ✅ Stream de estado (`SyncStatus`) para UI reactiva
 
 ### Funcionalidad
+
 - [x] ✅ Auto-detección de conexión
 - [x] ✅ Sincronización automática al volver online
 - [x] ✅ Gestión de reintentos (máximo 3)
@@ -737,6 +765,7 @@ class SyncProgressBar extends StatelessWidget {
 - [x] ✅ Manejo de operaciones fallidas
 
 ### Calidad
+
 - [x] ✅ 0 errores de compilación
 - [x] ✅ Logging detallado (AppLogger)
 - [x] ✅ Manejo de errores con try-catch
@@ -744,6 +773,7 @@ class SyncProgressBar extends StatelessWidget {
 - [x] ✅ Parseo seguro de JSON y enums
 
 ### Documentación
+
 - [x] ✅ Documentar arquitectura completa
 - [x] ✅ 5 ejemplos de uso detallados
 - [x] ✅ Decisiones de diseño explicadas
@@ -755,9 +785,11 @@ class SyncProgressBar extends StatelessWidget {
 ## 🚀 Próximos Pasos (Tarea 3.5)
 
 ### **Tarea 3.5: UI Indicators (Indicadores de Sincronización)**
+
 **Objetivo:** Crear widgets visuales que muestren estado de sincronización y conectividad
 
 **Componentes a crear:**
+
 1. **SyncStatusBar**: Barra superior que muestra sincronización en progreso
 2. **ConnectivityIndicator**: Icono que muestra estado online/offline
 3. **PendingOperationsButton**: Botón que muestra # operaciones pendientes
@@ -766,6 +798,7 @@ class SyncProgressBar extends StatelessWidget {
 **Estimación:** 2-3 horas
 
 **Dependencias:**
+
 - ✅ SyncManager (Task 3.4) - Para leer estado
 - ✅ ConnectivityService (Task 3.3) - Para mostrar online/offline
 
@@ -774,18 +807,21 @@ class SyncProgressBar extends StatelessWidget {
 ## 📈 Impacto en el Proyecto
 
 ### Beneficios Inmediatos
+
 1. ✅ **Sincronización automática:** Usuario no necesita hacer nada
 2. ✅ **Trabajo offline completo:** Create/Update/Delete funcionan sin conexión
 3. ✅ **Resiliencia:** Reintentos automáticos en errores transitorios
 4. ✅ **UI reactiva:** Stream permite mostrar progreso en tiempo real
 
 ### Arquitectura Mejorada
+
 - 🏗️ **Desacoplada:** Executor y Manager son independientes
 - 🏗️ **Extensible:** Agregar operaciones es trivial
 - 🏗️ **Testeable:** Fácil hacer mock de componentes
 - 🏗️ **Observable:** Stream permite múltiples listeners
 
 ### Preparación para Tarea 3.5
+
 - ✅ `syncStatusStream` listo para UI
 - ✅ `pendingOperationsCount` y `failedOperationsCount` disponibles
 - ✅ Auto-sync ya funciona sin intervención
@@ -798,10 +834,12 @@ class SyncProgressBar extends StatelessWidget {
 ### Limitaciones Actuales
 
 1. **Operaciones dependientes:**
+
    - Si creas Workspace → Project → Task offline, y el workspace falla, project y task también fallarán
    - **Solución futura:** Mantener mapeo temporal_id → server_id
 
 2. **Sin conflict resolution:**
+
    - Si dos usuarios modifican lo mismo offline, "last write wins"
    - **Solución futura:** Detectar 409 Conflict y mostrar diálogo de merge
 
@@ -812,16 +850,19 @@ class SyncProgressBar extends StatelessWidget {
 ### Mejoras Futuras (Post-Fase 3)
 
 **Prioridad Alta:**
+
 - [ ] Mapeo de IDs temporales a reales
 - [ ] UI para resolver conflictos manualmente
 - [ ] Auto-limpieza de operaciones muy antiguas
 
 **Prioridad Media:**
+
 - [ ] Priorización de operaciones (HIGH/NORMAL/LOW)
 - [ ] Retry exponential backoff (esperar más entre intentos)
 - [ ] Sincronización parcial (solo workspace X)
 
 **Prioridad Baja:**
+
 - [ ] CRDT para resolución automática de conflictos
 - [ ] Sincronización incremental (solo cambios)
 - [ ] Compression de operaciones (combinar múltiples UPDATEs)

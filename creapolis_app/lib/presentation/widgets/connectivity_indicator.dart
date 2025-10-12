@@ -4,10 +4,10 @@ import '../../injection.dart';
 import 'package:logger/logger.dart';
 
 /// Widget que muestra el estado de conectividad (online/offline)
-/// 
+///
 /// Escucha el stream de ConnectivityService y actualiza el icono
 /// en tiempo real cuando cambia la conectividad.
-/// 
+///
 /// Uso:
 /// ```dart
 /// AppBar(
@@ -19,13 +19,13 @@ import 'package:logger/logger.dart';
 class ConnectivityIndicator extends StatefulWidget {
   /// Color del icono cuando está online
   final Color? onlineColor;
-  
+
   /// Color del icono cuando está offline
   final Color? offlineColor;
-  
+
   /// Tamaño del icono
   final double iconSize;
-  
+
   /// Mostrar tooltip con el estado
   final bool showTooltip;
 
@@ -61,11 +61,7 @@ class _ConnectivityIndicatorState extends State<ConnectivityIndicator> {
           'ConnectivityIndicator: Estado = ${isConnected ? "ONLINE" : "OFFLINE"}',
         );
 
-        final iconWidget = Icon(
-          icon,
-          color: color,
-          size: widget.iconSize,
-        );
+        final iconWidget = Icon(icon, color: color, size: widget.iconSize);
 
         if (widget.showTooltip) {
           return Tooltip(
@@ -87,7 +83,7 @@ class _ConnectivityIndicatorState extends State<ConnectivityIndicator> {
 }
 
 /// Variante compacta del indicador de conectividad
-/// 
+///
 /// Muestra un punto de color más discreto
 class ConnectivityDot extends StatelessWidget {
   final double size;
