@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 import '../../core/errors/exceptions.dart';
 import '../../core/network/api_client.dart';
 import '../../core/utils/app_logger.dart';
@@ -55,6 +57,7 @@ abstract class TaskRemoteDataSource {
 }
 
 /// Implementación del data source remoto de tareas
+@LazySingleton(as: TaskRemoteDataSource)
 class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
   final ApiClient _apiClient;
 

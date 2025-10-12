@@ -7,9 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/network/api_client.dart';
 import 'core/network/interceptors/auth_interceptor.dart';
 import 'core/services/last_route_service.dart';
-import 'data/datasources/project_remote_datasource.dart';
-import 'data/datasources/task_remote_datasource.dart';
-import 'features/workspace/data/datasources/workspace_remote_datasource.dart';
 
 // Este archivo será generado por build_runner
 import 'injection.config.dart';
@@ -60,29 +57,18 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 6. Registrar Data Sources
-  // WorkspaceRemoteDataSource (usa ApiClient)
-  getIt.registerLazySingleton<WorkspaceRemoteDataSource>(
-    () => WorkspaceRemoteDataSource(),
-  );
-
-  // ProjectRemoteDataSource (usa ApiClient - registrar por interfaz)
-  getIt.registerLazySingleton<ProjectRemoteDataSource>(
-    () => ProjectRemoteDataSourceImpl(getIt<ApiClient>()),
-  );
-
-  // TaskRemoteDataSource (usa ApiClient - registrar por interfaz)
-  getIt.registerLazySingleton<TaskRemoteDataSource>(
-    () => TaskRemoteDataSourceImpl(getIt<ApiClient>()),
-  );
-
-  // 7. Inicializar dependencias generadas por injectable
+  // 6. Inicializar dependencias generadas por injectable
   // Esto registrará automáticamente:
   // - CacheManager (con @injectable)
   // - ConnectivityService
+  // - WorkspaceRemoteDataSource (con @lazySingleton)
+  // - ProjectRemoteDataSource (con @LazySingleton)
+  // - TaskRemoteDataSource (con @LazySingleton)
   // - WorkspaceCacheDataSource
   // - ProjectCacheDataSource
   // - TaskCacheDataSource
+  // - Todos los repositorios
+  // - Todos los BLoCs
   // Y todos los demás servicios marcados con @injectable
   _configureInjectable();
 }

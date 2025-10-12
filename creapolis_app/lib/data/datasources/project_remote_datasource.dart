@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/utils/app_logger.dart';
 import '../../domain/entities/project.dart';
@@ -40,6 +42,7 @@ abstract class ProjectRemoteDataSource {
 }
 
 /// Implementación del data source remoto de proyectos usando ApiClient
+@LazySingleton(as: ProjectRemoteDataSource)
 class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   final ApiClient _apiClient;
 

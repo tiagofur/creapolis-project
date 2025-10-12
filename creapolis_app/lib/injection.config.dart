@@ -15,6 +15,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import 'core/database/cache_manager.dart' as _i454;
+import 'core/network/api_client.dart' as _i871;
 import 'core/network/dio_client.dart' as _i45;
 import 'core/services/connectivity_service.dart' as _i524;
 import 'core/sync/sync_manager.dart' as _i223;
@@ -81,6 +82,8 @@ import 'domain/usecases/workspace/get_workspace_members.dart' as _i517;
 import 'domain/usecases/workspace/set_active_workspace.dart' as _i245;
 import 'features/projects/presentation/blocs/project_bloc.dart' as _i328;
 import 'features/tasks/presentation/blocs/task_bloc.dart' as _i100;
+import 'features/workspace/data/datasources/workspace_remote_datasource.dart'
+    as _i398;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/project/project_bloc.dart' as _i190;
@@ -114,8 +117,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i255.ProjectCacheDataSourceImpl(gh<_i454.CacheManager>()));
     gh.lazySingleton<_i314.TaskCacheDataSource>(
         () => _i314.TaskCacheDataSourceImpl(gh<_i454.CacheManager>()));
+    gh.lazySingleton<_i922.ProjectRemoteDataSource>(
+        () => _i922.ProjectRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i1007.TaskRemoteDataSource>(
+        () => _i1007.TaskRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i268.WorkspaceLocalDataSource>(() =>
         _i268.WorkspaceLocalDataSourceImpl(gh<_i460.SharedPreferences>()));
+    gh.lazySingleton<_i398.WorkspaceRemoteDataSource>(
+        () => _i398.WorkspaceRemoteDataSource(gh<_i871.ApiClient>()));
     gh.singleton<_i45.DioClient>(
         () => _i45.DioClient(gh<_i558.FlutterSecureStorage>()));
     gh.lazySingleton<_i391.WorkspaceRemoteDataSource>(

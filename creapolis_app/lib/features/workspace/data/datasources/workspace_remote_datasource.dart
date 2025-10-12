@@ -1,4 +1,4 @@
-import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/exceptions/api_exceptions.dart';
@@ -13,8 +13,11 @@ import '../models/workspace_model.dart';
 /// - CRUD de workspaces
 /// - Gestión de miembros
 /// - Invitaciones
+@lazySingleton
 class WorkspaceRemoteDataSource {
-  final ApiClient _apiClient = GetIt.instance<ApiClient>();
+  final ApiClient _apiClient;
+
+  WorkspaceRemoteDataSource(this._apiClient);
 
   // ============================================
   // WORKSPACES CRUD
