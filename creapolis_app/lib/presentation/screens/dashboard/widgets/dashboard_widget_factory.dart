@@ -8,6 +8,9 @@ import '../widgets/my_projects_widget.dart';
 import '../widgets/my_tasks_widget.dart';
 import '../widgets/quick_actions_grid.dart';
 import '../widgets/recent_activity_list.dart';
+import '../widgets/task_metrics_widget.dart';
+import '../widgets/task_priority_chart_widget.dart';
+import '../widgets/weekly_progress_chart_widget.dart';
 
 /// Factory que construye widgets del dashboard según su tipo
 class DashboardWidgetFactory {
@@ -39,6 +42,15 @@ class DashboardWidgetFactory {
         break;
       case DashboardWidgetType.recentActivity:
         child = const RecentActivityList();
+        break;
+      case DashboardWidgetType.taskMetrics:
+        child = const TaskMetricsWidget();
+        break;
+      case DashboardWidgetType.taskPriorityChart:
+        child = const TaskPriorityChartWidget();
+        break;
+      case DashboardWidgetType.weeklyProgressChart:
+        child = const WeeklyProgressChartWidget();
         break;
     }
 

@@ -8,6 +8,9 @@ enum DashboardWidgetType {
   recentActivity,
   quickActions,
   workspaceInfo,
+  taskMetrics,
+  taskPriorityChart,
+  weeklyProgressChart,
 }
 
 /// Extensión para obtener metadata de los widgets
@@ -27,6 +30,12 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Acciones Rápidas';
       case DashboardWidgetType.workspaceInfo:
         return 'Info del Workspace';
+      case DashboardWidgetType.taskMetrics:
+        return 'Métricas de Tareas';
+      case DashboardWidgetType.taskPriorityChart:
+        return 'Distribución por Prioridad';
+      case DashboardWidgetType.weeklyProgressChart:
+        return 'Progreso Semanal';
     }
   }
 
@@ -45,6 +54,12 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Acceso rápido a acciones comunes';
       case DashboardWidgetType.workspaceInfo:
         return 'Información del workspace activo';
+      case DashboardWidgetType.taskMetrics:
+        return 'KPIs de completadas, en progreso y retrasadas';
+      case DashboardWidgetType.taskPriorityChart:
+        return 'Gráfico de distribución por prioridad';
+      case DashboardWidgetType.weeklyProgressChart:
+        return 'Gráfico de progreso por día';
     }
   }
 
@@ -63,6 +78,12 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'grid_view';
       case DashboardWidgetType.workspaceInfo:
         return 'business';
+      case DashboardWidgetType.taskMetrics:
+        return 'analytics';
+      case DashboardWidgetType.taskPriorityChart:
+        return 'pie_chart';
+      case DashboardWidgetType.weeklyProgressChart:
+        return 'bar_chart';
     }
   }
 }
