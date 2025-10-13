@@ -53,6 +53,18 @@ Sistema de gestión de proyectos con planificación automática, sistema de work
 - WorkspaceSwitcher en todas las pantallas
 - Animaciones fluidas
 
+
+## 📚 Documentación
+
+### 🎨 Design System
+- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Sistema de diseño completo: colores, tipografía, espaciado, grid system
+- **[COMPONENTS.md](./COMPONENTS.md)** - Biblioteca de componentes reutilizables con ejemplos
+
+### 📖 Guías Técnicas
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Arquitectura detallada del proyecto
+- **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Guía de inicio rápido
+- **[FLUTTER_ROADMAP.md](./FLUTTER_ROADMAP.md)** - Roadmap de desarrollo
+
 ## �🏗️ Arquitectura del Proyecto
 
 El proyecto sigue **Clean Architecture** con una estructura modular y escalable:
