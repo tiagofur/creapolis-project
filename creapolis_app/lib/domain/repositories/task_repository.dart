@@ -1,12 +1,24 @@
 import 'package:dartz/dartz.dart' hide Task;
 
 import '../../core/errors/failures.dart';
+import '../../core/utils/pagination_helper.dart';
 import '../entities/task.dart';
 
 /// Repositorio de tareas
 abstract class TaskRepository {
-  /// Obtener todas las tareas de un proyecto
-  Future<Either<Failure, List<Task>>> getTasksByProject(int projectId);
+  /// Obtener todas las tareas de un proyecto con paginación opcional
+  Future<Either<Failure, List<Task>>> getTasksByProject(
+    int projectId, {
+    int? page,
+    int? limit,
+  });
+
+  /// Obtener tareas paginadas con metadata
+  Future<Either<Failure, PaginatedResponse<Task>>> getTasksByProjectPaginated(
+    int projectId, {
+    required int page,
+    required int limit,
+  });
 
   /// Obtener una tarea por ID
   Future<Either<Failure, Task>> getTaskById(int projectId, int taskId);

@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/utils/pagination_helper.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../datasources/local/task_cache_datasource.dart';
@@ -23,8 +24,31 @@ class TaskRepositoryImpl implements TaskRepository {
   );
 
   @override
-  Future<Either<Failure, List<Task>>> getTasksByProject(int projectId) async {
+  Future<Either<Failure, List<Task>>> getTasksByProject(
+    int projectId, {
+    int? page,
+    int? limit,
+  }) async {
     try {
+      // Si se solicita paginación, no usar caché para evitar inconsistencias
+      if (page != null && limit != null) {
+        // Paginación siempre requiere conexión
+        final isOnline = await _connectivityService.isConnected;
+        if (!isOnline) {
+          return const Left(
+            NetworkFailure('Paginación requiere conexión a internet'),
+          );
+        }
+
+        final tasks = await _remoteDataSource.getTasksByProject(
+          projectId,
+          page: page,
+          limit: limit,
+        );
+        return Right(tasks);
+      }
+
+      // Comportamiento normal sin paginación (con caché)
       // 1. Verificar si el caché tiene datos válidos para este proyecto
       final hasValidCache = await _cacheDataSource.hasValidCache(projectId);
       if (hasValidCache) {
@@ -80,6 +104,42 @@ class TaskRepositoryImpl implements TaskRepository {
       if (cachedTasks.isNotEmpty) {
         return Right(cachedTasks);
       }
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedResponse<Task>>>
+      getTasksByProjectPaginated(
+    int projectId, {
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      // Paginación siempre requiere conexión
+      final isOnline = await _connectivityService.isConnected;
+      if (!isOnline) {
+        return const Left(
+          NetworkFailure('Paginación requiere conexión a internet'),
+        );
+      }
+
+      final response = await _remoteDataSource.getTasksByProjectPaginated(
+        projectId,
+        page: page,
+        limit: limit,
+      );
+
+      return Right(response);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on NotFoundException catch (e) {
+      return Left(NotFoundFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure(e.toString()));

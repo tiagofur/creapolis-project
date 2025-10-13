@@ -34,7 +34,7 @@ class TaskService {
   async getProjectTasks(
     projectId,
     userId,
-    { status, assigneeId, sortBy = "createdAt", order = "desc" }
+    { status, assigneeId, sortBy = "createdAt", order = "desc", page, limit }
   ) {
     // Verify access
     await this.verifyProjectAccess(projectId, userId);
@@ -45,6 +45,70 @@ class TaskService {
       ...(assigneeId && { assigneeId: parseInt(assigneeId) }),
     };
 
+    // If pagination is requested
+    if (page !== undefined && limit !== undefined) {
+      const skip = (page - 1) * limit;
+
+      const [tasks, total] = await Promise.all([
+        prisma.task.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            assignee: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            predecessors: {
+              include: {
+                predecessor: {
+                  select: {
+                    id: true,
+                    title: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+            successors: {
+              include: {
+                successor: {
+                  select: {
+                    id: true,
+                    title: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                timeLogs: true,
+              },
+            },
+          },
+          orderBy: {
+            [sortBy]: order,
+          },
+        }),
+        prisma.task.count({ where }),
+      ]);
+
+      return {
+        tasks,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // Default behavior without pagination (for backward compatibility)
     const tasks = await prisma.task.findMany({
       where,
       include: {

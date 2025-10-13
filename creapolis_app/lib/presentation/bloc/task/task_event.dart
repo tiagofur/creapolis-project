@@ -177,3 +177,23 @@ class RescheduleProjectEvent extends TaskEvent {
   @override
   List<Object> get props => [projectId, triggerTaskId];
 }
+
+/// Cargar más tareas (lazy loading / infinite scroll)
+class LoadMoreTasksEvent extends TaskEvent {
+  final int projectId;
+
+  const LoadMoreTasksEvent(this.projectId);
+
+  @override
+  List<Object> get props => [projectId];
+}
+
+/// Reset paginación
+class ResetTasksPaginationEvent extends TaskEvent {
+  final int projectId;
+
+  const ResetTasksPaginationEvent(this.projectId);
+
+  @override
+  List<Object> get props => [projectId];
+}

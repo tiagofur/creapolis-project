@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/pagination_helper.dart';
 import '../../../domain/entities/task.dart';
 
 /// Estados del BLoC de tareas
@@ -20,16 +21,30 @@ class TaskLoading extends TaskState {
   const TaskLoading();
 }
 
-/// Tareas cargadas (lista)
+/// Tareas cargadas (lista) con soporte de paginación
 class TasksLoaded extends TaskState {
   final List<Task> tasks;
   final TaskStatus? statusFilter;
   final int? assigneeFilter;
+  final PaginationState paginationState;
+  final bool isLoadingMore;
 
-  const TasksLoaded(this.tasks, {this.statusFilter, this.assigneeFilter});
+  const TasksLoaded(
+    this.tasks, {
+    this.statusFilter,
+    this.assigneeFilter,
+    this.paginationState = const PaginationState(),
+    this.isLoadingMore = false,
+  });
 
   @override
-  List<Object?> get props => [tasks, statusFilter, assigneeFilter];
+  List<Object?> get props => [
+        tasks,
+        statusFilter,
+        assigneeFilter,
+        paginationState,
+        isLoadingMore,
+      ];
 
   /// Obtener tareas filtradas
   List<Task> get filteredTasks {
@@ -46,6 +61,25 @@ class TasksLoaded extends TaskState {
     }
 
     return filtered;
+  }
+
+  /// Copiar con nuevos valores
+  TasksLoaded copyWith({
+    List<Task>? tasks,
+    TaskStatus? statusFilter,
+    int? assigneeFilter,
+    PaginationState? paginationState,
+    bool? isLoadingMore,
+    bool clearFilters = false,
+  }) {
+    return TasksLoaded(
+      tasks ?? this.tasks,
+      statusFilter: clearFilters ? null : (statusFilter ?? this.statusFilter),
+      assigneeFilter:
+          clearFilters ? null : (assigneeFilter ?? this.assigneeFilter),
+      paginationState: paginationState ?? this.paginationState,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
   }
 }
 
