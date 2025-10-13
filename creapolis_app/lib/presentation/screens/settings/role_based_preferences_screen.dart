@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/services/role_based_preferences_service.dart';
@@ -99,6 +102,196 @@ class _RoleBasedPreferencesScreenState
     }
   }
 
+  Future<void> _exportPreferences() async {
+    try {
+      // Mostrar diálogo de carga
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final filePath = await _roleService.exportPreferences();
+
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de carga
+      }
+
+      if (filePath == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al exportar preferencias'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Mostrar diálogo con opciones de compartir o ver ubicación
+      if (mounted) {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exportación Exitosa'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tus preferencias han sido exportadas correctamente.'),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    filePath,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'close'),
+                child: const Text('Cerrar'),
+              ),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(context, 'share'),
+                icon: const Icon(Icons.share),
+                label: const Text('Compartir'),
+              ),
+            ],
+          ),
+        );
+
+        if (action == 'share') {
+          await Share.shareXFiles(
+            [XFile(filePath)],
+            subject: 'Mis preferencias de Creapolis',
+            text: 'Archivo de preferencias exportado desde Creapolis',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de carga si está abierto
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al exportar preferencias: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _importPreferences() async {
+    try {
+      // Mostrar advertencia antes de importar
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Importar Preferencias'),
+          content: const Text(
+            'Importar preferencias reemplazará tu configuración actual.\n\n'
+            '¿Deseas continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      // Abrir selector de archivo
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        dialogTitle: 'Seleccionar archivo de preferencias',
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return; // Usuario canceló
+      }
+
+      final filePath = result.files.first.path;
+      if (filePath == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo obtener la ruta del archivo'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Mostrar diálogo de carga
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final success = await _roleService.importPreferences(filePath);
+
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de carga
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Preferencias importadas correctamente'
+                  : 'Error al importar preferencias - Verifica el archivo',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+
+        if (success) {
+          _loadPreferences();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de carga si está abierto
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al importar preferencias: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _toggleThemeOverride() async {
     if (_userPreferences == null) return;
 
@@ -158,10 +351,54 @@ class _RoleBasedPreferencesScreenState
       appBar: AppBar(
         title: const Text('Preferencias por Rol'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.restore),
-            tooltip: 'Resetear a defaults del rol',
-            onPressed: _resetToRoleDefaults,
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'Más opciones',
+            onSelected: (value) {
+              switch (value) {
+                case 'reset':
+                  _resetToRoleDefaults();
+                  break;
+                case 'export':
+                  _exportPreferences();
+                  break;
+                case 'import':
+                  _importPreferences();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.restore),
+                    SizedBox(width: 8),
+                    Text('Resetear a defaults'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.upload_file),
+                    SizedBox(width: 8),
+                    Text('Exportar preferencias'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'import',
+                child: Row(
+                  children: [
+                    Icon(Icons.download),
+                    SizedBox(width: 8),
+                    Text('Importar preferencias'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -173,6 +410,8 @@ class _RoleBasedPreferencesScreenState
           _buildThemePreferenceCard(),
           const SizedBox(height: 16),
           _buildDashboardPreferenceCard(),
+          const SizedBox(height: 16),
+          _buildExportImportCard(),
           const SizedBox(height: 16),
           _buildHelpCard(),
         ],
@@ -373,6 +612,55 @@ class _RoleBasedPreferencesScreenState
     );
   }
 
+  Widget _buildExportImportCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.import_export),
+                const SizedBox(width: 8),
+                Text(
+                  'Exportar / Importar',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Guarda o restaura tu configuración completa. '
+              'Útil para respaldar preferencias o transferirlas entre dispositivos.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _exportPreferences,
+                    icon: const Icon(Icons.upload_file, size: 20),
+                    label: const Text('Exportar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _importPreferences,
+                    icon: const Icon(Icons.download, size: 20),
+                    label: const Text('Importar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHelpCard() {
     return Card(
       color: Colors.amber.shade50,
@@ -412,6 +700,11 @@ class _RoleBasedPreferencesScreenState
             _buildHelpItem(
               '4. Resetear',
               'Usa el botón de resetear para volver a los defaults del rol.',
+            ),
+            const SizedBox(height: 8),
+            _buildHelpItem(
+              '5. Exportar/Importar',
+              'Respalda tu configuración o transfiérela entre dispositivos.',
             ),
           ],
         ),

@@ -25,6 +25,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
+  file_picker: ^8.1.6
+  share_plus: ^10.1.2
 
   # Connectivity
   connectivity_plus: ^6.1.2
