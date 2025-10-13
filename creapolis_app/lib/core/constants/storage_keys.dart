@@ -20,4 +20,7 @@ class StorageKeys {
 
   // Dashboard Widgets
   static const String dashboardWidgetConfig = 'dashboard_widget_config';
+
+  // Role-Based UI Preferences
+  static const String roleBasedUIPreferences = 'role_based_ui_preferences';
 }
