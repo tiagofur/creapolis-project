@@ -21,6 +21,7 @@ import 'presentation/bloc/workspace_member/workspace_member_bloc.dart';
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import 'presentation/providers/workspace_context.dart';
 import 'presentation/providers/theme_provider.dart';
+import 'presentation/providers/dashboard_filter_provider.dart';
 import 'routes/app_router.dart';
 
 void main() async {
@@ -129,6 +130,7 @@ class _CreopolisAppState extends State<CreopolisApp> {
         // Context Providers
         ChangeNotifierProvider(create: (context) => getIt<WorkspaceContext>()),
         ChangeNotifierProvider(create: (context) => getIt<ThemeProvider>()),
+        ChangeNotifierProvider(create: (context) => DashboardFilterProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

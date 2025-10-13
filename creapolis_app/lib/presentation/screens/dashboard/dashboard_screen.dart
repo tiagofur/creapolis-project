@@ -10,6 +10,7 @@ import '../../bloc/project/project_event.dart';
 import '../../providers/workspace_context.dart';
 import 'widgets/add_widget_bottom_sheet.dart';
 import 'widgets/dashboard_widget_factory.dart';
+import 'widgets/dashboard_filter_bar.dart';
 
 /// Pantalla principal del Dashboard.
 ///
@@ -284,6 +285,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Filter bar
+          const DashboardFilterBar(),
+          const SizedBox(height: 16),
+          // Widgets
           for (var config in visibleWidgets) ...[
             DashboardWidgetFactory.buildWidget(context, config),
             const SizedBox(height: 16),
