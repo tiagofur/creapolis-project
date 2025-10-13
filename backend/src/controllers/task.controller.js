@@ -12,16 +12,24 @@ class TaskController {
    */
   list = asyncHandler(async (req, res) => {
     const projectId = parseInt(req.params.projectId);
-    const { status, assigneeId, sortBy, order } = req.query;
+    const { status, assigneeId, sortBy, order, page, limit } = req.query;
 
-    const tasks = await taskService.getProjectTasks(projectId, req.user.id, {
+    const result = await taskService.getProjectTasks(projectId, req.user.id, {
       status,
       assigneeId,
       sortBy,
       order,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
     });
 
-    return successResponse(res, tasks, "Tasks retrieved successfully");
+    // If pagination is used, result will have tasks and pagination
+    // Otherwise, result is just the tasks array
+    const responseData = result.pagination
+      ? { tasks: result.tasks, pagination: result.pagination }
+      : result;
+
+    return successResponse(res, responseData, "Tasks retrieved successfully");
   });
 
   /**

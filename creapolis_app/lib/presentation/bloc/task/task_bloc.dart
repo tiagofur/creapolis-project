@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/pagination_helper.dart';
 import '../../../domain/repositories/task_repository.dart';
 import '../../../domain/usecases/create_task_usecase.dart';
 import '../../../domain/usecases/delete_task_usecase.dart';
@@ -39,6 +40,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<FilterTasksByAssigneeEvent>(_onFilterByAssignee);
     on<CalculateScheduleEvent>(_onCalculateSchedule);
     on<RescheduleProjectEvent>(_onRescheduleProject);
+    on<LoadMoreTasksEvent>(_onLoadMoreTasks);
+    on<ResetTasksPaginationEvent>(_onResetPagination);
   }
 
   /// Cargar tareas de un proyecto
@@ -86,6 +89,122 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       (tasks) {
         AppLogger.info('TaskBloc: ${tasks.length} tareas refrescadas');
         emit(TasksLoaded(tasks));
+      },
+    );
+  }
+
+  /// Cargar más tareas (lazy loading)
+  Future<void> _onLoadMoreTasks(
+    LoadMoreTasksEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    final currentState = state;
+    
+    // Solo cargar más si estamos en estado TasksLoaded
+    if (currentState is! TasksLoaded) {
+      AppLogger.warning(
+        'TaskBloc: Intento de cargar más tareas fuera de estado TasksLoaded',
+      );
+      return;
+    }
+
+    // Si ya estamos cargando más o no hay más datos, no hacer nada
+    if (currentState.isLoadingMore || !currentState.paginationState.hasMoreData) {
+      AppLogger.info(
+        'TaskBloc: Ya cargando más o no hay más datos disponibles',
+      );
+      return;
+    }
+
+    AppLogger.info(
+      'TaskBloc: Cargando más tareas del proyecto ${event.projectId} '
+      '(página ${currentState.paginationState.currentPage + 1})',
+    );
+
+    // Emitir estado indicando que estamos cargando más
+    emit(currentState.copyWith(isLoadingMore: true));
+
+    final nextPage = currentState.paginationState.currentPage + 1;
+    final result = await _getTasksByProjectUseCase.paginatedWithMetadata(
+      event.projectId,
+      page: nextPage,
+      limit: currentState.paginationState.pageSize,
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'TaskBloc: Error al cargar más tareas - ${failure.message}',
+        );
+        // Volver al estado anterior sin isLoadingMore
+        emit(currentState.copyWith(isLoadingMore: false));
+      },
+      (paginatedResponse) {
+        AppLogger.info(
+          'TaskBloc: ${paginatedResponse.items.length} tareas adicionales cargadas',
+        );
+
+        // Combinar tareas existentes con las nuevas
+        final allTasks = [...currentState.tasks, ...paginatedResponse.items];
+        
+        // Actualizar estado de paginación
+        final newPaginationState = currentState.paginationState.copyWith(
+          currentPage: paginatedResponse.metadata.page,
+          hasMoreData: paginatedResponse.hasMore,
+          totalItems: paginatedResponse.metadata.total,
+        );
+
+        emit(TasksLoaded(
+          allTasks,
+          statusFilter: currentState.statusFilter,
+          assigneeFilter: currentState.assigneeFilter,
+          paginationState: newPaginationState,
+          isLoadingMore: false,
+        ));
+      },
+    );
+  }
+
+  /// Reset paginación y cargar primera página
+  Future<void> _onResetPagination(
+    ResetTasksPaginationEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    AppLogger.info(
+      'TaskBloc: Reseteando paginación para proyecto ${event.projectId}',
+    );
+
+    emit(const TaskLoading());
+
+    final result = await _getTasksByProjectUseCase.paginatedWithMetadata(
+      event.projectId,
+      page: 1,
+      limit: PaginationHelper.defaultPageSize,
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'TaskBloc: Error al cargar primera página - ${failure.message}',
+        );
+        emit(TaskError(failure.message));
+      },
+      (paginatedResponse) {
+        AppLogger.info(
+          'TaskBloc: Primera página cargada con ${paginatedResponse.items.length} tareas',
+        );
+
+        final paginationState = PaginationState(
+          currentPage: paginatedResponse.metadata.page,
+          pageSize: paginatedResponse.metadata.limit,
+          hasMoreData: paginatedResponse.hasMore,
+          totalItems: paginatedResponse.metadata.total,
+        );
+
+        emit(TasksLoaded(
+          paginatedResponse.items,
+          paginationState: paginationState,
+        ));
       },
     );
   }
