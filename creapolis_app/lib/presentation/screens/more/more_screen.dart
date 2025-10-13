@@ -96,6 +96,13 @@ class MoreScreen extends StatelessWidget {
           _buildSectionHeader(context, 'Información'),
           _buildMenuItem(
             context,
+            icon: Icons.analytics_outlined,
+            title: 'Métricas de Personalización',
+            subtitle: 'Estadísticas de uso de UI',
+            onTap: () => context.go(RoutePaths.customizationMetrics),
+          ),
+          _buildMenuItem(
+            context,
             icon: Icons.info_outline,
             title: 'Acerca de',
             subtitle: 'Información de la aplicación',
