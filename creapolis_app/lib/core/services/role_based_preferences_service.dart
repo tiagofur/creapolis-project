@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/dashboard_widget_config.dart';
@@ -316,6 +318,182 @@ class RoleBasedPreferencesService {
     } catch (e) {
       AppLogger.error(
         'RoleBasedPreferencesService: Error al limpiar preferencias',
+        e,
+      );
+      return false;
+    }
+  }
+
+  // ============== EXPORTACIÓN E IMPORTACIÓN ==============
+
+  /// Exporta las preferencias actuales a un archivo JSON
+  ///
+  /// Retorna la ruta del archivo creado o null si hay error
+  Future<String?> exportPreferences() async {
+    if (_currentUserPreferences == null) {
+      AppLogger.warning(
+        'RoleBasedPreferencesService: No hay preferencias para exportar',
+      );
+      return null;
+    }
+
+    try {
+      // Obtener el directorio de documentos
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final fileName = 'creapolis_preferences_$timestamp.json';
+      final filePath = '${directory.path}/$fileName';
+
+      // Crear el contenido JSON
+      final exportData = {
+        'version': '1.0',
+        'exportDate': DateTime.now().toIso8601String(),
+        'preferences': _currentUserPreferences!.toJson(),
+      };
+
+      final jsonString = const JsonEncoder.withIndent('  ').convert(exportData);
+
+      // Escribir al archivo
+      final file = File(filePath);
+      await file.writeAsString(jsonString);
+
+      AppLogger.info(
+        'RoleBasedPreferencesService: Preferencias exportadas a $filePath',
+      );
+
+      return filePath;
+    } catch (e) {
+      AppLogger.error(
+        'RoleBasedPreferencesService: Error al exportar preferencias',
+        e,
+      );
+      return null;
+    }
+  }
+
+  /// Importa preferencias desde un archivo JSON
+  ///
+  /// [filePath] - Ruta del archivo JSON a importar
+  /// Retorna true si la importación fue exitosa
+  Future<bool> importPreferences(String filePath) async {
+    if (!isInitialized) {
+      AppLogger.warning(
+        'RoleBasedPreferencesService: Intentando importar sin inicializar',
+      );
+      return false;
+    }
+
+    try {
+      // Leer el archivo
+      final file = File(filePath);
+      if (!await file.exists()) {
+        AppLogger.warning(
+          'RoleBasedPreferencesService: Archivo no existe: $filePath',
+        );
+        return false;
+      }
+
+      final jsonString = await file.readAsString();
+      final importData = json.decode(jsonString) as Map<String, dynamic>;
+
+      // Validar estructura del archivo
+      if (!importData.containsKey('preferences')) {
+        AppLogger.warning(
+          'RoleBasedPreferencesService: Archivo JSON inválido - falta campo preferences',
+        );
+        return false;
+      }
+
+      // Parsear preferencias
+      final preferences = UserUIPreferences.fromJson(
+        importData['preferences'] as Map<String, dynamic>,
+      );
+
+      // Guardar las preferencias importadas
+      final success = await saveUserPreferences(preferences);
+
+      if (success) {
+        AppLogger.info(
+          'RoleBasedPreferencesService: Preferencias importadas correctamente desde $filePath',
+        );
+      }
+
+      return success;
+    } catch (e) {
+      AppLogger.error(
+        'RoleBasedPreferencesService: Error al importar preferencias',
+        e,
+      );
+      return false;
+    }
+  }
+
+  /// Obtiene las preferencias actuales como String JSON para compartir
+  ///
+  /// Útil para copiar/pegar o compartir por otros medios
+  String? getPreferencesAsJson() {
+    if (_currentUserPreferences == null) {
+      return null;
+    }
+
+    try {
+      final exportData = {
+        'version': '1.0',
+        'exportDate': DateTime.now().toIso8601String(),
+        'preferences': _currentUserPreferences!.toJson(),
+      };
+
+      return const JsonEncoder.withIndent('  ').convert(exportData);
+    } catch (e) {
+      AppLogger.error(
+        'RoleBasedPreferencesService: Error al convertir preferencias a JSON',
+        e,
+      );
+      return null;
+    }
+  }
+
+  /// Importa preferencias desde un String JSON
+  ///
+  /// [jsonString] - String JSON con las preferencias
+  /// Retorna true si la importación fue exitosa
+  Future<bool> importPreferencesFromJson(String jsonString) async {
+    if (!isInitialized) {
+      AppLogger.warning(
+        'RoleBasedPreferencesService: Intentando importar sin inicializar',
+      );
+      return false;
+    }
+
+    try {
+      final importData = json.decode(jsonString) as Map<String, dynamic>;
+
+      // Validar estructura
+      if (!importData.containsKey('preferences')) {
+        AppLogger.warning(
+          'RoleBasedPreferencesService: JSON inválido - falta campo preferences',
+        );
+        return false;
+      }
+
+      // Parsear preferencias
+      final preferences = UserUIPreferences.fromJson(
+        importData['preferences'] as Map<String, dynamic>,
+      );
+
+      // Guardar las preferencias importadas
+      final success = await saveUserPreferences(preferences);
+
+      if (success) {
+        AppLogger.info(
+          'RoleBasedPreferencesService: Preferencias importadas correctamente desde JSON',
+        );
+      }
+
+      return success;
+    } catch (e) {
+      AppLogger.error(
+        'RoleBasedPreferencesService: Error al importar preferencias desde JSON',
         e,
       );
       return false;

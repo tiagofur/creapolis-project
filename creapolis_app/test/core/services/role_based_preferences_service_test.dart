@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -264,6 +266,138 @@ void main() {
 
         expect(success, true);
         expect(service.currentUserPreferences?.hasLayoutOverride, false);
+      });
+    });
+
+    group('Export and Import', () {
+      test('debe exportar preferencias correctamente', () async {
+        await service.loadUserPreferences(UserRole.admin);
+        await service.setThemeOverride('dark');
+
+        final filePath = await service.exportPreferences();
+
+        expect(filePath, isNotNull);
+        expect(filePath, contains('creapolis_preferences_'));
+        expect(filePath, contains('.json'));
+      });
+
+      test('debe importar preferencias correctamente', () async {
+        // Primero exportar
+        await service.loadUserPreferences(UserRole.admin);
+        await service.setThemeOverride('dark');
+        await service.setLayoutOverride('sidebar');
+
+        final exportPath = await service.exportPreferences();
+        expect(exportPath, isNotNull);
+
+        // Resetear a defaults
+        await service.resetToRoleDefaults();
+        expect(service.currentUserPreferences?.hasThemeOverride, false);
+
+        // Importar
+        final success = await service.importPreferences(exportPath!);
+        expect(success, true);
+
+        // Verificar que los overrides se restauraron
+        expect(service.currentUserPreferences?.hasThemeOverride, true);
+        expect(service.currentUserPreferences?.themeModeOverride, 'dark');
+        expect(service.currentUserPreferences?.hasLayoutOverride, true);
+        expect(service.currentUserPreferences?.layoutTypeOverride, 'sidebar');
+      });
+
+      test('debe fallar al importar archivo inexistente', () async {
+        await service.loadUserPreferences(UserRole.admin);
+
+        final success = await service.importPreferences('/path/to/nonexistent/file.json');
+        expect(success, false);
+      });
+
+      test('debe obtener preferencias como JSON', () async {
+        await service.loadUserPreferences(UserRole.admin);
+        await service.setThemeOverride('dark');
+
+        final jsonString = service.getPreferencesAsJson();
+
+        expect(jsonString, isNotNull);
+        expect(jsonString, contains('version'));
+        expect(jsonString, contains('preferences'));
+        expect(jsonString, contains('dark'));
+      });
+
+      test('debe importar preferencias desde JSON string', () async {
+        await service.loadUserPreferences(UserRole.admin);
+        await service.setThemeOverride('dark');
+
+        final jsonString = service.getPreferencesAsJson();
+        expect(jsonString, isNotNull);
+
+        // Resetear
+        await service.resetToRoleDefaults();
+        expect(service.currentUserPreferences?.hasThemeOverride, false);
+
+        // Importar desde string
+        final success = await service.importPreferencesFromJson(jsonString!);
+        expect(success, true);
+        expect(service.currentUserPreferences?.hasThemeOverride, true);
+        expect(service.currentUserPreferences?.themeModeOverride, 'dark');
+      });
+
+      test('debe fallar al importar JSON inválido', () async {
+        await service.loadUserPreferences(UserRole.admin);
+
+        final success = await service.importPreferencesFromJson('{"invalid": "json"}');
+        expect(success, false);
+      });
+
+      test('debe exportar archivo con estructura correcta', () async {
+        await service.loadUserPreferences(UserRole.projectManager);
+        await service.setThemeOverride('light');
+
+        final jsonString = service.getPreferencesAsJson();
+        expect(jsonString, isNotNull);
+
+        final decoded = json.decode(jsonString!);
+        expect(decoded['version'], '1.0');
+        expect(decoded['exportDate'], isNotNull);
+        expect(decoded['preferences'], isNotNull);
+        expect(decoded['preferences']['userRole'], 'projectManager');
+        expect(decoded['preferences']['themeModeOverride'], 'light');
+      });
+
+      test('debe preservar todos los overrides al exportar/importar', () async {
+        await service.loadUserPreferences(UserRole.teamMember);
+        
+        // Establecer múltiples overrides
+        await service.setThemeOverride('dark');
+        await service.setLayoutOverride('sidebar');
+        final customDashboard = DashboardConfig(
+          widgets: [
+            DashboardWidgetConfig.defaultForType(DashboardWidgetType.myTasks, 0),
+            DashboardWidgetConfig.defaultForType(DashboardWidgetType.quickStats, 1),
+          ],
+          lastModified: DateTime.now(),
+        );
+        await service.setDashboardOverride(customDashboard);
+
+        // Exportar
+        final jsonString = service.getPreferencesAsJson();
+        expect(jsonString, isNotNull);
+
+        // Resetear
+        await service.resetToRoleDefaults();
+
+        // Importar
+        final success = await service.importPreferencesFromJson(jsonString!);
+        expect(success, true);
+
+        // Verificar todos los overrides
+        expect(service.currentUserPreferences?.userRole, UserRole.teamMember);
+        expect(service.currentUserPreferences?.hasThemeOverride, true);
+        expect(service.currentUserPreferences?.themeModeOverride, 'dark');
+        expect(service.currentUserPreferences?.hasLayoutOverride, true);
+        expect(service.currentUserPreferences?.layoutTypeOverride, 'sidebar');
+        expect(service.currentUserPreferences?.hasDashboardOverride, true);
+        expect(service.currentUserPreferences?.dashboardConfigOverride?.widgets.length, 2);
       });
     });
 
