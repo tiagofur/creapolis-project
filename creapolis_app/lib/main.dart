@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
 import 'core/database/hive_manager.dart';
 import 'core/services/view_preferences_service.dart';
+import 'core/services/dashboard_preferences_service.dart';
 import 'core/sync/sync_manager.dart';
 import 'core/utils/app_logger.dart';
 import 'injection.dart';
@@ -40,6 +41,9 @@ void main() async {
 
     // Inicializar servicio de preferencias de vista
     await ViewPreferencesService.instance.init();
+
+    // Inicializar servicio de preferencias de dashboard
+    await DashboardPreferencesService.instance.init();
 
     // Inicializar SyncManager para auto-sincronización offline
     AppLogger.info('main: Inicializando SyncManager...');
