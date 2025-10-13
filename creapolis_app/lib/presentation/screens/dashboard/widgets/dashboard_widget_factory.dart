@@ -11,6 +11,8 @@ import '../widgets/recent_activity_list.dart';
 import '../widgets/task_metrics_widget.dart';
 import '../widgets/task_priority_chart_widget.dart';
 import '../widgets/weekly_progress_chart_widget.dart';
+import '../widgets/burndown_chart_widget.dart';
+import '../widgets/burnup_chart_widget.dart';
 
 /// Factory que construye widgets del dashboard según su tipo
 class DashboardWidgetFactory {
@@ -51,6 +53,12 @@ class DashboardWidgetFactory {
         break;
       case DashboardWidgetType.weeklyProgressChart:
         child = const WeeklyProgressChartWidget();
+        break;
+      case DashboardWidgetType.burndownChart:
+        child = const BurndownChartWidget();
+        break;
+      case DashboardWidgetType.burnupChart:
+        child = const BurnupChartWidget();
         break;
     }
 
