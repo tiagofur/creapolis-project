@@ -17,4 +17,7 @@ class StorageKeys {
   static const String languageCode = 'language_code';
   static const String isFirstLaunch = 'is_first_launch';
   static const String hasSeenOnboarding = 'has_seen_onboarding';
+
+  // Dashboard Widgets
+  static const String dashboardWidgetConfig = 'dashboard_widget_config';
 }

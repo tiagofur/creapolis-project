@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../domain/entities/dashboard_widget_config.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../providers/workspace_context.dart';
-import 'widgets/daily_summary_card.dart';
-import 'widgets/quick_actions_grid.dart';
-import 'widgets/recent_activity_list.dart';
-import 'widgets/my_tasks_widget.dart';
-import 'widgets/my_projects_widget.dart';
+import 'widgets/add_widget_bottom_sheet.dart';
+import 'widgets/dashboard_widget_factory.dart';
 
 /// Pantalla principal del Dashboard.
 ///
@@ -27,6 +26,7 @@ import 'widgets/my_projects_widget.dart';
 /// - Mis proyectos recientes
 /// - Actividad reciente
 /// - Integrado con WorkspaceContext para filtrar por workspace activo
+/// - **NUEVO**: Widgets personalizables con drag & drop
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -35,13 +35,27 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final _preferencesService = DashboardPreferencesService.instance;
+  DashboardConfig _dashboardConfig = DashboardConfig.defaultConfig();
+  bool _isEditMode = false;
+
   @override
   void initState() {
     super.initState();
+    _loadConfiguration();
     // Cargar datos del workspace activo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDashboardData();
     });
+  }
+
+  void _loadConfiguration() {
+    setState(() {
+      _dashboardConfig = _preferencesService.getDashboardConfig();
+    });
+    AppLogger.info(
+      'Dashboard: Configuración cargada (${_dashboardConfig.widgets.length} widgets)',
+    );
   }
 
   void _loadDashboardData() {
@@ -75,17 +89,153 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
+  Future<void> _toggleEditMode() async {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
+
+    if (!_isEditMode) {
+      // Save configuration when exiting edit mode
+      final success = await _preferencesService.saveDashboardConfig(
+        _dashboardConfig,
+      );
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Configuración guardada'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _addWidget() async {
+    final selectedType = await AddWidgetBottomSheet.show(context);
+
+    if (selectedType != null) {
+      final success = await _preferencesService.addWidget(selectedType);
+
+      if (success) {
+        _loadConfiguration();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Widget "${selectedType.displayName}" añadido'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _removeWidget(String widgetId) async {
+    final success = await _preferencesService.removeWidget(widgetId);
+
+    if (success) {
+      _loadConfiguration();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Widget eliminado'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resetConfiguration() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Resetear Configuración'),
+        content: const Text(
+          '¿Estás seguro de que quieres restaurar la configuración por defecto del dashboard?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Resetear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await _preferencesService.resetDashboardConfig();
+
+      if (success) {
+        _loadConfiguration();
+        setState(() {
+          _isEditMode = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Configuración reseteada'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final widgets = List<DashboardWidgetConfig>.from(
+        _dashboardConfig.visibleWidgets,
+      );
+      final item = widgets.removeAt(oldIndex);
+      widgets.insert(newIndex, item);
+
+      // Update positions
+      for (var i = 0; i < widgets.length; i++) {
+        widgets[i] = widgets[i].copyWith(position: i);
+      }
+
+      _dashboardConfig = _dashboardConfig.copyWith(
+        widgets: widgets,
+        lastModified: DateTime.now(),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Creapolis'),
         actions: [
-          // TODO: Añadir botón de notificaciones con badge
+          // Edit mode toggle
+          IconButton(
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit),
+            onPressed: _toggleEditMode,
+            tooltip: _isEditMode ? 'Guardar' : 'Personalizar',
+          ),
+          // Reset configuration
+          if (_isEditMode)
+            IconButton(
+              icon: const Icon(Icons.restore),
+              onPressed: _resetConfiguration,
+              tooltip: 'Resetear configuración',
+            ),
+          // Notifications
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
-              // TODO: Navegar a notificaciones
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Notificaciones - Por implementar'),
@@ -94,11 +244,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             },
           ),
-          // TODO: Añadir botón de perfil
+          // Profile
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
             onPressed: () {
-              // TODO: Navegar a perfil
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Perfil - Por implementar'),
@@ -111,106 +260,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _refreshDashboard,
-        child: Consumer<WorkspaceContext>(
-          builder: (context, workspaceContext, _) {
-            final activeWorkspace = workspaceContext.activeWorkspace;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Workspace Quick Info
-                  _buildWorkspaceCard(
-                    context,
-                    activeWorkspace,
-                    workspaceContext,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Daily Summary Card
-                  const DailySummaryCard(),
-                  const SizedBox(height: 16),
-
-                  // Quick Actions Grid
-                  const QuickActionsGrid(),
-                  const SizedBox(height: 16),
-
-                  // Mis Tareas
-                  const MyTasksWidget(),
-                  const SizedBox(height: 16),
-
-                  // Mis Proyectos
-                  const MyProjectsWidget(),
-                  const SizedBox(height: 16),
-
-                  // Actividad Reciente
-                  const RecentActivityList(),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            );
-          },
-        ),
+        child: _isEditMode ? _buildEditModeView() : _buildNormalView(),
       ),
-      // FAB removido: Ahora está en MainShell como Speed Dial global
+      floatingActionButton: _isEditMode
+          ? FloatingActionButton.extended(
+              onPressed: _addWidget,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir Widget'),
+            )
+          : null,
     );
   }
 
-  Widget _buildWorkspaceCard(
-    BuildContext context,
-    dynamic activeWorkspace,
-    WorkspaceContext workspaceContext,
-  ) {
+  Widget _buildNormalView() {
+    final visibleWidgets = _dashboardConfig.visibleWidgets;
+
+    if (visibleWidgets.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var config in visibleWidgets) ...[
+            DashboardWidgetFactory.buildWidget(context, config),
+            const SizedBox(height: 16),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditModeView() {
+    final visibleWidgets = _dashboardConfig.visibleWidgets;
+
+    if (visibleWidgets.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      onReorder: _onReorder,
+      itemCount: visibleWidgets.length,
+      itemBuilder: (context, index) {
+        final config = visibleWidgets[index];
+        return Padding(
+          key: ValueKey(config.id),
+          padding: const EdgeInsets.only(bottom: 16),
+          child: DashboardWidgetFactory.buildWidget(
+            context,
+            config,
+            onRemove: () => _removeWidget(config.id),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
     final theme = Theme.of(context);
 
-    return Card(
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(Icons.business, color: theme.colorScheme.primary),
+            Icon(
+              Icons.widgets_outlined,
+              size: 80,
+              color: theme.colorScheme.primary.withOpacity(0.5),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activeWorkspace?.name ?? 'Mi Workspace',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    activeWorkspace != null
-                        ? '${workspaceContext.userWorkspaces.length} workspaces disponibles'
-                        : 'Selecciona un workspace',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 24),
+            Text(
+              'Tu dashboard está vacío',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
-            if (workspaceContext.userWorkspaces.length > 1)
-              TextButton.icon(
-                onPressed: () {
-                  // TODO: Navegar a selección de workspace
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Cambio de workspace - Por implementar'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.swap_horiz, size: 20),
-                label: const Text('Cambiar'),
+            const SizedBox(height: 8),
+            Text(
+              'Añade widgets para personalizar tu experiencia',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _addWidget,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir Widget'),
+            ),
           ],
         ),
       ),
