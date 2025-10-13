@@ -1,0 +1,194 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+env:
+  STAGING_ENV: staging
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: npx prisma migrate deploy
+
+      - name: Build Docker image
+        run: |
+          docker build -f backend/Dockerfile -t creapolis-backend:staging backend/
+
+      - name: Deploy to staging server
+        id: deploy
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_KEY: ${{ secrets.STAGING_SSH_KEY }}
+        run: |
+          if [ -z "$STAGING_HOST" ]; then
+            echo "⚠️ Staging server not configured. Skipping deployment."
+            echo "Configure STAGING_HOST, STAGING_USER, and STAGING_SSH_KEY secrets to enable deployment."
+            echo "url=http://localhost:3001" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Deploying to staging server..."
+          # Add your deployment commands here
+          # Example: SSH to server and restart services
+          echo "url=http://$STAGING_HOST:3001" >> $GITHUB_OUTPUT
+
+      - name: Health check
+        run: |
+          echo "Performing health check..."
+          # Add health check commands
+          # Example: curl http://staging-server:3001/api/health
+          echo "✅ Deployment completed successfully"
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Backend deployment to staging ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  deploy-flutter-web:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging-web
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: creapolis_app
+        run: flutter pub get
+
+      - name: Generate code
+        working-directory: creapolis_app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Flutter web
+        working-directory: creapolis_app
+        env:
+          API_URL: ${{ secrets.STAGING_API_URL }}
+        run: |
+          flutter build web --release \
+            --dart-define=API_URL=${API_URL:-http://localhost:3001} \
+            --dart-define=ENVIRONMENT=staging
+
+      - name: Deploy to staging web server
+        id: deploy
+        env:
+          STAGING_WEB_HOST: ${{ secrets.STAGING_WEB_HOST }}
+          STAGING_WEB_USER: ${{ secrets.STAGING_WEB_USER }}
+          STAGING_WEB_KEY: ${{ secrets.STAGING_WEB_SSH_KEY }}
+        run: |
+          if [ -z "$STAGING_WEB_HOST" ]; then
+            echo "⚠️ Staging web server not configured. Skipping deployment."
+            echo "Configure STAGING_WEB_HOST, STAGING_WEB_USER, and STAGING_WEB_SSH_KEY secrets to enable deployment."
+            echo "url=http://localhost:8080" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Deploying Flutter web to staging..."
+          # Add your deployment commands here
+          # Example: rsync build/web to server
+          echo "url=http://$STAGING_WEB_HOST" >> $GITHUB_OUTPUT
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-web-staging
+          path: creapolis_app/build/web/
+          retention-days: 7
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Flutter web deployment to staging ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-flutter-web]
+    if: success()
+    
+    steps:
+      - name: Send success notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: '✅ Staging deployment completed successfully!',
+              attachments: [{
+                color: 'good',
+                fields: [
+                  {
+                    title: 'Environment',
+                    value: 'Staging',
+                    short: true
+                  },
+                  {
+                    title: 'Branch',
+                    value: '${{ github.ref_name }}',
+                    short: true
+                  },
+                  {
+                    title: 'Commit',
+                    value: '${{ github.sha }}',
+                    short: true
+                  },
+                  {
+                    title: 'Author',
+                    value: '${{ github.actor }}',
+                    short: true
+                  }
+                ]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

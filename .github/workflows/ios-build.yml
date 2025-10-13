@@ -1,0 +1,130 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'creapolis_app/**'
+      - '.github/workflows/ios-build.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'creapolis_app/**'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type (debug/release)'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: creapolis_app
+        run: flutter pub get
+
+      - name: Generate code
+        working-directory: creapolis_app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Install CocoaPods
+        working-directory: creapolis_app/ios
+        run: |
+          sudo gem install cocoapods
+          pod install
+
+      - name: Build iOS (Debug)
+        if: github.event_name == 'pull_request' || github.event.inputs.build_type == 'debug' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
+        working-directory: creapolis_app
+        run: |
+          flutter build ios --debug --no-codesign --verbose
+
+      - name: Build iOS (Release)
+        if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_type == 'release'
+        working-directory: creapolis_app
+        env:
+          MATCH_PASSWORD: ${{ secrets.IOS_MATCH_PASSWORD }}
+          FASTLANE_PASSWORD: ${{ secrets.IOS_FASTLANE_PASSWORD }}
+        run: |
+          if [ -n "$MATCH_PASSWORD" ]; then
+            echo "Building signed release"
+            flutter build ios --release --verbose
+          else
+            echo "Building unsigned release (no certificates configured)"
+            flutter build ios --release --no-codesign --verbose
+          fi
+
+      - name: Build iOS Archive (Release)
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: creapolis_app/ios
+        env:
+          MATCH_PASSWORD: ${{ secrets.IOS_MATCH_PASSWORD }}
+          FASTLANE_PASSWORD: ${{ secrets.IOS_FASTLANE_PASSWORD }}
+        run: |
+          if [ -n "$MATCH_PASSWORD" ]; then
+            echo "Creating signed archive"
+            xcodebuild -workspace Runner.xcworkspace \
+              -scheme Runner \
+              -configuration Release \
+              -archivePath build/Runner.xcarchive \
+              archive
+          else
+            echo "Skipping archive creation (no certificates configured)"
+          fi
+
+      - name: Export IPA (Release)
+        if: startsWith(github.ref, 'refs/tags/') && env.MATCH_PASSWORD != ''
+        working-directory: creapolis_app/ios
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportPath build/Runner.ipa \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Upload iOS build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-${{ github.sha }}
+          path: |
+            creapolis_app/build/ios/iphoneos/Runner.app
+          retention-days: 14
+
+      - name: Upload IPA artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ github.sha }}
+          path: |
+            creapolis_app/ios/build/Runner.ipa/*.ipa
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/') && env.MATCH_PASSWORD != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            creapolis_app/ios/build/Runner.ipa/*.ipa
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MATCH_PASSWORD: ${{ secrets.IOS_MATCH_PASSWORD }}

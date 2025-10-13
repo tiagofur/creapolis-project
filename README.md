@@ -4,9 +4,16 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.0-brightgreen.svg)](https://nodejs.org)
-[![Flutter](https://img.shields.io/badge/flutter-3.9%2B-blue.svg)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/flutter-3.27%2B-blue.svg)](https://flutter.dev)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com)
 [![PostgreSQL](https://img.shields.io/badge/postgres-16-blue.svg)](https://www.postgresql.org)
+
+### CI/CD Status
+
+[![Backend CI](https://github.com/tiagofur/creapolis-project/workflows/Backend%20CI/badge.svg)](https://github.com/tiagofur/creapolis-project/actions/workflows/backend-ci.yml)
+[![Flutter CI](https://github.com/tiagofur/creapolis-project/workflows/Flutter%20CI/badge.svg)](https://github.com/tiagofur/creapolis-project/actions/workflows/flutter-ci.yml)
+[![Android Build](https://github.com/tiagofur/creapolis-project/workflows/Android%20Build/badge.svg)](https://github.com/tiagofur/creapolis-project/actions/workflows/android-build.yml)
+[![iOS Build](https://github.com/tiagofur/creapolis-project/workflows/iOS%20Build/badge.svg)](https://github.com/tiagofur/creapolis-project/actions/workflows/ios-build.yml)
 
 ## 📋 Tabla de Contenidos
 
@@ -224,11 +231,18 @@ flutter run            # Móvil (con emulador)
 
 ## 📚 Documentación
 
+### Guías de Configuración
 - **[DOCKER_README.md](./DOCKER_README.md)**: Guía completa de Docker
 - **[QUICKSTART_DOCKER.md](./QUICKSTART_DOCKER.md)**: Quick Start rápido
 - **[backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)**: Documentación de API
-- **[documentation/tasks.md](./documentation/tasks.md)**: Plan de tareas
 - **[creapolis_app/ARCHITECTURE.md](./creapolis_app/ARCHITECTURE.md)**: Arquitectura Flutter
+
+### CI/CD y Testing
+- **[.github/CI_CD_DOCUMENTATION.md](./.github/CI_CD_DOCUMENTATION.md)**: Pipeline completo de CI/CD
+- **[creapolis_app/TESTING_STRATEGY.md](./creapolis_app/TESTING_STRATEGY.md)**: Estrategia de testing
+
+### Planificación y Tareas
+- **[documentation/tasks.md](./documentation/tasks.md)**: Plan de tareas
 
 ---
 

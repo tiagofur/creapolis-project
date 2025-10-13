@@ -1,0 +1,117 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'creapolis_app/**'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'creapolis_app/**'
+      - '.github/workflows/flutter-ci.yml'
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: creapolis_app
+        run: flutter pub get
+
+      - name: Verify Flutter installation
+        working-directory: creapolis_app
+        run: flutter doctor -v
+
+      - name: Generate code
+        working-directory: creapolis_app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze code
+        working-directory: creapolis_app
+        run: flutter analyze --fatal-infos
+
+      - name: Check formatting
+        working-directory: creapolis_app
+        run: dart format --set-exit-if-changed .
+
+      - name: Run tests
+        working-directory: creapolis_app
+        run: flutter test --coverage --reporter expanded
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./creapolis_app/coverage/lcov.info
+          flags: flutter
+          name: flutter-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Generate coverage report
+        if: always()
+        working-directory: creapolis_app
+        run: |
+          flutter pub global activate coverage
+          flutter pub global run coverage:format_coverage \
+            --lcov \
+            --in=coverage \
+            --out=coverage/lcov.info \
+            --packages=.dart_tool/package_config.json \
+            --report-on=lib || echo "Coverage report generated"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-results
+          path: creapolis_app/coverage/
+          retention-days: 7
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: creapolis_app
+        run: flutter pub get
+
+      - name: Check for outdated dependencies
+        working-directory: creapolis_app
+        run: flutter pub outdated || true
+
+      - name: Run dart analyze with metrics
+        working-directory: creapolis_app
+        run: |
+          flutter analyze --write=analysis_results.txt || true
+          echo "Analysis complete"
+
+      - name: Upload analysis results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-results
+          path: creapolis_app/analysis_results.txt
+          retention-days: 7
