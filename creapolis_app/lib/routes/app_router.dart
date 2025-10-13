@@ -21,6 +21,7 @@ import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../features/tasks/presentation/blocs/task_bloc.dart';
 import '../features/tasks/presentation/blocs/task_event.dart';
 import '../presentation/screens/settings/settings_screen.dart';
+import '../presentation/screens/customization_metrics_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
 import '../presentation/screens/tasks/task_detail_screen.dart';
@@ -78,6 +79,13 @@ class AppRouter {
         path: RoutePaths.profile,
         name: RouteNames.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // Customization Metrics Route (admin only)
+      GoRoute(
+        path: RoutePaths.customizationMetrics,
+        name: RouteNames.customizationMetrics,
+        builder: (context, state) => const CustomizationMetricsScreen(),
       ),
 
       // Main Shell con Bottom Navigation (4 tabs)
@@ -407,6 +415,7 @@ class RoutePaths {
   static const String onboarding = '/onboarding';
   static const String settings = '/settings';
   static const String profile = '/profile';
+  static const String customizationMetrics = '/customization-metrics';
 
   // Workspace routes
   static const String workspaces = '/workspaces';
@@ -453,6 +462,7 @@ class RouteNames {
   static const String workload = 'workload';
   static const String settings = 'settings';
   static const String profile = 'profile';
+  static const String customizationMetrics = 'customization-metrics';
 
   // Workspace route names
   static const String workspaces = 'workspaces';

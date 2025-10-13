@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/dashboard_widget_config.dart';
 import '../constants/storage_keys.dart';
 import '../utils/app_logger.dart';
+import 'customization_metrics_service.dart';
 
 /// Servicio para gestionar preferencias de widgets del dashboard
 ///
@@ -132,6 +133,8 @@ class DashboardPreferencesService {
         AppLogger.info(
           'DashboardPreferencesService: Configuración reseteada a default',
         );
+        // Track metrics
+        await CustomizationMetricsService.instance.trackDashboardReset();
       }
 
       return success;
@@ -159,7 +162,16 @@ class DashboardPreferencesService {
       lastModified: DateTime.now(),
     );
 
-    return saveDashboardConfig(newConfig);
+    final success = await saveDashboardConfig(newConfig);
+
+    // Track metrics
+    if (success) {
+      await CustomizationMetricsService.instance.trackWidgetsReordered(
+        widgets.map((w) => w.type.name).toList(),
+      );
+    }
+
+    return success;
   }
 
   /// Añade un widget al dashboard
@@ -185,12 +197,24 @@ class DashboardPreferencesService {
       lastModified: DateTime.now(),
     );
 
-    return saveDashboardConfig(newConfig);
+    final success = await saveDashboardConfig(newConfig);
+
+    // Track metrics
+    if (success) {
+      await CustomizationMetricsService.instance.trackWidgetAdded(type.name);
+    }
+
+    return success;
   }
 
   /// Elimina un widget del dashboard
   Future<bool> removeWidget(String widgetId) async {
     final currentConfig = getDashboardConfig();
+
+    // Find the widget to track its type before removal
+    final widgetToRemove = currentConfig.widgets
+        .where((w) => w.id == widgetId)
+        .firstOrNull;
 
     final updatedWidgets = currentConfig.widgets
         .where((w) => w.id != widgetId)
@@ -206,7 +230,16 @@ class DashboardPreferencesService {
       lastModified: DateTime.now(),
     );
 
-    return saveDashboardConfig(newConfig);
+    final success = await saveDashboardConfig(newConfig);
+
+    // Track metrics
+    if (success && widgetToRemove != null) {
+      await CustomizationMetricsService.instance.trackWidgetRemoved(
+        widgetToRemove.type.name,
+      );
+    }
+
+    return success;
   }
 
   /// Alterna la visibilidad de un widget
