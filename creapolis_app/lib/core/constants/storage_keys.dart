@@ -26,4 +26,9 @@ class StorageKeys {
 
   // Customization Metrics
   static const String customizationEvents = 'customization_events';
+
+  // Kanban Board Configuration
+  static const String kanbanWipLimit = 'kanban_wip_limit';
+  static const String kanbanSwimlanesEnabled = 'kanban_swimlanes_enabled';
+  static const String kanbanSwimlanes = 'kanban_swimlanes';
 }
