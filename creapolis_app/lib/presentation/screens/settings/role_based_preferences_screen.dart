@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/services/role_based_preferences_service.dart';
