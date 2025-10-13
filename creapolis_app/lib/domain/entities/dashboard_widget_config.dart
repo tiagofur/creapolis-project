@@ -11,6 +11,8 @@ enum DashboardWidgetType {
   taskMetrics,
   taskPriorityChart,
   weeklyProgressChart,
+  burndownChart,
+  burnupChart,
 }
 
 /// Extensión para obtener metadata de los widgets
@@ -36,6 +38,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Distribución por Prioridad';
       case DashboardWidgetType.weeklyProgressChart:
         return 'Progreso Semanal';
+      case DashboardWidgetType.burndownChart:
+        return 'Burndown Chart';
+      case DashboardWidgetType.burnupChart:
+        return 'Burnup Chart';
     }
   }
 
@@ -60,6 +66,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Gráfico de distribución por prioridad';
       case DashboardWidgetType.weeklyProgressChart:
         return 'Gráfico de progreso por día';
+      case DashboardWidgetType.burndownChart:
+        return 'Gráfico de burndown para sprints';
+      case DashboardWidgetType.burnupChart:
+        return 'Gráfico de burnup para proyectos';
     }
   }
 
@@ -84,6 +94,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'pie_chart';
       case DashboardWidgetType.weeklyProgressChart:
         return 'bar_chart';
+      case DashboardWidgetType.burndownChart:
+        return 'trending_down';
+      case DashboardWidgetType.burnupChart:
+        return 'trending_up';
     }
   }
 }
