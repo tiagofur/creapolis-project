@@ -1,5 +1,14 @@
 # 🎨 Creapolis App - Guía Visual de Estructura
 
+
+## 📚 Documentación Relacionada
+
+- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Sistema de diseño: colores, tipografía, espaciado
+- **[COMPONENTS.md](./COMPONENTS.md)** - Biblioteca de componentes reutilizables
+- **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Guía de inicio rápido
+
+---
+
 ## 📊 Diagrama de Arquitectura
 
 ```

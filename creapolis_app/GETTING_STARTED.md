@@ -74,6 +74,8 @@ Características del tema:
 - Componentes personalizados (buttons, cards, inputs)
 - Responsive design
 
+📚 **Ver documentación completa**: [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)
+
 ### 5. **Widgets Compartidos** 🧩
 
 ✅ **PrimaryButton** - Botón principal con loading y icono
@@ -89,6 +91,8 @@ Todos siguiendo principios:
 - Reutilizables
 - Con propiedades configurables
 - Un widget por archivo
+
+📚 **Ver biblioteca completa**: [COMPONENTS.md](./COMPONENTS.md)
 
 ### 6. **Dependencias Instaladas** 📦
 
