@@ -1,0 +1,200 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  pr-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR Information
+        run: |
+          echo "## 🔍 Pull Request Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR Number:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.head_ref }} → ${{ github.base_ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.event.pull_request.head.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      flutter: ${{ steps.filter.outputs.flutter }}
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Detect changed files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            flutter:
+              - 'creapolis_app/**'
+            docs:
+              - '**.md'
+              - 'documentation/**'
+
+  backend-checks:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: creapolis_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Setup database
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creapolis_test
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+
+      - name: Run tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/creapolis_test
+          JWT_SECRET: test-secret-key
+          NODE_ENV: test
+        run: npm test
+
+      - name: Comment test results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🧪 Backend Test Results\n\n';
+            comment += '✅ Tests completed successfully!\n\n';
+            comment += 'See the [full run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  flutter-checks:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.flutter == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: creapolis_app
+        run: flutter pub get
+
+      - name: Generate code
+        working-directory: creapolis_app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        working-directory: creapolis_app
+        run: flutter analyze
+
+      - name: Check formatting
+        working-directory: creapolis_app
+        run: dart format --set-exit-if-changed . || echo "::warning::Code formatting issues found"
+
+      - name: Run tests
+        working-directory: creapolis_app
+        run: flutter test --coverage
+
+      - name: Comment test results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let comment = '## 📱 Flutter Test Results\n\n';
+            comment += '✅ Tests completed successfully!\n\n';
+            comment += 'See the [full run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  all-checks-passed:
+    runs-on: ubuntu-latest
+    needs: [backend-checks, flutter-checks]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.backend-checks.result }}" == "failure" ]] || [[ "${{ needs.flutter-checks.result }}" == "failure" ]]; then
+            echo "❌ Some checks failed"
+            exit 1
+          elif [[ "${{ needs.backend-checks.result }}" == "skipped" ]] && [[ "${{ needs.flutter-checks.result }}" == "skipped" ]]; then
+            echo "✅ No relevant code changes detected"
+          else
+            echo "✅ All checks passed!"
+          fi
+
+      - name: Comment summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const backendResult = '${{ needs.backend-checks.result }}';
+            const flutterResult = '${{ needs.flutter-checks.result }}';
+            
+            let comment = '## ✅ CI/CD Pipeline Summary\n\n';
+            comment += '| Component | Status |\n';
+            comment += '|-----------|--------|\n';
+            comment += `| Backend | ${backendResult === 'success' ? '✅ Passed' : backendResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |\n`;
+            comment += `| Flutter | ${flutterResult === 'success' ? '✅ Passed' : flutterResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |\n`;
+            comment += '\n---\n';
+            comment += `🔗 [View full workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

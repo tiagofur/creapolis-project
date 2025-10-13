@@ -1,0 +1,158 @@
+name: Pipeline Status Notifications
+
+on:
+  workflow_run:
+    workflows:
+      - "Backend CI"
+      - "Flutter CI"
+      - "Android Build"
+      - "iOS Build"
+      - "Deploy to Staging"
+    types:
+      - completed
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get workflow conclusion
+        id: workflow
+        run: |
+          echo "conclusion=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "workflow_name=${{ github.event.workflow_run.name }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          echo "actor=${{ github.event.workflow_run.actor.login }}" >> $GITHUB_OUTPUT
+
+      - name: Set status emoji
+        id: status
+        run: |
+          if [ "${{ steps.workflow.outputs.conclusion }}" == "success" ]; then
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.workflow.outputs.conclusion }}" == "failure" ]; then
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=⚠️" >> $GITHUB_OUTPUT
+            echo "color=warning" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: '${{ steps.status.outputs.emoji }} Workflow: ${{ steps.workflow.outputs.workflow_name }}',
+              attachments: [{
+                color: '${{ steps.status.outputs.color }}',
+                fields: [
+                  {
+                    title: 'Status',
+                    value: '${{ steps.workflow.outputs.conclusion }}',
+                    short: true
+                  },
+                  {
+                    title: 'Branch',
+                    value: '${{ steps.workflow.outputs.branch }}',
+                    short: true
+                  },
+                  {
+                    title: 'Triggered by',
+                    value: '@${{ steps.workflow.outputs.actor }}',
+                    short: true
+                  },
+                  {
+                    title: 'Run',
+                    value: '<${{ github.event.workflow_run.html_url }}|View Details>',
+                    short: true
+                  }
+                ]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Send email notification
+        if: steps.workflow.outputs.conclusion == 'failure'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: '❌ Pipeline Failed: ${{ steps.workflow.outputs.workflow_name }}'
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: 'Creapolis CI/CD <noreply@creapolis.dev>'
+          body: |
+            Workflow '${{ steps.workflow.outputs.workflow_name }}' has failed.
+            
+            Branch: ${{ steps.workflow.outputs.branch }}
+            Commit: ${{ steps.workflow.outputs.sha }}
+            Triggered by: ${{ steps.workflow.outputs.actor }}
+            
+            View details: ${{ github.event.workflow_run.html_url }}
+        continue-on-error: true
+
+      - name: Create GitHub issue on failure
+        if: steps.workflow.outputs.conclusion == 'failure' && github.event.workflow_run.head_branch == 'main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `❌ Pipeline failure: ${{ steps.workflow.outputs.workflow_name }}`;
+            const body = `
+            ## Pipeline Failure Report
+            
+            **Workflow:** ${{ steps.workflow.outputs.workflow_name }}
+            **Branch:** ${{ steps.workflow.outputs.branch }}
+            **Commit:** ${{ steps.workflow.outputs.sha }}
+            **Triggered by:** @${{ steps.workflow.outputs.actor }}
+            
+            ### Details
+            
+            The pipeline has failed on the main branch. Please investigate and fix the issue.
+            
+            **Workflow Run:** ${{ github.event.workflow_run.html_url }}
+            
+            ### Next Steps
+            
+            1. Review the workflow logs
+            2. Identify the root cause
+            3. Create a fix
+            4. Verify the fix in a PR before merging
+            
+            ---
+            *This issue was automatically created by the CI/CD pipeline.*
+            `;
+            
+            // Check if similar issue exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ci-failure'
+            });
+            
+            const similarIssue = issues.data.find(issue => 
+              issue.title.includes('${{ steps.workflow.outputs.workflow_name }}')
+            );
+            
+            if (!similarIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['ci-failure', 'automated']
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: similarIssue.number,
+                body: `Another failure occurred in the same workflow.\n\n**Run:** ${{ github.event.workflow_run.html_url }}`
+              });
+            }
