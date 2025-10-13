@@ -23,4 +23,7 @@ class StorageKeys {
 
   // Role-Based UI Preferences
   static const String roleBasedUIPreferences = 'role_based_ui_preferences';
+
+  // Customization Metrics
+  static const String customizationEvents = 'customization_events';
 }

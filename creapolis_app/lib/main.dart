@@ -9,6 +9,7 @@ import 'core/database/hive_manager.dart';
 import 'core/services/view_preferences_service.dart';
 import 'core/services/dashboard_preferences_service.dart';
 import 'core/services/role_based_preferences_service.dart';
+import 'core/services/customization_metrics_service.dart';
 import 'core/sync/sync_manager.dart';
 import 'core/utils/app_logger.dart';
 import 'injection.dart';
@@ -48,6 +49,9 @@ void main() async {
 
     // Inicializar servicio de preferencias basadas en roles
     await RoleBasedPreferencesService.instance.init();
+
+    // Inicializar servicio de métricas de personalización
+    await CustomizationMetricsService.instance.init();
 
     // Inicializar SyncManager para auto-sincronización offline
     AppLogger.info('main: Inicializando SyncManager...');

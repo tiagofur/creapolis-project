@@ -9,6 +9,7 @@ import '../../domain/entities/role_based_ui_config.dart';
 import '../../domain/entities/user.dart';
 import '../constants/storage_keys.dart';
 import '../utils/app_logger.dart';
+import 'customization_metrics_service.dart';
 
 /// Servicio para gestionar preferencias de UI basadas en roles
 ///
@@ -164,11 +165,22 @@ class RoleBasedPreferencesService {
       return false;
     }
 
+    final previousTheme = _currentUserPreferences!.getEffectiveThemeMode();
     final updatedPrefs = _currentUserPreferences!.copyWith(
       themeModeOverride: themeMode,
     );
 
-    return saveUserPreferences(updatedPrefs);
+    final success = await saveUserPreferences(updatedPrefs);
+
+    // Track metrics
+    if (success) {
+      await CustomizationMetricsService.instance.trackThemeChange(
+        previousTheme,
+        themeMode,
+      );
+    }
+
+    return success;
   }
 
   /// Elimina el override de tema (vuelve al default del rol)
@@ -198,11 +210,22 @@ class RoleBasedPreferencesService {
       return false;
     }
 
+    final previousLayout = _currentUserPreferences!.getEffectiveLayoutType();
     final updatedPrefs = _currentUserPreferences!.copyWith(
       layoutTypeOverride: layoutType,
     );
 
-    return saveUserPreferences(updatedPrefs);
+    final success = await saveUserPreferences(updatedPrefs);
+
+    // Track metrics
+    if (success) {
+      await CustomizationMetricsService.instance.trackLayoutChange(
+        previousLayout,
+        layoutType,
+      );
+    }
+
+    return success;
   }
 
   /// Elimina el override de layout (vuelve al default del rol)
