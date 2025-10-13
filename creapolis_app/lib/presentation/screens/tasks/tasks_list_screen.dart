@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/pagination_helper.dart';
 import '../../../domain/entities/task.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/task/task_bloc.dart';
@@ -36,11 +37,16 @@ class _TasksListScreenState extends State<TasksListScreen>
     with WidgetsBindingObserver {
   TaskViewMode _viewMode = TaskViewMode.list;
   TaskDensity _density = TaskDensity.comfortable;
+  late ScrollController _scrollController;
+  bool _enablePagination = true; // Flag para habilitar/deshabilitar paginación
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    
     // Cargar tareas al iniciar después de verificar workspace
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkWorkspaceAndLoadTasks();
@@ -49,8 +55,27 @@ class _TasksListScreenState extends State<TasksListScreen>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onScroll() {
+    // Solo intentar cargar más si la paginación está habilitada
+    if (!_enablePagination) return;
+    
+    if (PaginationHelper.shouldLoadMore(_scrollController)) {
+      final currentState = context.read<TaskBloc>().state;
+      if (currentState is TasksLoaded && 
+          !currentState.isLoadingMore && 
+          currentState.paginationState.hasMoreData) {
+        AppLogger.info(
+          'TasksListScreen: Disparando carga de más tareas',
+        );
+        context.read<TaskBloc>().add(LoadMoreTasksEvent(widget.projectId));
+      }
+    }
   }
 
   @override
@@ -101,7 +126,12 @@ class _TasksListScreenState extends State<TasksListScreen>
     }
 
     if (shouldLoad) {
-      context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
+      // Usar paginación si está habilitada, sino carga normal
+      if (_enablePagination) {
+        context.read<TaskBloc>().add(ResetTasksPaginationEvent(widget.projectId));
+      } else {
+        context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
+      }
     }
   }
 
@@ -274,31 +304,59 @@ class _TasksListScreenState extends State<TasksListScreen>
       return KanbanBoardView(tasks: tasks, projectId: widget.projectId);
     }
 
-    // Vista Lista (por defecto)
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<TaskBloc>().add(RefreshTasksEvent(widget.projectId));
-        await Future.delayed(const Duration(seconds: 1));
+    // Vista Lista (por defecto) con infinite scroll
+    return BlocBuilder<TaskBloc, TaskState>(
+      builder: (context, state) {
+        final isLoadingMore = state is TasksLoaded ? state.isLoadingMore : false;
+        final hasMoreData = state is TasksLoaded 
+            ? state.paginationState.hasMoreData 
+            : false;
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            if (_enablePagination) {
+              context.read<TaskBloc>().add(
+                ResetTasksPaginationEvent(widget.projectId),
+              );
+            } else {
+              context.read<TaskBloc>().add(RefreshTasksEvent(widget.projectId));
+            }
+            await Future.delayed(const Duration(seconds: 1));
+          },
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            itemCount: tasks.length + (hasMoreData ? 1 : 0),
+            itemBuilder: (context, index) {
+              // Mostrar loader al final si hay más datos
+              if (index == tasks.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: isLoadingMore
+                        ? const CircularProgressIndicator()
+                        : const SizedBox.shrink(),
+                  ),
+                );
+              }
+
+              final task = tasks[index];
+              return StaggeredListAnimation(
+                index: index,
+                delay: const Duration(milliseconds: 30),
+                duration: const Duration(milliseconds: 300),
+                child: TaskCard(
+                  task: task,
+                  isCompact: _density == TaskDensity.compact,
+                  onTap: () => _navigateToDetail(context, task.id),
+                  onEdit: () => _showEditTaskSheet(context, task),
+                  onDelete: () => _confirmDelete(context, task),
+                ),
+              );
+            },
+          ),
+        );
       },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          final task = tasks[index];
-          return StaggeredListAnimation(
-            index: index,
-            delay: const Duration(milliseconds: 30),
-            duration: const Duration(milliseconds: 300),
-            child: TaskCard(
-              task: task,
-              isCompact: _density == TaskDensity.compact,
-              onTap: () => _navigateToDetail(context, task.id),
-              onEdit: () => _showEditTaskSheet(context, task),
-              onDelete: () => _confirmDelete(context, task),
-            ),
-          );
-        },
-      ),
     );
   }
 
