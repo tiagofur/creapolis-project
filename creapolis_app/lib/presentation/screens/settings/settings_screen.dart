@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/calendar_event.dart' as domain;
 import '../../../injection.dart';
+import '../../../routes/app_router.dart';
 import '../../bloc/calendar/calendar_bloc.dart';
 import '../../bloc/calendar/calendar_event.dart';
 import '../../bloc/calendar/calendar_state.dart';
@@ -26,6 +28,27 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // Sección de Apariencia
             _AppearanceSection(),
+            const Divider(),
+
+            // Sección de Personalización
+            _buildSection(
+              context,
+              title: 'Personalización por Rol',
+              subtitle: 'Personaliza tu experiencia según tu rol',
+              icon: Icons.tune,
+              onTap: () {
+                context.go(RoutePaths.rolePreferences);
+              },
+            ),
+            _buildSection(
+              context,
+              title: 'Métricas de Personalización',
+              subtitle: 'Estadísticas de uso de personalización',
+              icon: Icons.analytics,
+              onTap: () {
+                context.go(RoutePaths.customizationMetrics);
+              },
+            ),
             const Divider(),
 
             // Sección de Integraciones
@@ -80,12 +103,14 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildSection(
     BuildContext context, {
     required String title,
+    String? subtitle,
     required IconData icon,
     required VoidCallback onTap,
   }) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle) : null,
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     );

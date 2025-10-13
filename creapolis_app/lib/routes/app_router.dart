@@ -21,6 +21,7 @@ import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../features/tasks/presentation/blocs/task_bloc.dart';
 import '../features/tasks/presentation/blocs/task_event.dart';
 import '../presentation/screens/settings/settings_screen.dart';
+import '../presentation/screens/settings/role_based_preferences_screen.dart';
 import '../presentation/screens/customization_metrics_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
@@ -79,6 +80,13 @@ class AppRouter {
         path: RoutePaths.profile,
         name: RouteNames.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+
+      // Role-Based Preferences Route
+      GoRoute(
+        path: RoutePaths.rolePreferences,
+        name: RouteNames.rolePreferences,
+        builder: (context, state) => const RoleBasedPreferencesScreen(),
       ),
 
       // Customization Metrics Route (admin only)
@@ -415,6 +423,7 @@ class RoutePaths {
   static const String onboarding = '/onboarding';
   static const String settings = '/settings';
   static const String profile = '/profile';
+  static const String rolePreferences = '/role-preferences';
   static const String customizationMetrics = '/customization-metrics';
 
   // Workspace routes
@@ -462,6 +471,7 @@ class RouteNames {
   static const String workload = 'workload';
   static const String settings = 'settings';
   static const String profile = 'profile';
+  static const String rolePreferences = 'role-preferences';
   static const String customizationMetrics = 'customization-metrics';
 
   // Workspace route names
