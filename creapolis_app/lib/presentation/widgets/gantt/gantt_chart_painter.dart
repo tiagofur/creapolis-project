@@ -13,6 +13,7 @@ class GanttChartPainter extends CustomPainter {
   final double taskSpacing;
   final Map<int, List<int>> dependencies;
   final int? selectedTaskId;
+  final int? draggingTaskId;
 
   GanttChartPainter({
     required this.tasks,
@@ -23,6 +24,7 @@ class GanttChartPainter extends CustomPainter {
     this.taskSpacing = 10.0,
     required this.dependencies,
     this.selectedTaskId,
+    this.draggingTaskId,
   });
 
   @override
@@ -50,12 +52,13 @@ class GanttChartPainter extends CustomPainter {
       // Color basado en el estado
       final color = _getColorForStatus(task.status);
       final isSelected = task.id == selectedTaskId;
+      final isDragging = task.id == draggingTaskId;
 
-      // Dibujar sombra si está seleccionada
-      if (isSelected) {
+      // Dibujar sombra si está seleccionada o arrastrando
+      if (isSelected || isDragging) {
         final shadowPaint = Paint()
-          ..color = Colors.black.withValues(alpha: 0.2)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+          ..color = Colors.black.withValues(alpha: isDragging ? 0.3 : 0.2)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, isDragging ? 6 : 4);
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(x + 2, y + 2, width, taskHeight),
@@ -65,9 +68,9 @@ class GanttChartPainter extends CustomPainter {
         );
       }
 
-      // Dibujar barra principal
+      // Dibujar barra principal con opacidad si está arrastrando
       final barPaint = Paint()
-        ..color = color
+        ..color = isDragging ? color.withValues(alpha: 0.7) : color
         ..style = PaintingStyle.fill;
 
       canvas.drawRRect(
@@ -230,6 +233,7 @@ class GanttChartPainter extends CustomPainter {
   bool shouldRepaint(GanttChartPainter oldDelegate) {
     return oldDelegate.tasks != tasks ||
         oldDelegate.dayWidth != dayWidth ||
-        oldDelegate.selectedTaskId != selectedTaskId;
+        oldDelegate.selectedTaskId != selectedTaskId ||
+        oldDelegate.draggingTaskId != draggingTaskId;
   }
 }

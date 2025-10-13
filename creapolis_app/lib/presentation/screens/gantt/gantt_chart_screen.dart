@@ -6,7 +6,9 @@ import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
 import '../../widgets/gantt/gantt_chart_widget.dart';
+import '../../widgets/gantt/gantt_resource_panel.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
+import '../../services/gantt_export_service.dart';
 
 /// Pantalla de diagrama de Gantt
 class GanttChartScreen extends StatefulWidget {
@@ -19,6 +21,9 @@ class GanttChartScreen extends StatefulWidget {
 }
 
 class _GanttChartScreenState extends State<GanttChartScreen> {
+  final GlobalKey _ganttKey = GlobalKey();
+  bool _showResourcePanel = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +40,20 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
       appBar: AppBar(
         title: const Text('Diagrama de Gantt'),
         actions: [
+          IconButton(
+            icon: Icon(_showResourcePanel ? Icons.view_timeline : Icons.people),
+            onPressed: () {
+              setState(() {
+                _showResourcePanel = !_showResourcePanel;
+              });
+            },
+            tooltip: _showResourcePanel ? 'Ver Gantt' : 'Ver Recursos',
+          ),
+          IconButton(
+            icon: const Icon(Icons.file_download),
+            onPressed: () => _showExportOptions(context),
+            tooltip: 'Exportar',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadTasks,
@@ -209,14 +228,207 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
             );
           }
 
-          return GanttChartWidget(
-            tasks: tasks,
-            onTaskTap: _showTaskDetails,
-            onTaskLongPress: _showTaskEditOptions,
-          );
+          return _showResourcePanel
+              ? GanttResourcePanel(
+                  tasks: tasks,
+                  onTaskTap: _showTaskDetails,
+                )
+              : RepaintBoundary(
+                  key: _ganttKey,
+                  child: GanttChartWidget(
+                    tasks: tasks,
+                    onTaskTap: _showTaskDetails,
+                    onTaskLongPress: _showTaskEditOptions,
+                    onTaskDateChanged: _handleTaskDateChanged,
+                  ),
+                );
         },
       ),
     );
+  }
+
+  /// Maneja el cambio de fechas de una tarea
+  void _handleTaskDateChanged(Task task, DateTime newStartDate, DateTime newEndDate) {
+    // Mostrar confirmación
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Actualizar Fechas'),
+        content: Text(
+          '¿Desea actualizar las fechas de "${task.title}"?\n\n'
+          'Nuevo inicio: ${_formatDate(newStartDate)}\n'
+          'Nuevo fin: ${_formatDate(newEndDate)}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Actualizar tarea con nuevas fechas
+              context.read<TaskBloc>().add(
+                UpdateTaskEvent(
+                  id: task.id,
+                  startDate: newStartDate,
+                  endDate: newEndDate,
+                ),
+              );
+            },
+            child: const Text('Actualizar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Muestra opciones de exportación
+  void _showExportOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.image),
+            title: const Text('Exportar como Imagen'),
+            subtitle: const Text('PNG de alta calidad'),
+            onTap: () {
+              Navigator.pop(context);
+              _exportAsImage();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.picture_as_pdf),
+            title: const Text('Exportar como PDF'),
+            subtitle: const Text('Documento PDF'),
+            onTap: () {
+              Navigator.pop(context);
+              _exportAsPDF();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.share),
+            title: const Text('Compartir'),
+            subtitle: const Text('Compartir imagen del Gantt'),
+            onTap: () {
+              Navigator.pop(context);
+              _shareGantt();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Exporta como imagen
+  Future<void> _exportAsImage() async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final path = await GanttExportService.saveAsImage(
+        _ganttKey,
+        'Proyecto_${widget.projectId}',
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+
+      if (path != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Imagen guardada: $path'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'OK',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al exportar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Exporta como PDF
+  Future<void> _exportAsPDF() async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      await GanttExportService.exportAsPDF(
+        _ganttKey,
+        'Proyecto_${widget.projectId}',
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PDF exportado exitosamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al exportar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Comparte el Gantt
+  Future<void> _shareGantt() async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      await GanttExportService.exportAsImage(
+        _ganttKey,
+        'Proyecto_${widget.projectId}',
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al compartir: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Calcular cronograma del proyecto
