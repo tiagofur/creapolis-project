@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
+import { createServer } from "http";
 
 // Load environment variables
 dotenv.config();
@@ -16,8 +17,13 @@ import { taskTimeLogRoutes, timelogRouter } from "./routes/timelog.routes.js";
 import googleCalendarRoutes from "./routes/google-calendar.routes.js";
 import workspaceRoutes from "./routes/workspace.routes.js";
 import reportRoutes from "./routes/report.routes.js";
+import collaborationRoutes from "./routes/collaboration.routes.js";
+
+// Import WebSocket service
+import websocketService from "./services/websocket.service.js";
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
@@ -100,6 +106,7 @@ app.use("/api/tasks", taskTimeLogRoutes);
 app.use("/api/timelogs", timelogRouter);
 app.use("/api/integrations/google", googleCalendarRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/collaboration", collaborationRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -136,11 +143,15 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Initialize WebSocket service
+websocketService.initialize(httpServer);
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket ready for connections`);
 });
 
 export default app;
