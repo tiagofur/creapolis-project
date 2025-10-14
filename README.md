@@ -2,6 +2,8 @@
 
 > Sistema de gestión de proyectos colaborativo con planificación adaptativa y sincronización con Google Calendar
 
+> **📚 Documentation Reorganized!** All documentation has been moved to the [`docs/`](./docs/) folder with a comprehensive, world-class structure. See [Documentation Migration Guide](./DOCUMENTATION_MIGRATION_GUIDE.md) for details.
+
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.0-brightgreen.svg)](https://nodejs.org)
 [![Flutter](https://img.shields.io/badge/flutter-3.27%2B-blue.svg)](https://flutter.dev)
