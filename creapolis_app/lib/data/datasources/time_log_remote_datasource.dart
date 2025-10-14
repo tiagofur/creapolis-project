@@ -12,6 +12,13 @@ abstract class TimeLogRemoteDataSource {
   Future<List<TimeLogModel>> getTimeLogsByTask(int taskId);
   Future<TimeLogModel?> getActiveTimeLog();
   Future<TimeLogModel?> getActiveTimeLogByTask(int taskId);
+  Future<Map<String, dynamic>> getProductivityHeatmap({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? projectId,
+    bool teamView = false,
+    int? workspaceId,
+  });
 }
 
 /// Implementación del data source remoto de time logs
@@ -147,6 +154,55 @@ class TimeLogRemoteDataSourceImpl implements TimeLogRemoteDataSource {
     } catch (e) {
       throw ServerException(
         'Error al obtener timer activo de tarea: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getProductivityHeatmap({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? projectId,
+    bool teamView = false,
+    int? workspaceId,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{};
+      
+      if (startDate != null) {
+        queryParameters['startDate'] = startDate.toIso8601String();
+      }
+      if (endDate != null) {
+        queryParameters['endDate'] = endDate.toIso8601String();
+      }
+      if (projectId != null) {
+        queryParameters['projectId'] = projectId.toString();
+      }
+      if (workspaceId != null) {
+        queryParameters['workspaceId'] = workspaceId.toString();
+      }
+      queryParameters['teamView'] = teamView.toString();
+
+      final response = await _client.get(
+        '/timelogs/heatmap',
+        queryParameters: queryParameters,
+      );
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'];
+      
+      if (data == null || data is! Map<String, dynamic>) {
+        throw ServerException('Formato de respuesta inesperado');
+      }
+
+      return data;
+    } on AuthException {
+      rethrow;
+    } on NotFoundException {
+      rethrow;
+    } catch (e) {
+      throw ServerException(
+        'Error al obtener heatmap de productividad: ${e.toString()}',
       );
     }
   }

@@ -5,6 +5,7 @@ import { validate } from "../middleware/validation.middleware.js";
 import {
   taskIdValidation,
   getStatsValidation,
+  getHeatmapValidation,
 } from "../validators/timelog.validator.js";
 
 const router = express.Router();
@@ -269,6 +270,18 @@ timelogRouter.get(
   getStatsValidation,
   validate,
   timeLogController.getStats
+);
+
+/**
+ * @route   GET /api/timelogs/heatmap
+ * @desc    Get productivity heatmap data
+ * @access  Private
+ */
+timelogRouter.get(
+  "/heatmap",
+  getHeatmapValidation,
+  validate,
+  timeLogController.getHeatmap
 );
 
 export { router as taskTimeLogRoutes, timelogRouter };

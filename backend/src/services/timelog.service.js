@@ -350,6 +350,153 @@ class TimeLogService {
       },
     };
   }
+
+  /**
+   * Get productivity heatmap data
+   * Returns hours worked grouped by hour of day and day of week
+   */
+  async getProductivityHeatmap(userId, { startDate, endDate, projectId, teamView, workspaceId }) {
+    // Build base where clause
+    const where = {
+      duration: { not: null },
+      ...(startDate &&
+        endDate && {
+          startTime: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        }),
+    };
+
+    // For individual view, filter by userId
+    if (!teamView) {
+      where.userId = userId;
+    } else if (workspaceId) {
+      // For team view, get all users in the workspace
+      const workspaceMembers = await prisma.workspaceMember.findMany({
+        where: { workspaceId, isActive: true },
+        select: { userId: true },
+      });
+      const userIds = workspaceMembers.map((m) => m.userId);
+      where.userId = { in: userIds };
+    }
+
+    // Filter by project if specified
+    if (projectId) {
+      where.task = {
+        projectId: parseInt(projectId),
+      };
+    }
+
+    // Get all time logs
+    const timeLogs = await prisma.timeLog.findMany({
+      where,
+      select: {
+        startTime: true,
+        endTime: true,
+        duration: true,
+        userId: true,
+        task: {
+          select: {
+            id: true,
+            title: true,
+            projectId: true,
+          },
+        },
+      },
+    });
+
+    // Initialize heatmap data structures
+    const hourlyData = Array(24).fill(0); // 0-23 hours
+    const weeklyData = Array(7).fill(0); // 0-6 days (Sunday-Saturday)
+    const hourlyWeeklyMatrix = Array(7)
+      .fill(null)
+      .map(() => Array(24).fill(0));
+
+    // Process time logs
+    timeLogs.forEach((log) => {
+      const start = new Date(log.startTime);
+      const hour = start.getHours();
+      const day = start.getDay(); // 0=Sunday, 6=Saturday
+
+      hourlyData[hour] += log.duration;
+      weeklyData[day] += log.duration;
+      hourlyWeeklyMatrix[day][hour] += log.duration;
+    });
+
+    // Calculate insights
+    const totalHours = timeLogs.reduce((sum, log) => sum + log.duration, 0);
+    const peakHour = hourlyData.indexOf(Math.max(...hourlyData));
+    const peakDay = weeklyData.indexOf(Math.max(...weeklyData));
+    const avgHoursPerDay = weeklyData.reduce((sum, h) => sum + h, 0) / 7;
+
+    // Find most productive time slots (top 3)
+    const topSlots = [];
+    for (let day = 0; day < 7; day++) {
+      for (let hour = 0; hour < 24; hour++) {
+        topSlots.push({ day, hour, hours: hourlyWeeklyMatrix[day][hour] });
+      }
+    }
+    topSlots.sort((a, b) => b.hours - a.hours);
+    const topProductiveSlots = topSlots.slice(0, 3).filter((s) => s.hours > 0);
+
+    // Generate automatic insights
+    const insights = [];
+    
+    if (peakHour >= 9 && peakHour <= 12) {
+      insights.push({
+        type: "peak_morning",
+        message: "Mayor productividad en horario matutino (9-12h)",
+        icon: "morning",
+      });
+    } else if (peakHour >= 14 && peakHour <= 18) {
+      insights.push({
+        type: "peak_afternoon",
+        message: "Mayor productividad en horario vespertino (14-18h)",
+        icon: "afternoon",
+      });
+    }
+
+    const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    if (peakDay >= 1 && peakDay <= 5) {
+      insights.push({
+        type: "peak_weekday",
+        message: `${dayNames[peakDay]} es tu día más productivo`,
+        icon: "calendar",
+      });
+    }
+
+    if (avgHoursPerDay > 6) {
+      insights.push({
+        type: "high_productivity",
+        message: `Promedio alto de ${avgHoursPerDay.toFixed(1)} horas/día`,
+        icon: "trending_up",
+      });
+    } else if (avgHoursPerDay < 3) {
+      insights.push({
+        type: "low_productivity",
+        message: `Promedio bajo de ${avgHoursPerDay.toFixed(1)} horas/día`,
+        icon: "trending_down",
+      });
+    }
+
+    return {
+      hourlyData,
+      weeklyData,
+      hourlyWeeklyMatrix,
+      totalHours,
+      avgHoursPerDay,
+      peakHour,
+      peakDay,
+      topProductiveSlots,
+      insights,
+      period: {
+        startDate,
+        endDate,
+      },
+      totalLogs: timeLogs.length,
+    };
+  }
 }
 
 export default new TimeLogService();

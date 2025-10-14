@@ -13,6 +13,8 @@ enum DashboardWidgetType {
   weeklyProgressChart,
   burndownChart,
   burnupChart,
+  hourlyProductivityHeatmap,
+  weeklyProductivityHeatmap,
 }
 
 /// Extensión para obtener metadata de los widgets
@@ -42,6 +44,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Burndown Chart';
       case DashboardWidgetType.burnupChart:
         return 'Burnup Chart';
+      case DashboardWidgetType.hourlyProductivityHeatmap:
+        return 'Productividad por Hora';
+      case DashboardWidgetType.weeklyProductivityHeatmap:
+        return 'Productividad por Día';
     }
   }
 
@@ -70,6 +76,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'Gráfico de burndown para sprints';
       case DashboardWidgetType.burnupChart:
         return 'Gráfico de burnup para proyectos';
+      case DashboardWidgetType.hourlyProductivityHeatmap:
+        return 'Mapa de calor de productividad por hora del día';
+      case DashboardWidgetType.weeklyProductivityHeatmap:
+        return 'Mapa de calor de productividad por día de la semana';
     }
   }
 
@@ -98,6 +108,10 @@ extension DashboardWidgetTypeExtension on DashboardWidgetType {
         return 'trending_down';
       case DashboardWidgetType.burnupChart:
         return 'trending_up';
+      case DashboardWidgetType.hourlyProductivityHeatmap:
+        return 'schedule';
+      case DashboardWidgetType.weeklyProductivityHeatmap:
+        return 'calendar_view_week';
     }
   }
 }
