@@ -33,6 +33,16 @@
 - ✅ **Planificación considerando calendario** personal
 - ✅ Renovación automática de tokens
 
+### Sistema de Integraciones ⭐ NEW
+
+- ✅ **Framework extensible** para integraciones con servicios externos
+- ✅ **Slack Integration**: OAuth 2.0, envío de mensajes, gestión de canales
+- ✅ **Trello Integration**: OAuth token-based, gestión de boards y cards
+- ✅ **Activity Logging**: Audit trail completo de todas las integraciones
+- ✅ **Per-User Configuration**: Cada usuario gestiona sus propias conexiones
+- ✅ **Statistics & Analytics**: Métricas de uso y performance
+- 📚 Documentación: Ver [INTEGRATIONS_DOCUMENTATION.md](./INTEGRATIONS_DOCUMENTATION.md)
+
 ## 🚀 Inicio Rápido
 
 ### Prerrequisitos
@@ -105,14 +115,20 @@ backend/
 │   │   ├── task.controller.js
 │   │   ├── timelog.controller.js
 │   │   ├── scheduler.controller.js          # ⭐ Planificación
-│   │   └── google-calendar.controller.js    # ⭐ Google Calendar
+│   │   ├── google-calendar.controller.js    # ⭐ Google Calendar
+│   │   ├── slack-integration.controller.js  # ⭐ Slack Integration
+│   │   ├── trello-integration.controller.js # ⭐ Trello Integration
+│   │   └── integrations.controller.js       # ⭐ General Integrations
 │   ├── services/        # Lógica de negocio
 │   │   ├── auth.service.js
 │   │   ├── project.service.js
 │   │   ├── task.service.js
 │   │   ├── timelog.service.js
 │   │   ├── scheduler.service.js             # ⭐ Motor de planificación
-│   │   └── google-calendar.service.js       # ⭐ Integración Google
+│   │   ├── google-calendar.service.js       # ⭐ Integración Google
+│   │   ├── base-integration.service.js      # ⭐ Base para integraciones
+│   │   ├── slack-integration.service.js     # ⭐ Integración Slack
+│   │   └── trello-integration.service.js    # ⭐ Integración Trello
 │   ├── middleware/      # Middleware de Express
 │   │   ├── auth.middleware.js
 │   │   └── validation.middleware.js
@@ -122,7 +138,10 @@ backend/
 │   │   ├── task.routes.js
 │   │   ├── timelog.routes.js
 │   │   ├── scheduler.routes.js              # ⭐ Rutas de scheduler
-│   │   └── google-calendar.routes.js        # ⭐ Rutas de Google
+│   │   ├── google-calendar.routes.js        # ⭐ Rutas de Google
+│   │   ├── slack-integration.routes.js      # ⭐ Rutas de Slack
+│   │   ├── trello-integration.routes.js     # ⭐ Rutas de Trello
+│   │   └── integrations.routes.js           # ⭐ Rutas generales
 │   ├── utils/           # Utilidades y helpers
 │   ├── validators/      # Validadores de entrada
 │   ├── config/          # Configuraciones
@@ -130,8 +149,11 @@ backend/
 ├── prisma/
 │   └── schema.prisma    # Esquema de base de datos
 ├── tests/               # Tests
-├── API_DOCUMENTATION.md # 📘 Documentación completa de API
-├── PHASE3_SUMMARY.md    # 📋 Resumen Fase 3 (Scheduler + Google)
+├── API_DOCUMENTATION.md           # 📘 Documentación completa de API
+├── INTEGRATIONS_DOCUMENTATION.md  # 📘 Sistema de Integraciones ⭐
+├── INTEGRATIONS_QUICK_START.md    # 🚀 Guía rápida de integraciones ⭐
+├── PHASE3_SUMMARY.md              # 📋 Resumen Fase 3 (Scheduler + Google)
+├── FASE_2_INTEGRATIONS_SUMMARY.md # 📋 Resumen Fase 2 (Integraciones) ⭐
 └── package.json
 ```
 
@@ -196,7 +218,7 @@ See [GRAPHQL_QUICKSTART.md](./GRAPHQL_QUICKSTART.md) for full guide.
 
 ### REST Endpoints
 
-### Resumen (31 endpoints totales)
+### Resumen (60+ endpoints totales)
 
 | Categoría           | Endpoints | Descripción                        |
 | ------------------- | --------- | ---------------------------------- |
@@ -206,6 +228,9 @@ See [GRAPHQL_QUICKSTART.md](./GRAPHQL_QUICKSTART.md) for full guide.
 | **Time Tracking**   | 5         | Start/stop/finish, timelogs        |
 | **Scheduler**       | 4         | Planificación y replanificación ⭐ |
 | **Google Calendar** | 7         | OAuth, eventos, disponibilidad ⭐  |
+| **Slack**           | 8         | OAuth, canales, mensajes ⭐ NEW    |
+| **Trello**          | 10        | OAuth, boards, cards ⭐ NEW        |
+| **Integrations**    | 7         | Gestión general de integraciones ⭐ NEW |
 
 ### Endpoints Principales
 
@@ -228,14 +253,48 @@ GET    /api/integrations/google/availability          # Obtener disponibilidad
 GET    /api/integrations/google/events                # Obtener eventos
 ```
 
-**Ver documentación completa**: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+#### Slack Integration ⭐ NEW
+
+```http
+GET    /api/integrations/slack/connect                # Iniciar OAuth
+POST   /api/integrations/slack/tokens                 # Guardar tokens
+GET    /api/integrations/slack/channels               # Listar canales
+POST   /api/integrations/slack/message                # Enviar mensaje
+GET    /api/integrations/slack/status                 # Estado de conexión
+```
+
+#### Trello Integration ⭐ NEW
+
+```http
+GET    /api/integrations/trello/connect               # Iniciar OAuth
+POST   /api/integrations/trello/tokens                # Guardar token
+GET    /api/integrations/trello/boards                # Listar boards
+POST   /api/integrations/trello/cards                 # Crear card
+PUT    /api/integrations/trello/cards/:id             # Actualizar card
+```
+
+#### General Integrations ⭐ NEW
+
+```http
+GET    /api/integrations                              # Listar todas las integraciones
+GET    /api/integrations/:provider                    # Obtener específica
+GET    /api/integrations/:provider/logs               # Logs de actividad
+GET    /api/integrations/:provider/stats              # Estadísticas de uso
+DELETE /api/integrations/:provider                    # Eliminar integración
+```
+
+**Ver documentación completa**: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)  
+**Ver guía de integraciones**: [INTEGRATIONS_DOCUMENTATION.md](./INTEGRATIONS_DOCUMENTATION.md)
 
 ## 📚 Documentación
 
 ### Documentos Disponibles
 
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Documentación completa de todos los 31 endpoints REST con ejemplos
+- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Documentación completa de todos los endpoints REST con ejemplos
 - **[GRAPHQL_API_DOCUMENTATION.md](./GRAPHQL_API_DOCUMENTATION.md)**: Documentación completa de la API GraphQL moderna
+- **[INTEGRATIONS_DOCUMENTATION.md](./INTEGRATIONS_DOCUMENTATION.md)**: Sistema de integraciones completo ⭐ NEW
+- **[INTEGRATIONS_QUICK_START.md](./INTEGRATIONS_QUICK_START.md)**: Guía rápida para configurar integraciones ⭐ NEW
+- **[FASE_2_INTEGRATIONS_SUMMARY.md](./FASE_2_INTEGRATIONS_SUMMARY.md)**: Resumen ejecutivo de Fase 2 ⭐ NEW
 - **[GRAPHQL_QUICKSTART.md](./GRAPHQL_QUICKSTART.md)**: Guía rápida para empezar con GraphQL en 5 minutos
 - **[PHASE3_SUMMARY.md](./PHASE3_SUMMARY.md)**: Resumen detallado de Fase 3 (Motor de Planificación + Google Calendar)
 - **[prisma/schema.prisma](./prisma/schema.prisma)**: Modelo de datos completo
