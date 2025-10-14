@@ -27,6 +27,7 @@ import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
 import '../presentation/screens/tasks/task_detail_screen.dart';
 import '../presentation/screens/workload/workload_screen.dart';
+import '../presentation/screens/resource_map/resource_allocation_map_screen.dart';
 import '../presentation/screens/workspace/workspace_create_screen.dart';
 import '../presentation/screens/workspace/workspace_invitations_screen.dart';
 import '../presentation/screens/workspace/workspace_list_screen.dart';
@@ -257,6 +258,18 @@ class AppRouter {
                         },
                       ),
 
+                      // Mapa de recursos del proyecto
+                      GoRoute(
+                        path: 'resource-map',
+                        name: RouteNames.resourceMap,
+                        builder: (context, state) {
+                          final projectId = state.pathParameters['pId'] ?? '0';
+                          return ResourceAllocationMapScreen(
+                            projectId: int.parse(projectId),
+                          );
+                        },
+                      ),
+
                       // Task detail dentro del proyecto
                       GoRoute(
                         path: 'tasks/:tId',
@@ -446,6 +459,8 @@ class RoutePaths {
       '/workspaces/$wId/projects/$pId/gantt';
   static String workload(int wId, int pId) =>
       '/workspaces/$wId/projects/$pId/workload';
+  static String resourceMap(int wId, int pId) =>
+      '/workspaces/$wId/projects/$pId/resource-map';
 
   // Task routes (requieren workspaceId, projectId y taskId)
   static String taskDetail(int wId, int pId, int tId) =>
@@ -469,6 +484,7 @@ class RouteNames {
   static const String gantt = 'gantt';
   static const String timeTracking = 'time-tracking';
   static const String workload = 'workload';
+  static const String resourceMap = 'resource-map';
   static const String settings = 'settings';
   static const String profile = 'profile';
   static const String rolePreferences = 'role-preferences';
