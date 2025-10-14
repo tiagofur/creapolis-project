@@ -24,6 +24,9 @@ import notificationRoutes from "./routes/notification.routes.js";
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
 
+// Import GraphQL setup
+import { createApolloServer, createGraphQLMiddleware } from "./graphql/index.js";
+
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
@@ -150,12 +153,30 @@ app.use((err, req, res, next) => {
 // Initialize WebSocket service
 websocketService.initialize(httpServer);
 
-// Start server
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔌 WebSocket ready for connections`);
-});
+// Initialize and mount GraphQL server
+const startServer = async () => {
+  try {
+    // Create Apollo Server
+    const apolloServer = await createApolloServer(httpServer);
+    
+    // Mount GraphQL endpoint
+    app.use("/graphql", express.json(), createGraphQLMiddleware(apolloServer));
+    
+    // Start HTTP server
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔌 WebSocket ready for connections`);
+      console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`);
+      console.log(`📊 GraphQL Playground: http://localhost:${PORT}/graphql (in dev mode)`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

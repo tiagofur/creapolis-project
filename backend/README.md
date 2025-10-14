@@ -147,6 +147,55 @@ backend/
 
 ## 🔗 API Endpoints
 
+### API Options
+
+Creapolis provides two API options:
+
+1. **REST API** (Legacy): Traditional REST endpoints at `/api/*`
+2. **GraphQL API** (Modern, Recommended): Modern GraphQL endpoint at `/graphql`
+
+### GraphQL Endpoint
+
+```
+POST http://localhost:3001/graphql
+```
+
+**Features:**
+- 🎯 Type-safe queries with schema validation
+- 📊 Get exactly the data you need (no over-fetching)
+- 🔄 Real-time subscriptions via WebSockets
+- 📖 Self-documenting with GraphQL Playground
+- 🚀 Optimized queries with DataLoader
+
+**Quick Start:**
+
+```graphql
+# Login
+mutation {
+  login(input: { email: "user@example.com", password: "pass123" }) {
+    token
+    user { name }
+  }
+}
+
+# Get your tasks
+query {
+  myTasks(status: IN_PROGRESS) {
+    edges {
+      node {
+        id
+        title
+        project { name }
+      }
+    }
+  }
+}
+```
+
+See [GRAPHQL_QUICKSTART.md](./GRAPHQL_QUICKSTART.md) for full guide.
+
+### REST Endpoints
+
 ### Resumen (31 endpoints totales)
 
 | Categoría           | Endpoints | Descripción                        |
@@ -185,7 +234,9 @@ GET    /api/integrations/google/events                # Obtener eventos
 
 ### Documentos Disponibles
 
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Documentación completa de todos los 31 endpoints con ejemplos
+- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Documentación completa de todos los 31 endpoints REST con ejemplos
+- **[GRAPHQL_API_DOCUMENTATION.md](./GRAPHQL_API_DOCUMENTATION.md)**: Documentación completa de la API GraphQL moderna
+- **[GRAPHQL_QUICKSTART.md](./GRAPHQL_QUICKSTART.md)**: Guía rápida para empezar con GraphQL en 5 minutos
 - **[PHASE3_SUMMARY.md](./PHASE3_SUMMARY.md)**: Resumen detallado de Fase 3 (Motor de Planificación + Google Calendar)
 - **[prisma/schema.prisma](./prisma/schema.prisma)**: Modelo de datos completo
 
