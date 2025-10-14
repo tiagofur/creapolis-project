@@ -30,8 +30,20 @@ class SyncManager {
   // Suscripción al stream de conectividad
   StreamSubscription<bool>? _connectivitySubscription;
 
+  // Timer para sincronización periódica en background
+  Timer? _periodicSyncTimer;
+
+  // Intervalo de sincronización periódica (default: 15 minutos)
+  Duration _syncInterval = const Duration(minutes: 15);
+
   // Flag para prevenir múltiples syncs simultáneos
   bool _isSyncing = false;
+
+  // Flag para habilitar/deshabilitar sincronización periódica
+  bool _periodicSyncEnabled = true;
+
+  // Timestamp de última sincronización exitosa
+  DateTime? _lastSuccessfulSync;
 
   SyncManager(
     this._connectivityService,
@@ -82,17 +94,33 @@ class SyncManager {
   ///
   /// Debe llamarse en main.dart después de inicializar la app.
   /// Escucha cambios de conectividad y sincroniza automáticamente
-  /// cuando se recupera la conexión.
+  /// cuando se recupera la conexión. También inicia la sincronización
+  /// periódica en background.
+  ///
+  /// Parámetros:
+  /// - [enablePeriodicSync]: Habilita sincronización periódica (default: true)
+  /// - [syncInterval]: Intervalo entre sincronizaciones (default: 15 minutos)
   ///
   /// Ejemplo:
   /// ```dart
   /// // En main.dart
   /// await HiveManager.init();
   /// final syncManager = getIt<SyncManager>();
-  /// syncManager.startAutoSync();
+  /// syncManager.startAutoSync(
+  ///   enablePeriodicSync: true,
+  ///   syncInterval: Duration(minutes: 10),
+  /// );
   /// ```
-  void startAutoSync() {
+  void startAutoSync({
+    bool enablePeriodicSync = true,
+    Duration? syncInterval,
+  }) {
     AppLogger.info('SyncManager: Iniciando auto-sync');
+
+    _periodicSyncEnabled = enablePeriodicSync;
+    if (syncInterval != null) {
+      _syncInterval = syncInterval;
+    }
 
     // Emitir estado inicial
     _syncStatusController.add(SyncStatus.idle());
@@ -107,10 +135,20 @@ class SyncManager {
         syncPendingOperations();
       } else {
         AppLogger.info('SyncManager: Conexión perdida');
+        // Detener sincronización periódica cuando no hay conexión
+        _stopPeriodicSync();
       }
     });
 
-    AppLogger.info('SyncManager: Auto-sync activado');
+    // Iniciar sincronización periódica en background si está habilitada
+    if (_periodicSyncEnabled) {
+      _startPeriodicSync();
+    }
+
+    AppLogger.info(
+      'SyncManager: Auto-sync activado '
+      '(periodic: $_periodicSyncEnabled, interval: $_syncInterval)',
+    );
   }
 
   /// Detener auto-sincronización
@@ -120,6 +158,7 @@ class SyncManager {
     AppLogger.info('SyncManager: Deteniendo auto-sync');
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
+    _stopPeriodicSync();
   }
 
   /// Encolar una operación para sincronización posterior
@@ -278,6 +317,11 @@ class SyncManager {
         failed: failed,
       ));
 
+      // Actualizar timestamp de última sincronización exitosa si hubo éxitos
+      if (completed > 0) {
+        _lastSuccessfulSync = DateTime.now();
+      }
+
       AppLogger.info(
         'SyncManager: Sincronización completada - $completed OK, $failed fallos',
       );
@@ -375,6 +419,170 @@ class SyncManager {
       AppLogger.error('Error obteniendo operaciones fallidas', e);
       return [];
     }
+  }
+
+  /// Iniciar sincronización periódica en background
+  ///
+  /// Ejecuta sincronización cada [_syncInterval] si hay conexión
+  /// y operaciones pendientes.
+  void _startPeriodicSync() {
+    // Cancelar timer existente si hay alguno
+    _stopPeriodicSync();
+
+    AppLogger.info(
+      'SyncManager: Iniciando sincronización periódica cada $_syncInterval',
+    );
+
+    _periodicSyncTimer = Timer.periodic(_syncInterval, (timer) async {
+      // Solo sincronizar si hay conexión y operaciones pendientes
+      final isConnected = await _connectivityService.isConnected;
+      final hasPendingOps = pendingOperationsCount > 0;
+
+      if (isConnected && hasPendingOps) {
+        AppLogger.info(
+          'SyncManager: Ejecutando sincronización periódica '
+          '($hasPendingOps operaciones pendientes)',
+        );
+        await syncPendingOperations();
+      } else if (!isConnected) {
+        AppLogger.debug(
+          'SyncManager: Sincronización periódica omitida (sin conexión)',
+        );
+      } else {
+        AppLogger.debug(
+          'SyncManager: Sincronización periódica omitida '
+          '(no hay operaciones pendientes)',
+        );
+      }
+
+      // Limpiar operaciones antiguas completadas cada ciclo
+      await _cleanupOldOperations();
+    });
+  }
+
+  /// Detener sincronización periódica
+  void _stopPeriodicSync() {
+    if (_periodicSyncTimer != null) {
+      AppLogger.info('SyncManager: Deteniendo sincronización periódica');
+      _periodicSyncTimer?.cancel();
+      _periodicSyncTimer = null;
+    }
+  }
+
+  /// Limpiar operaciones completadas antiguas para gestión eficiente de recursos
+  ///
+  /// Elimina operaciones completadas con más de 7 días de antigüedad
+  /// para evitar que la cola crezca indefinidamente.
+  Future<void> _cleanupOldOperations() async {
+    try {
+      final queue = HiveManager.operationQueue;
+      final cutoffDate = DateTime.now().subtract(const Duration(days: 7));
+      
+      final oldOperations = queue.values
+          .where((op) => 
+              op.isCompleted && 
+              op.timestamp.isBefore(cutoffDate))
+          .toList();
+
+      if (oldOperations.isEmpty) {
+        return;
+      }
+
+      AppLogger.info(
+        'SyncManager: Limpiando ${oldOperations.length} operaciones '
+        'completadas antiguas',
+      );
+
+      for (final op in oldOperations) {
+        await op.delete();
+      }
+
+      AppLogger.info(
+        'SyncManager: ✅ ${oldOperations.length} operaciones antiguas eliminadas',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'SyncManager: Error limpiando operaciones antiguas',
+        e,
+        stackTrace,
+      );
+    }
+  }
+
+  /// Configurar intervalo de sincronización periódica
+  ///
+  /// Permite cambiar el intervalo de sincronización en tiempo de ejecución.
+  /// Reinicia el timer con el nuevo intervalo.
+  ///
+  /// Ejemplo:
+  /// ```dart
+  /// // Cambiar a sincronización cada 5 minutos
+  /// syncManager.setSyncInterval(Duration(minutes: 5));
+  /// ```
+  void setSyncInterval(Duration interval) {
+    if (interval < const Duration(minutes: 1)) {
+      AppLogger.warning(
+        'SyncManager: Intervalo mínimo es 1 minuto, usando 1 minuto',
+      );
+      _syncInterval = const Duration(minutes: 1);
+    } else {
+      _syncInterval = interval;
+      AppLogger.info(
+        'SyncManager: Intervalo de sincronización actualizado a $_syncInterval',
+      );
+    }
+
+    // Reiniciar timer con nuevo intervalo si está activo
+    if (_periodicSyncTimer != null && _periodicSyncEnabled) {
+      _startPeriodicSync();
+    }
+  }
+
+  /// Habilitar o deshabilitar sincronización periódica
+  ///
+  /// Permite activar/desactivar la sincronización periódica en tiempo de ejecución.
+  ///
+  /// Ejemplo:
+  /// ```dart
+  /// // Deshabilitar sincronización periódica para ahorrar batería
+  /// syncManager.setPeriodicSyncEnabled(false);
+  /// ```
+  void setPeriodicSyncEnabled(bool enabled) {
+    _periodicSyncEnabled = enabled;
+    
+    if (enabled && _periodicSyncTimer == null) {
+      AppLogger.info('SyncManager: Habilitando sincronización periódica');
+      _startPeriodicSync();
+    } else if (!enabled) {
+      AppLogger.info('SyncManager: Deshabilitando sincronización periódica');
+      _stopPeriodicSync();
+    }
+  }
+
+  /// Obtener información de la última sincronización exitosa
+  DateTime? get lastSuccessfulSync => _lastSuccessfulSync;
+
+  /// Obtener intervalo de sincronización actual
+  Duration get syncInterval => _syncInterval;
+
+  /// Verificar si la sincronización periódica está habilitada
+  bool get isPeriodicSyncEnabled => _periodicSyncEnabled;
+
+  /// Obtener estadísticas de sincronización
+  ///
+  /// Retorna un mapa con información útil sobre el estado del sync manager.
+  Map<String, dynamic> getSyncStatistics() {
+    return {
+      'pendingOperations': pendingOperationsCount,
+      'failedOperations': failedOperationsCount,
+      'isSyncing': _isSyncing,
+      'periodicSyncEnabled': _periodicSyncEnabled,
+      'syncInterval': _syncInterval.inMinutes,
+      'lastSuccessfulSync': _lastSuccessfulSync?.toIso8601String(),
+      'timeSinceLastSync': _lastSuccessfulSync != null
+          ? DateTime.now().difference(_lastSuccessfulSync!).inMinutes
+          : null,
+    };
   }
 
   /// Liberar recursos
