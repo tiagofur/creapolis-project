@@ -33,6 +33,7 @@ model User {
   projectRoles            ProjectRoleMember[]
   assignedRoles           ProjectRoleMember[]      @relation("RoleAssigner")
   auditLogs               RoleAuditLog[]
+  integrations            Integration[]
 
   @@index([email])
 }
@@ -126,27 +127,27 @@ model ProjectMember {
 }
 
 model Task {
-  id                   Int                   @id @default(autoincrement())
-  title                String
-  description          String?
-  status               TaskStatus            @default(PLANNED)
-  category             TaskCategory?
-  estimatedHours       Float
-  actualHours          Float                 @default(0)
-  startDate            DateTime?
-  endDate              DateTime?
-  projectId            Int
-  assigneeId           Int?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  predecessors         Dependency[]          @relation("TaskPredecessors")
-  successors           Dependency[]          @relation("TaskSuccessors")
-  assignee             User?                 @relation(fields: [assigneeId], references: [id])
-  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  timeLogs             TimeLog[]
-  comments             Comment[]
-  categorySuggestions  CategorySuggestion[]
-  categoryFeedbacks    CategoryFeedback[]
+  id                  Int                  @id @default(autoincrement())
+  title               String
+  description         String?
+  status              TaskStatus           @default(PLANNED)
+  category            TaskCategory?
+  estimatedHours      Float
+  actualHours         Float                @default(0)
+  startDate           DateTime?
+  endDate             DateTime?
+  projectId           Int
+  assigneeId          Int?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  predecessors        Dependency[]         @relation("TaskPredecessors")
+  successors          Dependency[]         @relation("TaskSuccessors")
+  assignee            User?                @relation(fields: [assigneeId], references: [id])
+  project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeLogs            TimeLog[]
+  comments            Comment[]
+  categorySuggestions CategorySuggestion[]
+  categoryFeedbacks   CategoryFeedback[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -223,21 +224,21 @@ enum InvitationStatus {
 }
 
 model Comment {
-  id          Int              @id @default(autoincrement())
-  content     String
-  taskId      Int?
-  projectId   Int?
-  parentId    Int?
-  authorId    Int
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  isEdited    Boolean          @default(false)
-  task        Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  project     Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author      User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent      Comment?         @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[]        @relation("CommentThread")
-  mentions    CommentMention[]
+  id        Int              @id @default(autoincrement())
+  content   String
+  taskId    Int?
+  projectId Int?
+  parentId  Int?
+  authorId  Int
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  isEdited  Boolean          @default(false)
+  task      Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  project   Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?         @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]        @relation("CommentThread")
+  mentions  CommentMention[]
 
   @@index([taskId])
   @@index([projectId])
@@ -260,17 +261,17 @@ model CommentMention {
 }
 
 model Notification {
-  id           Int              @id @default(autoincrement())
-  userId       Int
-  type         NotificationType
-  title        String
-  message      String
-  isRead       Boolean          @default(false)
-  relatedId    Int?
-  relatedType  String?
-  createdAt    DateTime         @default(now())
-  readAt       DateTime?
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  relatedId   Int?
+  relatedType String?
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
@@ -333,14 +334,14 @@ model CategoryFeedback {
 }
 
 model DeviceToken {
-  id        Int          @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
-  token     String       @unique
+  token     String   @unique
   platform  Platform
-  isActive  Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
@@ -348,34 +349,34 @@ model DeviceToken {
 }
 
 model NotificationPreferences {
-  id                        Int      @id @default(autoincrement())
-  userId                    Int      @unique
-  pushEnabled               Boolean  @default(true)
-  emailEnabled              Boolean  @default(true)
-  mentionNotifications      Boolean  @default(true)
-  commentReplyNotifications Boolean  @default(true)
-  taskAssignedNotifications Boolean  @default(true)
-  taskUpdatedNotifications  Boolean  @default(true)
-  projectUpdatedNotifications Boolean @default(true)
-  systemNotifications       Boolean  @default(true)
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                          Int      @id @default(autoincrement())
+  userId                      Int      @unique
+  pushEnabled                 Boolean  @default(true)
+  emailEnabled                Boolean  @default(true)
+  mentionNotifications        Boolean  @default(true)
+  commentReplyNotifications   Boolean  @default(true)
+  taskAssignedNotifications   Boolean  @default(true)
+  taskUpdatedNotifications    Boolean  @default(true)
+  projectUpdatedNotifications Boolean  @default(true)
+  systemNotifications         Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model NotificationLog {
-  id              Int              @id @default(autoincrement())
-  userId          Int
-  notificationId  Int?
-  type            NotificationType
-  platform        Platform?
-  status          DeliveryStatus
-  errorMessage    String?
-  sentAt          DateTime         @default(now())
-  deliveredAt     DateTime?
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             Int              @id @default(autoincrement())
+  userId         Int
+  notificationId Int?
+  type           NotificationType
+  platform       Platform?
+  status         DeliveryStatus
+  errorMessage   String?
+  sentAt         DateTime         @default(now())
+  deliveredAt    DateTime?
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([notificationId])
@@ -397,14 +398,14 @@ enum DeliveryStatus {
 }
 
 model ProjectRole {
-  id          Int                @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   projectId   Int
   name        String
   description String?
-  isDefault   Boolean            @default(false)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  project     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  isDefault   Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   permissions ProjectPermission[]
   members     ProjectRoleMember[]
   auditLogs   RoleAuditLog[]
@@ -414,14 +415,14 @@ model ProjectRole {
 }
 
 model ProjectPermission {
-  id           Int         @id @default(autoincrement())
-  roleId       Int
-  resource     String
-  action       String
-  granted      Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  role         ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id        Int         @id @default(autoincrement())
+  roleId    Int
+  resource  String
+  action    String
+  granted   Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, resource, action])
   @@index([roleId])
@@ -429,14 +430,14 @@ model ProjectPermission {
 }
 
 model ProjectRoleMember {
-  id        Int         @id @default(autoincrement())
-  userId    Int
-  roleId    Int
-  assignedAt DateTime   @default(now())
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  roleId     Int
+  assignedAt DateTime    @default(now())
   assignedBy Int?
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  assigner  User?       @relation("RoleAssigner", fields: [assignedBy], references: [id])
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assigner   User?       @relation("RoleAssigner", fields: [assignedBy], references: [id])
 
   @@unique([userId, roleId])
   @@index([userId])
@@ -444,14 +445,14 @@ model ProjectRoleMember {
 }
 
 model RoleAuditLog {
-  id          Int         @id @default(autoincrement())
-  roleId      Int
-  userId      Int
-  action      AuditAction
-  details     String?
-  createdAt   DateTime    @default(now())
-  role        ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int         @id @default(autoincrement())
+  roleId    Int
+  userId    Int
+  action    AuditAction
+  details   String?
+  createdAt DateTime    @default(now())
+  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([roleId])
   @@index([userId])
@@ -466,4 +467,66 @@ enum AuditAction {
   PERMISSION_REVOKED
   MEMBER_ASSIGNED
   MEMBER_REMOVED
+}
+
+// Integration models for external service connections
+model Integration {
+  id           Int                 @id @default(autoincrement())
+  userId       Int
+  provider     IntegrationProvider
+  status       IntegrationStatus   @default(ACTIVE)
+  accessToken  String? // Encrypted
+  refreshToken String? // Encrypted
+  tokenExpiry  DateTime?
+  scopes       String? // JSON array of scopes
+  metadata     String? // JSON metadata specific to provider
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  lastSyncAt   DateTime?
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs         IntegrationLog[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+}
+
+model IntegrationLog {
+  id            Int         @id @default(autoincrement())
+  integrationId Int
+  action        String // e.g., "sync", "event_created", "webhook_received"
+  status        LogStatus
+  requestData   String? // JSON of request
+  responseData  String? // JSON of response
+  errorMessage  String?
+  duration      Int? // milliseconds
+  createdAt     DateTime    @default(now())
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId])
+  @@index([action])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+  SLACK
+  TRELLO
+  GITHUB
+  JIRA
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  EXPIRED
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILED
+  PENDING
 }
