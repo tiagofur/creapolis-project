@@ -87,6 +87,31 @@ class TimeLogController {
 
     return successResponse(res, stats, "Statistics retrieved successfully");
   });
+
+  /**
+   * Get productivity heatmap data
+   * GET /api/timelogs/heatmap
+   */
+  getHeatmap = asyncHandler(async (req, res) => {
+    const { startDate, endDate, projectId, teamView, workspaceId } = req.query;
+
+    const heatmapData = await timeLogService.getProductivityHeatmap(
+      req.user.id,
+      {
+        startDate,
+        endDate,
+        projectId,
+        teamView: teamView === "true",
+        workspaceId: workspaceId ? parseInt(workspaceId) : null,
+      }
+    );
+
+    return successResponse(
+      res,
+      heatmapData,
+      "Heatmap data retrieved successfully"
+    );
+  });
 }
 
 export default new TimeLogController();

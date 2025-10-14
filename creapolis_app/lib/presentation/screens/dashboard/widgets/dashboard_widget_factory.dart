@@ -13,6 +13,8 @@ import '../widgets/task_priority_chart_widget.dart';
 import '../widgets/weekly_progress_chart_widget.dart';
 import '../widgets/burndown_chart_widget.dart';
 import '../widgets/burnup_chart_widget.dart';
+import '../widgets/hourly_productivity_heatmap_widget.dart';
+import '../widgets/weekly_productivity_heatmap_widget.dart';
 
 /// Factory que construye widgets del dashboard según su tipo
 class DashboardWidgetFactory {
@@ -59,6 +61,12 @@ class DashboardWidgetFactory {
         break;
       case DashboardWidgetType.burnupChart:
         child = const BurnupChartWidget();
+        break;
+      case DashboardWidgetType.hourlyProductivityHeatmap:
+        child = const HourlyProductivityHeatmapWidget();
+        break;
+      case DashboardWidgetType.weeklyProductivityHeatmap:
+        child = const WeeklyProductivityHeatmapWidget();
         break;
     }
 
