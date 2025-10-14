@@ -20,11 +20,15 @@ import reportRoutes from "./routes/report.routes.js";
 import collaborationRoutes from "./routes/collaboration.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import pushNotificationRoutes from "./routes/push-notification.routes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import nlpRoutes from "./routes/nlp.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
+
+// Import Firebase service
+import firebaseService from "./services/firebase.service.js";
 
 // Import GraphQL setup
 import { createApolloServer, createGraphQLMiddleware } from "./graphql/index.js";
@@ -116,6 +120,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/collaboration", collaborationRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/push", pushNotificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/nlp", nlpRoutes);
 
@@ -160,6 +165,9 @@ websocketService.initialize(httpServer);
 // Initialize and mount GraphQL server
 const startServer = async () => {
   try {
+    // Initialize Firebase
+    firebaseService.initialize();
+    
     // Create Apollo Server
     const apolloServer = await createApolloServer(httpServer);
     
@@ -174,6 +182,7 @@ const startServer = async () => {
       console.log(`🔌 WebSocket ready for connections`);
       console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`);
       console.log(`📊 GraphQL Playground: http://localhost:${PORT}/graphql (in dev mode)`);
+      console.log(`🔔 Push notifications: ${firebaseService.isInitialized() ? 'enabled' : 'disabled'}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

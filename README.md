@@ -60,6 +60,14 @@
 - **Autenticación JWT**: Segura y escalable
 - **Permisos por Proyecto**: Control de acceso fino
 
+### 🔔 Sistema de Notificaciones Push
+
+- **Firebase Cloud Messaging**: Notificaciones en tiempo real (Web, iOS, Android)
+- **Preferencias Personalizables**: Control granular por tipo de notificación
+- **Notificaciones Individuales y Grupales**: Soporte para topics y usuarios específicos
+- **Logs y Métricas**: Seguimiento completo de entregas y fallos
+- **Integración Automática**: Push enviado automáticamente al crear notificaciones
+
 ---
 
 ## 🏗️ Arquitectura
@@ -237,6 +245,10 @@ flutter run            # Móvil (con emulador)
 - **[backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)**: Documentación de API
 - **[creapolis_app/ARCHITECTURE.md](./creapolis_app/ARCHITECTURE.md)**: Arquitectura Flutter
 
+### Sistema de Notificaciones Push
+- **[PUSH_NOTIFICATIONS_QUICK_START.md](./PUSH_NOTIFICATIONS_QUICK_START.md)**: ⚡ Guía rápida de configuración (15 min)
+- **[PUSH_NOTIFICATIONS_DOCUMENTATION.md](./PUSH_NOTIFICATIONS_DOCUMENTATION.md)**: 📖 Documentación completa
+
 ### CI/CD y Testing
 - **[.github/CI_CD_DOCUMENTATION.md](./.github/CI_CD_DOCUMENTATION.md)**: Pipeline completo de CI/CD
 - **[creapolis_app/TESTING_STRATEGY.md](./creapolis_app/TESTING_STRATEGY.md)**: Estrategia de testing
@@ -293,6 +305,21 @@ POST /api/integrations/google/callback       # Completar OAuth
 GET  /api/integrations/google/status         # Estado de conexión
 GET  /api/integrations/google/events         # Eventos del calendario
 ```
+
+#### Push Notifications
+
+```bash
+POST   /api/push/register           # Registrar dispositivo
+DELETE /api/push/unregister         # Desregistrar dispositivo
+GET    /api/push/preferences        # Obtener preferencias
+PUT    /api/push/preferences        # Actualizar preferencias
+POST   /api/push/subscribe          # Suscribirse a topic
+POST   /api/push/unsubscribe        # Desuscribirse de topic
+GET    /api/push/logs               # Logs de notificaciones
+GET    /api/push/metrics            # Métricas de notificaciones
+```
+
+Ver [PUSH_NOTIFICATIONS_DOCUMENTATION.md](./PUSH_NOTIFICATIONS_DOCUMENTATION.md) para más detalles.
 
 ---
 
