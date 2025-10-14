@@ -150,4 +150,107 @@ describe("TimeLog Endpoints", () => {
       expect(res.body.data.taskCount).toBeGreaterThan(0);
     });
   });
+
+  describe("GET /api/timelogs/heatmap", () => {
+    beforeAll(async () => {
+      // Create additional time logs for heatmap testing
+      const task2Res = await request(app)
+        .post(`/api/projects/${projectId}/tasks`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          title: "Test Task 2 for Heatmap",
+          estimatedHours: 3,
+        });
+
+      const task2Id = task2Res.body.data.id;
+
+      // Start and stop tracking to create time logs
+      await request(app)
+        .post(`/api/tasks/${task2Id}/start`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      await request(app)
+        .post(`/api/tasks/${task2Id}/stop`)
+        .set("Authorization", `Bearer ${authToken}`);
+    });
+
+    it("should get productivity heatmap data", async () => {
+      const res = await request(app)
+        .get("/api/timelogs/heatmap")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.hourlyData).toBeInstanceOf(Array);
+      expect(res.body.data.hourlyData.length).toBe(24);
+      expect(res.body.data.weeklyData).toBeInstanceOf(Array);
+      expect(res.body.data.weeklyData.length).toBe(7);
+      expect(res.body.data.hourlyWeeklyMatrix).toBeInstanceOf(Array);
+      expect(res.body.data.hourlyWeeklyMatrix.length).toBe(7);
+      expect(res.body.data.totalHours).toBeGreaterThan(0);
+      expect(res.body.data.insights).toBeInstanceOf(Array);
+    });
+
+    it("should filter heatmap by date range", async () => {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      const endDate = new Date();
+
+      const res = await request(app)
+        .get("/api/timelogs/heatmap")
+        .query({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        })
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.period.startDate).toBeDefined();
+      expect(res.body.data.period.endDate).toBeDefined();
+    });
+
+    it("should support individual view mode", async () => {
+      const res = await request(app)
+        .get("/api/timelogs/heatmap")
+        .query({ teamView: false })
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data).toBeDefined();
+    });
+
+    it("should return valid peak hour and day", async () => {
+      const res = await request(app)
+        .get("/api/timelogs/heatmap")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.peakHour).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.peakHour).toBeLessThanOrEqual(23);
+      expect(res.body.data.peakDay).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.peakDay).toBeLessThanOrEqual(6);
+    });
+
+    it("should return top productive slots", async () => {
+      const res = await request(app)
+        .get("/api/timelogs/heatmap")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.topProductiveSlots).toBeInstanceOf(Array);
+      expect(res.body.data.topProductiveSlots.length).toBeLessThanOrEqual(3);
+      
+      if (res.body.data.topProductiveSlots.length > 0) {
+        const slot = res.body.data.topProductiveSlots[0];
+        expect(slot.day).toBeGreaterThanOrEqual(0);
+        expect(slot.day).toBeLessThanOrEqual(6);
+        expect(slot.hour).toBeGreaterThanOrEqual(0);
+        expect(slot.hour).toBeLessThanOrEqual(23);
+        expect(slot.hours).toBeGreaterThan(0);
+      }
+    });
+  });
 });
