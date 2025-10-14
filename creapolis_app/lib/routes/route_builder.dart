@@ -56,6 +56,9 @@ class RouteBuilder {
   static String workload(int workspaceId, int projectId) =>
       '/workspaces/$workspaceId/projects/$projectId/workload';
 
+  static String resourceMap(int workspaceId, int projectId) =>
+      '/workspaces/$workspaceId/projects/$projectId/resource-map';
+
   // Settings
   static String settings() => '/settings';
 }
@@ -102,6 +105,8 @@ extension RouteNavigationExtension on BuildContext {
       go(RouteBuilder.gantt(workspaceId, projectId));
   void goToWorkload(int workspaceId, int projectId) =>
       go(RouteBuilder.workload(workspaceId, projectId));
+  void goToResourceMap(int workspaceId, int projectId) =>
+      go(RouteBuilder.resourceMap(workspaceId, projectId));
 
   // Settings navigation
   void goToSettings() => go(RouteBuilder.settings());

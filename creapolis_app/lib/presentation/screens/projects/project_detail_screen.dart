@@ -386,6 +386,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 icon: const Icon(Icons.people, size: 18),
                 label: const Text('Workload'),
               ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: workspaceId != null
+                    ? () => context.goToResourceMap(workspaceId, project.id)
+                    : null,
+                icon: const Icon(Icons.grid_view, size: 18),
+                label: const Text('Mapa de Recursos'),
+              ),
             ],
           ),
         ),
