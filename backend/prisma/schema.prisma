@@ -119,28 +119,32 @@ model ProjectMember {
 }
 
 model Task {
-  id             Int          @id @default(autoincrement())
-  title          String
-  description    String?
-  status         TaskStatus   @default(PLANNED)
-  estimatedHours Float
-  actualHours    Float        @default(0)
-  startDate      DateTime?
-  endDate        DateTime?
-  projectId      Int
-  assigneeId     Int?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  predecessors   Dependency[] @relation("TaskPredecessors")
-  successors     Dependency[] @relation("TaskSuccessors")
-  assignee       User?        @relation(fields: [assigneeId], references: [id])
-  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  timeLogs       TimeLog[]
-  comments       Comment[]
+  id                   Int                   @id @default(autoincrement())
+  title                String
+  description          String?
+  status               TaskStatus            @default(PLANNED)
+  category             TaskCategory?
+  estimatedHours       Float
+  actualHours          Float                 @default(0)
+  startDate            DateTime?
+  endDate              DateTime?
+  projectId            Int
+  assigneeId           Int?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  predecessors         Dependency[]          @relation("TaskPredecessors")
+  successors           Dependency[]          @relation("TaskSuccessors")
+  assignee             User?                 @relation(fields: [assigneeId], references: [id])
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeLogs             TimeLog[]
+  comments             Comment[]
+  categorySuggestions  CategorySuggestion[]
+  categoryFeedbacks    CategoryFeedback[]
 
   @@index([projectId])
   @@index([assigneeId])
   @@index([status])
+  @@index([category])
 }
 
 model Dependency {
@@ -273,4 +277,50 @@ enum NotificationType {
   TASK_UPDATED
   PROJECT_UPDATED
   SYSTEM
+}
+
+enum TaskCategory {
+  DEVELOPMENT
+  DESIGN
+  TESTING
+  DOCUMENTATION
+  MEETING
+  BUG
+  FEATURE
+  MAINTENANCE
+  RESEARCH
+  DEPLOYMENT
+  REVIEW
+  PLANNING
+}
+
+model CategorySuggestion {
+  id                Int          @id @default(autoincrement())
+  taskId            Int
+  suggestedCategory TaskCategory
+  confidence        Float
+  reasoning         String
+  keywords          String[]
+  isApplied         Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  task              Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([suggestedCategory])
+  @@index([createdAt])
+}
+
+model CategoryFeedback {
+  id                Int           @id @default(autoincrement())
+  taskId            Int
+  suggestedCategory TaskCategory
+  correctedCategory TaskCategory?
+  wasCorrect        Boolean
+  userComment       String?
+  createdAt         DateTime      @default(now())
+  task              Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@index([wasCorrect])
 }
