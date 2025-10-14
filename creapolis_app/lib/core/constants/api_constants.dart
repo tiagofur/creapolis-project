@@ -28,6 +28,9 @@ class ApiConstants {
   static String stopTask(int taskId) => '/tasks/$taskId/stop';
   static String finishTask(int taskId) => '/tasks/$taskId/finish';
 
+  // Roles Endpoints
+  static const String rolesEndpoint = '/roles';
+
   // Headers
   static const String contentType = 'application/json';
   static const String authorization = 'Authorization';
