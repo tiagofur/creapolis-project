@@ -23,6 +23,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import pushNotificationRoutes from "./routes/push-notification.routes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import nlpRoutes from "./routes/nlp.routes.js";
+import searchRoutes from "./routes/search.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -123,6 +124,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/push", pushNotificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/nlp", nlpRoutes);
+app.use("/api/search", searchRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
