@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/sync/sync_manager.dart';
+import '../../core/sync/sync_status.dart';
 import '../../injection.dart';
 import 'package:logger/logger.dart';
 
