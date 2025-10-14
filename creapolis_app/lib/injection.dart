@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
@@ -38,12 +39,17 @@ Future<void> initializeDependencies() async {
   // 3. Registrar Connectivity para ConnectivityService
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  // 4. Registrar LastRouteService
+  // 4. Registrar Firebase Messaging
+  getIt.registerLazySingleton<FirebaseMessaging>(
+    () => FirebaseMessaging.instance,
+  );
+
+  // 5. Registrar LastRouteService
   getIt.registerLazySingleton<LastRouteService>(
     () => LastRouteService(getIt<FlutterSecureStorage>()),
   );
 
-  // 5. Registrar Networking Layer
+  // 6. Registrar Networking Layer
   // AuthInterceptor (singleton)
   getIt.registerSingleton<AuthInterceptor>(
     AuthInterceptor(storage: getIt<FlutterSecureStorage>()),
@@ -57,7 +63,7 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // 6. Inicializar dependencias generadas por injectable
+  // 7. Inicializar dependencias generadas por injectable
   // Esto registrará automáticamente:
   // - CacheManager (con @injectable)
   // - ConnectivityService
