@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import pushNotificationService from "./push-notification.service.js";
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,11 @@ class NotificationService {
       },
     });
 
+    // Send push notification asynchronously (don't wait for it)
+    pushNotificationService.sendPushNotification(userId, notification).catch(error => {
+      console.error('Error sending push notification:', error);
+    });
+
     return notification;
   }
 
@@ -42,6 +48,25 @@ class NotificationService {
         relatedId: notif.relatedId || null,
         relatedType: notif.relatedType || null,
       })),
+    });
+
+    // Get the created notifications
+    const createdNotifications = await prisma.notification.findMany({
+      where: {
+        userId: { in: notifications.map(n => n.userId) },
+        type: { in: notifications.map(n => n.type) },
+        createdAt: {
+          gte: new Date(Date.now() - 5000), // Last 5 seconds
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Send push notifications asynchronously
+    createdNotifications.forEach(notification => {
+      pushNotificationService.sendPushNotification(notification.userId, notification).catch(error => {
+        console.error('Error sending push notification:', error);
+      });
     });
 
     return created;
