@@ -22,7 +22,7 @@
   "author": "Creapolis Team",
   "license": "MIT",
   "dependencies": {
-    "@apollo/server": "^5.0.0",
+    "@apollo/server": "^4.11.0",
     "@prisma/client": "^6.17.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

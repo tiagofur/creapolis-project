@@ -18,6 +18,7 @@ export const projectTypeDefs = `#graphql
     user: User!
     userId: Int!
     projectId: Int!
+    project: Project!
     joinedAt: DateTime!
   }
 

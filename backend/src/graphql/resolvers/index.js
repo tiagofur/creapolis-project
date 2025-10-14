@@ -38,6 +38,25 @@ const workspaceResolvers = {
       });
     },
   },
+  Workspace: {
+    owner: async (parent, _, { prisma }) => {
+      return prisma.user.findUnique({ where: { id: parent.ownerId } });
+    },
+    projects: async (parent, _, { prisma }) => {
+      return prisma.project.findMany({ where: { workspaceId: parent.id } });
+    },
+    members: async (parent, _, { prisma }) => {
+      return prisma.workspaceMember.findMany({ where: { workspaceId: parent.id } });
+    },
+  },
+  WorkspaceMember: {
+    workspace: async (parent, _, { prisma }) => {
+      return prisma.workspace.findUnique({ where: { id: parent.workspaceId } });
+    },
+    user: async (parent, _, { prisma }) => {
+      return prisma.user.findUnique({ where: { id: parent.userId } });
+    },
+  },
 };
 
 const timeLogResolvers = {
@@ -277,4 +296,6 @@ export const resolvers = {
   TimeLog: timeLogResolvers.TimeLog,
   Comment: commentResolvers.Comment,
   Notification: commentResolvers.Notification,
+  Workspace: workspaceResolvers.Workspace,
+  WorkspaceMember: workspaceResolvers.WorkspaceMember,
 };

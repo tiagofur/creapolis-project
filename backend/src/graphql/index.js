@@ -1,6 +1,7 @@
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import express from "express";
 import { typeDefs } from "./typeDefs/index.js";
 import { resolvers } from "./resolvers/index.js";
 import { createContext } from "./context.js";
