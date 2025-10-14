@@ -20,6 +20,7 @@ import reportRoutes from "./routes/report.routes.js";
 import collaborationRoutes from "./routes/collaboration.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -114,6 +115,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/collaboration", collaborationRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
