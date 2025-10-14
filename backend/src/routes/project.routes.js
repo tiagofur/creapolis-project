@@ -1,5 +1,6 @@
 import express from "express";
 import projectController from "../controllers/project.controller.js";
+import commentController from "../controllers/comment.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import {
@@ -75,6 +76,13 @@ router.delete(
   validate,
   projectController.removeMember
 );
+
+/**
+ * @route   GET /api/projects/:id/comments
+ * @desc    Get all comments for a project
+ * @access  Private
+ */
+router.get("/:id/comments", commentController.getProjectComments.bind(commentController));
 
 // Scheduler routes - nested under /api/projects/:projectId/schedule
 router.use("/:projectId/schedule", schedulerRoutes);

@@ -1,5 +1,6 @@
 import express from "express";
 import taskController from "../controllers/task.controller.js";
+import commentController from "../controllers/comment.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import {
@@ -74,5 +75,12 @@ router.delete(
   validate,
   taskController.removeDependency
 );
+
+/**
+ * @route   GET /api/projects/:projectId/tasks/:taskId/comments
+ * @desc    Get all comments for a task
+ * @access  Private
+ */
+router.get("/:taskId/comments", commentController.getTaskComments.bind(commentController));
 
 export default router;

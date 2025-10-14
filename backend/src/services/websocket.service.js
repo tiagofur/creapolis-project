@@ -89,6 +89,14 @@ class WebSocketService {
         });
       });
 
+      // Notification event
+      socket.on("notification_received", ({ userId, notification }) => {
+        this.io.to(`user_${userId}`).emit("new_notification", {
+          notification,
+          timestamp: new Date().toISOString(),
+        });
+      });
+
       // Typing indicator
       socket.on("typing_start", ({ roomId, userId, userName, field }) => {
         socket.to(roomId).emit("user_typing", {
