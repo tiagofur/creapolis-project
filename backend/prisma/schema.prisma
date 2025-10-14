@@ -30,6 +30,9 @@ model User {
   deviceTokens            DeviceToken[]
   notificationPreferences NotificationPreferences?
   notificationLogs        NotificationLog[]
+  projectRoles            ProjectRoleMember[]
+  assignedRoles           ProjectRoleMember[]      @relation("RoleAssigner")
+  auditLogs               RoleAuditLog[]
 
   @@index([email])
 }
@@ -103,6 +106,7 @@ model Project {
   members     ProjectMember[]
   tasks       Task[]
   comments    Comment[]
+  roles       ProjectRole[]
 
   @@index([workspaceId])
   @@index([name])
@@ -390,4 +394,76 @@ enum DeliveryStatus {
   SENT
   DELIVERED
   FAILED
+}
+
+model ProjectRole {
+  id          Int                @id @default(autoincrement())
+  projectId   Int
+  name        String
+  description String?
+  isDefault   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  project     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  permissions ProjectPermission[]
+  members     ProjectRoleMember[]
+  auditLogs   RoleAuditLog[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+}
+
+model ProjectPermission {
+  id           Int         @id @default(autoincrement())
+  roleId       Int
+  resource     String
+  action       String
+  granted      Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  role         ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action])
+  @@index([roleId])
+  @@index([resource])
+}
+
+model ProjectRoleMember {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  roleId    Int
+  assignedAt DateTime   @default(now())
+  assignedBy Int?
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assigner  User?       @relation("RoleAssigner", fields: [assignedBy], references: [id])
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model RoleAuditLog {
+  id          Int         @id @default(autoincrement())
+  roleId      Int
+  userId      Int
+  action      AuditAction
+  details     String?
+  createdAt   DateTime    @default(now())
+  role        ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  ROLE_CREATED
+  ROLE_UPDATED
+  ROLE_DELETED
+  PERMISSION_GRANTED
+  PERMISSION_REVOKED
+  MEMBER_ASSIGNED
+  MEMBER_REMOVED
 }
