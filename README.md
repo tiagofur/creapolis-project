@@ -18,11 +18,9 @@
 ## 📋 Tabla de Contenidos
 
 - [Características](#-características-principales)
-- [Arquitectura](#-arquitectura)
-- [Quick Start con Docker](#-quick-start-con-docker)
-- [Instalación Manual](#-instalación-manual)
+- [Quick Start](#-quick-start-con-docker)
 - [Documentación](#-documentación)
-- [API](#-api)
+- [Arquitectura](#-arquitectura)
 - [Contribuir](#-contribuir)
 
 ---
@@ -239,22 +237,33 @@ flutter run            # Móvil (con emulador)
 
 ## 📚 Documentación
 
-### Guías de Configuración
-- **[DOCKER_README.md](./DOCKER_README.md)**: Guía completa de Docker
-- **[QUICKSTART_DOCKER.md](./QUICKSTART_DOCKER.md)**: Quick Start rápido
-- **[backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)**: Documentación de API
-- **[creapolis_app/ARCHITECTURE.md](./creapolis_app/ARCHITECTURE.md)**: Arquitectura Flutter
+### 📖 [Complete Documentation](./docs/)
 
-### Sistema de Notificaciones Push
-- **[PUSH_NOTIFICATIONS_QUICK_START.md](./PUSH_NOTIFICATIONS_QUICK_START.md)**: ⚡ Guía rápida de configuración (15 min)
-- **[PUSH_NOTIFICATIONS_DOCUMENTATION.md](./PUSH_NOTIFICATIONS_DOCUMENTATION.md)**: 📖 Documentación completa
+**New to Creapolis?** Start here:
+- **[Getting Started Guide](./docs/getting-started/)** - Setup and first steps
+- **[Quick Start with Docker](./docs/getting-started/quickstart-docker.md)** - Fastest way to run
+- **[User Guides](./docs/user-guides/)** - Step-by-step guides for users
 
-### CI/CD y Testing
-- **[.github/CI_CD_DOCUMENTATION.md](./.github/CI_CD_DOCUMENTATION.md)**: Pipeline completo de CI/CD
-- **[creapolis_app/TESTING_STRATEGY.md](./creapolis_app/TESTING_STRATEGY.md)**: Estrategia de testing
+**For Developers:**
+- **[Architecture Overview](./docs/architecture/)** - System design and patterns
+- **[API Reference](./docs/api-reference/)** - Complete API documentation
+- **[Development Guide](./docs/development/)** - Contributing and development
+- **[Deployment Guide](./docs/deployment/)** - Production deployment
 
-### Planificación y Tareas
-- **[documentation/tasks.md](./documentation/tasks.md)**: Plan de tareas
+**Features:**
+- **[Features Documentation](./docs/features/)** - All features documented
+  - [Advanced Search](./docs/features/advanced-search/)
+  - [AI Categorization](./docs/features/ai-categorization/)
+  - [NLP Task Creation](./docs/features/nlp-task-creation/)
+  - [Push Notifications](./docs/features/notifications/)
+  - [And more...](./docs/features/)
+
+**Project Management:**
+- **[Master Development Plan](./docs/project-management/MASTER_DEVELOPMENT_PLAN.md)** - Roadmap
+- **[Changelog](./docs/project-management/CHANGELOG.md)** - Version history
+- **[Phase Documentation](./docs/project-management/phases/)** - Implementation phases
+
+> **💡 Tip**: All documentation has been reorganized into the [`docs/`](./docs/) folder for better navigation and discoverability.
 
 ---
 
@@ -319,11 +328,13 @@ GET    /api/push/logs               # Logs de notificaciones
 GET    /api/push/metrics            # Métricas de notificaciones
 ```
 
-Ver [PUSH_NOTIFICATIONS_DOCUMENTATION.md](./PUSH_NOTIFICATIONS_DOCUMENTATION.md) para más detalles.
+**📖 Complete API Documentation**: See [API Reference](./docs/api-reference/)
 
 ---
 
 ## 🤝 Contribuir
+
+We welcome contributions! Here's how to get started:
 
 1. Fork el proyecto
 2. Crea tu rama (`git checkout -b feature/AmazingFeature`)
@@ -331,7 +342,7 @@ Ver [PUSH_NOTIFICATIONS_DOCUMENTATION.md](./PUSH_NOTIFICATIONS_DOCUMENTATION.md)
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para más detalles.
+**📖 Contribution Guidelines**: See [Contributing Guide](./docs/development/contributing.md)
 
 ---
 
