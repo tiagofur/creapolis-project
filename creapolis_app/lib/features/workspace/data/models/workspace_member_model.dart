@@ -138,22 +138,66 @@ class WorkspaceInvitation extends Equatable {
   });
 
   factory WorkspaceInvitation.fromJson(Map<String, dynamic> json) {
+    String _stringOr(Map<String, dynamic> map, String key, String fallback) {
+      final value = map[key];
+      if (value is String && value.isNotEmpty) {
+        return value;
+      }
+      return fallback;
+    }
+
+    final workspaceName = _stringOr(
+      json,
+      'workspaceName',
+      'Workspace sin nombre',
+    );
+    final inviterName = _stringOr(json, 'inviterName', 'Miembro');
+    final inviterEmail = _stringOr(
+      json,
+      'inviterEmail',
+      'sin-correo@desconocido.com',
+    );
+    final inviteeEmail = _stringOr(
+      json,
+      'inviteeEmail',
+      'sin-correo@desconocido.com',
+    );
+    final token = _stringOr(json, 'token', '');
+    final status = _stringOr(json, 'status', InvitationStatus.pending.value);
+
+    final roleValue = _stringOr(json, 'role', WorkspaceRole.member.value);
+    final workspaceTypeValue = _stringOr(
+      json,
+      'workspaceType',
+      WorkspaceType.team.value,
+    );
+    final createdAtRaw = _stringOr(
+      json,
+      'createdAt',
+      DateTime.now().toIso8601String(),
+    );
+    final expiresAtRaw = _stringOr(
+      json,
+      'expiresAt',
+      DateTime.now().toIso8601String(),
+    );
+
     return WorkspaceInvitation(
       id: json['id'] as int,
       workspaceId: json['workspaceId'] as int,
-      workspaceName: json['workspaceName'] as String,
+      workspaceName: workspaceName,
       workspaceDescription: json['workspaceDescription'] as String?,
       workspaceAvatarUrl: json['workspaceAvatarUrl'] as String?,
-      workspaceType: WorkspaceType.fromString(json['workspaceType'] as String),
-      inviterName: json['inviterName'] as String,
-      inviterEmail: json['inviterEmail'] as String,
+      workspaceType: WorkspaceType.fromString(workspaceTypeValue),
+      inviterName: inviterName,
+      inviterEmail: inviterEmail,
       inviterAvatarUrl: json['inviterAvatarUrl'] as String?,
-      inviteeEmail: json['inviteeEmail'] as String,
-      role: WorkspaceRole.fromString(json['role'] as String),
-      token: json['token'] as String,
-      status: InvitationStatus.fromString(json['status'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      expiresAt: DateTime.parse(json['expiresAt'] as String),
+      inviteeEmail: inviteeEmail,
+      role: WorkspaceRole.fromString(roleValue),
+      token: token,
+      status: InvitationStatus.fromString(status),
+      createdAt: DateTime.parse(createdAtRaw),
+      expiresAt: DateTime.parse(expiresAtRaw),
     );
   }
 
@@ -217,6 +261,3 @@ enum InvitationStatus {
     );
   }
 }
-
-
-

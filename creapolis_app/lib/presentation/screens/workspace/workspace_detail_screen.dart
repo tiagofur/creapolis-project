@@ -9,6 +9,7 @@ import '../../bloc/workspace/workspace_state.dart';
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
+import 'widgets/invite_member_dialog.dart';
 import 'workspace_edit_screen.dart';
 import 'workspace_members_screen.dart';
 import 'workspace_settings_screen.dart';
@@ -568,9 +569,16 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Mostrar diálogo de invitar miembro
   void _showInviteMemberDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invitar miembro próximamente')),
-    );
+    showInviteMemberDialog(
+      context: context,
+      workspaceId: _workspace.id,
+      currentUserRole: _workspace.userRole,
+    ).then((result) {
+      if (!mounted || result == null || !result.success) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    });
   }
 
   /// Mostrar confirmación de eliminación

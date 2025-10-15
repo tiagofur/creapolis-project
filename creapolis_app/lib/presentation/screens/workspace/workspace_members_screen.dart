@@ -9,6 +9,7 @@ import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
 import '../../widgets/loading/skeleton_list.dart';
+import 'widgets/invite_member_dialog.dart';
 
 /// Pantalla de gestión de miembros del workspace
 class WorkspaceMembersScreen extends StatefulWidget {
@@ -610,11 +611,15 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
 
   /// Mostrar diálogo de invitar miembro
   void _showInviteMemberDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Funcionalidad de invitación próximamente')),
-    );
+    showInviteMemberDialog(
+      context: context,
+      workspaceId: widget.workspace.id,
+      currentUserRole: widget.workspace.userRole,
+    ).then((result) {
+      if (!mounted || result == null || !result.success) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    });
   }
 }
-
-
-
