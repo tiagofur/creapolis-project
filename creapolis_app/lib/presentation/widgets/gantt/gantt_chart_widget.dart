@@ -183,7 +183,11 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
                           _handleLongPress(details.localPosition, chartHeight);
                         },
                         onPanStart: (details) {
-                          _handleDragStart(details.localPosition, chartHeight, startDate);
+                          _handleDragStart(
+                            details.localPosition,
+                            chartHeight,
+                            startDate,
+                          );
                         },
                         onPanUpdate: (details) {
                           _handleDragUpdate(details.localPosition, startDate);
@@ -389,17 +393,21 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
   }
 
   /// Inicia el arrastre de una tarea
-  void _handleDragStart(Offset position, double chartHeight, DateTime startDate) {
+  void _handleDragStart(
+    Offset position,
+    double chartHeight,
+    DateTime startDate,
+  ) {
     final taskIndex = (position.dy / (_taskHeight + _taskSpacing)).floor();
     if (taskIndex >= 0 && taskIndex < widget.tasks.length) {
       final task = widget.tasks[taskIndex];
-      
+
       // Verificar si el drag comienza dentro de la barra de la tarea
       final taskStartDays = task.startDate.difference(startDate).inDays;
       final taskDurationDays = task.endDate.difference(task.startDate).inDays;
       final taskX = taskStartDays * _dayWidth;
       final taskWidth = taskDurationDays * _dayWidth;
-      
+
       if (position.dx >= taskX && position.dx <= taskX + taskWidth) {
         setState(() {
           _draggingTaskId = task.id;
@@ -412,10 +420,12 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
 
   /// Actualiza la posición durante el arrastre
   void _handleDragUpdate(Offset position, DateTime startDate) {
-    if (_draggingTaskId != null && _dragStartPosition != null && _dragOriginalStartDate != null) {
+    if (_draggingTaskId != null &&
+        _dragStartPosition != null &&
+        _dragOriginalStartDate != null) {
       final deltaX = position.dx - _dragStartPosition!.dx;
       final deltaDays = (deltaX / _dayWidth).round();
-      
+
       if (deltaDays != 0) {
         setState(() {
           // El visual feedback se maneja en el painter
@@ -426,15 +436,14 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
 
   /// Finaliza el arrastre y aplica los cambios
   void _handleDragEnd() {
-    if (_draggingTaskId != null && _dragStartPosition != null && _dragOriginalStartDate != null) {
-      final task = widget.tasks.firstWhere((t) => t.id == _draggingTaskId);
-      final deltaX = _dragStartPosition!.dx - _dragStartPosition!.dx; // Reset for calculation
-      
+    if (_draggingTaskId != null &&
+        _dragStartPosition != null &&
+        _dragOriginalStartDate != null) {
       // Calcular nuevo start date basado en la posición final
       // Esto se debe hacer en el onPanUpdate para obtener la posición final
       // Por ahora, notificamos el cambio con las fechas originales
       // En una implementación real, necesitaríamos almacenar la posición final
-      
+
       setState(() {
         _draggingTaskId = null;
         _dragStartPosition = null;
@@ -443,3 +452,6 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
     }
   }
 }
+
+
+

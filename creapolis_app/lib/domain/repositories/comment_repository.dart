@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../core/error/failures.dart';
+import '../../core/errors/failures.dart';
 import '../entities/comment.dart';
 
 /// Interfaz del repositorio de comentarios
@@ -39,12 +39,12 @@ abstract class CommentRepository {
   /// Actualiza un comentario
   /// [commentId] ID del comentario
   /// [content] Nuevo contenido
-  Future<Either<Failure, Comment>> updateComment(
-    int commentId,
-    String content,
-  );
+  Future<Either<Failure, Comment>> updateComment(int commentId, String content);
 
   /// Elimina un comentario
   /// [commentId] ID del comentario
   Future<Either<Failure, void>> deleteComment(int commentId);
 }
+
+
+

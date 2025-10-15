@@ -26,6 +26,7 @@ class User extends Equatable {
   final UserRole role;
   final String? googleAccessToken;
   final String? googleRefreshToken;
+  final String? avatarUrl;
 
   const User({
     required this.id,
@@ -34,6 +35,7 @@ class User extends Equatable {
     required this.role,
     this.googleAccessToken,
     this.googleRefreshToken,
+    this.avatarUrl,
   });
 
   /// Verifica si el usuario es administrador
@@ -53,5 +55,9 @@ class User extends Equatable {
     role,
     googleAccessToken,
     googleRefreshToken,
+    avatarUrl,
   ];
 }
+
+
+

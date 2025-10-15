@@ -367,3 +367,6 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
     );
   }
 }
+
+
+

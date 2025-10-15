@@ -38,7 +38,7 @@ class _TasksListScreenState extends State<TasksListScreen>
   TaskViewMode _viewMode = TaskViewMode.list;
   TaskDensity _density = TaskDensity.comfortable;
   late ScrollController _scrollController;
-  bool _enablePagination = true; // Flag para habilitar/deshabilitar paginación
+  final bool _enablePagination = true; // Flag para habilitar/deshabilitar paginación
 
   @override
   void initState() {
@@ -486,3 +486,6 @@ class _TasksListScreenState extends State<TasksListScreen>
     }
   }
 }
+
+
+

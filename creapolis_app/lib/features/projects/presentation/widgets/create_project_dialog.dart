@@ -209,7 +209,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
                 // Estado del proyecto
                 DropdownButtonFormField<ProjectStatus>(
-                  value: _status,
+                  initialValue: _status,
                   decoration: const InputDecoration(
                     labelText: 'Estado',
                     prefixIcon: Icon(Icons.flag),

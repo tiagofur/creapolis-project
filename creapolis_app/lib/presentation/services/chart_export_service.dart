@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,23 +13,23 @@ class ChartExportService {
     try {
       final RenderRepaintBoundary boundary =
           key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      
+
       // Capturar imagen con alta calidad
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       final Uint8List pngBytes = byteData!.buffer.asUint8List();
 
       // Guardar temporalmente
       final directory = await getTemporaryDirectory();
-      final filePath = '${directory.path}/chart_${DateTime.now().millisecondsSinceEpoch}.png';
+      final filePath =
+          '${directory.path}/chart_${DateTime.now().millisecondsSinceEpoch}.png';
       final file = File(filePath);
       await file.writeAsBytes(pngBytes);
 
       // Compartir
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        text: '$chartName',
-      );
+      await Share.shareXFiles([XFile(filePath)], text: chartName);
     } catch (e) {
       rethrow;
     }
@@ -39,15 +40,18 @@ class ChartExportService {
     try {
       final RenderRepaintBoundary boundary =
           key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      
+
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       final Uint8List pngBytes = byteData!.buffer.asUint8List();
 
       // Obtener directorio de documentos
       final directory = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '${directory.path}/chart_${chartName.replaceAll(' ', '_')}_$timestamp.png';
+      final filePath =
+          '${directory.path}/chart_${chartName.replaceAll(' ', '_')}_$timestamp.png';
       final file = File(filePath);
       await file.writeAsBytes(pngBytes);
 
@@ -69,3 +73,6 @@ class ChartExportService {
     }
   }
 }
+
+
+

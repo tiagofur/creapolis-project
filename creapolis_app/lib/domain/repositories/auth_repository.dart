@@ -46,3 +46,6 @@ abstract class AuthRepository {
   /// Verifica si existe un JWT válido almacenado
   Future<bool> isAuthenticated();
 }
+
+
+

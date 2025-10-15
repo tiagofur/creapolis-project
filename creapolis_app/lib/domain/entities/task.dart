@@ -117,6 +117,15 @@ class Task extends Equatable {
   /// Verifica si la tarea tiene dependencias
   bool get hasDependencies => dependencyIds.isNotEmpty;
 
+  /// Getter para compatibilidad con código existente
+  int? get assignedTo => assignee?.id;
+
+  /// Getter para fecha de vencimiento (compatibilidad)
+  DateTime? get dueDate => endDate;
+
+  /// Getter para fecha de completado (compatibilidad)
+  DateTime? get completedAt => isCompleted ? updatedAt : null;
+
   /// Calcula el progreso de horas (0.0 a 1.0)
   double get hoursProgress {
     if (estimatedHours == 0) return 0.0;
@@ -244,3 +253,6 @@ class TaskDependency extends Equatable {
     );
   }
 }
+
+
+

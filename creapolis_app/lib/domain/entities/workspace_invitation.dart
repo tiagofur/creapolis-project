@@ -146,3 +146,6 @@ class WorkspaceInvitation extends Equatable {
     expiresAt,
   ];
 }
+
+
+

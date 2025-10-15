@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/di/injection.dart';
+import '../../../../injection.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../data/datasources/nlp_remote_datasource.dart';
 import '../../../../domain/entities/task.dart';
 import '../../../../domain/usecases/get_nlp_examples_usecase.dart';
 import '../../../../domain/usecases/parse_task_instruction_usecase.dart';
-import '../../blocs/task_bloc.dart';
-import '../../blocs/task_event.dart';
+import '../../../../presentation/bloc/task/task_bloc.dart';
+import '../../../../presentation/bloc/task/task_event.dart';
 
 /// Diálogo para crear tareas usando lenguaje natural
 class NLPCreateTaskDialog extends StatefulWidget {
   final int projectId;
 
-  const NLPCreateTaskDialog({
-    super.key,
-    required this.projectId,
-  });
+  const NLPCreateTaskDialog({super.key, required this.projectId});
 
   @override
   State<NLPCreateTaskDialog> createState() => _NLPCreateTaskDialogState();
@@ -54,10 +51,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
       },
       (examples) {
         setState(() {
-          _examples = [
-            ...examples.spanish,
-            ...examples.english,
-          ];
+          _examples = [...examples.spanish, ...examples.english];
         });
       },
     );
@@ -101,17 +95,17 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
     if (_parsedTask == null) return;
 
     context.read<TaskBloc>().add(
-          CreateTask(
-            projectId: widget.projectId,
-            title: _parsedTask!.title,
-            description: _parsedTask!.description,
-            priority: _parsedTask!.priority,
-            status: TaskStatus.planned,
-            estimatedHours: 8.0, // Default
-            startDate: DateTime.now(),
-            endDate: _parsedTask!.dueDate,
-          ),
-        );
+      CreateTaskEvent(
+        projectId: widget.projectId,
+        title: _parsedTask!.title,
+        description: _parsedTask!.description,
+        priority: _parsedTask!.priority,
+        status: TaskStatus.planned,
+        estimatedHours: 8.0, // Default
+        startDate: DateTime.now(),
+        endDate: _parsedTask!.dueDate,
+      ),
+    );
 
     Navigator.pop(context, true);
   }
@@ -151,9 +145,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
     final dialogWidth = screenWidth > 600 ? 550.0 : screenWidth * 0.9;
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: dialogWidth,
         constraints: const BoxConstraints(maxHeight: 700),
@@ -164,7 +156,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
+                color: theme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -191,7 +183,8 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                         Text(
                           'Escribe en lenguaje natural',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -217,13 +210,16 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       controller: _instructionController,
                       decoration: InputDecoration(
                         labelText: 'Tu instrucción',
-                        hintText: 'Ej: Diseñar logo urgente para Juan, para el viernes',
+                        hintText:
+                            'Ej: Diseñar logo urgente para Juan, para el viernes',
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.edit_note),
                         suffixIcon: _examples != null && _examples!.isNotEmpty
                             ? IconButton(
                                 icon: Icon(
-                                  _showExamples ? Icons.expand_less : Icons.expand_more,
+                                  _showExamples
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -244,7 +240,9 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 
+                            0.3,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -257,29 +255,33 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            ...(_examples!.take(3).map((example) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: InkWell(
-                                    onTap: () {
-                                      _instructionController.text = example;
-                                      setState(() {
-                                        _showExamples = false;
-                                      });
-                                    },
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.touch_app, size: 14),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            example,
-                                            style: theme.textTheme.bodySmall,
+                            ...(_examples!
+                                .take(3)
+                                .map(
+                                  (example) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: InkWell(
+                                      onTap: () {
+                                        _instructionController.text = example;
+                                        setState(() {
+                                          _showExamples = false;
+                                        });
+                                      },
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.touch_app, size: 14),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              example,
+                                              style: theme.textTheme.bodySmall,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ))),
+                                )),
                           ],
                         ),
                       ),
@@ -309,13 +311,19 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -334,10 +342,10 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.05),
+                          color: Colors.green.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.green.withOpacity(0.3),
+                            color: Colors.green.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Column(
@@ -383,7 +391,11 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                             const SizedBox(height: 12),
                             _buildResultField(
                               'Prioridad',
-                              _parsedTask!.priority.toString().split('.').last.toUpperCase(),
+                              _parsedTask!.priority
+                                  .toString()
+                                  .split('.')
+                                  .last
+                                  .toUpperCase(),
                               Icons.flag,
                               _parsedTask!.analysis.priority.confidence,
                             ),
@@ -409,7 +421,8 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 'Categoría',
                                 _parsedTask!.category!,
                                 Icons.category,
-                                _parsedTask!.analysis.category?.confidence ?? 0.5,
+                                _parsedTask!.analysis.category?.confidence ??
+                                    0.5,
                               ),
                             ],
                           ],
@@ -434,7 +447,9 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                               icon: const Icon(Icons.add_task),
                               label: const Text('Crear Tarea'),
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -505,3 +520,6 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
+
+
+

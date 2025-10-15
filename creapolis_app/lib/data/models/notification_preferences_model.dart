@@ -51,6 +51,7 @@ class NotificationPreferencesModel extends NotificationPreferences {
     };
   }
 
+  @override
   NotificationPreferencesModel copyWith({
     int? id,
     int? userId,
@@ -85,3 +86,6 @@ class NotificationPreferencesModel extends NotificationPreferences {
     );
   }
 }
+
+
+

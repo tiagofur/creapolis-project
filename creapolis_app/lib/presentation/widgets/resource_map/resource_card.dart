@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../domain/entities/resource_allocation.dart';
 import 'draggable_task_item.dart';
@@ -43,9 +42,7 @@ class _ResourceCardState extends State<ResourceCard> {
           // Header con información del usuario
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(12),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -98,9 +95,7 @@ class _ResourceCardState extends State<ResourceCard> {
 
                       // Expand icon
                       Icon(
-                        _isExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
+                        _isExpanded ? Icons.expand_less : Icons.expand_more,
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ],
@@ -132,7 +127,8 @@ class _ResourceCardState extends State<ResourceCard> {
     final colorScheme = theme.colorScheme;
 
     final isAvailable =
-        !widget.allocation.isOverloaded && widget.allocation.averageHoursPerDay < 6.0;
+        !widget.allocation.isOverloaded &&
+        widget.allocation.averageHoursPerDay < 6.0;
 
     if (widget.allocation.isOverloaded) {
       return Container(
@@ -144,11 +140,7 @@ class _ResourceCardState extends State<ResourceCard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.warning,
-              size: 12,
-              color: colorScheme.onErrorContainer,
-            ),
+            Icon(Icons.warning, size: 12, color: colorScheme.onErrorContainer),
             const SizedBox(width: 4),
             Text(
               'Sobrecargado',
@@ -170,11 +162,7 @@ class _ResourceCardState extends State<ResourceCard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.check_circle,
-              size: 12,
-              color: Colors.green.shade800,
-            ),
+            Icon(Icons.check_circle, size: 12, color: Colors.green.shade800),
             const SizedBox(width: 4),
             Text(
               'Disponible',
@@ -222,7 +210,8 @@ class _ResourceCardState extends State<ResourceCard> {
           child: _StatItem(
             icon: Icons.today,
             label: 'Promedio/día',
-            value: '${widget.allocation.averageHoursPerDay.toStringAsFixed(1)}h',
+            value:
+                '${widget.allocation.averageHoursPerDay.toStringAsFixed(1)}h',
             theme: theme,
           ),
         ),
@@ -247,8 +236,8 @@ class _ResourceCardState extends State<ResourceCard> {
           child: Text(
             'Sin tareas asignadas',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -309,3 +298,6 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -70,7 +70,7 @@ class CommentCard extends StatelessWidget {
                       Text(
                         timeago.format(comment.createdAt, locale: 'es'),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -127,7 +127,7 @@ class CommentCard extends StatelessWidget {
                 child: Text(
                   '(editado)',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -166,3 +166,6 @@ class CommentCard extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -57,3 +57,6 @@ class HiveOperationQueueAdapter extends TypeAdapter<HiveOperationQueue> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+
+

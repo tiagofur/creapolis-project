@@ -129,7 +129,7 @@ class _ActivityItem extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
       leading: CircleAvatar(
-        backgroundColor: activity.iconColor.withOpacity(0.15),
+        backgroundColor: activity.iconColor.withValues(alpha: 0.15),
         child: Icon(activity.icon, color: activity.iconColor, size: 20),
       ),
       title: Text(
@@ -187,3 +187,6 @@ class ActivityItem {
     required this.timestamp,
   });
 }
+
+
+

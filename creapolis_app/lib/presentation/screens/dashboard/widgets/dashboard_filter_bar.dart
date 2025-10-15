@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../../bloc/project/project_bloc.dart';
 import '../../../bloc/project/project_state.dart';
-import '../../providers/dashboard_filter_provider.dart';
+import '../providers/dashboard_filter_provider.dart';
 
 /// Barra de filtros para el dashboard
 ///
@@ -143,8 +142,8 @@ class _ProjectFilterChip extends StatelessWidget {
                 child: Text(
                   'Seleccionar Proyecto',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const Divider(height: 1),
@@ -194,18 +193,15 @@ class _DateRangeFilterChip extends StatelessWidget {
           context: context,
           firstDate: firstDate,
           lastDate: lastDate,
-          initialDateRange: filterProvider.startDate != null &&
-                  filterProvider.endDate != null
+          initialDateRange:
+              filterProvider.startDate != null && filterProvider.endDate != null
               ? DateTimeRange(
                   start: filterProvider.startDate!,
                   end: filterProvider.endDate!,
                 )
               : null,
           builder: (context, child) {
-            return Theme(
-              data: Theme.of(context),
-              child: child!,
-            );
+            return Theme(data: Theme.of(context), child: child!);
           },
         );
 
@@ -222,27 +218,22 @@ class _ActiveFilterChip extends StatelessWidget {
   final String label;
   final VoidCallback onRemove;
 
-  const _ActiveFilterChip({
-    required this.label,
-    required this.onRemove,
-  });
+  const _ActiveFilterChip({required this.label, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Chip(
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 12),
-      ),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
       deleteIcon: const Icon(Icons.close, size: 16),
       onDeleted: onRemove,
       visualDensity: VisualDensity.compact,
       backgroundColor: theme.colorScheme.primaryContainer,
-      labelStyle: TextStyle(
-        color: theme.colorScheme.onPrimaryContainer,
-      ),
+      labelStyle: TextStyle(color: theme.colorScheme.onPrimaryContainer),
     );
   }
 }
+
+
+

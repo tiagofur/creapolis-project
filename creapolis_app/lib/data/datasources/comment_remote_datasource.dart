@@ -55,10 +55,7 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
         if (parentId != null) 'parentId': parentId,
       };
 
-      final response = await _apiClient.post(
-        '/comments',
-        data: body,
-      );
+      final response = await _apiClient.post('/comments', data: body);
 
       if (response.statusCode == 201 && response.data != null) {
         AppLogger.success('Comment created successfully');
@@ -66,12 +63,12 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to create comment',
+        response.data?['message'] ?? 'Failed to create comment',
       );
     } catch (e) {
       AppLogger.error('Error creating comment: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to create comment: $e');
+      throw ServerException('Failed to create comment: $e');
     }
   }
 
@@ -85,9 +82,7 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
 
       final response = await _apiClient.get(
         '/projects/0/tasks/$taskId/comments',
-        queryParameters: {
-          'includeReplies': includeReplies.toString(),
-        },
+        queryParameters: {'includeReplies': includeReplies.toString()},
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -97,12 +92,12 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get task comments',
+        response.data?['message'] ?? 'Failed to get task comments',
       );
     } catch (e) {
       AppLogger.error('Error fetching task comments: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get task comments: $e');
+      throw ServerException('Failed to get task comments: $e');
     }
   }
 
@@ -116,9 +111,7 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
 
       final response = await _apiClient.get(
         '/projects/$projectId/comments',
-        queryParameters: {
-          'includeReplies': includeReplies.toString(),
-        },
+        queryParameters: {'includeReplies': includeReplies.toString()},
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -128,12 +121,12 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get project comments',
+        response.data?['message'] ?? 'Failed to get project comments',
       );
     } catch (e) {
       AppLogger.error('Error fetching project comments: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get project comments: $e');
+      throw ServerException('Failed to get project comments: $e');
     }
   }
 
@@ -150,12 +143,12 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get comment',
+        response.data?['message'] ?? 'Failed to get comment',
       );
     } catch (e) {
       AppLogger.error('Error fetching comment: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get comment: $e');
+      throw ServerException('Failed to get comment: $e');
     }
   }
 
@@ -175,12 +168,12 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to update comment',
+        response.data?['message'] ?? 'Failed to update comment',
       );
     } catch (e) {
       AppLogger.error('Error updating comment: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to update comment: $e');
+      throw ServerException('Failed to update comment: $e');
     }
   }
 
@@ -197,12 +190,15 @@ class CommentRemoteDataSourceImpl implements CommentRemoteDataSource {
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to delete comment',
+        response.data?['message'] ?? 'Failed to delete comment',
       );
     } catch (e) {
       AppLogger.error('Error deleting comment: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to delete comment: $e');
+      throw ServerException('Failed to delete comment: $e');
     }
   }
 }
+
+
+

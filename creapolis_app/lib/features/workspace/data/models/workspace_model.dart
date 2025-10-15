@@ -270,3 +270,6 @@ enum WorkspaceRole {
   /// Verifica si el rol puede crear proyectos
   bool get canCreateProjects => this != WorkspaceRole.guest;
 }
+
+
+

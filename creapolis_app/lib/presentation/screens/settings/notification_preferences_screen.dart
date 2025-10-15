@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/notification_preferences.dart';
-
 /// Pantalla de configuración de preferencias de notificación
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -14,7 +12,6 @@ class NotificationPreferencesScreen extends StatefulWidget {
 class _NotificationPreferencesScreenState
     extends State<NotificationPreferencesScreen> {
   bool _isLoading = true;
-  NotificationPreferences? _preferences;
 
   // Local state for switches
   bool _pushEnabled = true;
@@ -34,11 +31,11 @@ class _NotificationPreferencesScreenState
 
   Future<void> _loadPreferences() async {
     setState(() => _isLoading = true);
-    
+
     // TODO: Load preferences from repository
     // For now, using defaults
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     setState(() => _isLoading = false);
   }
 
@@ -55,9 +52,7 @@ class _NotificationPreferencesScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Preferencias de Notificación'),
-      ),
+      appBar: AppBar(title: const Text('Preferencias de Notificación')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -208,17 +203,17 @@ class _NotificationPreferencesScreenState
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ],
@@ -240,9 +235,7 @@ class _NotificationPreferencesScreenState
     return SwitchListTile(
       title: Text(
         title,
-        style: TextStyle(
-          color: enabled ? null : Colors.grey.shade400,
-        ),
+        style: TextStyle(color: enabled ? null : Colors.grey.shade400),
       ),
       subtitle: Text(
         subtitle,
@@ -257,7 +250,7 @@ class _NotificationPreferencesScreenState
         icon,
         color: enabled ? Theme.of(context).primaryColor : Colors.grey.shade400,
       ),
-      activeColor: Theme.of(context).primaryColor,
+      activeThumbColor: Theme.of(context).primaryColor,
     );
   }
 }

@@ -188,3 +188,6 @@ class CategorySuggestionCard extends StatelessWidget {
     );
   }
 }
+
+
+

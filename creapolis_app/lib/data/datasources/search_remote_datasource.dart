@@ -14,10 +14,7 @@ abstract class SearchRemoteDataSource {
   });
 
   /// Quick search for autocomplete
-  Future<List<Map<String, dynamic>>> quickSearch(
-    String query, {
-    int limit = 5,
-  });
+  Future<List<Map<String, dynamic>>> quickSearch(String query, {int limit = 5});
 
   /// Search tasks only
   Future<List<Map<String, dynamic>>> searchTasks(
@@ -75,13 +72,11 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
       if (response.statusCode == 200 && response.data['success'] == true) {
         return response.data['data'] as Map<String, dynamic>;
       } else {
-        throw ServerException(
-          message: response.data['message'] ?? 'Search failed',
-        );
+        throw ServerException(response.data['message'] ?? 'Search failed');
       }
     } catch (e) {
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to perform search: $e');
+      throw ServerException('Failed to perform search: $e');
     }
   }
 
@@ -93,26 +88,21 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
     try {
       final response = await _apiClient.get(
         '/search/quick',
-        queryParameters: {
-          'q': query,
-          'limit': limit.toString(),
-        },
+        queryParameters: {'q': query, 'limit': limit.toString()},
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final suggestions =
             response.data['data']['suggestions'] as List<dynamic>;
-        return suggestions
-            .map((e) => e as Map<String, dynamic>)
-            .toList();
+        return suggestions.map((e) => e as Map<String, dynamic>).toList();
       } else {
         throw ServerException(
-          message: response.data['message'] ?? 'Quick search failed',
+          response.data['message'] ?? 'Quick search failed',
         );
       }
     } catch (e) {
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to perform quick search: $e');
+      throw ServerException('Failed to perform quick search: $e');
     }
   }
 
@@ -145,13 +135,11 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
         final tasks = response.data['data']['tasks'] as List<dynamic>;
         return tasks.map((e) => e as Map<String, dynamic>).toList();
       } else {
-        throw ServerException(
-          message: response.data['message'] ?? 'Task search failed',
-        );
+        throw ServerException(response.data['message'] ?? 'Task search failed');
       }
     } catch (e) {
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to search tasks: $e');
+      throw ServerException('Failed to search tasks: $e');
     }
   }
 
@@ -176,12 +164,12 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
         return projects.map((e) => e as Map<String, dynamic>).toList();
       } else {
         throw ServerException(
-          message: response.data['message'] ?? 'Project search failed',
+          response.data['message'] ?? 'Project search failed',
         );
       }
     } catch (e) {
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to search projects: $e');
+      throw ServerException('Failed to search projects: $e');
     }
   }
 
@@ -205,13 +193,14 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
         final users = response.data['data']['users'] as List<dynamic>;
         return users.map((e) => e as Map<String, dynamic>).toList();
       } else {
-        throw ServerException(
-          message: response.data['message'] ?? 'User search failed',
-        );
+        throw ServerException(response.data['message'] ?? 'User search failed');
       }
     } catch (e) {
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to search users: $e');
+      throw ServerException('Failed to search users: $e');
     }
   }
 }
+
+
+

@@ -296,3 +296,6 @@ class _TaskDetailScreenWithCollaborationState
 ///    - Agregar más campos editables con su propio tracking
 ///    - Personalizar el indicador de escritura
 ///    - Agregar cursores visuales si es necesario
+
+
+

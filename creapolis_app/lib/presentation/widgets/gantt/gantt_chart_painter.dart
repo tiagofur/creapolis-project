@@ -237,3 +237,6 @@ class GanttChartPainter extends CustomPainter {
         oldDelegate.draggingTaskId != draggingTaskId;
   }
 }
+
+
+

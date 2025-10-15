@@ -246,3 +246,6 @@ class FriendlyErrorMessage {
 
 /// Niveles de severidad de error
 enum ErrorSeverity { info, warning, error, critical }
+
+
+

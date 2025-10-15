@@ -50,3 +50,6 @@ class WorkloadStats {
   /// Verifica si el proyecto está balanceado
   bool get isBalanced => overloadPercentage < 20.0;
 }
+
+
+

@@ -1,5 +1,4 @@
 import '../../domain/entities/comment.dart';
-import '../../domain/entities/user.dart';
 import 'user_model.dart';
 
 /// Modelo de datos para Comentario
@@ -47,13 +46,16 @@ class CommentModel {
       isEdited: json['isEdited'] as bool? ?? false,
       mentions: json['mentions'] != null
           ? (json['mentions'] as List)
-              .map((m) => CommentMentionModel.fromJson(m as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (m) =>
+                      CommentMentionModel.fromJson(m as Map<String, dynamic>),
+                )
+                .toList()
           : [],
       replies: json['replies'] != null
           ? (json['replies'] as List)
-              .map((r) => CommentModel.fromJson(r as Map<String, dynamic>))
-              .toList()
+                .map((r) => CommentModel.fromJson(r as Map<String, dynamic>))
+                .toList()
           : [],
     );
   }
@@ -85,7 +87,7 @@ class CommentModel {
       projectId: projectId,
       parentId: parentId,
       authorId: authorId,
-      author: author.toEntity(),
+      author: author,
       createdAt: createdAt,
       updatedAt: updatedAt,
       isEdited: isEdited,
@@ -159,7 +161,7 @@ class CommentMentionModel {
       id: id,
       commentId: commentId,
       userId: userId,
-      user: user.toEntity(),
+      user: user,
       createdAt: createdAt,
     );
   }
@@ -175,3 +177,6 @@ class CommentMentionModel {
     );
   }
 }
+
+
+

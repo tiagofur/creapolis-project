@@ -181,3 +181,6 @@ class KanbanBoardConfig extends Equatable {
   @override
   List<Object?> get props => [columnConfigs, swimlanes, swimlanesEnabled];
 }
+
+
+

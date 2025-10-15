@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/resource_allocation.dart';
-import '../../../domain/entities/task.dart';
 import '../../../domain/usecases/update_task_usecase.dart';
 import '../../../injection.dart';
 import '../../bloc/workload/workload_bloc.dart';
@@ -32,9 +31,8 @@ class ResourceMapView extends StatefulWidget {
 
 class _ResourceMapViewState extends State<ResourceMapView> {
   final UpdateTaskUseCase _updateTaskUseCase = getIt<UpdateTaskUseCase>();
-  
+
   // Track dragging state
-  TaskAllocation? _draggedTask;
   int? _draggedFromUserId;
 
   @override
@@ -93,14 +91,14 @@ class _ResourceMapViewState extends State<ResourceMapView> {
     return DragTarget<TaskAllocation>(
       onWillAcceptWithDetails: (details) {
         // Solo aceptar si es una tarea diferente del mismo usuario
-        return details.data != null && _draggedFromUserId != allocation.userId;
+        return _draggedFromUserId != allocation.userId;
       },
       onAcceptWithDetails: (details) {
         _handleTaskDrop(context, details.data, allocation.userId);
       },
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
-        
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
@@ -114,10 +112,9 @@ class _ResourceMapViewState extends State<ResourceMapView> {
             boxShadow: isHovering
                 ? [
                     BoxShadow(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -131,13 +128,11 @@ class _ResourceMapViewState extends State<ResourceMapView> {
             isCompact: widget.viewMode == 'grid',
             onTaskDragStart: (task) {
               setState(() {
-                _draggedTask = task;
                 _draggedFromUserId = allocation.userId;
               });
             },
             onTaskDragEnd: () {
               setState(() {
-                _draggedTask = null;
                 _draggedFromUserId = null;
               });
             },
@@ -214,9 +209,12 @@ class _ResourceMapViewState extends State<ResourceMapView> {
 
         // Refrescar la vista
         context.read<WorkloadBloc>().add(
-              RefreshWorkloadEvent(widget.projectId),
-            );
+          RefreshWorkloadEvent(widget.projectId),
+        );
       },
     );
   }
 }
+
+
+

@@ -82,3 +82,6 @@ class WorkspaceQuickInfo extends StatelessWidget {
     context.goToWorkspaces();
   }
 }
+
+
+

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
@@ -52,7 +50,10 @@ class TaskMetricsWidget extends StatelessWidget {
                 if (filterProvider.hasActiveFilters)
                   Chip(
                     avatar: const Icon(Icons.filter_list, size: 16),
-                    label: const Text('Filtrado', style: TextStyle(fontSize: 11)),
+                    label: const Text(
+                      'Filtrado',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: theme.colorScheme.primaryContainer,
                   ),
@@ -326,21 +327,14 @@ class _KpiCard extends StatelessWidget {
       width: cardWidth,
       padding: EdgeInsets.all(isCompact ? 8.0 : 12.0),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: isCompact ? 24 : 28,
-          ),
+          Icon(icon, color: color, size: isCompact ? 24 : 28),
           SizedBox(height: isCompact ? 4 : 8),
           Text(
             value,
@@ -355,7 +349,7 @@ class _KpiCard extends StatelessWidget {
             label,
             style: theme.textTheme.bodySmall?.copyWith(
               fontSize: isCompact ? 10 : 11,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -366,3 +360,6 @@ class _KpiCard extends StatelessWidget {
     );
   }
 }
+
+
+

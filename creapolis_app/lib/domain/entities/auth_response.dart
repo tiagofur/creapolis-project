@@ -28,3 +28,6 @@ class AuthResponse extends Equatable {
     role,
   ];
 }
+
+
+

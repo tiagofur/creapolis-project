@@ -136,7 +136,7 @@ class MyTasksWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 0,
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: InkWell(
         onTap: () {
           // TODO: Navegar a detalle de tarea
@@ -194,7 +194,7 @@ class MyTasksWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: priorityColor.withOpacity(0.15),
+                  color: priorityColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -213,3 +213,6 @@ class MyTasksWidget extends StatelessWidget {
     );
   }
 }
+
+
+

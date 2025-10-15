@@ -26,10 +26,10 @@ class StatusBadgeWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _getStatusColor(task.status).withOpacity(0.1),
+          color: _getStatusColor(task.status).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _getStatusColor(task.status).withOpacity(0.3),
+            color: _getStatusColor(task.status).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -187,10 +187,10 @@ class PriorityBadgeWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _getPriorityColor(task.priority).withOpacity(0.1),
+          color: _getPriorityColor(task.priority).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: _getPriorityColor(task.priority).withOpacity(0.3),
+            color: _getPriorityColor(task.priority).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -245,3 +245,6 @@ class PriorityBadgeWidget extends StatelessWidget {
     }
   }
 }
+
+
+

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../core/utils/app_logger.dart';
-import '../datasources/push_notification_remote_datasource.dart';
+import '../../data/datasources/push_notification_remote_datasource.dart';
 
 /// Handler para notificaciones en background
 @pragma('vm:entry-point')
@@ -141,7 +141,9 @@ class FirebaseMessagingService {
 
   /// Muestra una notificación dentro de la app (foreground)
   void _showInAppNotification(
-      RemoteNotification notification, Map<String, dynamic> data) {
+    RemoteNotification notification,
+    Map<String, dynamic> data,
+  ) {
     // TODO: Implementar UI para mostrar notificación en foreground
     // Por ejemplo, un SnackBar o un banner en la parte superior
     AppLogger.info('Showing in-app notification: ${notification.title}');
@@ -229,3 +231,6 @@ class FirebaseMessagingService {
     }
   }
 }
+
+
+

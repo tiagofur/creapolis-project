@@ -86,9 +86,15 @@ class NLPAnalysis {
   factory NLPAnalysis.fromJson(Map<String, dynamic> json) {
     return NLPAnalysis(
       overallConfidence: (json['overallConfidence'] as num).toDouble(),
-      priority: NLPFieldAnalysis.fromJson(json['priority'] as Map<String, dynamic>),
-      dueDate: NLPFieldAnalysis.fromJson(json['dueDate'] as Map<String, dynamic>),
-      assignee: NLPFieldAnalysis.fromJson(json['assignee'] as Map<String, dynamic>),
+      priority: NLPFieldAnalysis.fromJson(
+        json['priority'] as Map<String, dynamic>,
+      ),
+      dueDate: NLPFieldAnalysis.fromJson(
+        json['dueDate'] as Map<String, dynamic>,
+      ),
+      assignee: NLPFieldAnalysis.fromJson(
+        json['assignee'] as Map<String, dynamic>,
+      ),
       category: json['category'] != null
           ? NLPFieldAnalysis.fromJson(json['category'] as Map<String, dynamic>)
           : null,
@@ -192,22 +198,20 @@ class NLPRemoteDataSourceImpl implements NLPRemoteDataSource {
 
       final response = await _apiClient.post<Map<String, dynamic>>(
         '/nlp/parse-task-instruction',
-        data: {
-          'instruction': instruction,
-        },
+        data: {'instruction': instruction},
       );
 
       final responseBody = response.data;
-      
+
       if (responseBody == null) {
-        throw ServerException(message: 'Response body is null');
+        throw ServerException('Response body is null');
       }
 
       // La respuesta del backend viene en formato { success, message, data }
       final data = responseBody['data'] as Map<String, dynamic>;
-      
+
       final parsed = NLPParsedTask.fromJson(data);
-      
+
       AppLogger.info(
         'NLPRemoteDataSource: Instrucción parseada exitosamente. '
         'Confianza: ${(parsed.analysis.overallConfidence * 100).toStringAsFixed(1)}%',
@@ -216,14 +220,12 @@ class NLPRemoteDataSourceImpl implements NLPRemoteDataSource {
       return parsed;
     } catch (e) {
       AppLogger.error('NLPRemoteDataSource: Error parseando instrucción', e);
-      
+
       if (e is ServerException) {
         rethrow;
       }
-      
-      throw ServerException(
-        message: 'Error al parsear la instrucción: ${e.toString()}',
-      );
+
+      throw ServerException('Error al parsear la instrucción: ${e.toString()}');
     }
   }
 
@@ -237,55 +239,59 @@ class NLPRemoteDataSourceImpl implements NLPRemoteDataSource {
       );
 
       final responseBody = response.data;
-      
+
       if (responseBody == null) {
-        throw ServerException(message: 'Response body is null');
+        throw ServerException('Response body is null');
       }
 
       final data = responseBody['data'] as Map<String, dynamic>;
-      
+
       return NLPExamples.fromJson(data);
     } catch (e) {
       AppLogger.error('NLPRemoteDataSource: Error obteniendo ejemplos', e);
-      
+
       if (e is ServerException) {
         rethrow;
       }
-      
-      throw ServerException(
-        message: 'Error al obtener ejemplos: ${e.toString()}',
-      );
+
+      throw ServerException('Error al obtener ejemplos: ${e.toString()}');
     }
   }
 
   @override
   Future<Map<String, dynamic>> getServiceInfo() async {
     try {
-      AppLogger.info('NLPRemoteDataSource: Obteniendo información del servicio');
-
-      final response = await _apiClient.get<Map<String, dynamic>>(
-        '/nlp/info',
+      AppLogger.info(
+        'NLPRemoteDataSource: Obteniendo información del servicio',
       );
 
+      final response = await _apiClient.get<Map<String, dynamic>>('/nlp/info');
+
       final responseBody = response.data;
-      
+
       if (responseBody == null) {
-        throw ServerException(message: 'Response body is null');
+        throw ServerException('Response body is null');
       }
 
       final data = responseBody['data'] as Map<String, dynamic>;
-      
+
       return data;
     } catch (e) {
-      AppLogger.error('NLPRemoteDataSource: Error obteniendo info del servicio', e);
-      
+      AppLogger.error(
+        'NLPRemoteDataSource: Error obteniendo info del servicio',
+        e,
+      );
+
       if (e is ServerException) {
         rethrow;
       }
-      
+
       throw ServerException(
-        message: 'Error al obtener información del servicio: ${e.toString()}',
+        'Error al obtener información del servicio: ${e.toString()}',
       );
     }
   }
 }
+
+
+

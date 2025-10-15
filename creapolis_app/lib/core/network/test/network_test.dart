@@ -10,6 +10,7 @@
 /// - ✅ ErrorInterceptor mapea errores HTTP
 /// - ✅ RetryInterceptor reintenta en errores de red
 /// - ✅ ApiResponse parsea respuestas del backend
+library;
 
 import 'package:flutter/foundation.dart';
 
@@ -141,3 +142,6 @@ Future<void> testNetworking() async {
 void main() {
   testNetworking();
 }
+
+
+

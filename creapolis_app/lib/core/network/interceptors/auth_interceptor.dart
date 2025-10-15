@@ -7,7 +7,7 @@ import '../../utils/app_logger.dart';
 ///
 /// Funcionalidad:
 /// - Lee el token JWT del secure storage
-/// - Añade header "Authorization: Bearer <token>" a cada petición
+/// - Añade header 'Authorization: Bearer token' a cada petición
 /// - Omite header en endpoints públicos (login, register)
 class AuthInterceptor extends Interceptor {
   final FlutterSecureStorage _storage;

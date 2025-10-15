@@ -39,7 +39,7 @@ class PermissionsMatrix extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           headingRowColor: WidgetStateProperty.all(
-            Theme.of(context).primaryColor.withOpacity(0.1),
+            Theme.of(context).primaryColor.withValues(alpha: 0.1),
           ),
           columns: [
             const DataColumn(
@@ -167,3 +167,6 @@ class PermissionBadge extends StatelessWidget {
     );
   }
 }
+
+
+

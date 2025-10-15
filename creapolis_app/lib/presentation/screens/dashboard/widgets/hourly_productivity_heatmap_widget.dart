@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 
 /// Widget que muestra un heatmap de productividad por hora del día
 /// Muestra un gráfico de calor que indica las horas más productivas
 class HourlyProductivityHeatmapWidget extends StatefulWidget {
   final bool isTeamView;
 
-  const HourlyProductivityHeatmapWidget({
-    super.key,
-    this.isTeamView = false,
-  });
+  const HourlyProductivityHeatmapWidget({super.key, this.isTeamView = false});
 
   @override
   State<HourlyProductivityHeatmapWidget> createState() =>
@@ -166,10 +160,7 @@ class _HourlyProductivityHeatmapWidgetState
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Menor',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('Menor', style: theme.textTheme.bodySmall),
         const SizedBox(width: 8),
         for (var i = 0; i <= 4; i++) ...[
           Container(
@@ -182,10 +173,7 @@ class _HourlyProductivityHeatmapWidgetState
           ),
           const SizedBox(width: 4),
         ],
-        Text(
-          'Mayor',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('Mayor', style: theme.textTheme.bodySmall),
       ],
     );
   }
@@ -249,11 +237,11 @@ class _HourlyProductivityHeatmapWidgetState
     if (intensity < 0.2) {
       return theme.colorScheme.surfaceContainerHighest;
     } else if (intensity < 0.4) {
-      return theme.colorScheme.primaryContainer.withOpacity(0.4);
+      return theme.colorScheme.primaryContainer.withValues(alpha: 0.4);
     } else if (intensity < 0.6) {
-      return theme.colorScheme.primaryContainer.withOpacity(0.6);
+      return theme.colorScheme.primaryContainer.withValues(alpha: 0.6);
     } else if (intensity < 0.8) {
-      return theme.colorScheme.primary.withOpacity(0.7);
+      return theme.colorScheme.primary.withValues(alpha: 0.7);
     } else {
       return theme.colorScheme.primary;
     }
@@ -269,3 +257,6 @@ class _HourlyProductivityHeatmapWidgetState
     ];
   }
 }
+
+
+

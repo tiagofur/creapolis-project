@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../../core/error/failures.dart';
+import '../../core/errors/failures.dart';
 import '../entities/notification.dart';
 
 /// Interfaz del repositorio de notificaciones
@@ -26,3 +26,6 @@ abstract class NotificationRepository {
   /// [notificationId] ID de la notificación
   Future<Either<Failure, void>> deleteNotification(int notificationId);
 }
+
+
+

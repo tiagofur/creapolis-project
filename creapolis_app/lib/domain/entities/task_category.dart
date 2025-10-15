@@ -270,3 +270,6 @@ class CategoryMetrics extends Equatable {
         lastUpdated,
       ];
 }
+
+
+

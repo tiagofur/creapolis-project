@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:creapolis_app/core/error/failures.dart';
+import 'package:creapolis_app/core/errors/failures.dart';
 import 'package:creapolis_app/core/errors/exceptions.dart';
 import 'package:creapolis_app/domain/entities/search_result.dart';
 import 'package:creapolis_app/domain/repositories/search_repository.dart';
@@ -31,11 +31,11 @@ class SearchRepositoryImpl implements SearchRepository {
       final response = SearchResponse.fromJson(result);
       return Right(response);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Failed to perform search: $e'));
+      return Left(ServerFailure('Failed to perform search: $e'));
     }
   }
 
@@ -45,10 +45,7 @@ class SearchRepositoryImpl implements SearchRepository {
     int limit = 5,
   }) async {
     try {
-      final result = await _remoteDataSource.quickSearch(
-        query,
-        limit: limit,
-      );
+      final result = await _remoteDataSource.quickSearch(query, limit: limit);
 
       final suggestions = result
           .map((json) => SearchResult.fromJson(json))
@@ -56,11 +53,11 @@ class SearchRepositoryImpl implements SearchRepository {
 
       return Right(suggestions);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Failed to perform quick search: $e'));
+      return Left(ServerFailure('Failed to perform quick search: $e'));
     }
   }
 
@@ -79,17 +76,15 @@ class SearchRepositoryImpl implements SearchRepository {
         limit: limit,
       );
 
-      final tasks = result
-          .map((json) => SearchResult.fromJson(json))
-          .toList();
+      final tasks = result.map((json) => SearchResult.fromJson(json)).toList();
 
       return Right(tasks);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Failed to search tasks: $e'));
+      return Left(ServerFailure('Failed to search tasks: $e'));
     }
   }
 
@@ -112,11 +107,11 @@ class SearchRepositoryImpl implements SearchRepository {
 
       return Right(projects);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Failed to search projects: $e'));
+      return Left(ServerFailure('Failed to search projects: $e'));
     }
   }
 
@@ -133,17 +128,18 @@ class SearchRepositoryImpl implements SearchRepository {
         limit: limit,
       );
 
-      final users = result
-          .map((json) => SearchResult.fromJson(json))
-          .toList();
+      final users = result.map((json) => SearchResult.fromJson(json)).toList();
 
       return Right(users);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Failed to search users: $e'));
+      return Left(ServerFailure('Failed to search users: $e'));
     }
   }
 }
+
+
+

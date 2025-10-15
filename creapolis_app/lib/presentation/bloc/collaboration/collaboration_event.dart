@@ -186,3 +186,6 @@ class StopTyping extends CollaborationEvent {
   @override
   List<Object?> get props => [roomId, userId, userName, field];
 }
+
+
+

@@ -245,3 +245,6 @@ class GanttResourcePanel extends StatelessWidget {
         '${date.month.toString().padLeft(2, '0')}';
   }
 }
+
+
+

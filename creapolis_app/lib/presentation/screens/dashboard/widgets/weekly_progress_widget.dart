@@ -136,7 +136,7 @@ class WeeklyProgressWidget extends StatelessWidget {
           width: 24,
           height: 80,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Align(
@@ -170,3 +170,6 @@ class WeeklyProgressWidget extends StatelessWidget {
     );
   }
 }
+
+
+

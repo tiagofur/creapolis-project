@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../core/error/failures.dart';
+import '../../core/errors/failures.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/utils/app_logger.dart';
 import '../../domain/entities/notification.dart';
@@ -28,13 +28,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
       return Right(notifications.map((model) => model.toEntity()).toList());
     } on ServerException catch (e) {
       AppLogger.error('Error getting notifications: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error getting notifications: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error getting notifications: $e');
-      return Left(ServerFailure(message: 'Failed to get notifications'));
+      return Left(ServerFailure('Failed to get notifications'));
     }
   }
 
@@ -45,13 +45,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
       return Right(count);
     } on ServerException catch (e) {
       AppLogger.error('Error getting unread count: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error getting unread count: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error getting unread count: $e');
-      return Left(ServerFailure(message: 'Failed to get unread count'));
+      return Left(ServerFailure('Failed to get unread count'));
     }
   }
 
@@ -64,13 +64,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
       return Right(notificationModel.toEntity());
     } on ServerException catch (e) {
       AppLogger.error('Error marking notification as read: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      AppLogger.error('Network error marking notification as read: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      AppLogger.error(
+        'Network error marking notification as read: ${e.message}',
+      );
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error marking notification as read: $e');
-      return Left(ServerFailure(message: 'Failed to mark notification as read'));
+      return Left(ServerFailure('Failed to mark notification as read'));
     }
   }
 
@@ -81,13 +83,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
       return const Right(null);
     } on ServerException catch (e) {
       AppLogger.error('Error marking all as read: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error marking all as read: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error marking all as read: $e');
-      return Left(ServerFailure(message: 'Failed to mark all as read'));
+      return Left(ServerFailure('Failed to mark all as read'));
     }
   }
 
@@ -98,13 +100,16 @@ class NotificationRepositoryImpl implements NotificationRepository {
       return const Right(null);
     } on ServerException catch (e) {
       AppLogger.error('Error deleting notification: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error deleting notification: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error deleting notification: $e');
-      return Left(ServerFailure(message: 'Failed to delete notification'));
+      return Left(ServerFailure('Failed to delete notification'));
     }
   }
 }
+
+
+

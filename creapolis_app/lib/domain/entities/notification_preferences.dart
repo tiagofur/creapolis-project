@@ -80,3 +80,6 @@ class NotificationPreferences extends Equatable {
     );
   }
 }
+
+
+

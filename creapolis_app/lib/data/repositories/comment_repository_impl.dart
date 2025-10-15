@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../core/error/failures.dart';
+import '../../core/errors/failures.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/utils/app_logger.dart';
 import '../../domain/entities/comment.dart';
@@ -32,13 +32,13 @@ class CommentRepositoryImpl implements CommentRepository {
       return Right(commentModel.toEntity());
     } on ServerException catch (e) {
       AppLogger.error('Error creating comment: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error creating comment: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error creating comment: $e');
-      return Left(ServerFailure(message: 'Failed to create comment'));
+      return Left(ServerFailure('Failed to create comment'));
     }
   }
 
@@ -55,13 +55,13 @@ class CommentRepositoryImpl implements CommentRepository {
       return Right(comments.map((model) => model.toEntity()).toList());
     } on ServerException catch (e) {
       AppLogger.error('Error getting task comments: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error getting task comments: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error getting task comments: $e');
-      return Left(ServerFailure(message: 'Failed to get task comments'));
+      return Left(ServerFailure('Failed to get task comments'));
     }
   }
 
@@ -78,13 +78,13 @@ class CommentRepositoryImpl implements CommentRepository {
       return Right(comments.map((model) => model.toEntity()).toList());
     } on ServerException catch (e) {
       AppLogger.error('Error getting project comments: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error getting project comments: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error getting project comments: $e');
-      return Left(ServerFailure(message: 'Failed to get project comments'));
+      return Left(ServerFailure('Failed to get project comments'));
     }
   }
 
@@ -95,13 +95,13 @@ class CommentRepositoryImpl implements CommentRepository {
       return Right(commentModel.toEntity());
     } on ServerException catch (e) {
       AppLogger.error('Error getting comment: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error getting comment: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error getting comment: $e');
-      return Left(ServerFailure(message: 'Failed to get comment'));
+      return Left(ServerFailure('Failed to get comment'));
     }
   }
 
@@ -118,13 +118,13 @@ class CommentRepositoryImpl implements CommentRepository {
       return Right(commentModel.toEntity());
     } on ServerException catch (e) {
       AppLogger.error('Error updating comment: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error updating comment: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error updating comment: $e');
-      return Left(ServerFailure(message: 'Failed to update comment'));
+      return Left(ServerFailure('Failed to update comment'));
     }
   }
 
@@ -135,13 +135,16 @@ class CommentRepositoryImpl implements CommentRepository {
       return const Right(null);
     } on ServerException catch (e) {
       AppLogger.error('Error deleting comment: ${e.message}');
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
       AppLogger.error('Network error deleting comment: ${e.message}');
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('Unexpected error deleting comment: $e');
-      return Left(ServerFailure(message: 'Failed to delete comment'));
+      return Left(ServerFailure('Failed to delete comment'));
     }
   }
 }
+
+
+

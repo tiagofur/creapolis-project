@@ -23,8 +23,7 @@ abstract class NotificationRemoteDataSource {
 
 /// Implementación del data source remoto de notificaciones
 @LazySingleton(as: NotificationRemoteDataSource)
-class NotificationRemoteDataSourceImpl
-    implements NotificationRemoteDataSource {
+class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   final ApiClient _apiClient;
 
   NotificationRemoteDataSourceImpl(this._apiClient);
@@ -52,12 +51,12 @@ class NotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get notifications',
+        response.data?['message'] ?? 'Failed to get notifications',
       );
     } catch (e) {
       AppLogger.error('Error fetching notifications: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get notifications: $e');
+      throw ServerException('Failed to get notifications: $e');
     }
   }
 
@@ -75,12 +74,12 @@ class NotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get unread count',
+        response.data?['message'] ?? 'Failed to get unread count',
       );
     } catch (e) {
       AppLogger.error('Error fetching unread count: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get unread count: $e');
+      throw ServerException('Failed to get unread count: $e');
     }
   }
 
@@ -99,12 +98,12 @@ class NotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to mark as read',
+        response.data?['message'] ?? 'Failed to mark as read',
       );
     } catch (e) {
       AppLogger.error('Error marking notification as read: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to mark as read: $e');
+      throw ServerException('Failed to mark as read: $e');
     }
   }
 
@@ -121,12 +120,12 @@ class NotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to mark all as read',
+        response.data?['message'] ?? 'Failed to mark all as read',
       );
     } catch (e) {
       AppLogger.error('Error marking all notifications as read: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to mark all as read: $e');
+      throw ServerException('Failed to mark all as read: $e');
     }
   }
 
@@ -145,12 +144,15 @@ class NotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to delete notification',
+        response.data?['message'] ?? 'Failed to delete notification',
       );
     } catch (e) {
       AppLogger.error('Error deleting notification: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to delete notification: $e');
+      throw ServerException('Failed to delete notification: $e');
     }
   }
 }
+
+
+

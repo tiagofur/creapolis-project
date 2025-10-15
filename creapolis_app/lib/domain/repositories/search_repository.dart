@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:creapolis_app/core/error/failures.dart';
+import 'package:creapolis_app/core/errors/failures.dart';
 import 'package:creapolis_app/domain/entities/search_result.dart';
 
 /// Repository interface for search functionality
@@ -40,3 +40,6 @@ abstract class SearchRepository {
     int limit = 20,
   });
 }
+
+
+

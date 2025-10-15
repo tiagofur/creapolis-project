@@ -100,3 +100,6 @@ class CalendarConnection extends Equatable {
   @override
   List<Object?> get props => [status, userEmail, connectedAt, errorMessage];
 }
+
+
+

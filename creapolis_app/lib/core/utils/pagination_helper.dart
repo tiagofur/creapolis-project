@@ -175,3 +175,6 @@ class PaginatedResponse<T> {
   bool get hasMore => metadata.hasNextPage;
   int get nextPage => metadata.nextPage;
 }
+
+
+

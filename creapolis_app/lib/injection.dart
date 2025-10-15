@@ -78,3 +78,6 @@ Future<void> initializeDependencies() async {
   // Y todos los demás servicios marcados con @injectable
   _configureInjectable();
 }
+
+
+

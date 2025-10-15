@@ -56,3 +56,6 @@ class RemoveMemberEvent extends WorkspaceMemberEvent {
   @override
   List<Object?> get props => [workspaceId, userId];
 }
+
+
+

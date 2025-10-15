@@ -10,6 +10,7 @@
 ///   - ConflictException (409)
 ///   - ValidationException (422)
 ///   - ServerException (500-599)
+library;
 
 /// Excepción base para errores de API
 class ApiException implements Exception {
@@ -95,3 +96,6 @@ class ServerException extends ApiException {
   @override
   String toString() => 'ServerException($statusCode): $message';
 }
+
+
+

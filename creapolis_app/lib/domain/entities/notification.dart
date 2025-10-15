@@ -132,3 +132,6 @@ class Notification extends Equatable {
         readAt,
       ];
 }
+
+
+

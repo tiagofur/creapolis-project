@@ -214,8 +214,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Creapolis'),
@@ -336,7 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Icon(
               Icons.widgets_outlined,
               size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.5),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24),
             Text(
@@ -366,3 +364,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+
+
+

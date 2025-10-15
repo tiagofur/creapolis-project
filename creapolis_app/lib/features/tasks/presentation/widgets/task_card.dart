@@ -268,9 +268,9 @@ class _PriorityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _getColor().withOpacity(0.1),
+        color: _getColor().withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getColor().withOpacity(0.3), width: 1),
+        border: Border.all(color: _getColor().withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -337,9 +337,9 @@ class _StatusChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: _getColor().withOpacity(0.15),
+          color: _getColor().withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _getColor().withOpacity(0.4), width: 1.5),
+          border: Border.all(color: _getColor().withValues(alpha: 0.4), width: 1.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -398,7 +398,7 @@ class _StatusChip extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: _getColorForStatus(newStatus).withOpacity(0.2),
+                  color: _getColorForStatus(newStatus).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: _getColorForStatus(newStatus),
@@ -449,3 +449,6 @@ class _StatusChip extends StatelessWidget {
     }
   }
 }
+
+
+

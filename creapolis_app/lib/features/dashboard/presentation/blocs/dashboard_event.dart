@@ -17,3 +17,6 @@ class LoadDashboardData extends DashboardEvent {
 class RefreshDashboardData extends DashboardEvent {
   const RefreshDashboardData();
 }
+
+
+

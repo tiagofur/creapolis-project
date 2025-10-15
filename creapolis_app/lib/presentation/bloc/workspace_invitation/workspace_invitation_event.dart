@@ -55,3 +55,6 @@ class DeclineInvitationEvent extends WorkspaceInvitationEvent {
   @override
   List<Object?> get props => [token];
 }
+
+
+

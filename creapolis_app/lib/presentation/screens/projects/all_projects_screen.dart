@@ -69,24 +69,8 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
   }
 
   Widget _buildContent(BuildContext context) {
-    // TODO: Verificar si hay workspace activo
-    final hasWorkspace = false; // Temporal
-
-    if (!hasWorkspace) {
-      return _buildNoWorkspaceState(context);
-    }
-
-    // TODO: Obtener proyectos del BLoC
-    // final projects = <dynamic>[]; // Temporal: lista vacía
-    //
-    // if (projects.isEmpty) {
-    //   return _buildEmptyState(context);
-    // }
-    //
-    // return ListView.builder(...);
-
-    // Por ahora siempre mostramos empty state
-    return _buildEmptyState(context);
+    // TODO: Verificar si hay workspace activo - por ahora se asume que no hay workspace
+    return _buildNoWorkspaceState(context);
   }
 
   /// Estado cuando no hay workspace seleccionado
@@ -129,53 +113,6 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
               },
               icon: const Icon(Icons.business),
               label: const Text('Seleccionar Workspace'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Estado cuando no hay proyectos
-  Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.folder_open, size: 80, color: theme.colorScheme.outline),
-            const SizedBox(height: 24),
-            Text(
-              'No hay proyectos',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Crea tu primer proyecto para comenzar a organizar tareas',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                // TODO: Navegar a crear proyecto
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Crear proyecto - Por implementar'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Crear Proyecto'),
             ),
           ],
         ),
@@ -233,3 +170,6 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     }
   }
 }
+
+
+

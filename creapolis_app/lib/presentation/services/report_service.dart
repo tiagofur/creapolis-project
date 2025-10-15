@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,19 +9,19 @@ import '../../domain/entities/report_template.dart';
 /// Service for generating and exporting reports
 class ReportService {
   final Dio _dio;
-  
+
   ReportService(this._dio);
 
   /// Get available report templates
   Future<List<ReportTemplate>> getTemplates() async {
     try {
       final response = await _dio.get('/api/reports/templates');
-      
+
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
         return data.map((json) => ReportTemplate.fromJson(json)).toList();
       }
-      
+
       throw Exception('Failed to load templates');
     } catch (e) {
       rethrow;
@@ -37,18 +36,16 @@ class ReportService {
     DateTime? endDate,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'format': 'json',
-      };
-      
+      final queryParams = <String, dynamic>{'format': 'json'};
+
       if (metrics != null && metrics.isNotEmpty) {
         queryParams['metrics'] = metrics.join(',');
       }
-      
+
       if (startDate != null) {
         queryParams['startDate'] = startDate.toIso8601String();
       }
-      
+
       if (endDate != null) {
         queryParams['endDate'] = endDate.toIso8601String();
       }
@@ -87,18 +84,16 @@ class ReportService {
     DateTime? endDate,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'format': 'json',
-      };
-      
+      final queryParams = <String, dynamic>{'format': 'json'};
+
       if (metrics != null && metrics.isNotEmpty) {
         queryParams['metrics'] = metrics.join(',');
       }
-      
+
       if (startDate != null) {
         queryParams['startDate'] = startDate.toIso8601String();
       }
-      
+
       if (endDate != null) {
         queryParams['endDate'] = endDate.toIso8601String();
       }
@@ -154,16 +149,18 @@ class ReportService {
         final data = response.data['data'];
         return Report(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          name: entityType == 'project' 
-              ? data['project']['name'] 
+          name: entityType == 'project'
+              ? data['project']['name']
               : data['workspace']['name'],
-          type: entityType == 'project' ? ReportType.project : ReportType.workspace,
+          type: entityType == 'project'
+              ? ReportType.project
+              : ReportType.workspace,
           entityId: entityId,
           data: data,
           generatedAt: DateTime.parse(data['generatedAt']),
           startDate: startDate,
           endDate: endDate,
-          metrics: data['template'] != null 
+          metrics: data['template'] != null
               ? (data['template']['metrics'] as List).cast<String>()
               : [],
           templateId: templateId,
@@ -189,9 +186,7 @@ class ReportService {
         endpoint = '/api/reports/workspace/${report.entityId}';
       }
 
-      final queryParams = <String, dynamic>{
-        'format': format.name,
-      };
+      final queryParams = <String, dynamic>{'format': format.name};
 
       if (report.metrics.isNotEmpty) {
         queryParams['metrics'] = report.metrics.join(',');
@@ -208,21 +203,20 @@ class ReportService {
       final response = await _dio.get(
         endpoint,
         queryParameters: queryParams,
-        options: Options(
-          responseType: ResponseType.bytes,
-        ),
+        options: Options(responseType: ResponseType.bytes),
       );
 
       if (response.statusCode == 200) {
         // Save to documents directory
         final directory = await getApplicationDocumentsDirectory();
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = 'report_${report.id}_$timestamp.${format.fileExtension}';
+        final fileName =
+            'report_${report.id}_$timestamp.${format.fileExtension}';
         final filePath = '${directory.path}/$fileName';
-        
+
         final file = File(filePath);
         await file.writeAsBytes(response.data);
-        
+
         return filePath;
       }
 
@@ -239,11 +233,10 @@ class ReportService {
   }) async {
     try {
       final filePath = await exportReport(report: report, format: format);
-      
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        text: 'Reporte: ${report.name}',
-      );
+
+      await Share.shareXFiles([
+        XFile(filePath),
+      ], text: 'Reporte: ${report.name}');
     } catch (e) {
       rethrow;
     }
@@ -269,21 +262,20 @@ class ReportService {
           if (startDate != null) 'startDate': startDate.toIso8601String(),
           if (endDate != null) 'endDate': endDate.toIso8601String(),
         },
-        options: Options(
-          responseType: ResponseType.bytes,
-        ),
+        options: Options(responseType: ResponseType.bytes),
       );
 
       if (response.statusCode == 200) {
         // Save to documents directory
         final directory = await getApplicationDocumentsDirectory();
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = '${templateId}_${entityId}_$timestamp.${format.fileExtension}';
+        final fileName =
+            '${templateId}_${entityId}_$timestamp.${format.fileExtension}';
         final filePath = '${directory.path}/$fileName';
-        
+
         final file = File(filePath);
         await file.writeAsBytes(response.data);
-        
+
         return filePath;
       }
 
@@ -293,3 +285,6 @@ class ReportService {
     }
   }
 }
+
+
+

@@ -14,10 +14,7 @@ class NLPRepositoryImpl implements NLPRepository {
   final NLPRemoteDataSource _remoteDataSource;
   final ConnectivityService _connectivityService;
 
-  NLPRepositoryImpl(
-    this._remoteDataSource,
-    this._connectivityService,
-  );
+  NLPRepositoryImpl(this._remoteDataSource, this._connectivityService);
 
   @override
   Future<Either<Failure, NLPParsedTask>> parseTaskInstruction(
@@ -28,7 +25,9 @@ class NLPRepositoryImpl implements NLPRepository {
       final isOnline = await _connectivityService.isConnected;
       if (!isOnline) {
         return const Left(
-          NetworkFailure('Se requiere conexión a internet para usar el servicio NLP'),
+          NetworkFailure(
+            'Se requiere conexión a internet para usar el servicio NLP',
+          ),
         );
       }
 
@@ -46,7 +45,7 @@ class NLPRepositoryImpl implements NLPRepository {
       }
 
       final result = await _remoteDataSource.parseTaskInstruction(instruction);
-      
+
       AppLogger.info(
         'NLPRepository: Instrucción parseada exitosamente. '
         'Título: "${result.title}", Confianza: ${(result.analysis.overallConfidence * 100).toStringAsFixed(1)}%',
@@ -61,7 +60,7 @@ class NLPRepositoryImpl implements NLPRepository {
       return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('NLPRepository: Error inesperado', e);
-      return Left(UnexpectedFailure('Error inesperado: ${e.toString()}'));
+      return Left(UnknownFailure('Error inesperado: ${e.toString()}'));
     }
   }
 
@@ -72,12 +71,14 @@ class NLPRepositoryImpl implements NLPRepository {
       final isOnline = await _connectivityService.isConnected;
       if (!isOnline) {
         return const Left(
-          NetworkFailure('Se requiere conexión a internet para obtener ejemplos'),
+          NetworkFailure(
+            'Se requiere conexión a internet para obtener ejemplos',
+          ),
         );
       }
 
       final result = await _remoteDataSource.getExamples();
-      
+
       return Right(result);
     } on ServerException catch (e) {
       AppLogger.error('NLPRepository: Error obteniendo ejemplos', e);
@@ -87,7 +88,7 @@ class NLPRepositoryImpl implements NLPRepository {
       return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('NLPRepository: Error inesperado', e);
-      return Left(UnexpectedFailure('Error inesperado: ${e.toString()}'));
+      return Left(UnknownFailure('Error inesperado: ${e.toString()}'));
     }
   }
 
@@ -98,12 +99,14 @@ class NLPRepositoryImpl implements NLPRepository {
       final isOnline = await _connectivityService.isConnected;
       if (!isOnline) {
         return const Left(
-          NetworkFailure('Se requiere conexión a internet para obtener información'),
+          NetworkFailure(
+            'Se requiere conexión a internet para obtener información',
+          ),
         );
       }
 
       final result = await _remoteDataSource.getServiceInfo();
-      
+
       return Right(result);
     } on ServerException catch (e) {
       AppLogger.error('NLPRepository: Error obteniendo información', e);
@@ -113,7 +116,10 @@ class NLPRepositoryImpl implements NLPRepository {
       return Left(NetworkFailure(e.message));
     } catch (e) {
       AppLogger.error('NLPRepository: Error inesperado', e);
-      return Left(UnexpectedFailure('Error inesperado: ${e.toString()}'));
+      return Left(UnknownFailure('Error inesperado: ${e.toString()}'));
     }
   }
 }
+
+
+

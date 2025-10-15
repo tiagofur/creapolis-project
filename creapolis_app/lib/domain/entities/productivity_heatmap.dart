@@ -146,3 +146,6 @@ class ProductivityHeatmap extends Equatable {
         totalLogs,
       ];
 }
+
+
+

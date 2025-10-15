@@ -53,3 +53,6 @@ class TimeSlot extends Equatable {
   @override
   List<Object?> get props => [startTime, endTime, isAvailable];
 }
+
+
+

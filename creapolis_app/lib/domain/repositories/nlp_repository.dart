@@ -14,3 +14,6 @@ abstract class NLPRepository {
   /// Obtiene información sobre las capacidades del servicio NLP
   Future<Either<Failure, Map<String, dynamic>>> getServiceInfo();
 }
+
+
+

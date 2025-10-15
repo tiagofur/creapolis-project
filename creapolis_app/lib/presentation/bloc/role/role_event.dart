@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/entities/project_role.dart';
 
-/// Events for RoleBloc
+/// Eventos para el BLoC de roles
 abstract class RoleEvent extends Equatable {
   const RoleEvent();
 
@@ -36,7 +35,13 @@ class CreateProjectRole extends RoleEvent {
   });
 
   @override
-  List<Object?> get props => [projectId, name, description, isDefault, permissions];
+  List<Object?> get props => [
+    projectId,
+    name,
+    description,
+    isDefault,
+    permissions,
+  ];
 }
 
 /// Update a role
@@ -86,10 +91,7 @@ class AssignRoleToUser extends RoleEvent {
   final int roleId;
   final int userId;
 
-  const AssignRoleToUser({
-    required this.roleId,
-    required this.userId,
-  });
+  const AssignRoleToUser({required this.roleId, required this.userId});
 
   @override
   List<Object?> get props => [roleId, userId];
@@ -100,10 +102,7 @@ class RemoveRoleFromUser extends RoleEvent {
   final int roleId;
   final int userId;
 
-  const RemoveRoleFromUser({
-    required this.roleId,
-    required this.userId,
-  });
+  const RemoveRoleFromUser({required this.roleId, required this.userId});
 
   @override
   List<Object?> get props => [roleId, userId];
@@ -134,3 +133,6 @@ class CheckUserPermission extends RoleEvent {
   @override
   List<Object?> get props => [projectId, resource, action];
 }
+
+
+

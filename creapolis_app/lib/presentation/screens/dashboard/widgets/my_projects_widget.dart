@@ -124,7 +124,7 @@ class MyProjectsWidget extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: InkWell(
         onTap: () {
           // TODO: Navegar a detalle de proyecto
@@ -197,7 +197,7 @@ class MyProjectsWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: theme.colorScheme.outline.withOpacity(
+                      backgroundColor: theme.colorScheme.outline.withValues(alpha: 
                         0.2,
                       ),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
@@ -220,3 +220,6 @@ class MyProjectsWidget extends StatelessWidget {
     return project.progress;
   }
 }
+
+
+

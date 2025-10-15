@@ -738,3 +738,6 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   /// Getter para lista de workspaces
   List<Workspace> get workspaces => _workspaces;
 }
+
+
+

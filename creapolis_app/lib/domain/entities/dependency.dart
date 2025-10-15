@@ -38,3 +38,6 @@ class Dependency extends Equatable {
   @override
   List<Object?> get props => [id, predecessorId, successorId, type];
 }
+
+
+

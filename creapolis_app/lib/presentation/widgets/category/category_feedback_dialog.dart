@@ -4,7 +4,12 @@ import '../../../domain/entities/task_category.dart';
 /// Widget para mostrar y enviar feedback sobre una categorización
 class CategoryFeedbackDialog extends StatefulWidget {
   final CategorySuggestion suggestion;
-  final Function(bool wasCorrect, TaskCategoryType? correctedCategory, String? comment) onSubmit;
+  final Function(
+    bool wasCorrect,
+    TaskCategoryType? correctedCategory,
+    String? comment,
+  )
+  onSubmit;
 
   const CategoryFeedbackDialog({
     super.key,
@@ -39,9 +44,9 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
             // Mostrar sugerencia actual
             Text(
               'Categoría sugerida:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -62,43 +67,54 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
             // ¿Fue correcta?
             Text(
               '¿Fue correcta la sugerencia?',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('Sí, fue correcta'),
-                    value: true,
-                    groupValue: _wasCorrect,
-                    onChanged: (value) {
-                      setState(() {
-                        _wasCorrect = value!;
-                        _correctedCategory = null;
-                      });
-                    },
-                  ),
+            RadioTheme(
+              data: RadioThemeData(
+                fillColor: WidgetStateProperty.all(
+                  Theme.of(context).primaryColor,
                 ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('No, fue incorrecta'),
-                    value: false,
-                    groupValue: _wasCorrect,
-                    onChanged: (value) {
-                      setState(() {
-                        _wasCorrect = value!;
-                      });
-                    },
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text('Sí, fue correcta'),
+                          value: true,
+                          selected: _wasCorrect == true,
+                          onChanged: (value) {
+                            setState(() {
+                              _wasCorrect = value!;
+                              _correctedCategory = null;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text('No, fue incorrecta'),
+                          value: false,
+                          selected: _wasCorrect == false,
+                          onChanged: (value) {
+                            setState(() {
+                              _wasCorrect = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -106,13 +122,13 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
             if (!_wasCorrect) ...[
               Text(
                 'Selecciona la categoría correcta:',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<TaskCategoryType>(
-                value: _correctedCategory,
+                initialValue: _correctedCategory,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Selecciona una categoría',
@@ -146,9 +162,9 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
             // Comentario opcional
             Text(
               'Comentario (opcional):',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -182,7 +198,9 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
             widget.onSubmit(
               _wasCorrect,
               _correctedCategory,
-              _commentController.text.isNotEmpty ? _commentController.text : null,
+              _commentController.text.isNotEmpty
+                  ? _commentController.text
+                  : null,
             );
             Navigator.of(context).pop();
           },

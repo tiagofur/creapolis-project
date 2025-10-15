@@ -196,3 +196,6 @@ int? _parseDurationInSeconds(Map<String, dynamic> json) {
   final durationInHours = _parseNum(durationRaw, fieldName: 'duration');
   return (durationInHours * 3600).round();
 }
+
+
+

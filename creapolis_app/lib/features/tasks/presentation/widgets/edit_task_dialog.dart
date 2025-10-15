@@ -187,7 +187,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
                 // Prioridad
                 DropdownButtonFormField<TaskPriority>(
-                  value: _priority,
+                  initialValue: _priority,
                   decoration: const InputDecoration(
                     labelText: 'Prioridad',
                     prefixIcon: Icon(Icons.flag),
@@ -221,7 +221,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
                 // Estado
                 DropdownButtonFormField<TaskStatus>(
-                  value: _status,
+                  initialValue: _status,
                   decoration: const InputDecoration(
                     labelText: 'Estado',
                     prefixIcon: Icon(Icons.timeline),

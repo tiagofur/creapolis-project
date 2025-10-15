@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 
 import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/services/role_based_preferences_service.dart';
+import '../../../domain/entities/dashboard_widget_config.dart';
 import '../../../domain/entities/role_based_ui_config.dart';
 import '../../../domain/entities/user.dart';
 
@@ -43,10 +43,7 @@ class _RoleBasedPreferencesScreenState
 
     try {
       _userPreferences = _roleService.currentUserPreferences;
-      if (_userPreferences == null) {
-        // Si no hay preferencias cargadas, usar un default
-        _userPreferences = UserUIPreferences(userRole: UserRole.teamMember);
-      }
+      _userPreferences ??= UserUIPreferences(userRole: UserRole.teamMember);
       _roleConfig = _roleService.getRoleBaseConfig();
     } catch (e) {
       if (mounted) {
@@ -109,9 +106,8 @@ class _RoleBasedPreferencesScreenState
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
       }
 
@@ -143,7 +139,9 @@ class _RoleBasedPreferencesScreenState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tus preferencias han sido exportadas correctamente.'),
+                const Text(
+                  'Tus preferencias han sido exportadas correctamente.',
+                ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -251,9 +249,8 @@ class _RoleBasedPreferencesScreenState
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
       }
 
@@ -327,20 +324,14 @@ class _RoleBasedPreferencesScreenState
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Preferencias por Rol'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        appBar: AppBar(title: const Text('Preferencias por Rol')),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_userPreferences == null || _roleConfig == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Preferencias por Rol'),
-        ),
+        appBar: AppBar(title: const Text('Preferencias por Rol')),
         body: const Center(
           child: Text('No se pudieron cargar las preferencias'),
         ),
@@ -442,9 +433,9 @@ class _RoleBasedPreferencesScreenState
             const SizedBox(height: 8),
             Text(
               _getRoleDescription(_userPreferences!.userRole),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
             Container(
@@ -491,10 +482,7 @@ class _RoleBasedPreferencesScreenState
               children: [
                 const Icon(Icons.palette),
                 const SizedBox(width: 8),
-                Text(
-                  'Tema',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Tema', style: Theme.of(context).textTheme.titleMedium),
                 const Spacer(),
                 if (hasOverride)
                   Chip(
@@ -676,8 +664,8 @@ class _RoleBasedPreferencesScreenState
                 Text(
                   '¿Cómo funciona?',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.amber.shade900,
-                      ),
+                    color: Colors.amber.shade900,
+                  ),
                 ),
               ],
             ),
@@ -738,10 +726,7 @@ class _RoleBasedPreferencesScreenState
               ),
               Text(
                 description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.amber.shade800,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.amber.shade800),
               ),
             ],
           ),
@@ -809,3 +794,6 @@ class _RoleBasedPreferencesScreenState
     }
   }
 }
+
+
+

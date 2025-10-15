@@ -120,3 +120,6 @@ class WorkspaceError extends WorkspaceState {
   @override
   List<Object?> get props => [message];
 }
+
+
+

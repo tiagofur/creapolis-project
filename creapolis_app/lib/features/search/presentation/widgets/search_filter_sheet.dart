@@ -347,7 +347,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
       ),
       selected: isSelected,
       onSelected: onSelected,
-      selectedColor: (color ?? Theme.of(context).primaryColor).withOpacity(0.2),
+      selectedColor: (color ?? Theme.of(context).primaryColor).withValues(alpha: 0.2),
       checkmarkColor: color ?? Theme.of(context).primaryColor,
     );
   }
@@ -421,3 +421,6 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
     Navigator.pop(context);
   }
 }
+
+
+

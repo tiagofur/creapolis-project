@@ -56,3 +56,6 @@ abstract class ProjectRepository {
   /// Retorna `Left(Failure)` si hay error.
   Future<Either<Failure, void>> deleteProject(int id);
 }
+
+
+

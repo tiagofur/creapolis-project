@@ -110,3 +110,6 @@ class ClearSearch extends SearchEvent {
 class ClearFilters extends SearchEvent {
   const ClearFilters();
 }
+
+
+

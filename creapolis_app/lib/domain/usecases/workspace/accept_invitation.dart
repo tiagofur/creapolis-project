@@ -24,3 +24,6 @@ class AcceptInvitationUseCase {
     return await _repository.acceptInvitation(params.token);
   }
 }
+
+
+

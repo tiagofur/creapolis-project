@@ -80,3 +80,6 @@ class WorkspaceInvitationError extends WorkspaceInvitationState {
   @override
   List<Object?> get props => [message];
 }
+
+
+

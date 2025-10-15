@@ -9,7 +9,9 @@ abstract class PushNotificationRemoteDataSource {
   Future<void> registerDevice(String token, String platform);
   Future<void> unregisterDevice(String token);
   Future<Map<String, dynamic>> getPreferences();
-  Future<Map<String, dynamic>> updatePreferences(Map<String, dynamic> preferences);
+  Future<Map<String, dynamic>> updatePreferences(
+    Map<String, dynamic> preferences,
+  );
   Future<void> subscribeToTopic(String topic);
   Future<void> unsubscribeFromTopic(String topic);
   Future<List<Map<String, dynamic>>> getLogs({int limit = 50});
@@ -34,10 +36,7 @@ class PushNotificationRemoteDataSourceImpl
 
       final response = await _apiClient.post(
         '/push/register',
-        data: {
-          'token': token,
-          'platform': platform,
-        },
+        data: {'token': token, 'platform': platform},
       );
 
       if (response.statusCode == 200) {
@@ -46,12 +45,12 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to register device',
+        response.data?['message'] ?? 'Failed to register device',
       );
     } catch (e) {
       AppLogger.error('Error registering device: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to register device: $e');
+      throw ServerException('Failed to register device: $e');
     }
   }
 
@@ -71,12 +70,12 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to unregister device',
+        response.data?['message'] ?? 'Failed to unregister device',
       );
     } catch (e) {
       AppLogger.error('Error unregistering device: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to unregister device: $e');
+      throw ServerException('Failed to unregister device: $e');
     }
   }
 
@@ -93,18 +92,19 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get preferences',
+        response.data?['message'] ?? 'Failed to get preferences',
       );
     } catch (e) {
       AppLogger.error('Error fetching preferences: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get preferences: $e');
+      throw ServerException('Failed to get preferences: $e');
     }
   }
 
   @override
   Future<Map<String, dynamic>> updatePreferences(
-      Map<String, dynamic> preferences) async {
+    Map<String, dynamic> preferences,
+  ) async {
     try {
       AppLogger.info('Updating notification preferences');
 
@@ -119,12 +119,12 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to update preferences',
+        response.data?['message'] ?? 'Failed to update preferences',
       );
     } catch (e) {
       AppLogger.error('Error updating preferences: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to update preferences: $e');
+      throw ServerException('Failed to update preferences: $e');
     }
   }
 
@@ -144,12 +144,12 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to subscribe to topic',
+        response.data?['message'] ?? 'Failed to subscribe to topic',
       );
     } catch (e) {
       AppLogger.error('Error subscribing to topic: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to subscribe to topic: $e');
+      throw ServerException('Failed to subscribe to topic: $e');
     }
   }
 
@@ -169,13 +169,12 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message:
-            response.data?['message'] ?? 'Failed to unsubscribe from topic',
+        response.data?['message'] ?? 'Failed to unsubscribe from topic',
       );
     } catch (e) {
       AppLogger.error('Error unsubscribing from topic: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to unsubscribe from topic: $e');
+      throw ServerException('Failed to unsubscribe from topic: $e');
     }
   }
 
@@ -195,13 +194,11 @@ class PushNotificationRemoteDataSourceImpl
         return data.map((json) => Map<String, dynamic>.from(json)).toList();
       }
 
-      throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get logs',
-      );
+      throw ServerException(response.data?['message'] ?? 'Failed to get logs');
     } catch (e) {
       AppLogger.error('Error fetching logs: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get logs: $e');
+      throw ServerException('Failed to get logs: $e');
     }
   }
 
@@ -232,12 +229,15 @@ class PushNotificationRemoteDataSourceImpl
       }
 
       throw ServerException(
-        message: response.data?['message'] ?? 'Failed to get metrics',
+        response.data?['message'] ?? 'Failed to get metrics',
       );
     } catch (e) {
       AppLogger.error('Error fetching metrics: $e');
       if (e is ServerException) rethrow;
-      throw ServerException(message: 'Failed to get metrics: $e');
+      throw ServerException('Failed to get metrics: $e');
     }
   }
 }
+
+
+

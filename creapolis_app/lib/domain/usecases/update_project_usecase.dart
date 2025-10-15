@@ -88,3 +88,6 @@ class UpdateProjectParams extends Equatable {
     managerId,
   ];
 }
+
+
+

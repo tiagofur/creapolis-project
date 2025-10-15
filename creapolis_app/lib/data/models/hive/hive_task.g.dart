@@ -87,3 +87,6 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+
+

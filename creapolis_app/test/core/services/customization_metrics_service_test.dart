@@ -69,7 +69,11 @@ void main() {
         expect(service.totalEvents, 1);
         final events = service.getAllEvents();
         expect(events.first.type, CustomizationEventType.widgetReordered);
-        expect(events.first.metadata?['widgetOrder'], ['widget1', 'widget2', 'widget3']);
+        expect(events.first.metadata?['widgetOrder'], [
+          'widget1',
+          'widget2',
+          'widget3',
+        ]);
       });
 
       test('debe registrar reset de dashboard', () async {
@@ -103,24 +107,28 @@ void main() {
         await service.trackThemeChange('dark', 'system');
         await service.trackWidgetAdded('quickStats');
 
-        final themeEvents = service.getEventsByType(CustomizationEventType.themeChanged);
+        final themeEvents = service.getEventsByType(
+          CustomizationEventType.themeChanged,
+        );
         expect(themeEvents.length, 2);
 
-        final widgetEvents = service.getEventsByType(CustomizationEventType.widgetAdded);
+        final widgetEvents = service.getEventsByType(
+          CustomizationEventType.widgetAdded,
+        );
         expect(widgetEvents.length, 1);
       });
 
       test('debe obtener eventos entre fechas', () async {
         final startDate = DateTime.now();
-        
+
         await service.trackThemeChange('light', 'dark');
         await Future.delayed(const Duration(milliseconds: 100));
-        
+
         final midDate = DateTime.now();
-        
+
         await service.trackWidgetAdded('quickStats');
         await Future.delayed(const Duration(milliseconds: 100));
-        
+
         final endDate = DateTime.now();
 
         final eventsInRange = service.getEventsBetween(startDate, endDate);
@@ -196,17 +204,15 @@ void main() {
       });
 
       test('debe generar métricas para rango de fechas', () async {
-        final startDate = DateTime.now();
-        
         await service.trackThemeChange('light', 'dark');
         await Future.delayed(const Duration(milliseconds: 100));
-        
+
         final midDate = DateTime.now();
-        
+
         await service.trackWidgetAdded('quickStats');
         await service.trackWidgetAdded('myTasks');
         await Future.delayed(const Duration(milliseconds: 100));
-        
+
         final endDate = DateTime.now();
 
         final allMetrics = service.generateMetrics();
@@ -267,21 +273,24 @@ void main() {
         expect(service.lastEventDate, null);
       });
 
-      test('debe retornar fechas correctas de primer y último evento', () async {
-        await service.trackThemeChange('light', 'dark');
-        await Future.delayed(const Duration(milliseconds: 100));
-        await service.trackWidgetAdded('quickStats');
+      test(
+        'debe retornar fechas correctas de primer y último evento',
+        () async {
+          await service.trackThemeChange('light', 'dark');
+          await Future.delayed(const Duration(milliseconds: 100));
+          await service.trackWidgetAdded('quickStats');
 
-        expect(service.firstEventDate, isNotNull);
-        expect(service.lastEventDate, isNotNull);
-        expect(service.lastEventDate!.isAfter(service.firstEventDate!), true);
-      });
+          expect(service.firstEventDate, isNotNull);
+          expect(service.lastEventDate, isNotNull);
+          expect(service.lastEventDate!.isAfter(service.firstEventDate!), true);
+        },
+      );
     });
 
     group('Privacidad y Anonimización', () {
       test('no debe almacenar información personal identificable', () async {
         await service.trackThemeChange('light', 'dark');
-        
+
         final events = service.getAllEvents();
         final event = events.first;
 
@@ -302,3 +311,6 @@ void main() {
     });
   });
 }
+
+
+

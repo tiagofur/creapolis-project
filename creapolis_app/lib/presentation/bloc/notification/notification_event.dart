@@ -76,3 +76,6 @@ class UpdateRealtimeNotification extends NotificationEvent {
   @override
   List<Object?> get props => [notificationId, isRead];
 }
+
+
+

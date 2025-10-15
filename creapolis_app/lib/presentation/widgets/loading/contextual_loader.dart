@@ -227,3 +227,6 @@ class LoadingOverlay extends StatelessWidget {
 
 /// Tipos de loader disponibles
 enum LoaderType { circular, linear, dots }
+
+
+

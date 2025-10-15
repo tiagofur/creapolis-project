@@ -74,3 +74,6 @@ class TimeoutFailure extends Failure {
 class CancelFailure extends Failure {
   const CancelFailure([super.message = 'Operación cancelada']);
 }
+
+
+

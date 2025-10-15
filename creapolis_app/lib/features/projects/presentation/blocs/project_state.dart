@@ -98,3 +98,6 @@ class ProjectError extends ProjectState {
   @override
   List<Object?> get props => [message, currentProjects];
 }
+
+
+

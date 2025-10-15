@@ -103,3 +103,6 @@ class TaskAllocation extends Equatable {
     status,
   ];
 }
+
+
+

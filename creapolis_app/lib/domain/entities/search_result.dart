@@ -198,3 +198,6 @@ class SearchResponse extends Equatable {
     );
   }
 }
+
+
+

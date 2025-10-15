@@ -112,3 +112,6 @@ class CustomizationEvent extends Equatable {
         metadata,
       ];
 }
+
+
+

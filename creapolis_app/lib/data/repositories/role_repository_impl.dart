@@ -14,16 +14,17 @@ class RoleRepositoryImpl implements RoleRepository {
 
   @override
   Future<Either<Failure, List<ProjectRole>>> getProjectRoles(
-      int projectId) async {
+    int projectId,
+  ) async {
     try {
       final roles = await remoteDataSource.getProjectRoles(projectId);
       return Right(roles);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al obtener roles',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al obtener roles'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -45,11 +46,11 @@ class RoleRepositoryImpl implements RoleRepository {
       );
       return Right(role);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al crear rol',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al crear rol'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -69,11 +70,11 @@ class RoleRepositoryImpl implements RoleRepository {
       );
       return Right(role);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al actualizar rol',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al actualizar rol'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -83,11 +84,11 @@ class RoleRepositoryImpl implements RoleRepository {
       await remoteDataSource.deleteProjectRole(roleId);
       return const Right(null);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al eliminar rol',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al eliminar rol'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -103,11 +104,13 @@ class RoleRepositoryImpl implements RoleRepository {
       );
       return Right(role);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al actualizar permisos',
-      ));
+      return Left(
+        ServerFailure(
+          e.response?.data['message'] ?? 'Error al actualizar permisos',
+        ),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -117,17 +120,14 @@ class RoleRepositoryImpl implements RoleRepository {
     required int userId,
   }) async {
     try {
-      await remoteDataSource.assignRoleToUser(
-        roleId: roleId,
-        userId: userId,
-      );
+      await remoteDataSource.assignRoleToUser(roleId: roleId, userId: userId);
       return const Right(null);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al asignar rol',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al asignar rol'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -137,33 +137,32 @@ class RoleRepositoryImpl implements RoleRepository {
     required int userId,
   }) async {
     try {
-      await remoteDataSource.removeRoleFromUser(
-        roleId: roleId,
-        userId: userId,
-      );
+      await remoteDataSource.removeRoleFromUser(roleId: roleId, userId: userId);
       return const Right(null);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al remover rol',
-      ));
+      return Left(
+        ServerFailure(e.response?.data['message'] ?? 'Error al remover rol'),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, List<RoleAuditLog>>> getRoleAuditLogs(
-      int roleId) async {
+    int roleId,
+  ) async {
     try {
       final logs = await remoteDataSource.getRoleAuditLogs(roleId);
       return Right(logs);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message:
-            e.response?.data['message'] ?? 'Error al obtener logs de auditoría',
-      ));
+      return Left(
+        ServerFailure(
+          e.response?.data['message'] ?? 'Error al obtener logs de auditoría',
+        ),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -181,11 +180,16 @@ class RoleRepositoryImpl implements RoleRepository {
       );
       return Right(hasPermission);
     } on DioException catch (e) {
-      return Left(ServerFailure(
-        message: e.response?.data['message'] ?? 'Error al verificar permiso',
-      ));
+      return Left(
+        ServerFailure(
+          e.response?.data['message'] ?? 'Error al verificar permiso',
+        ),
+      );
     } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
+
+
+

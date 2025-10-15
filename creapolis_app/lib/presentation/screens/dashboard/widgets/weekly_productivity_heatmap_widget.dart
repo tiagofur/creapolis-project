@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 /// Widget que muestra un heatmap de productividad por día de la semana
 /// Muestra una matriz de calor hora x día para identificar patrones semanales
 class WeeklyProductivityHeatmapWidget extends StatefulWidget {
   final bool isTeamView;
 
-  const WeeklyProductivityHeatmapWidget({
-    super.key,
-    this.isTeamView = false,
-  });
+  const WeeklyProductivityHeatmapWidget({super.key, this.isTeamView = false});
 
   @override
   State<WeeklyProductivityHeatmapWidget> createState() =>
@@ -124,17 +119,19 @@ class _WeeklyProductivityHeatmapWidgetState
           Row(
             children: [
               const SizedBox(width: 50), // Space for day labels
-              ...hours.map((hour) => SizedBox(
-                    width: 60,
-                    child: Center(
-                      child: Text(
-                        hour,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+              ...hours.map(
+                (hour) => SizedBox(
+                  width: 60,
+                  child: Center(
+                    child: Text(
+                      hour,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  )),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -166,7 +163,7 @@ class _WeeklyProductivityHeatmapWidgetState
                       padding: const EdgeInsets.only(right: 4),
                       child: Tooltip(
                         message:
-                            '${days[dayIndex]} ${actualHour}:00 - ${hours.toStringAsFixed(1)}h',
+                            '${days[dayIndex]} $actualHour:00 - ${hours.toStringAsFixed(1)}h',
                         child: Container(
                           width: 56,
                           height: 36,
@@ -207,10 +204,7 @@ class _WeeklyProductivityHeatmapWidgetState
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Menor',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('Menor', style: theme.textTheme.bodySmall),
         const SizedBox(width: 8),
         for (var i = 0; i <= 4; i++) ...[
           Container(
@@ -227,10 +221,7 @@ class _WeeklyProductivityHeatmapWidgetState
           ),
           const SizedBox(width: 4),
         ],
-        Text(
-          'Mayor',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('Mayor', style: theme.textTheme.bodySmall),
       ],
     );
   }
@@ -294,11 +285,11 @@ class _WeeklyProductivityHeatmapWidgetState
     if (intensity < 0.2) {
       return theme.colorScheme.surfaceContainerHighest;
     } else if (intensity < 0.4) {
-      return theme.colorScheme.primaryContainer.withOpacity(0.4);
+      return theme.colorScheme.primaryContainer.withValues(alpha: 0.4);
     } else if (intensity < 0.6) {
-      return theme.colorScheme.primaryContainer.withOpacity(0.6);
+      return theme.colorScheme.primaryContainer.withValues(alpha: 0.6);
     } else if (intensity < 0.8) {
-      return theme.colorScheme.primary.withOpacity(0.7);
+      return theme.colorScheme.primary.withValues(alpha: 0.7);
     } else {
       return theme.colorScheme.primary;
     }
@@ -342,3 +333,6 @@ class _WeeklyProductivityHeatmapWidgetState
     ];
   }
 }
+
+
+

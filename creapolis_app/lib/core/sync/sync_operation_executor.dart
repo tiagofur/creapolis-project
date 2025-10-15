@@ -67,9 +67,7 @@ class SyncOperationExecutor {
           return await _executeDeleteTask(data);
 
         default:
-          throw UnimplementedError(
-            'Operación no soportada: ${operation.type}',
-          );
+          throw UnimplementedError('Operación no soportada: ${operation.type}');
       }
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -388,41 +386,41 @@ class SyncOperationExecutor {
   // ========== HELPER METHODS ==========
 
   WorkspaceType _parseWorkspaceType(String? type) {
-    if (type == null) return WorkspaceType.business;
-    
+    if (type == null) return WorkspaceType.enterprise;
+
     switch (type.toLowerCase()) {
       case 'personal':
         return WorkspaceType.personal;
       case 'business':
-        return WorkspaceType.business;
+        return WorkspaceType.enterprise;
       case 'educational':
-        return WorkspaceType.educational;
+        return WorkspaceType.team;
       default:
-        return WorkspaceType.business;
+        return WorkspaceType.enterprise;
     }
   }
 
   ProjectStatus _parseProjectStatus(String status) {
     switch (status.toLowerCase()) {
       case 'planning':
-        return ProjectStatus.planning;
+        return ProjectStatus.planned;
       case 'active':
         return ProjectStatus.active;
       case 'on_hold':
-        return ProjectStatus.onHold;
+        return ProjectStatus.paused;
       case 'completed':
         return ProjectStatus.completed;
       case 'cancelled':
         return ProjectStatus.cancelled;
       default:
-        return ProjectStatus.planning;
+        return ProjectStatus.planned;
     }
   }
 
   TaskStatus _parseTaskStatus(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return TaskStatus.pending;
+        return TaskStatus.planned;
       case 'in_progress':
         return TaskStatus.inProgress;
       case 'completed':
@@ -430,7 +428,7 @@ class SyncOperationExecutor {
       case 'blocked':
         return TaskStatus.blocked;
       default:
-        return TaskStatus.pending;
+        return TaskStatus.planned;
     }
   }
 
@@ -449,3 +447,6 @@ class SyncOperationExecutor {
     }
   }
 }
+
+
+

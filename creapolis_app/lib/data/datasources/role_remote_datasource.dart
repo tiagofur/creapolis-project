@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
 import '../../domain/entities/project_role.dart';
-import '../core/constants/api_constants.dart';
-import '../core/network/dio_client.dart';
-import '../core/utils/app_logger.dart';
+import '../../core/constants/api_constants.dart';
+import '../../core/network/dio_client.dart';
+import '../../core/utils/app_logger.dart';
 
 /// Remote data source for role and permission operations
 class RoleRemoteDataSource {
@@ -24,7 +23,8 @@ class RoleRemoteDataSource {
             .toList();
       } else {
         throw Exception(
-            response.data['message'] ?? 'Error al obtener roles del proyecto');
+          response.data['message'] ?? 'Error al obtener roles del proyecto',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in getProjectRoles', e);
@@ -53,10 +53,12 @@ class RoleRemoteDataSource {
 
       if (response.data['success'] == true) {
         return ProjectRole.fromJson(
-            response.data['data'] as Map<String, dynamic>);
+          response.data['data'] as Map<String, dynamic>,
+        );
       } else {
         throw Exception(
-            response.data['message'] ?? 'Error al crear rol del proyecto');
+          response.data['message'] ?? 'Error al crear rol del proyecto',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in createProjectRole', e);
@@ -83,10 +85,12 @@ class RoleRemoteDataSource {
 
       if (response.data['success'] == true) {
         return ProjectRole.fromJson(
-            response.data['data'] as Map<String, dynamic>);
+          response.data['data'] as Map<String, dynamic>,
+        );
       } else {
         throw Exception(
-            response.data['message'] ?? 'Error al actualizar rol del proyecto');
+          response.data['message'] ?? 'Error al actualizar rol del proyecto',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in updateProjectRole', e);
@@ -103,7 +107,8 @@ class RoleRemoteDataSource {
 
       if (response.data['success'] != true) {
         throw Exception(
-            response.data['message'] ?? 'Error al eliminar rol del proyecto');
+          response.data['message'] ?? 'Error al eliminar rol del proyecto',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in deleteProjectRole', e);
@@ -119,17 +124,17 @@ class RoleRemoteDataSource {
     try {
       final response = await _dioClient.put(
         '${ApiConstants.rolesEndpoint}/roles/$roleId/permissions',
-        data: {
-          'permissions': permissions,
-        },
+        data: {'permissions': permissions},
       );
 
       if (response.data['success'] == true) {
         return ProjectRole.fromJson(
-            response.data['data'] as Map<String, dynamic>);
+          response.data['data'] as Map<String, dynamic>,
+        );
       } else {
         throw Exception(
-            response.data['message'] ?? 'Error al actualizar permisos del rol');
+          response.data['message'] ?? 'Error al actualizar permisos del rol',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in updateRolePermissions', e);
@@ -145,14 +150,13 @@ class RoleRemoteDataSource {
     try {
       final response = await _dioClient.post(
         '${ApiConstants.rolesEndpoint}/roles/$roleId/assign',
-        data: {
-          'targetUserId': userId,
-        },
+        data: {'targetUserId': userId},
       );
 
       if (response.data['success'] != true) {
         throw Exception(
-            response.data['message'] ?? 'Error al asignar rol al usuario');
+          response.data['message'] ?? 'Error al asignar rol al usuario',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in assignRoleToUser', e);
@@ -172,7 +176,8 @@ class RoleRemoteDataSource {
 
       if (response.data['success'] != true) {
         throw Exception(
-            response.data['message'] ?? 'Error al remover rol del usuario');
+          response.data['message'] ?? 'Error al remover rol del usuario',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in removeRoleFromUser', e);
@@ -193,8 +198,9 @@ class RoleRemoteDataSource {
             .map((json) => RoleAuditLog.fromJson(json as Map<String, dynamic>))
             .toList();
       } else {
-        throw Exception(response.data['message'] ??
-            'Error al obtener logs de auditoría');
+        throw Exception(
+          response.data['message'] ?? 'Error al obtener logs de auditoría',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in getRoleAuditLogs', e);
@@ -211,17 +217,15 @@ class RoleRemoteDataSource {
     try {
       final response = await _dioClient.get(
         '${ApiConstants.rolesEndpoint}/projects/$projectId/check-permission',
-        queryParameters: {
-          'resource': resource,
-          'action': action,
-        },
+        queryParameters: {'resource': resource, 'action': action},
       );
 
       if (response.data['success'] == true) {
         return response.data['data']['hasPermission'] as bool;
       } else {
         throw Exception(
-            response.data['message'] ?? 'Error al verificar permiso');
+          response.data['message'] ?? 'Error al verificar permiso',
+        );
       }
     } catch (e) {
       AppLogger.error('Error in checkPermission', e);
@@ -229,3 +233,6 @@ class RoleRemoteDataSource {
     }
   }
 }
+
+
+

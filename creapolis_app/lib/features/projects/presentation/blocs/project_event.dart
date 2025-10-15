@@ -132,3 +132,6 @@ class SearchProjects extends ProjectEvent {
   @override
   List<Object?> get props => [query];
 }
+
+
+

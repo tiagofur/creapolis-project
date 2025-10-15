@@ -182,3 +182,6 @@ class ApiClient {
   /// Obtener instancia de Dio (para casos especiales)
   Dio get dio => _dio;
 }
+
+
+

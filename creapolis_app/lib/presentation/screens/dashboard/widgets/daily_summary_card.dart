@@ -223,7 +223,7 @@ class DailySummaryCard extends StatelessWidget {
           style: const TextStyle(fontSize: 11),
         ),
         visualDensity: VisualDensity.compact,
-        backgroundColor: priorityColor.withOpacity(0.1),
+        backgroundColor: priorityColor.withValues(alpha: 0.1),
       ),
       onTap: () => _openTask(context),
     );
@@ -283,7 +283,7 @@ class _StatItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 24),
@@ -298,3 +298,6 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
+
+
+

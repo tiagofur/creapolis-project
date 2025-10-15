@@ -216,12 +216,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }
 
   Widget _buildContent(BuildContext context, {required bool myTasksOnly}) {
-    // TODO: Verificar si hay workspace activo
-    final hasWorkspace = true; // Temporal: true para mostrar datos de prueba
-
-    if (!hasWorkspace) {
-      return _buildNoWorkspaceState(context);
-    }
+    // TODO: Verificar si hay workspace activo - por ahora se asume que siempre hay workspace
 
     // TODO: Obtener tareas del BLoC
     // Aquí usaríamos el bloc para filtrar por usuario si myTasksOnly == true
@@ -405,7 +400,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -675,7 +670,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: priorityColor.withOpacity(0.15),
+                        color: priorityColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -734,7 +729,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
+                            color: Colors.red.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
@@ -842,55 +837,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }
 
   /// Estado cuando no hay workspace seleccionado
-  Widget _buildNoWorkspaceState(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.task_outlined,
-              size: 80,
-              color: theme.colorScheme.outline,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No hay workspace seleccionado',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Selecciona un workspace para ver tus tareas',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                // TODO: Navegar a selección de workspace
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Seleccionar workspace - Por implementar'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.business),
-              label: const Text('Seleccionar Workspace'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   /// Estado cuando no hay tareas
   Widget _buildEmptyState(BuildContext context) {
@@ -1155,3 +1101,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     }
   }
 }
+
+
+

@@ -131,3 +131,6 @@ class TypingIndicator extends Equatable {
   @override
   List<Object?> get props => [userId, userName, field, isTyping];
 }
+
+
+

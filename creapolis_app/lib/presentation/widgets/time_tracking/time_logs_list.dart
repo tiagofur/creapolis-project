@@ -136,3 +136,6 @@ class _TimeLogItem extends StatelessWidget {
     return '$start - Ahora · $date';
   }
 }
+
+
+

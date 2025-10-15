@@ -211,7 +211,7 @@ class _ValidatedDropdownState<T> extends State<ValidatedDropdown<T>> {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: widget.value,
+      initialValue: widget.value,
       items: widget.items,
       onChanged: widget.enabled
           ? (value) {

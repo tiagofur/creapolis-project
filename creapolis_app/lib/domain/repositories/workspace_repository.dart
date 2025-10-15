@@ -75,3 +75,6 @@ abstract class WorkspaceRepository {
   /// Obtener workspace activo desde local storage
   Future<Either<Failure, int?>> getActiveWorkspaceId();
 }
+
+
+

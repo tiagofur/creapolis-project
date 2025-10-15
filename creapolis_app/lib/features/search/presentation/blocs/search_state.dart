@@ -120,3 +120,6 @@ class SearchError extends SearchState {
 class SearchEmpty extends SearchState {
   const SearchEmpty();
 }
+
+
+

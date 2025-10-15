@@ -136,3 +136,6 @@ class CategoryHistoryError extends CategoryState {
   @override
   List<Object?> get props => [message];
 }
+
+
+

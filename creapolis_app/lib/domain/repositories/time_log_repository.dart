@@ -23,3 +23,6 @@ abstract class TimeLogRepository {
   /// Obtener time log activo de una tarea específica
   Future<Either<Failure, TimeLog?>> getActiveTimeLogByTask(int taskId);
 }
+
+
+

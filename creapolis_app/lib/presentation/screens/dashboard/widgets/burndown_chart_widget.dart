@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
@@ -152,11 +150,14 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
                                     reservedSize: 30,
                                     interval: 1,
                                     getTitlesWidget: (value, meta) {
-                                      if (value < 0 || value >= chartData['days']) {
+                                      if (value < 0 ||
+                                          value >= chartData['days']) {
                                         return const SizedBox.shrink();
                                       }
                                       return Padding(
-                                        padding: const EdgeInsets.only(top: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                        ),
                                         child: Text(
                                           'D${value.toInt()}',
                                           style: theme.textTheme.bodySmall,
@@ -193,7 +194,9 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
                                 LineChartBarData(
                                   spots: chartData['idealSpots'],
                                   isCurved: false,
-                                  color: theme.colorScheme.primary.withOpacity(0.5),
+                                  color: theme.colorScheme.primary.withValues(alpha: 
+                                    0.5,
+                                  ),
                                   barWidth: 2,
                                   isStrokeCapRound: true,
                                   dotData: const FlDotData(show: false),
@@ -209,18 +212,21 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
                                   isStrokeCapRound: true,
                                   dotData: FlDotData(
                                     show: true,
-                                    getDotPainter: (spot, percent, barData, index) {
-                                      return FlDotCirclePainter(
-                                        radius: 4,
-                                        color: theme.colorScheme.primary,
-                                        strokeWidth: 2,
-                                        strokeColor: theme.colorScheme.surface,
-                                      );
-                                    },
+                                    getDotPainter:
+                                        (spot, percent, barData, index) {
+                                          return FlDotCirclePainter(
+                                            radius: 4,
+                                            color: theme.colorScheme.primary,
+                                            strokeWidth: 2,
+                                            strokeColor:
+                                                theme.colorScheme.surface,
+                                          );
+                                        },
                                   ),
                                   belowBarData: BarAreaData(
                                     show: true,
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.1),
                                   ),
                                 ),
                                 // Línea de predicción (si existe)
@@ -238,7 +244,8 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
                               ],
                               lineTouchData: LineTouchData(
                                 touchTooltipData: LineTouchTooltipData(
-                                  getTooltipColor: (_) => theme.colorScheme.inverseSurface,
+                                  getTooltipColor: (_) =>
+                                      theme.colorScheme.inverseSurface,
                                   getTooltipItems: (touchedSpots) {
                                     return touchedSpots.map((spot) {
                                       String label = '';
@@ -252,7 +259,9 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
                                       return LineTooltipItem(
                                         '$label${spot.y.toStringAsFixed(1)} pts',
                                         TextStyle(
-                                          color: theme.colorScheme.onInverseSurface,
+                                          color: theme
+                                              .colorScheme
+                                              .onInverseSurface,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       );
@@ -282,15 +291,12 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _LegendItem(
-          color: theme.colorScheme.primary.withOpacity(0.5),
+          color: theme.colorScheme.primary.withValues(alpha: 0.5),
           label: 'Línea Ideal',
           isDashed: true,
         ),
         const SizedBox(width: 16),
-        _LegendItem(
-          color: theme.colorScheme.primary,
-          label: 'Línea Real',
-        ),
+        _LegendItem(color: theme.colorScheme.primary, label: 'Línea Real'),
         if (chartData['predictionSpots'] != null) ...[
           const SizedBox(width: 16),
           _LegendItem(
@@ -313,7 +319,7 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
             ListTile(
               leading: const Icon(Icons.image),
               title: const Text('Exportar como Imagen'),
-              onPressed: () {
+              onTap: () {
                 Navigator.pop(context);
                 _exportAsImage();
               },
@@ -321,7 +327,7 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
             ListTile(
               leading: const Icon(Icons.share),
               title: const Text('Compartir'),
-              onPressed: () {
+              onTap: () {
                 Navigator.pop(context);
                 _shareChart();
               },
@@ -379,9 +385,7 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -393,7 +397,10 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
 
     if (filterProvider.selectedProjectId != null) {
       filtered = filtered
-          .where((task) => task.projectId.toString() == filterProvider.selectedProjectId)
+          .where(
+            (task) =>
+                task.projectId.toString() == filterProvider.selectedProjectId,
+          )
           .toList();
     }
 
@@ -425,10 +432,10 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
     // Calcular línea real
     final actualSpots = <FlSpot>[];
     final now = DateTime.now();
-    
+
     for (int i = 0; i < days; i++) {
       final currentDate = startDate.add(Duration(days: i));
-      
+
       if (currentDate.isAfter(now)) break;
 
       // Calcular puntos restantes en esta fecha
@@ -456,10 +463,7 @@ class _BurndownChartWidgetState extends State<BurndownChartWidget> {
         final daysToCompletion = (lastSpot.y / velocityPerDay).ceil();
         final predictionDay = lastSpot.x + daysToCompletion;
 
-        predictionSpots = [
-          lastSpot,
-          FlSpot(predictionDay, 0),
-        ];
+        predictionSpots = [lastSpot, FlSpot(predictionDay, 0)];
       }
     }
 
@@ -497,16 +501,11 @@ class _LegendItem extends StatelessWidget {
             border: isDashed ? Border.all(color: color, width: 2) : null,
           ),
           child: isDashed
-              ? CustomPaint(
-                  painter: _DashedLinePainter(color: color),
-                )
+              ? CustomPaint(painter: _DashedLinePainter(color: color))
               : null,
         ),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -541,3 +540,6 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+
+

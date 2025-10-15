@@ -38,7 +38,7 @@ class RetryInterceptor extends Interceptor {
 
     if (retryCount >= maxRetries) {
       AppLogger.error(
-        'Retry: Máximo de reintentos alcanzado (${retryCount}) para ${err.requestOptions.method} ${err.requestOptions.path}',
+        'Retry: Máximo de reintentos alcanzado ($retryCount) para ${err.requestOptions.method} ${err.requestOptions.path}',
       );
       return handler.next(err);
     }
@@ -91,3 +91,6 @@ class RetryInterceptor extends Interceptor {
     }
   }
 }
+
+
+

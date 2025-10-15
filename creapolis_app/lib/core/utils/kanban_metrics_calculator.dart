@@ -83,3 +83,6 @@ class KanbanMetricsCalculator {
     return tasks.where((t) => t.isInProgress || t.isBlocked).length;
   }
 }
+
+
+

@@ -75,3 +75,6 @@ class HiveWorkspaceAdapter extends TypeAdapter<HiveWorkspace> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+
+

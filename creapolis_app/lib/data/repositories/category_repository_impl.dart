@@ -27,11 +27,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
       );
       return Right(suggestion);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al obtener sugerencia: $e'));
+      return Left(ServerFailure('Error al obtener sugerencia: $e'));
     }
   }
 
@@ -41,17 +41,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
     required TaskCategoryType category,
   }) async {
     try {
-      await _remoteDataSource.applyCategory(
-        taskId: taskId,
-        category: category,
-      );
+      await _remoteDataSource.applyCategory(taskId: taskId, category: category);
       return const Right(null);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al aplicar categoría: $e'));
+      return Left(ServerFailure('Error al aplicar categoría: $e'));
     }
   }
 
@@ -73,11 +70,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
       );
       return Right(feedback);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al enviar feedback: $e'));
+      return Left(ServerFailure('Error al enviar feedback: $e'));
     }
   }
 
@@ -87,11 +84,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
       final metrics = await _remoteDataSource.getMetrics();
       return Right(metrics);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al obtener métricas: $e'));
+      return Left(ServerFailure('Error al obtener métricas: $e'));
     }
   }
 
@@ -107,11 +104,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
       );
       return Right(suggestions);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al obtener historial: $e'));
+      return Left(ServerFailure('Error al obtener historial: $e'));
     }
   }
 
@@ -127,11 +124,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
       );
       return Right(feedback);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
+      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure(message: 'Error al obtener historial de feedback: $e'));
+      return Left(ServerFailure('Error al obtener historial de feedback: $e'));
     }
   }
 }
+
+
+

@@ -19,7 +19,7 @@ class GetCategorySuggestionUseCase {
     // Validaciones básicas
     if (title.trim().isEmpty) {
       return Left(
-        ValidationFailure(message: 'El título de la tarea no puede estar vacío'),
+        ValidationFailure('El título de la tarea no puede estar vacío'),
       );
     }
 
@@ -30,3 +30,6 @@ class GetCategorySuggestionUseCase {
     );
   }
 }
+
+
+

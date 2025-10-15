@@ -22,7 +22,7 @@ class SubmitCategoryFeedbackUseCase {
     if (!wasCorrect && correctedCategory == null) {
       return Left(
         ValidationFailure(
-          message: 'Debe proporcionar la categoría correcta si la sugerencia fue incorrecta',
+          'Debe proporcionar la categoría correcta si la sugerencia fue incorrecta',
         ),
       );
     }
@@ -36,3 +36,6 @@ class SubmitCategoryFeedbackUseCase {
     );
   }
 }
+
+
+

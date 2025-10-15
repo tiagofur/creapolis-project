@@ -117,7 +117,7 @@ class ConnectivityDot extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.5),
+                color: color.withValues(alpha: 0.5),
                 blurRadius: 4,
                 spreadRadius: 1,
               ),
@@ -128,3 +128,6 @@ class ConnectivityDot extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -267,3 +267,6 @@ class DashboardConfig extends Equatable {
   @override
   List<Object?> get props => [widgets, lastModified];
 }
+
+
+

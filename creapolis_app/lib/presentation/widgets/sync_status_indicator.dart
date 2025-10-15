@@ -56,7 +56,7 @@ class _SyncStatusIndicatorState extends State<SyncStatusIndicator> {
 
         if (widget.persistent) {
           // Barra de progreso persistente
-          return Container(
+          return SizedBox(
             height: widget.height,
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey[300],
@@ -244,3 +244,6 @@ class SyncProgressDialog extends StatelessWidget {
     );
   }
 }
+
+
+

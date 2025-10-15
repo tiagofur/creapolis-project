@@ -368,3 +368,6 @@ class CustomizationMetricsService {
   DateTime? get lastEventDate =>
       _events.isEmpty ? null : _events.last.timestamp;
 }
+
+
+

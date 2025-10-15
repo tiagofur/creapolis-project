@@ -17,3 +17,6 @@ class GetPendingInvitationsUseCase {
     return await _repository.getPendingInvitations();
   }
 }
+
+
+

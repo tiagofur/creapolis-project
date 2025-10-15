@@ -47,10 +47,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     result.fold(
       (failure) => emit(SearchError(failure.message)),
-      (response) => emit(SearchLoaded(
-        response: response,
-        filters: event.filters ?? const SearchFilters(),
-      )),
+      (response) => emit(
+        SearchLoaded(
+          response: response,
+          filters: event.filters ?? const SearchFilters(),
+        ),
+      ),
     );
   }
 
@@ -65,7 +67,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
 
     if (event.query.trim().length < 2) {
-      emit(const QuickSearchLoaded(suggestions: [], query: event.query));
+      emit(QuickSearchLoaded(suggestions: const [], query: event.query));
       return;
     }
 
@@ -78,10 +80,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     result.fold(
       (failure) => emit(SearchError(failure.message)),
-      (suggestions) => emit(QuickSearchLoaded(
-        suggestions: suggestions,
-        query: event.query,
-      )),
+      (suggestions) =>
+          emit(QuickSearchLoaded(suggestions: suggestions, query: event.query)),
     );
   }
 
@@ -111,11 +111,13 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     result.fold(
       (failure) => emit(SearchError(failure.message)),
-      (tasks) => emit(TaskSearchLoaded(
-        tasks: tasks,
-        query: event.query,
-        filters: event.filters,
-      )),
+      (tasks) => emit(
+        TaskSearchLoaded(
+          tasks: tasks,
+          query: event.query,
+          filters: event.filters,
+        ),
+      ),
     );
   }
 
@@ -144,10 +146,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     result.fold(
       (failure) => emit(SearchError(failure.message)),
-      (projects) => emit(ProjectSearchLoaded(
-        projects: projects,
-        query: event.query,
-      )),
+      (projects) =>
+          emit(ProjectSearchLoaded(projects: projects, query: event.query)),
     );
   }
 
@@ -176,10 +176,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     result.fold(
       (failure) => emit(SearchError(failure.message)),
-      (users) => emit(UserSearchLoaded(
-        users: users,
-        query: event.query,
-      )),
+      (users) => emit(UserSearchLoaded(users: users, query: event.query)),
     );
   }
 
@@ -192,18 +189,17 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     if (currentState is SearchLoaded) {
       // Re-perform search with new filters
-      add(PerformGlobalSearch(
-        query: currentState.response.query,
-        filters: event.filters,
-      ));
+      add(
+        PerformGlobalSearch(
+          query: currentState.response.query,
+          filters: event.filters,
+        ),
+      );
     }
   }
 
   /// Handle clear search
-  void _onClearSearch(
-    ClearSearch event,
-    Emitter<SearchState> emit,
-  ) {
+  void _onClearSearch(ClearSearch event, Emitter<SearchState> emit) {
     emit(const SearchInitial());
   }
 
@@ -216,10 +212,15 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     if (currentState is SearchLoaded) {
       // Re-perform search without filters
-      add(PerformGlobalSearch(
-        query: currentState.response.query,
-        filters: const SearchFilters(),
-      ));
+      add(
+        PerformGlobalSearch(
+          query: currentState.response.query,
+          filters: const SearchFilters(),
+        ),
+      );
     }
   }
 }
+
+
+

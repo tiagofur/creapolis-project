@@ -144,3 +144,6 @@ class HiveWorkspace extends HiveObject {
     return 'HiveWorkspace(id: $id, name: $name, isPendingSync: $isPendingSync)';
   }
 }
+
+
+

@@ -190,3 +190,6 @@ class ThemeProvider extends ChangeNotifier {
     AppLogger.info('[ThemeProvider] Preferencias reseteadas a valores por defecto');
   }
 }
+
+
+

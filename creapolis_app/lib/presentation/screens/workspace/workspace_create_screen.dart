@@ -230,15 +230,21 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
         child: Row(
           children: [
             // Radio button
-            Radio<WorkspaceType>(
-              value: type,
-              groupValue: _selectedType,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedType = value);
-                }
-              },
-              activeColor: color,
+            Theme(
+              data: Theme.of(context).copyWith(
+                radioTheme: RadioThemeData(
+                  fillColor: WidgetStateProperty.all(color),
+                ),
+              ),
+              child: Radio<WorkspaceType>(
+                value: type,
+                groupValue: _selectedType,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedType = value);
+                  }
+                },
+              ),
             ),
             // Icono
             Container(

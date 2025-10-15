@@ -155,7 +155,7 @@ class _WorkspaceScreenContent extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         margin: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: AppColors.primary,
@@ -448,7 +448,7 @@ class _WorkspaceScreenContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<WorkspaceType>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(labelText: 'Tipo'),
                   items: WorkspaceType.values
                       .map(

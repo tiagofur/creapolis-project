@@ -19,9 +19,10 @@ class TypingIndicatorWidget extends StatelessWidget {
     // Filter indicators for current field
     final relevantIndicators = currentField != null
         ? typingIndicators.values
-            .where((indicator) => indicator.field == currentField)
-            .toList()
-        : [];
+              .where((indicator) => indicator.field == currentField)
+              .cast<TypingIndicator>()
+              .toList()
+        : <TypingIndicator>[];
 
     if (relevantIndicators.isEmpty) {
       return const SizedBox.shrink();
@@ -76,10 +77,7 @@ class _AnimatedDot extends StatefulWidget {
   final Duration delay;
   final Color color;
 
-  const _AnimatedDot({
-    required this.delay,
-    required this.color,
-  });
+  const _AnimatedDot({required this.delay, required this.color});
 
   @override
   State<_AnimatedDot> createState() => _AnimatedDotState();
@@ -98,9 +96,10 @@ class _AnimatedDotState extends State<_AnimatedDot>
       vsync: this,
     );
 
-    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     Future.delayed(widget.delay, () {
       if (mounted) {
@@ -124,7 +123,7 @@ class _AnimatedDotState extends State<_AnimatedDot>
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: widget.color.withOpacity(_animation.value),
+            color: widget.color.withValues(alpha: _animation.value),
             shape: BoxShape.circle,
           ),
         );
@@ -132,3 +131,6 @@ class _AnimatedDotState extends State<_AnimatedDot>
     );
   }
 }
+
+
+

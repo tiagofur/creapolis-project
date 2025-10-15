@@ -68,3 +68,6 @@ class AppStrings {
       'La contraseña debe tener al menos 6 caracteres';
   static const String passwordsDontMatch = 'Las contraseñas no coinciden';
 }
+
+
+

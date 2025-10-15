@@ -37,6 +37,13 @@ abstract class AppLogger {
     _logger.i(message);
   }
 
+  /// Log nivel SUCCESS - Operaciones exitosas importantes
+  ///
+  /// Ejemplo: `AppLogger.success('Task created successfully');`
+  static void success(String message) {
+    _logger.i('✅ $message');
+  }
+
   /// Log nivel WARNING - Situaciones inusuales pero manejables
   ///
   /// Ejemplo: `AppLogger.warning('API response took ${duration}ms (slow)');`
@@ -85,3 +92,6 @@ abstract class AppLogger {
     Logger.level = level;
   }
 }
+
+
+

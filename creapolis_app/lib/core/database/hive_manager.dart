@@ -200,3 +200,6 @@ class HiveManager {
   /// Verificar si Hive está inicializado
   static bool get isInitialized => _isInitialized;
 }
+
+
+
