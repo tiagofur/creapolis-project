@@ -32,12 +32,13 @@ class RefreshTasksEvent extends TaskEvent {
 
 /// Cargar una tarea por ID
 class LoadTaskByIdEvent extends TaskEvent {
+  final int projectId;
   final int id;
 
-  const LoadTaskByIdEvent(this.id);
+  const LoadTaskByIdEvent(this.projectId, this.id);
 
   @override
-  List<Object> get props => [id];
+  List<Object> get props => [projectId, id];
 }
 
 /// Crear una nueva tarea
@@ -83,6 +84,7 @@ class CreateTaskEvent extends TaskEvent {
 
 /// Actualizar una tarea
 class UpdateTaskEvent extends TaskEvent {
+  final int projectId;
   final int id;
   final String? title;
   final String? description;
@@ -96,6 +98,7 @@ class UpdateTaskEvent extends TaskEvent {
   final List<int>? dependencyIds;
 
   const UpdateTaskEvent({
+    required this.projectId,
     required this.id,
     this.title,
     this.description,
@@ -111,6 +114,7 @@ class UpdateTaskEvent extends TaskEvent {
 
   @override
   List<Object?> get props => [
+    projectId,
     id,
     title,
     description,
@@ -127,12 +131,13 @@ class UpdateTaskEvent extends TaskEvent {
 
 /// Eliminar una tarea
 class DeleteTaskEvent extends TaskEvent {
+  final int projectId;
   final int id;
 
-  const DeleteTaskEvent(this.id);
+  const DeleteTaskEvent({required this.projectId, required this.id});
 
   @override
-  List<Object> get props => [id];
+  List<Object> get props => [projectId, id];
 }
 
 /// Filtrar tareas por estado
@@ -197,6 +202,3 @@ class ResetTasksPaginationEvent extends TaskEvent {
   @override
   List<Object> get props => [projectId];
 }
-
-
-

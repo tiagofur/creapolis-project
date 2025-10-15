@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../domain/entities/workspace.dart';
 import '../../domain/entities/workspace_invitation.dart';
@@ -167,8 +168,18 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
         type: type,
         settings: settings,
       );
+      final workspace = workspaceModel.toEntity();
 
-      return Right(workspaceModel.toEntity());
+      try {
+        await _cacheDataSource.cacheWorkspace(workspace);
+        await _cacheDataSource.invalidateCache();
+      } catch (e) {
+        AppLogger.warning(
+          'WorkspaceRepositoryImpl: Error al sincronizar caché tras crear workspace: $e',
+        );
+      }
+
+      return Right(workspace);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
@@ -198,8 +209,18 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
         type: type,
         settings: settings,
       );
+      final workspace = workspaceModel.toEntity();
 
-      return Right(workspaceModel.toEntity());
+      try {
+        await _cacheDataSource.cacheWorkspace(workspace);
+        await _cacheDataSource.invalidateCache();
+      } catch (e) {
+        AppLogger.warning(
+          'WorkspaceRepositoryImpl: Error al sincronizar caché tras actualizar workspace $workspaceId: $e',
+        );
+      }
+
+      return Right(workspace);
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on ForbiddenException catch (e) {
@@ -222,6 +243,15 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
       final activeId = await _localDataSource.getActiveWorkspaceId();
       if (activeId == workspaceId) {
         await _localDataSource.clearActiveWorkspace();
+      }
+
+      try {
+        await _cacheDataSource.deleteCachedWorkspace(workspaceId);
+        await _cacheDataSource.invalidateCache();
+      } catch (e) {
+        AppLogger.warning(
+          'WorkspaceRepositoryImpl: Error al actualizar caché tras eliminar workspace $workspaceId: $e',
+        );
       }
 
       return const Right(null);
@@ -417,6 +447,3 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     }
   }
 }
-
-
-

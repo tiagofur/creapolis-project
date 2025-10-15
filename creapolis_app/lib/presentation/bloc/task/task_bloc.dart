@@ -99,7 +99,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     final currentState = state;
-    
+
     // Solo cargar más si estamos en estado TasksLoaded
     if (currentState is! TasksLoaded) {
       AppLogger.warning(
@@ -109,7 +109,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
 
     // Si ya estamos cargando más o no hay más datos, no hacer nada
-    if (currentState.isLoadingMore || !currentState.paginationState.hasMoreData) {
+    if (currentState.isLoadingMore ||
+        !currentState.paginationState.hasMoreData) {
       AppLogger.info(
         'TaskBloc: Ya cargando más o no hay más datos disponibles',
       );
@@ -146,7 +147,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
         // Combinar tareas existentes con las nuevas
         final allTasks = [...currentState.tasks, ...paginatedResponse.items];
-        
+
         // Actualizar estado de paginación
         final newPaginationState = currentState.paginationState.copyWith(
           currentPage: paginatedResponse.metadata.page,
@@ -154,13 +155,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           totalItems: paginatedResponse.metadata.total,
         );
 
-        emit(TasksLoaded(
-          allTasks,
-          statusFilter: currentState.statusFilter,
-          assigneeFilter: currentState.assigneeFilter,
-          paginationState: newPaginationState,
-          isLoadingMore: false,
-        ));
+        emit(
+          TasksLoaded(
+            allTasks,
+            statusFilter: currentState.statusFilter,
+            assigneeFilter: currentState.assigneeFilter,
+            paginationState: newPaginationState,
+            isLoadingMore: false,
+          ),
+        );
       },
     );
   }
@@ -201,10 +204,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           totalItems: paginatedResponse.metadata.total,
         );
 
-        emit(TasksLoaded(
-          paginatedResponse.items,
-          paginationState: paginationState,
-        ));
+        emit(
+          TasksLoaded(
+            paginatedResponse.items,
+            paginationState: paginationState,
+          ),
+        );
       },
     );
   }
@@ -217,8 +222,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     AppLogger.info('TaskBloc: Cargando tarea ${event.id}');
     emit(const TaskLoading());
 
-    // TODO: Necesitamos projectId aquí - por ahora usamos 1 como placeholder
-    final result = await _getTaskByIdUseCase(1, event.id);
+    final result = await _getTaskByIdUseCase(event.projectId, event.id);
 
     result.fold(
       (failure) {
@@ -278,7 +282,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     emit(const TaskLoading());
 
     final params = UpdateTaskParams(
-      projectId: 1, // TODO: Pasar projectId correcto
+      projectId: event.projectId,
       id: event.id,
       title: event.title,
       description: event.description,
@@ -316,8 +320,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     AppLogger.info('TaskBloc: Eliminando tarea ${event.id}');
     emit(const TaskLoading());
 
-    // TODO: Necesitamos projectId aquí - por ahora usamos 1 como placeholder
-    final result = await _deleteTaskUseCase(1, event.id);
+    final result = await _deleteTaskUseCase(event.projectId, event.id);
 
     result.fold(
       (failure) {
@@ -438,6 +441,3 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 }
-
-
-

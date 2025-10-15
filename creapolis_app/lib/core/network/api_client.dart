@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
+import '../config/environment_config.dart';
 import '../utils/app_logger.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
@@ -37,17 +38,21 @@ class ApiClient {
       authInterceptor, // 1. Inyecta token JWT
       RetryInterceptor(), // 2. Reintentos automáticos
       ErrorInterceptor(), // 3. Maneja errores HTTP
-      PrettyDioLogger(
-        // 4. Logging (solo en debug)
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        responseHeader: false,
-        error: true,
-        compact: true,
-        maxWidth: 90,
-      ),
     ]);
+
+    if (EnvironmentConfig.enableHttpLogs) {
+      _dio.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          compact: true,
+          maxWidth: 90,
+        ),
+      );
+    }
 
     AppLogger.info('ApiClient inicializado con base URL: $baseUrl');
   }
@@ -182,6 +187,3 @@ class ApiClient {
   /// Obtener instancia de Dio (para casos especiales)
   Dio get dio => _dio;
 }
-
-
-

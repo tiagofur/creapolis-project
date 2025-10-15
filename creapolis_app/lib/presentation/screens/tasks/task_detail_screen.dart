@@ -43,7 +43,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
     _taskBloc = getIt<TaskBloc>();
 
     // Cargar tarea en el BLoC local
-    _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
+    _taskBloc.add(LoadTaskByIdEvent(widget.projectId, widget.taskId));
 
     // Cargar time logs
     _timeTrackingBloc.add(LoadTimeLogsEvent(widget.taskId));
@@ -72,7 +72,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
+                _taskBloc.add(
+                  LoadTaskByIdEvent(widget.projectId, widget.taskId),
+                );
                 _timeTrackingBloc.add(LoadTimeLogsEvent(widget.taskId));
               },
             ),
@@ -93,7 +95,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
               AppLogger.info(
                 'TaskDetailScreen: Tarea actualizada, recargando datos',
               );
-              _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
+              _taskBloc.add(LoadTaskByIdEvent(widget.projectId, widget.taskId));
             }
           },
           builder: (context, state) {
@@ -125,7 +127,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: () {
-                        _taskBloc.add(LoadTaskByIdEvent(widget.taskId));
+                        _taskBloc.add(
+                          LoadTaskByIdEvent(widget.projectId, widget.taskId),
+                        );
                       },
                       icon: const Icon(Icons.refresh),
                       label: const Text('Reintentar'),
@@ -513,6 +517,3 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
         '${date.year}';
   }
 }
-
-
-

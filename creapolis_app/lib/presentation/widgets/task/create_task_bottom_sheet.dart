@@ -357,6 +357,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         );
         context.read<TaskBloc>().add(
           UpdateTaskEvent(
+            projectId: widget.projectId,
             id: widget.task!.id,
             title: title,
             description: description,
@@ -388,6 +389,3 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     }
   }
 }
-
-
-

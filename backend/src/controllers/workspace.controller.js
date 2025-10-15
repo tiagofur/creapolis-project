@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
+import { PrismaClient } from "@prisma/client";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -49,7 +49,7 @@ export const getUserWorkspaces = async (req, res) => {
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
 
@@ -82,10 +82,10 @@ export const getUserWorkspaces = async (req, res) => {
       data: formattedWorkspaces,
     });
   } catch (error) {
-    console.error('Error getting user workspaces:', error);
+    console.error("Error getting user workspaces:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener workspaces',
+      message: "Error al obtener workspaces",
       error: error.message,
     });
   }
@@ -138,7 +138,7 @@ export const getWorkspaceById = async (req, res) => {
     if (!workspace) {
       return res.status(404).json({
         success: false,
-        message: 'Workspace no encontrado o no tienes acceso',
+        message: "Workspace no encontrado o no tienes acceso",
       });
     }
 
@@ -170,10 +170,10 @@ export const getWorkspaceById = async (req, res) => {
       data: formattedWorkspace,
     });
   } catch (error) {
-    console.error('Error getting workspace:', error);
+    console.error("Error getting workspace:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener workspace',
+      message: "Error al obtener workspace",
       error: error.message,
     });
   }
@@ -191,7 +191,7 @@ export const createWorkspace = async (req, res) => {
     if (!name || name.trim().length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'El nombre del workspace es requerido',
+        message: "El nombre del workspace es requerido",
       });
     }
 
@@ -201,14 +201,14 @@ export const createWorkspace = async (req, res) => {
         name: name.trim(),
         description: description?.trim(),
         avatarUrl,
-        type: type || 'TEAM',
+        type: type || "TEAM",
         ownerId: userId,
         allowGuestInvites: settings?.allowGuestInvites ?? true,
         requireEmailVerification: settings?.requireEmailVerification ?? true,
         autoAssignNewMembers: settings?.autoAssignNewMembers ?? false,
         defaultProjectTemplate: settings?.defaultProjectTemplate,
-        timezone: settings?.timezone || 'UTC',
-        language: settings?.language || 'es',
+        timezone: settings?.timezone || "UTC",
+        language: settings?.language || "es",
       },
       include: {
         owner: {
@@ -227,13 +227,13 @@ export const createWorkspace = async (req, res) => {
       data: {
         workspaceId: workspace.id,
         userId: userId,
-        role: 'OWNER',
+        role: "OWNER",
       },
     });
 
     res.status(201).json({
       success: true,
-      message: 'Workspace creado exitosamente',
+      message: "Workspace creado exitosamente",
       data: {
         id: workspace.id,
         name: workspace.name,
@@ -242,7 +242,7 @@ export const createWorkspace = async (req, res) => {
         type: workspace.type,
         ownerId: workspace.ownerId,
         owner: workspace.owner,
-        userRole: 'OWNER',
+        userRole: "OWNER",
         memberCount: 1,
         projectCount: 0,
         settings: {
@@ -258,10 +258,10 @@ export const createWorkspace = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error creating workspace:', error);
+    console.error("Error creating workspace:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al crear workspace',
+      message: "Error al crear workspace",
       error: error.message,
     });
   }
@@ -285,10 +285,10 @@ export const updateWorkspace = async (req, res) => {
       },
     });
 
-    if (!member || (member.role !== 'OWNER' && member.role !== 'ADMIN')) {
+    if (!member || (member.role !== "OWNER" && member.role !== "ADMIN")) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permisos para actualizar este workspace',
+        message: "No tienes permisos para actualizar este workspace",
       });
     }
 
@@ -335,7 +335,7 @@ export const updateWorkspace = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Workspace actualizado exitosamente',
+      message: "Workspace actualizado exitosamente",
       data: {
         id: workspace.id,
         name: workspace.name,
@@ -360,10 +360,10 @@ export const updateWorkspace = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error updating workspace:', error);
+    console.error("Error updating workspace:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al actualizar workspace',
+      message: "Error al actualizar workspace",
       error: error.message,
     });
   }
@@ -388,7 +388,7 @@ export const deleteWorkspace = async (req, res) => {
     if (!workspace) {
       return res.status(403).json({
         success: false,
-        message: 'Solo el propietario puede eliminar el workspace',
+        message: "Solo el propietario puede eliminar el workspace",
       });
     }
 
@@ -399,13 +399,13 @@ export const deleteWorkspace = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Workspace eliminado exitosamente',
+      message: "Workspace eliminado exitosamente",
     });
   } catch (error) {
-    console.error('Error deleting workspace:', error);
+    console.error("Error deleting workspace:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al eliminar workspace',
+      message: "Error al eliminar workspace",
       error: error.message,
     });
   }
@@ -420,7 +420,7 @@ export const getWorkspaceMembers = async (req, res) => {
     const workspaceId = parseInt(req.params.id);
 
     // Verificar que el usuario sea miembro del workspace
-    const isMember = await prisma.workspaceMember.findFirst({
+    let isMember = await prisma.workspaceMember.findFirst({
       where: {
         workspaceId,
         userId,
@@ -429,10 +429,43 @@ export const getWorkspaceMembers = async (req, res) => {
     });
 
     if (!isMember) {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes acceso a este workspace',
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { ownerId: true },
       });
+
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace no encontrado",
+        });
+      }
+
+      if (workspace.ownerId === userId) {
+        isMember = await prisma.workspaceMember.upsert({
+          where: {
+            workspaceId_userId: {
+              workspaceId,
+              userId,
+            },
+          },
+          update: {
+            role: "OWNER",
+            isActive: true,
+          },
+          create: {
+            workspaceId,
+            userId,
+            role: "OWNER",
+            isActive: true,
+          },
+        });
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "No tienes acceso a este workspace",
+        });
+      }
     }
 
     const members = await prisma.workspaceMember.findMany({
@@ -450,7 +483,7 @@ export const getWorkspaceMembers = async (req, res) => {
           },
         },
       },
-      orderBy: [{ role: 'asc' }, { joinedAt: 'asc' }],
+      orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
     });
 
     const formattedMembers = members.map((member) => ({
@@ -471,10 +504,10 @@ export const getWorkspaceMembers = async (req, res) => {
       data: formattedMembers,
     });
   } catch (error) {
-    console.error('Error getting workspace members:', error);
+    console.error("Error getting workspace members:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener miembros del workspace',
+      message: "Error al obtener miembros del workspace",
       error: error.message,
     });
   }
@@ -491,10 +524,10 @@ export const updateMemberRole = async (req, res) => {
     const { role } = req.body;
 
     // Validar rol
-    if (!['OWNER', 'ADMIN', 'MEMBER', 'GUEST'].includes(role)) {
+    if (!["OWNER", "ADMIN", "MEMBER", "GUEST"].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Rol inválido',
+        message: "Rol inválido",
       });
     }
 
@@ -509,11 +542,11 @@ export const updateMemberRole = async (req, res) => {
 
     if (
       !currentMember ||
-      (currentMember.role !== 'OWNER' && currentMember.role !== 'ADMIN')
+      (currentMember.role !== "OWNER" && currentMember.role !== "ADMIN")
     ) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permisos para cambiar roles',
+        message: "No tienes permisos para cambiar roles",
       });
     }
 
@@ -522,10 +555,10 @@ export const updateMemberRole = async (req, res) => {
       where: { id: workspaceId },
     });
 
-    if (targetUserId === workspace.ownerId && role !== 'OWNER') {
+    if (targetUserId === workspace.ownerId && role !== "OWNER") {
       return res.status(400).json({
         success: false,
-        message: 'No se puede cambiar el rol del propietario original',
+        message: "No se puede cambiar el rol del propietario original",
       });
     }
 
@@ -554,7 +587,7 @@ export const updateMemberRole = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Rol actualizado exitosamente',
+      message: "Rol actualizado exitosamente",
       data: {
         id: updatedMember.id,
         workspaceId: updatedMember.workspaceId,
@@ -569,10 +602,10 @@ export const updateMemberRole = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error updating member role:', error);
+    console.error("Error updating member role:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al actualizar rol',
+      message: "Error al actualizar rol",
       error: error.message,
     });
   }
@@ -598,11 +631,11 @@ export const removeMember = async (req, res) => {
 
     if (
       !currentMember ||
-      (currentMember.role !== 'OWNER' && currentMember.role !== 'ADMIN')
+      (currentMember.role !== "OWNER" && currentMember.role !== "ADMIN")
     ) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permisos para remover miembros',
+        message: "No tienes permisos para remover miembros",
       });
     }
 
@@ -614,7 +647,7 @@ export const removeMember = async (req, res) => {
     if (targetUserId === workspace.ownerId) {
       return res.status(400).json({
         success: false,
-        message: 'No se puede remover al propietario del workspace',
+        message: "No se puede remover al propietario del workspace",
       });
     }
 
@@ -633,13 +666,13 @@ export const removeMember = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Miembro removido exitosamente',
+      message: "Miembro removido exitosamente",
     });
   } catch (error) {
-    console.error('Error removing member:', error);
+    console.error("Error removing member:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al remover miembro',
+      message: "Error al remover miembro",
       error: error.message,
     });
   }
@@ -655,17 +688,17 @@ export const createInvitation = async (req, res) => {
     const { email, role } = req.body;
 
     // Validaciones
-    if (!email || !email.includes('@')) {
+    if (!email || !email.includes("@")) {
       return res.status(400).json({
         success: false,
-        message: 'Email inválido',
+        message: "Email inválido",
       });
     }
 
-    if (!['ADMIN', 'MEMBER', 'GUEST'].includes(role)) {
+    if (!["ADMIN", "MEMBER", "GUEST"].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Rol inválido',
+        message: "Rol inválido",
       });
     }
 
@@ -678,10 +711,10 @@ export const createInvitation = async (req, res) => {
       },
     });
 
-    if (!member || member.role === 'GUEST') {
+    if (!member || member.role === "GUEST") {
       return res.status(403).json({
         success: false,
-        message: 'No tienes permisos para invitar miembros',
+        message: "No tienes permisos para invitar miembros",
       });
     }
 
@@ -701,7 +734,7 @@ export const createInvitation = async (req, res) => {
       if (existingMember) {
         return res.status(400).json({
           success: false,
-          message: 'El usuario ya es miembro de este workspace',
+          message: "El usuario ya es miembro de este workspace",
         });
       }
     }
@@ -711,7 +744,7 @@ export const createInvitation = async (req, res) => {
       where: {
         workspaceId,
         inviteeEmail: email.toLowerCase(),
-        status: 'PENDING',
+        status: "PENDING",
         expiresAt: {
           gt: new Date(),
         },
@@ -721,12 +754,12 @@ export const createInvitation = async (req, res) => {
     if (pendingInvitation) {
       return res.status(400).json({
         success: false,
-        message: 'Ya existe una invitación pendiente para este email',
+        message: "Ya existe una invitación pendiente para este email",
       });
     }
 
     // Crear token único
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString("hex");
 
     // Crear invitación
     const invitation = await prisma.workspaceInvitation.create({
@@ -754,7 +787,7 @@ export const createInvitation = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Invitación creada exitosamente',
+      message: "Invitación creada exitosamente",
       data: {
         id: invitation.id,
         workspaceId: invitation.workspaceId,
@@ -769,10 +802,10 @@ export const createInvitation = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error creating invitation:', error);
+    console.error("Error creating invitation:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al crear invitación',
+      message: "Error al crear invitación",
       error: error.message,
     });
   }
@@ -788,7 +821,7 @@ export const getPendingInvitations = async (req, res) => {
     const invitations = await prisma.workspaceInvitation.findMany({
       where: {
         inviteeEmail: userEmail.toLowerCase(),
-        status: 'PENDING',
+        status: "PENDING",
         expiresAt: {
           gt: new Date(),
         },
@@ -812,7 +845,7 @@ export const getPendingInvitations = async (req, res) => {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -839,10 +872,10 @@ export const getPendingInvitations = async (req, res) => {
       data: formattedInvitations,
     });
   } catch (error) {
-    console.error('Error getting pending invitations:', error);
+    console.error("Error getting pending invitations:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener invitaciones',
+      message: "Error al obtener invitaciones",
       error: error.message,
     });
   }
@@ -859,7 +892,7 @@ export const acceptInvitation = async (req, res) => {
     if (!token) {
       return res.status(400).json({
         success: false,
-        message: 'Token requerido',
+        message: "Token requerido",
       });
     }
 
@@ -874,35 +907,37 @@ export const acceptInvitation = async (req, res) => {
     if (!invitation) {
       return res.status(404).json({
         success: false,
-        message: 'Invitación no encontrada',
+        message: "Invitación no encontrada",
       });
     }
 
     // Verificar que la invitación sea para este usuario
-    if (invitation.inviteeEmail.toLowerCase() !== req.user.email.toLowerCase()) {
+    if (
+      invitation.inviteeEmail.toLowerCase() !== req.user.email.toLowerCase()
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Esta invitación no es para ti',
+        message: "Esta invitación no es para ti",
       });
     }
 
     // Verificar estado y expiración
-    if (invitation.status !== 'PENDING') {
+    if (invitation.status !== "PENDING") {
       return res.status(400).json({
         success: false,
-        message: 'Esta invitación ya fue procesada',
+        message: "Esta invitación ya fue procesada",
       });
     }
 
     if (invitation.expiresAt < new Date()) {
       await prisma.workspaceInvitation.update({
         where: { id: invitation.id },
-        data: { status: 'EXPIRED' },
+        data: { status: "EXPIRED" },
       });
 
       return res.status(400).json({
         success: false,
-        message: 'Esta invitación ha expirado',
+        message: "Esta invitación ha expirado",
       });
     }
 
@@ -918,7 +953,7 @@ export const acceptInvitation = async (req, res) => {
       if (existingMember.isActive) {
         return res.status(400).json({
           success: false,
-          message: 'Ya eres miembro de este workspace',
+          message: "Ya eres miembro de este workspace",
         });
       } else {
         // Reactivar membresía
@@ -944,22 +979,22 @@ export const acceptInvitation = async (req, res) => {
     // Actualizar invitación
     await prisma.workspaceInvitation.update({
       where: { id: invitation.id },
-      data: { status: 'ACCEPTED' },
+      data: { status: "ACCEPTED" },
     });
 
     res.json({
       success: true,
-      message: 'Invitación aceptada exitosamente',
+      message: "Invitación aceptada exitosamente",
       data: {
         workspaceId: invitation.workspaceId,
         workspaceName: invitation.workspace.name,
       },
     });
   } catch (error) {
-    console.error('Error accepting invitation:', error);
+    console.error("Error accepting invitation:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al aceptar invitación',
+      message: "Error al aceptar invitación",
       error: error.message,
     });
   }
@@ -975,7 +1010,7 @@ export const declineInvitation = async (req, res) => {
     if (!token) {
       return res.status(400).json({
         success: false,
-        message: 'Token requerido',
+        message: "Token requerido",
       });
     }
 
@@ -986,38 +1021,40 @@ export const declineInvitation = async (req, res) => {
     if (!invitation) {
       return res.status(404).json({
         success: false,
-        message: 'Invitación no encontrada',
+        message: "Invitación no encontrada",
       });
     }
 
-    if (invitation.inviteeEmail.toLowerCase() !== req.user.email.toLowerCase()) {
+    if (
+      invitation.inviteeEmail.toLowerCase() !== req.user.email.toLowerCase()
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Esta invitación no es para ti',
+        message: "Esta invitación no es para ti",
       });
     }
 
-    if (invitation.status !== 'PENDING') {
+    if (invitation.status !== "PENDING") {
       return res.status(400).json({
         success: false,
-        message: 'Esta invitación ya fue procesada',
+        message: "Esta invitación ya fue procesada",
       });
     }
 
     await prisma.workspaceInvitation.update({
       where: { id: invitation.id },
-      data: { status: 'DECLINED' },
+      data: { status: "DECLINED" },
     });
 
     res.json({
       success: true,
-      message: 'Invitación rechazada',
+      message: "Invitación rechazada",
     });
   } catch (error) {
-    console.error('Error declining invitation:', error);
+    console.error("Error declining invitation:", error);
     res.status(500).json({
       success: false,
-      message: 'Error al rechazar invitación',
+      message: "Error al rechazar invitación",
       error: error.message,
     });
   }

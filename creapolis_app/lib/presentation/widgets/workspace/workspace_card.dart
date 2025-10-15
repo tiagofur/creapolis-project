@@ -77,35 +77,72 @@ class WorkspaceCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               // Información adicional
-              Row(
-                children: [
-                  _buildTypeChip(context),
-                  const SizedBox(width: 8),
-                  _buildRoleChip(context),
-                  const Spacer(),
-                  if (!isActive && onSetActive != null)
-                    TextButton.icon(
-                      onPressed: isActivating ? null : onSetActive,
-                      icon: isActivating
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_circle_outline, size: 16),
-                      label: Text(isActivating ? 'Activando...' : 'Activar'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final activateButton = (!isActive && onSetActive != null)
+                      ? _buildActivateButton(context)
+                      : null;
+                  final isCompact = constraints.maxWidth < 360;
+
+                  if (isCompact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildTypeChip(context),
+                            _buildRoleChip(context),
+                          ],
                         ),
+                        if (activateButton != null) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: activateButton,
+                          ),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildTypeChip(context),
+                          _buildRoleChip(context),
+                        ],
                       ),
-                    ),
-                ],
+                      const Spacer(),
+                      if (activateButton != null) activateButton,
+                    ],
+                  );
+                },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivateButton(BuildContext context) {
+    return TextButton.icon(
+      onPressed: isActivating ? null : onSetActive,
+      icon: isActivating
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.check_circle_outline, size: 16),
+      label: Text(isActivating ? 'Activando...' : 'Activar'),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
     );
   }
@@ -237,6 +274,3 @@ class WorkspaceCard extends StatelessWidget {
     }
   }
 }
-
-
-

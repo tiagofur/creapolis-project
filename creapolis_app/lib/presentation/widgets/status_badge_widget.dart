@@ -120,7 +120,11 @@ class StatusBadgeWidget extends StatelessWidget {
 
   void _updateTaskStatus(BuildContext context, TaskStatus newStatus) {
     context.read<TaskBloc>().add(
-      UpdateTaskEvent(id: task.id, status: newStatus),
+      UpdateTaskEvent(
+        projectId: task.projectId,
+        id: task.id,
+        status: newStatus,
+      ),
     );
 
     // Mostrar confirmación
@@ -245,6 +249,3 @@ class PriorityBadgeWidget extends StatelessWidget {
     }
   }
 }
-
-
-

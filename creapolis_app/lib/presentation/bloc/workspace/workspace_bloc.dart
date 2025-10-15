@@ -4,19 +4,23 @@ import 'package:injectable/injectable.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../../domain/usecases/workspace/create_workspace.dart';
+import '../../../domain/usecases/workspace/delete_workspace.dart';
 import '../../../domain/usecases/workspace/get_active_workspace.dart';
 import '../../../domain/usecases/workspace/get_user_workspaces.dart';
 import '../../../domain/usecases/workspace/set_active_workspace.dart';
+import '../../../domain/usecases/workspace/update_workspace.dart';
 import 'workspace_event.dart';
 import 'workspace_state.dart';
 
 /// BLoC para manejo de workspaces
-@injectable
+@lazySingleton
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   final GetUserWorkspacesUseCase _getUserWorkspacesUseCase;
   final CreateWorkspaceUseCase _createWorkspaceUseCase;
   final SetActiveWorkspaceUseCase _setActiveWorkspaceUseCase;
   final GetActiveWorkspaceUseCase _getActiveWorkspaceUseCase;
+  final UpdateWorkspaceUseCase _updateWorkspaceUseCase;
+  final DeleteWorkspaceUseCase _deleteWorkspaceUseCase;
 
   // Almacenar temporalmente el ID del workspace activo
   int? _pendingActiveWorkspaceId;
@@ -26,6 +30,8 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     this._createWorkspaceUseCase,
     this._setActiveWorkspaceUseCase,
     this._getActiveWorkspaceUseCase,
+    this._updateWorkspaceUseCase,
+    this._deleteWorkspaceUseCase,
   ) : super(const WorkspaceInitial()) {
     on<LoadUserWorkspacesEvent>(_onLoadUserWorkspaces);
     on<RefreshWorkspacesEvent>(_onRefreshWorkspaces);
@@ -183,23 +189,52 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
 
     final result = await _createWorkspaceUseCase(params);
 
-    result.fold(
-      (failure) {
-        AppLogger.error(
-          'WorkspaceBloc: Error al crear workspace - ${failure.message}',
-        );
-        emit(WorkspaceError(failure.message));
-      },
-      (workspace) {
-        AppLogger.info(
-          'WorkspaceBloc: Workspace creado con ID ${workspace.id}',
-        );
-        emit(WorkspaceCreated(workspace));
+    if (result.isLeft()) {
+      final failure = result.fold((l) => l, (_) => null)!;
+      AppLogger.error(
+        'WorkspaceBloc: Error al crear workspace - ${failure.message}',
+      );
+      emit(WorkspaceError(failure.message));
+      return;
+    }
 
-        // Recargar la lista después de crear
-        add(const LoadUserWorkspacesEvent());
-      },
+    final workspace = result.fold((_) => null, (r) => r)!;
+
+    AppLogger.info('WorkspaceBloc: Workspace creado con ID ${workspace.id}');
+
+    final saveResult = await _setActiveWorkspaceUseCase(workspace.id);
+    saveResult.fold(
+      (failure) => AppLogger.error(
+        'WorkspaceBloc: No se pudo guardar workspace activo tras creación - ${failure.message}',
+      ),
+      (_) => AppLogger.info(
+        'WorkspaceBloc: Workspace ${workspace.id} establecido como activo tras creación',
+      ),
     );
+
+    _pendingActiveWorkspaceId = workspace.id;
+
+    final existingWorkspaces = state is WorkspacesLoaded
+        ? (state as WorkspacesLoaded).workspaces
+        : <Workspace>[];
+
+    emit(ActiveWorkspaceSet(workspaceId: workspace.id, workspace: workspace));
+
+    final updatedWorkspaces = [
+      ...existingWorkspaces.where((w) => w.id != workspace.id),
+      workspace,
+    ];
+
+    emit(
+      WorkspacesLoaded(
+        workspaces: updatedWorkspaces,
+        activeWorkspaceId: workspace.id,
+      ),
+    );
+
+    emit(WorkspaceCreated(workspace));
+
+    add(const LoadUserWorkspacesEvent());
   }
 
   /// Manejar actualización de workspace
@@ -210,11 +245,53 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     AppLogger.info(
       'WorkspaceBloc: Actualizando workspace ${event.workspaceId}',
     );
+    final previousState = state;
     emit(const WorkspaceLoading());
 
-    // TODO: Implementar cuando se cree el UpdateWorkspaceUseCase
-    AppLogger.warning('WorkspaceBloc: UpdateWorkspace no implementado aún');
-    emit(const WorkspaceError('Funcionalidad no implementada'));
+    final params = UpdateWorkspaceParams(
+      workspaceId: event.workspaceId,
+      name: event.name,
+      description: event.description,
+      avatarUrl: event.avatarUrl,
+      type: event.type,
+      settings: event.settings,
+    );
+
+    final result = await _updateWorkspaceUseCase(params);
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'WorkspaceBloc: Error al actualizar workspace - ${failure.message}',
+        );
+        emit(WorkspaceError(failure.message));
+      },
+      (Workspace workspace) {
+        AppLogger.info(
+          'WorkspaceBloc: Workspace ${workspace.id} actualizado correctamente',
+        );
+
+        if (previousState is WorkspacesLoaded) {
+          final updatedWorkspaces = previousState.workspaces
+              .map<Workspace>((w) => w.id == workspace.id ? workspace : w)
+              .toList();
+
+          emit(
+            WorkspacesLoaded(
+              workspaces: updatedWorkspaces,
+              activeWorkspaceId: previousState.activeWorkspaceId,
+            ),
+          );
+        } else if (previousState is WorkspaceLoaded &&
+            previousState.workspace.id == workspace.id) {
+          emit(WorkspaceLoaded(workspace));
+        }
+
+        emit(WorkspaceUpdated(workspace));
+
+        add(const LoadUserWorkspacesEvent());
+      },
+    );
   }
 
   /// Manejar eliminación de workspace
@@ -223,11 +300,49 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) async {
     AppLogger.info('WorkspaceBloc: Eliminando workspace ${event.workspaceId}');
+    final previousState = state;
     emit(const WorkspaceLoading());
 
-    // TODO: Implementar cuando se cree el DeleteWorkspaceUseCase
-    AppLogger.warning('WorkspaceBloc: DeleteWorkspace no implementado aún');
-    emit(const WorkspaceError('Funcionalidad no implementada'));
+    final result = await _deleteWorkspaceUseCase(event.workspaceId);
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'WorkspaceBloc: Error al eliminar workspace - ${failure.message}',
+        );
+        emit(WorkspaceError(failure.message));
+      },
+      (_) {
+        AppLogger.info(
+          'WorkspaceBloc: Workspace ${event.workspaceId} eliminado correctamente',
+        );
+
+        if (previousState is WorkspacesLoaded) {
+          final updatedWorkspaces = previousState.workspaces
+              .where((w) => w.id != event.workspaceId)
+              .toList();
+          final isActiveRemoved =
+              previousState.activeWorkspaceId == event.workspaceId;
+
+          if (isActiveRemoved) {
+            _pendingActiveWorkspaceId = null;
+          }
+
+          emit(
+            WorkspacesLoaded(
+              workspaces: updatedWorkspaces,
+              activeWorkspaceId: isActiveRemoved
+                  ? null
+                  : previousState.activeWorkspaceId,
+            ),
+          );
+        }
+
+        emit(WorkspaceDeleted(event.workspaceId));
+
+        add(const LoadUserWorkspacesEvent());
+      },
+    );
   }
 
   /// Manejar establecimiento de workspace activo
@@ -365,6 +480,3 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     // TODO: También limpiar del cache local cuando se implemente el use case
   }
 }
-
-
-

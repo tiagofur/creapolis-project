@@ -5,6 +5,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/workspace.dart';
 import '../../bloc/workspace/workspace_bloc.dart';
 import '../../bloc/workspace/workspace_event.dart';
+import '../../bloc/workspace/workspace_state.dart';
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
@@ -23,109 +24,130 @@ class WorkspaceDetailScreen extends StatefulWidget {
 }
 
 class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
+  late Workspace _workspace;
+
   @override
   void initState() {
     super.initState();
+    _workspace = widget.workspace;
     // Cargar miembros del workspace
     context.read<WorkspaceMemberBloc>().add(
-      LoadWorkspaceMembersEvent(widget.workspace.id),
+      LoadWorkspaceMembersEvent(_workspace.id),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.workspace.name),
-        actions: [
-          // Menú de opciones
-          PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(value),
-            itemBuilder: (context) => [
-              if (widget.workspace.canManageSettings)
+    return BlocListener<WorkspaceBloc, WorkspaceState>(
+      listener: (context, state) {
+        if (state is WorkspaceUpdated && state.workspace.id == _workspace.id) {
+          setState(() => _workspace = state.workspace);
+        } else if (state is WorkspacesLoaded) {
+          try {
+            final workspace = state.workspaces.firstWhere(
+              (w) => w.id == _workspace.id,
+            );
+            if (workspace != _workspace) {
+              setState(() => _workspace = workspace);
+            }
+          } catch (_) {
+            // Workspace no encontrado en la lista; mantener el actual
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_workspace.name),
+          actions: [
+            // Menú de opciones
+            PopupMenuButton<String>(
+              onSelected: (value) => _handleMenuAction(value),
+              itemBuilder: (context) => [
+                if (_workspace.canManageSettings)
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit),
+                        SizedBox(width: 8),
+                        Text('Editar'),
+                      ],
+                    ),
+                  ),
+                if (_workspace.canManageMembers)
+                  const PopupMenuItem(
+                    value: 'members',
+                    child: Row(
+                      children: [
+                        Icon(Icons.people),
+                        SizedBox(width: 8),
+                        Text('Gestionar Miembros'),
+                      ],
+                    ),
+                  ),
+                if (_workspace.canManageSettings)
+                  const PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings),
+                        SizedBox(width: 8),
+                        Text('Configuración'),
+                      ],
+                    ),
+                  ),
                 const PopupMenuItem(
-                  value: 'edit',
+                  value: 'refresh',
                   child: Row(
                     children: [
-                      Icon(Icons.edit),
+                      Icon(Icons.refresh),
                       SizedBox(width: 8),
-                      Text('Editar'),
+                      Text('Refrescar'),
                     ],
                   ),
                 ),
-              if (widget.workspace.canManageMembers)
-                const PopupMenuItem(
-                  value: 'members',
-                  child: Row(
-                    children: [
-                      Icon(Icons.people),
-                      SizedBox(width: 8),
-                      Text('Gestionar Miembros'),
-                    ],
+                if (_workspace.userRole.canDeleteWorkspace)
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Eliminar', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
-                ),
-              if (widget.workspace.canManageSettings)
-                const PopupMenuItem(
-                  value: 'settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.settings),
-                      SizedBox(width: 8),
-                      Text('Configuración'),
-                    ],
-                  ),
-                ),
-              const PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh),
-                    SizedBox(width: 8),
-                    Text('Refrescar'),
-                  ],
-                ),
-              ),
-              if (widget.workspace.userRole.canDeleteWorkspace)
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Eliminar', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header con información principal
-              _buildHeaderCard(),
-              const SizedBox(height: 16),
+              ],
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header con información principal
+                _buildHeaderCard(),
+                const SizedBox(height: 16),
 
-              // Estadísticas
-              _buildStatsCard(),
-              const SizedBox(height: 16),
+                // Estadísticas
+                _buildStatsCard(),
+                const SizedBox(height: 16),
 
-              // Información del propietario
-              _buildOwnerCard(),
-              const SizedBox(height: 16),
+                // Información del propietario
+                _buildOwnerCard(),
+                const SizedBox(height: 16),
 
-              // Miembros
-              _buildMembersSection(),
-              const SizedBox(height: 16),
+                // Miembros
+                _buildMembersSection(),
+                const SizedBox(height: 16),
 
-              // Configuración
-              if (widget.workspace.canManageSettings) _buildSettingsCard(),
-            ],
+                // Configuración
+                if (_workspace.canManageSettings) _buildSettingsCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -144,10 +166,10 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             CircleAvatar(
               radius: 40,
               backgroundColor: _getTypeColor().withValues(alpha: 0.2),
-              child: widget.workspace.avatarUrl != null
+              child: _workspace.avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        widget.workspace.avatarUrl!,
+                        _workspace.avatarUrl!,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
@@ -163,16 +185,16 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             const SizedBox(height: 16),
             // Nombre
             Text(
-              widget.workspace.name,
+              _workspace.name,
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            if (widget.workspace.description != null) ...[
+            if (_workspace.description != null) ...[
               const SizedBox(height: 8),
               Text(
-                widget.workspace.description!,
+                _workspace.description!,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -190,12 +212,12 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
                     size: 16,
                     color: _getTypeColor(),
                   ),
-                  label: Text(widget.workspace.type.displayName),
+                  label: Text(_workspace.type.displayName),
                   backgroundColor: _getTypeColor().withValues(alpha: 0.1),
                 ),
                 const SizedBox(width: 8),
                 Chip(
-                  label: Text(widget.workspace.userRole.displayName),
+                  label: Text(_workspace.userRole.displayName),
                   backgroundColor: _getRoleColor().withValues(alpha: 0.1),
                 ),
               ],
@@ -216,7 +238,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             Expanded(
               child: _buildStatItem(
                 Icons.group,
-                '${widget.workspace.memberCount}',
+                '${_workspace.memberCount}',
                 'Miembros',
                 Colors.blue,
               ),
@@ -225,7 +247,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             Expanded(
               child: _buildStatItem(
                 Icons.folder,
-                '${widget.workspace.projectCount}',
+                '${_workspace.projectCount}',
                 'Proyectos',
                 Colors.orange,
               ),
@@ -266,9 +288,9 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Construir tarjeta del propietario
   Widget _buildOwnerCard() {
-    if (widget.workspace.owner == null) return const SizedBox.shrink();
+    if (_workspace.owner == null) return const SizedBox.shrink();
 
-    final owner = widget.workspace.owner!;
+    final owner = _workspace.owner!;
 
     return Card(
       child: ListTile(
@@ -305,7 +327,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
               'Miembros del Workspace',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            trailing: widget.workspace.userRole.canInviteMembers
+            trailing: _workspace.userRole.canInviteMembers
                 ? IconButton(
                     icon: const Icon(Icons.person_add),
                     onPressed: () => _showInviteMemberDialog(),
@@ -369,7 +391,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
               return const SizedBox.shrink();
             },
           ),
-          if (widget.workspace.memberCount > 5)
+          if (_workspace.memberCount > 5)
             TextButton(
               onPressed: () => _navigateToMembersScreen(),
               child: const Text('Ver todos los miembros'),
@@ -381,7 +403,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Construir tarjeta de configuración
   Widget _buildSettingsCard() {
-    final settings = widget.workspace.settings;
+    final settings = _workspace.settings;
 
     return Card(
       child: Column(
@@ -420,7 +442,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Obtener icono del tipo
   IconData _getTypeIcon() {
-    switch (widget.workspace.type) {
+    switch (_workspace.type) {
       case WorkspaceType.personal:
         return Icons.person;
       case WorkspaceType.team:
@@ -432,7 +454,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Obtener color del tipo
   Color _getTypeColor() {
-    switch (widget.workspace.type) {
+    switch (_workspace.type) {
       case WorkspaceType.personal:
         return Colors.blue;
       case WorkspaceType.team:
@@ -444,7 +466,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Obtener color del rol
   Color _getRoleColor() {
-    switch (widget.workspace.userRole) {
+    switch (_workspace.userRole) {
       case WorkspaceRole.owner:
         return Colors.red;
       case WorkspaceRole.admin:
@@ -496,8 +518,9 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   /// Manejar refresh
   Future<void> _handleRefresh() async {
     context.read<WorkspaceMemberBloc>().add(
-      RefreshWorkspaceMembersEvent(widget.workspace.id),
+      RefreshWorkspaceMembersEvent(_workspace.id),
     );
+    context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -505,14 +528,17 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   void _navigateToEditWorkspace() async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => WorkspaceEditScreen(workspace: widget.workspace),
+        builder: (context) => WorkspaceEditScreen(workspace: _workspace),
       ),
     );
 
-    // Si se actualizó, refrescar
-    if (result != null && mounted) {
+    if (!mounted) return;
+
+    if (result is Workspace) {
+      setState(() => _workspace = result);
+      context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
       context.read<WorkspaceMemberBloc>().add(
-        RefreshWorkspaceMembersEvent(widget.workspace.id),
+        RefreshWorkspaceMembersEvent(_workspace.id),
       );
     }
   }
@@ -521,8 +547,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   void _navigateToMembersScreen() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) =>
-            WorkspaceMembersScreen(workspace: widget.workspace),
+        builder: (context) => WorkspaceMembersScreen(workspace: _workspace),
       ),
     );
   }
@@ -531,8 +556,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   void _navigateToSettingsScreen() async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) =>
-            WorkspaceSettingsScreen(workspace: widget.workspace),
+        builder: (context) => WorkspaceSettingsScreen(workspace: _workspace),
       ),
     );
 
@@ -556,7 +580,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Workspace'),
         content: Text(
-          '¿Estás seguro de que deseas eliminar "${widget.workspace.name}"? Esta acción no se puede deshacer.',
+          '¿Estás seguro de que deseas eliminar "${_workspace.name}"? Esta acción no se puede deshacer.',
         ),
         actions: [
           TextButton(
@@ -578,9 +602,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Manejar eliminación
   void _handleDelete() {
-    context.read<WorkspaceBloc>().add(
-      DeleteWorkspaceEvent(widget.workspace.id),
-    );
+    context.read<WorkspaceBloc>().add(DeleteWorkspaceEvent(_workspace.id));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Funcionalidad de eliminación próximamente'),
@@ -588,6 +610,3 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
     );
   }
 }
-
-
-

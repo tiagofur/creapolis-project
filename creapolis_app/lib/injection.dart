@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/config/environment_config.dart';
 import 'core/network/api_client.dart';
 import 'core/network/interceptors/auth_interceptor.dart';
 import 'core/services/last_route_service.dart';
@@ -58,7 +59,7 @@ Future<void> initializeDependencies() async {
   // ApiClient (singleton)
   getIt.registerSingleton<ApiClient>(
     ApiClient(
-      baseUrl: 'http://localhost:3001/api', // TODO: Move to env config
+      baseUrl: EnvironmentConfig.apiBaseUrl,
       authInterceptor: getIt<AuthInterceptor>(),
     ),
   );
@@ -78,6 +79,3 @@ Future<void> initializeDependencies() async {
   // Y todos los demás servicios marcados con @injectable
   _configureInjectable();
 }
-
-
-

@@ -53,14 +53,15 @@ Sistema de gestión de proyectos con planificación automática, sistema de work
 - WorkspaceSwitcher en todas las pantallas
 - Animaciones fluidas
 
-
 ## 📚 Documentación
 
 ### 🎨 Design System
+
 - **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Sistema de diseño completo: colores, tipografía, espaciado, grid system
 - **[COMPONENTS.md](./COMPONENTS.md)** - Biblioteca de componentes reutilizables con ejemplos
 
 ### 📖 Guías Técnicas
+
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Arquitectura detallada del proyecto
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Guía de inicio rápido
 - **[FLUTTER_ROADMAP.md](./FLUTTER_ROADMAP.md)** - Roadmap de desarrollo
@@ -189,6 +190,19 @@ flutter test test/domain/usecases/workspace/
 cd creapolis_app
 flutter pub get
 flutter run
+```
+
+## ⚙️ Variables de Entorno (Flutter)
+
+- `API_BASE_URL` controla la URL base usada por `ApiClient`. Valor por defecto: `http://localhost:3001/api`.
+- `ENABLE_HTTP_LOGS` habilita (`true`) o deshabilita (`false`) los logs detallados de las peticiones HTTP. Valor por defecto: `true`.
+
+Para sobrescribirlos en tiempo de ejecución utiliza `--dart-define`:
+
+```bash
+flutter run \
+  --dart-define=API_BASE_URL=https://api.dev.creapolis.com/v1 \
+  --dart-define=ENABLE_HTTP_LOGS=false
 ```
 
 ### Build Runner (para mocks)

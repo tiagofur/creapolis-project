@@ -75,6 +75,3 @@ class HiveProjectAdapter extends TypeAdapter<HiveProject> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
-
-
-

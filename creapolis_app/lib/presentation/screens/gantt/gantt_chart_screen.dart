@@ -229,10 +229,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
           }
 
           return _showResourcePanel
-              ? GanttResourcePanel(
-                  tasks: tasks,
-                  onTaskTap: _showTaskDetails,
-                )
+              ? GanttResourcePanel(tasks: tasks, onTaskTap: _showTaskDetails)
               : RepaintBoundary(
                   key: _ganttKey,
                   child: GanttChartWidget(
@@ -248,7 +245,11 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
   }
 
   /// Maneja el cambio de fechas de una tarea
-  void _handleTaskDateChanged(Task task, DateTime newStartDate, DateTime newEndDate) {
+  void _handleTaskDateChanged(
+    Task task,
+    DateTime newStartDate,
+    DateTime newEndDate,
+  ) {
     // Mostrar confirmación
     showDialog(
       context: context,
@@ -270,6 +271,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
               // Actualizar tarea con nuevas fechas
               context.read<TaskBloc>().add(
                 UpdateTaskEvent(
+                  projectId: widget.projectId,
                   id: task.id,
                   startDate: newStartDate,
                   endDate: newEndDate,
@@ -327,9 +329,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       final path = await GanttExportService.saveAsImage(
@@ -345,10 +345,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
           SnackBar(
             content: Text('Imagen guardada: $path'),
             backgroundColor: Colors.green,
-            action: SnackBarAction(
-              label: 'OK',
-              onPressed: () {},
-            ),
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
           ),
         );
       }
@@ -370,9 +367,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       await GanttExportService.exportAsPDF(
@@ -407,9 +402,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       await GanttExportService.exportAsImage(
@@ -623,6 +616,3 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
         '${date.year}';
   }
 }
-
-
-

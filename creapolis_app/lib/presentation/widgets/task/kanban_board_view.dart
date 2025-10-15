@@ -111,17 +111,12 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     return _columns.map((column) {
       // Obtener tareas de esta columna desde el mapa interno
       final columnTasks = _tasksByColumn[column.status] ?? [];
-      
+
       // Obtener configuración de la columna
       final columnConfig = _boardConfig.getColumnConfig(column.status);
 
       return DragAndDropList(
-        header: _buildHeader(
-          context,
-          column,
-          columnTasks.length,
-          columnConfig,
-        ),
+        header: _buildHeader(context, column, columnTasks.length, columnConfig),
         canDrag: false, // No permitir reordenar columnas
         children: columnTasks
             .map(
@@ -153,7 +148,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
         // Toolbar con opciones de configuración
         _buildToolbar(context),
         const Divider(height: 1),
-        
+
         // Tablero Kanban
         Expanded(
           child: DragAndDropLists(
@@ -209,9 +204,9 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
         children: [
           Text(
             'Tablero Kanban',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const Spacer(),
           IconButton(
@@ -246,9 +241,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
             ? Colors.red.withValues(alpha: 0.15)
             : column.color.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        border: isWipExceeded
-            ? Border.all(color: Colors.red, width: 2)
-            : null,
+        border: isWipExceeded ? Border.all(color: Colors.red, width: 2) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,9 +262,9 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
                 child: Text(
                   column.title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: column.color,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: column.color,
+                  ),
                 ),
               ),
               // Contador de tareas
@@ -297,15 +290,11 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
               // Icono de alerta WIP
               if (isWipExceeded) ...[
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.warning,
-                  color: Colors.red,
-                  size: 16,
-                ),
+                Icon(Icons.warning, color: Colors.red, size: 16),
               ],
             ],
           ),
-          
+
           // Métricas (si existen tareas completadas)
           if (metrics != null &&
               (metrics.averageLeadTime > 0 || metrics.averageCycleTime > 0))
@@ -344,10 +333,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
           const SizedBox(width: 4),
           Text(
             '$label: ',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
           ),
           Text(
             value,
@@ -417,7 +403,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     if (oldListIndex != newListIndex) {
       final newColumnConfig = _boardConfig.getColumnConfig(newStatus);
       final newColumnCount = (_tasksByColumn[newStatus]?.length ?? 0);
-      
+
       if (newColumnConfig?.isWipExceeded(newColumnCount + 1) ?? false) {
         // Mostrar advertencia pero permitir el movimiento
         ScaffoldMessenger.of(context).showSnackBar(
@@ -451,7 +437,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
         _tasksByColumn[newStatus] = [];
       }
       _tasksByColumn[newStatus]!.insert(newItemIndex, task);
-      
+
       // Recalcular métricas
       _calculateMetrics();
     });
@@ -465,6 +451,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
       // Actualizar tarea en el backend con el nuevo estado
       context.read<TaskBloc>().add(
         UpdateTaskEvent(
+          projectId: widget.projectId,
           id: task.id,
           title: task.title,
           description: task.description,
@@ -513,10 +500,8 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
   void _showMetricsDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => _KanbanMetricsDialog(
-        metrics: _metrics,
-        tasks: widget.tasks,
-      ),
+      builder: (context) =>
+          _KanbanMetricsDialog(metrics: _metrics, tasks: widget.tasks),
     );
   }
 }
@@ -576,9 +561,9 @@ class _KanbanConfigDialogState extends State<_KanbanConfigDialog> {
             children: [
               Text(
                 'WIP Limits por Columna',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ...TaskStatus.values.map((status) => _buildWipLimitRow(status)),
@@ -591,10 +576,7 @@ class _KanbanConfigDialogState extends State<_KanbanConfigDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
-        FilledButton(
-          onPressed: _saveConfig,
-          child: const Text('Guardar'),
-        ),
+        FilledButton(onPressed: _saveConfig, child: const Text('Guardar')),
       ],
     );
   }
@@ -639,11 +621,7 @@ class _KanbanConfigDialogState extends State<_KanbanConfigDialog> {
     final service = KanbanPreferencesService.instance;
 
     for (final entry in _wipLimits.entries) {
-      await service.setWipLimit(
-        widget.projectId,
-        entry.key,
-        entry.value,
-      );
+      await service.setWipLimit(widget.projectId, entry.key, entry.value);
     }
 
     widget.onConfigChanged();
@@ -664,10 +642,7 @@ class _KanbanMetricsDialog extends StatelessWidget {
   final Map<TaskStatus, KanbanColumnMetrics> metrics;
   final List<Task> tasks;
 
-  const _KanbanMetricsDialog({
-    required this.metrics,
-    required this.tasks,
-  });
+  const _KanbanMetricsDialog({required this.metrics, required this.tasks});
 
   @override
   Widget build(BuildContext context) {
@@ -690,13 +665,13 @@ class _KanbanMetricsDialog extends StatelessWidget {
               // Métricas generales
               _buildGeneralMetrics(wip, completedThisWeek),
               const Divider(height: 32),
-              
+
               // Métricas por columna
               Text(
                 'Métricas por Columna',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ...TaskStatus.values.map((status) {
@@ -760,10 +735,7 @@ class _KanbanMetricsDialog extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
               Text(
                 value,
@@ -795,18 +767,15 @@ class _KanbanMetricsDialog extends StatelessWidget {
           children: [
             Text(
               metric.status.displayName,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _buildMetricItem(
-                    'Tareas',
-                    '${metric.taskCount}',
-                  ),
+                  child: _buildMetricItem('Tareas', '${metric.taskCount}'),
                 ),
                 Expanded(
                   child: _buildMetricItem(
@@ -838,22 +807,13 @@ class _KanbanMetricsDialog extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 }
-
-
-

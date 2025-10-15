@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/view_constants.dart';
+import '../../../core/utils/app_logger.dart';
+import '../../../injection.dart';
 
 /// Widget reutilizable para crear secciones colapsables/expandibles
 ///
@@ -113,8 +116,9 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
       curve: ViewConstants.collapseCurve,
     );
 
-    // TODO: Cargar estado guardado si existe storageKey
-    // _loadExpandedState();
+    if (widget.storageKey != null) {
+      _loadExpandedState();
+    }
   }
 
   @override
@@ -137,8 +141,43 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
     // Notificar cambio
     widget.onExpandChanged?.call(_isExpanded);
 
-    // TODO: Guardar estado si existe storageKey
-    // _saveExpandedState();
+    if (widget.storageKey != null) {
+      _saveExpandedState();
+    }
+  }
+
+  SharedPreferences get _preferences => getIt<SharedPreferences>();
+
+  String get _prefsKey => 'collapsible_section_${widget.storageKey!}';
+
+  void _loadExpandedState() {
+    try {
+      final storedValue = _preferences.getBool(_prefsKey);
+      if (storedValue == null) {
+        return;
+      }
+
+      _isExpanded = storedValue;
+      _animationController.value = _isExpanded ? 1.0 : 0.0;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'CollapsibleSection: error al cargar estado persistido',
+        error,
+        stackTrace,
+      );
+    }
+  }
+
+  Future<void> _saveExpandedState() async {
+    try {
+      await _preferences.setBool(_prefsKey, _isExpanded);
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'CollapsibleSection: error al guardar estado persistido',
+        error,
+        stackTrace,
+      );
+    }
   }
 
   @override
@@ -367,6 +406,3 @@ class _ExpandableDescriptionState extends State<ExpandableDescription> {
     );
   }
 }
-
-
-

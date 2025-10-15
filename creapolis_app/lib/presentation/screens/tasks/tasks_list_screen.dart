@@ -38,7 +38,8 @@ class _TasksListScreenState extends State<TasksListScreen>
   TaskViewMode _viewMode = TaskViewMode.list;
   TaskDensity _density = TaskDensity.comfortable;
   late ScrollController _scrollController;
-  final bool _enablePagination = true; // Flag para habilitar/deshabilitar paginación
+  final bool _enablePagination =
+      true; // Flag para habilitar/deshabilitar paginación
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _TasksListScreenState extends State<TasksListScreen>
     WidgetsBinding.instance.addObserver(this);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    
+
     // Cargar tareas al iniciar después de verificar workspace
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkWorkspaceAndLoadTasks();
@@ -64,15 +65,13 @@ class _TasksListScreenState extends State<TasksListScreen>
   void _onScroll() {
     // Solo intentar cargar más si la paginación está habilitada
     if (!_enablePagination) return;
-    
+
     if (PaginationHelper.shouldLoadMore(_scrollController)) {
       final currentState = context.read<TaskBloc>().state;
-      if (currentState is TasksLoaded && 
-          !currentState.isLoadingMore && 
+      if (currentState is TasksLoaded &&
+          !currentState.isLoadingMore &&
           currentState.paginationState.hasMoreData) {
-        AppLogger.info(
-          'TasksListScreen: Disparando carga de más tareas',
-        );
+        AppLogger.info('TasksListScreen: Disparando carga de más tareas');
         context.read<TaskBloc>().add(LoadMoreTasksEvent(widget.projectId));
       }
     }
@@ -128,7 +127,9 @@ class _TasksListScreenState extends State<TasksListScreen>
     if (shouldLoad) {
       // Usar paginación si está habilitada, sino carga normal
       if (_enablePagination) {
-        context.read<TaskBloc>().add(ResetTasksPaginationEvent(widget.projectId));
+        context.read<TaskBloc>().add(
+          ResetTasksPaginationEvent(widget.projectId),
+        );
       } else {
         context.read<TaskBloc>().add(LoadTasksByProjectEvent(widget.projectId));
       }
@@ -307,9 +308,11 @@ class _TasksListScreenState extends State<TasksListScreen>
     // Vista Lista (por defecto) con infinite scroll
     return BlocBuilder<TaskBloc, TaskState>(
       builder: (context, state) {
-        final isLoadingMore = state is TasksLoaded ? state.isLoadingMore : false;
-        final hasMoreData = state is TasksLoaded 
-            ? state.paginationState.hasMoreData 
+        final isLoadingMore = state is TasksLoaded
+            ? state.isLoadingMore
+            : false;
+        final hasMoreData = state is TasksLoaded
+            ? state.paginationState.hasMoreData
             : false;
 
         return RefreshIndicator(
@@ -482,10 +485,9 @@ class _TasksListScreenState extends State<TasksListScreen>
 
     if (confirmed == true && context.mounted) {
       AppLogger.info('TasksListScreen: Eliminando tarea ${task.id}');
-      context.read<TaskBloc>().add(DeleteTaskEvent(task.id));
+      context.read<TaskBloc>().add(
+        DeleteTaskEvent(projectId: widget.projectId, id: task.id),
+      );
     }
   }
 }
-
-
-
