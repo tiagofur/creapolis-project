@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../../core/database/cache_manager.dart';
 import '../../../core/database/hive_manager.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../models/hive/hive_workspace.dart';
 
 /// Interface para el datasource de caché local de workspaces (Hive)
@@ -305,6 +305,3 @@ class WorkspaceCacheDataSourceImpl implements WorkspaceCacheDataSource {
     }
   }
 }
-
-
-

@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 part 'hive_workspace.g.dart';
 
@@ -90,10 +90,16 @@ class HiveWorkspace extends HiveObject {
       avatarUrl: avatarUrl,
       type: WorkspaceType.fromString(type),
       ownerId: ownerId,
+      owner: WorkspaceOwner(
+        id: ownerId,
+        name: '', // No tenemos el nombre en caché
+        email: '', // No tenemos el email en caché
+        avatarUrl: null,
+      ),
       userRole: WorkspaceRole.fromString(userRole),
       memberCount: memberCount,
       projectCount: projectCount,
-      settings: const WorkspaceSettings(), // Default settings para caché
+      settings: WorkspaceSettings.defaults(), // Default settings para caché
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -144,6 +150,3 @@ class HiveWorkspace extends HiveObject {
     return 'HiveWorkspace(id: $id, name: $name, isPendingSync: $isPendingSync)';
   }
 }
-
-
-

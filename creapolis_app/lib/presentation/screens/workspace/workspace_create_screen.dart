@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/validators.dart';
-import '../../../domain/entities/workspace.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../widgets/form/validated_text_field.dart';
 
 /// Pantalla para crear un nuevo workspace
@@ -38,26 +38,28 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
       appBar: AppBar(title: const Text('Crear Workspace')),
       body: BlocListener<WorkspaceBloc, WorkspaceState>(
         listener: (context, state) {
-          if (state is WorkspaceLoading) {
+          if (state is WorkspaceLoading ||
+              state is WorkspaceOperationInProgress) {
             setState(() => _isLoading = true);
           } else {
             setState(() => _isLoading = false);
           }
 
-          if (state is WorkspaceCreated) {
+          if (state is WorkspaceOperationSuccess &&
+              state.updatedWorkspace != null) {
             AppLogger.info(
-              'Workspace creado exitosamente: ${state.workspace.id}',
+              'Workspace creado exitosamente: ${state.updatedWorkspace!.id}',
             );
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Workspace "${state.workspace.name}" creado exitosamente',
+                  'Workspace "${state.updatedWorkspace!.name}" creado exitosamente',
                 ),
                 backgroundColor: Colors.green,
               ),
             );
             // Regresar a la pantalla anterior después de crear
-            Navigator.of(context).pop(state.workspace);
+            Navigator.of(context).pop(state.updatedWorkspace);
           } else if (state is WorkspaceError) {
             AppLogger.error('Error al crear workspace: ${state.message}');
             ScaffoldMessenger.of(context).showSnackBar(
@@ -294,11 +296,11 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
 
       // Enviar evento al BLoC
       context.read<WorkspaceBloc>().add(
-        CreateWorkspaceEvent(
+        CreateWorkspace(
           name: name,
           description: description.isNotEmpty ? description : null,
           type: _selectedType,
-          settings: const WorkspaceSettings(), // Configuración por defecto
+          settings: WorkspaceSettings.defaults(), // Configuración por defecto
         ),
       );
     }

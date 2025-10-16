@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Widget para mostrar el avatar de un workspace
 class WorkspaceAvatar extends StatelessWidget {
@@ -82,6 +82,3 @@ class WorkspaceAvatar extends StatelessWidget {
     }
   }
 }
-
-
-

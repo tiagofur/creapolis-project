@@ -17,7 +17,7 @@ import 'injection.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/project/project_bloc.dart';
 import 'presentation/bloc/task/task_bloc.dart';
-import 'presentation/bloc/workspace/workspace_bloc.dart';
+import 'features/workspace/presentation/bloc/workspace_bloc.dart';
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart';
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import 'presentation/providers/workspace_context.dart';
@@ -151,6 +151,3 @@ class _CreopolisAppState extends State<CreopolisApp> {
     );
   }
 }
-
-
-

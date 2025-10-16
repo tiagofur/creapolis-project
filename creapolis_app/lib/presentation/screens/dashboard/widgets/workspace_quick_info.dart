@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/entities/workspace.dart';
+import '../../../../features/workspace/data/models/workspace_model.dart';
 import '../../../../routes/route_builder.dart';
 
 /// Widget que muestra información rápida del workspace activo.
@@ -82,6 +82,3 @@ class WorkspaceQuickInfo extends StatelessWidget {
     context.goToWorkspaces();
   }
 }
-
-
-

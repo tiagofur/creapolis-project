@@ -102,6 +102,7 @@ import 'domain/usecases/update_task_usecase.dart' as _i1018;
 import 'domain/usecases/workspace/accept_invitation.dart' as _i927;
 import 'domain/usecases/workspace/create_invitation.dart' as _i359;
 import 'domain/usecases/workspace/create_workspace.dart' as _i225;
+import 'domain/usecases/workspace/decline_invitation.dart' as _i9;
 import 'domain/usecases/workspace/delete_workspace.dart' as _i154;
 import 'domain/usecases/workspace/get_active_workspace.dart' as _i890;
 import 'domain/usecases/workspace/get_pending_invitations.dart' as _i591;
@@ -114,6 +115,7 @@ import 'features/search/presentation/blocs/search_bloc.dart' as _i807;
 import 'features/tasks/presentation/blocs/task_bloc.dart' as _i100;
 import 'features/workspace/data/datasources/workspace_remote_datasource.dart'
     as _i398;
+import 'features/workspace/presentation/bloc/workspace_bloc.dart' as _i207;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/category/category_bloc.dart' as _i116;
@@ -123,7 +125,6 @@ import 'presentation/bloc/project/project_bloc.dart' as _i190;
 import 'presentation/bloc/task/task_bloc.dart' as _i944;
 import 'presentation/bloc/time_tracking/time_tracking_bloc.dart' as _i808;
 import 'presentation/bloc/workload/workload_bloc.dart' as _i107;
-import 'presentation/bloc/workspace/workspace_bloc.dart' as _i754;
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart'
     as _i953;
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart' as _i53;
@@ -194,6 +195,8 @@ extension GetItInjectableX on _i174.GetIt {
             gh<_i888.NotificationRemoteDataSource>()));
     gh.lazySingleton<_i524.ConnectivityService>(
         () => _i524.ConnectivityService(gh<_i895.Connectivity>()));
+    gh.lazySingleton<_i207.WorkspaceBloc>(
+        () => _i207.WorkspaceBloc(gh<_i398.WorkspaceRemoteDataSource>()));
     gh.factory<_i318.CalendarRemoteDataSource>(
         () => _i318.CalendarRemoteDataSource(gh<_i45.DioClient>()));
     gh.factory<_i233.WorkloadRemoteDataSource>(
@@ -213,6 +216,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i225.CreateWorkspaceUseCase>(
         () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i9.DeclineInvitationUseCase>(
+        () => _i9.DeclineInvitationUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i154.DeleteWorkspaceUseCase>(
         () => _i154.DeleteWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i890.GetActiveWorkspaceUseCase>(
@@ -265,6 +270,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i714.TimeLogRemoteDataSourceImpl(gh<_i45.DioClient>()));
     gh.factory<_i916.CalendarRepository>(() =>
         _i365.CalendarRepositoryImpl(gh<_i318.CalendarRemoteDataSource>()));
+    gh.factory<_i953.WorkspaceInvitationBloc>(
+        () => _i953.WorkspaceInvitationBloc(
+              gh<_i591.GetPendingInvitationsUseCase>(),
+              gh<_i359.CreateInvitationUseCase>(),
+              gh<_i927.AcceptInvitationUseCase>(),
+              gh<_i9.DeclineInvitationUseCase>(),
+            ));
     gh.factory<_i889.GetProfileUseCase>(
         () => _i889.GetProfileUseCase(gh<_i716.AuthRepository>()));
     gh.factory<_i883.LoginUseCase>(
@@ -277,31 +289,15 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i23.NLPRemoteDataSource>(),
           gh<_i524.ConnectivityService>(),
         ));
-    gh.lazySingleton<_i754.WorkspaceBloc>(() => _i754.WorkspaceBloc(
-          gh<_i820.GetUserWorkspacesUseCase>(),
-          gh<_i225.CreateWorkspaceUseCase>(),
-          gh<_i245.SetActiveWorkspaceUseCase>(),
-          gh<_i890.GetActiveWorkspaceUseCase>(),
-          gh<_i1066.UpdateWorkspaceUseCase>(),
-          gh<_i154.DeleteWorkspaceUseCase>(),
-        ));
     gh.factory<_i764.GetNLPExamplesUseCase>(
         () => _i764.GetNLPExamplesUseCase(gh<_i511.NLPRepository>()));
     gh.factory<_i82.ParseTaskInstructionUseCase>(
         () => _i82.ParseTaskInstructionUseCase(gh<_i511.NLPRepository>()));
-    gh.factory<_i953.WorkspaceInvitationBloc>(
-        () => _i953.WorkspaceInvitationBloc(
-              gh<_i591.GetPendingInvitationsUseCase>(),
-              gh<_i359.CreateInvitationUseCase>(),
-              gh<_i927.AcceptInvitationUseCase>(),
-            ));
     gh.lazySingleton<_i449.TaskRepository>(() => _i221.TaskRepositoryImpl(
           gh<_i1007.TaskRemoteDataSource>(),
           gh<_i314.TaskCacheDataSource>(),
           gh<_i524.ConnectivityService>(),
         ));
-    gh.singleton<_i34.WorkspaceContext>(
-        () => _i34.WorkspaceContext(gh<_i754.WorkspaceBloc>()));
     gh.lazySingleton<_i657.TimeLogRepository>(
         () => _i384.TimeLogRepositoryImpl(gh<_i714.TimeLogRemoteDataSource>()));
     gh.factory<_i612.CreateTaskUseCase>(
@@ -314,6 +310,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i1018.UpdateTaskUseCase>(
         () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.singleton<_i34.WorkspaceContext>(
+        () => _i34.WorkspaceContext(gh<_i207.WorkspaceBloc>()));
     gh.factory<_i42.WorkloadRepository>(() =>
         _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()));
     gh.factory<_i328.ProjectBloc>(() =>

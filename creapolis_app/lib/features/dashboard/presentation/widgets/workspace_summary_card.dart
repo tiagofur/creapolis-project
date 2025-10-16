@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 
 /// Card que muestra el resumen del workspace actual
 class WorkspaceSummaryCard extends StatelessWidget {
@@ -184,6 +184,3 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
-
-
-

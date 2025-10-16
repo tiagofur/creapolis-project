@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/network/exceptions/api_exceptions.dart';
@@ -15,6 +16,7 @@ import 'workspace_state.dart';
 /// - Workspace activo (persistido en SharedPreferences)
 /// - Gestión de miembros
 /// - Invitaciones
+@lazySingleton
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   final WorkspaceRemoteDataSource _dataSource;
 
@@ -738,6 +740,3 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   /// Getter para lista de workspaces
   List<Workspace> get workspaces => _workspaces;
 }
-
-
-

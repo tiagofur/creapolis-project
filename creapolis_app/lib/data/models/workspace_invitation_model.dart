@@ -1,4 +1,4 @@
-import '../../domain/entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/workspace_invitation.dart';
 
 /// Model para WorkspaceInvitation que maneja serialización JSON
@@ -121,6 +121,3 @@ class WorkspaceInvitationModel {
     );
   }
 }
-
-
-

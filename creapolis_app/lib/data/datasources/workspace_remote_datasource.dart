@@ -2,21 +2,20 @@ import 'package:injectable/injectable.dart';
 
 import '../../core/errors/exceptions.dart';
 import '../../core/network/dio_client.dart';
-import '../../domain/entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../models/workspace_invitation_model.dart';
 import '../models/workspace_member_model.dart';
-import '../models/workspace_model.dart';
 
 /// Interface para el data source remoto de workspaces
 abstract class WorkspaceRemoteDataSource {
   /// Obtener todos los workspaces del usuario
-  Future<List<WorkspaceModel>> getUserWorkspaces();
+  Future<List<Workspace>> getUserWorkspaces();
 
   /// Obtener workspace por ID
-  Future<WorkspaceModel> getWorkspace(int workspaceId);
+  Future<Workspace> getWorkspace(int workspaceId);
 
   /// Crear nuevo workspace
-  Future<WorkspaceModel> createWorkspace({
+  Future<Workspace> createWorkspace({
     required String name,
     String? description,
     String? avatarUrl,
@@ -25,7 +24,7 @@ abstract class WorkspaceRemoteDataSource {
   });
 
   /// Actualizar workspace existente
-  Future<WorkspaceModel> updateWorkspace({
+  Future<Workspace> updateWorkspace({
     required int workspaceId,
     String? name,
     String? description,
@@ -61,7 +60,7 @@ abstract class WorkspaceRemoteDataSource {
   Future<List<WorkspaceInvitationModel>> getPendingInvitations();
 
   /// Aceptar invitación
-  Future<WorkspaceModel> acceptInvitation(String token);
+  Future<Workspace> acceptInvitation(String token);
 
   /// Rechazar invitación
   Future<void> declineInvitation(String token);
@@ -75,7 +74,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
   WorkspaceRemoteDataSourceImpl(this._dioClient);
 
   @override
-  Future<List<WorkspaceModel>> getUserWorkspaces() async {
+  Future<List<Workspace>> getUserWorkspaces() async {
     try {
       final response = await _dioClient.get('/workspaces');
 
@@ -88,7 +87,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
 
       final workspacesJson = data as List<dynamic>;
       return workspacesJson
-          .map((json) => WorkspaceModel.fromJson(json as Map<String, dynamic>))
+          .map((json) => Workspace.fromJson(json as Map<String, dynamic>))
           .toList();
     } on ServerException {
       rethrow;
@@ -100,7 +99,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
   }
 
   @override
-  Future<WorkspaceModel> getWorkspace(int workspaceId) async {
+  Future<Workspace> getWorkspace(int workspaceId) async {
     try {
       final response = await _dioClient.get('/workspaces/$workspaceId');
 
@@ -111,7 +110,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
         throw ServerException('Datos no encontrados en respuesta');
       }
 
-      return WorkspaceModel.fromJson(data);
+      return Workspace.fromJson(data);
     } on NotFoundException {
       rethrow;
     } on ServerException {
@@ -122,7 +121,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
   }
 
   @override
-  Future<WorkspaceModel> createWorkspace({
+  Future<Workspace> createWorkspace({
     required String name,
     String? description,
     String? avatarUrl,
@@ -158,7 +157,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
         );
       }
 
-      return WorkspaceModel.fromJson(data);
+      return Workspace.fromJson(data);
     } on ValidationException {
       rethrow;
     } on ServerException {
@@ -169,7 +168,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
   }
 
   @override
-  Future<WorkspaceModel> updateWorkspace({
+  Future<Workspace> updateWorkspace({
     required int workspaceId,
     String? name,
     String? description,
@@ -209,7 +208,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
         );
       }
 
-      return WorkspaceModel.fromJson(data);
+      return Workspace.fromJson(data);
     } on NotFoundException {
       rethrow;
     } on ForbiddenException {
@@ -377,7 +376,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
   }
 
   @override
-  Future<WorkspaceModel> acceptInvitation(String token) async {
+  Future<Workspace> acceptInvitation(String token) async {
     try {
       final response = await _dioClient.post(
         '/workspaces/invitations/accept',
@@ -393,7 +392,7 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
         );
       }
 
-      return WorkspaceModel.fromJson(data);
+      return Workspace.fromJson(data);
     } on NotFoundException {
       rethrow;
     } on ServerException {
@@ -419,6 +418,3 @@ class WorkspaceRemoteDataSourceImpl implements WorkspaceRemoteDataSource {
     }
   }
 }
-
-
-

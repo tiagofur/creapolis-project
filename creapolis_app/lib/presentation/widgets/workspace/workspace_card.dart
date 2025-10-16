@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Widget de tarjeta de workspace
 class WorkspaceCard extends StatelessWidget {

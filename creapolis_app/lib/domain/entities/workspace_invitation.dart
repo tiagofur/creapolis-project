@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import 'workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 
 /// Estados de invitación
 enum InvitationStatus {
@@ -146,6 +146,3 @@ class WorkspaceInvitation extends Equatable {
     expiresAt,
   ];
 }
-
-
-

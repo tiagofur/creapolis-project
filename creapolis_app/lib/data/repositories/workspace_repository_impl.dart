@@ -5,7 +5,7 @@ import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/services/connectivity_service.dart';
-import '../../domain/entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/workspace_invitation.dart';
 import '../../domain/entities/workspace_member.dart';
 import '../../domain/repositories/workspace_repository.dart';
@@ -43,12 +43,9 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
 
       if (isOnline) {
         // 3a. Online: obtener de API y actualizar caché
-        final workspaceModels = await _remoteDataSource.getUserWorkspaces();
+        final workspaces = await _remoteDataSource.getUserWorkspaces();
 
-        // Convertir a entities y cachear
-        final workspaces = workspaceModels
-            .map((model) => model.toEntity())
-            .toList();
+        // Cachear los workspaces
         await _cacheDataSource.cacheWorkspaces(workspaces);
 
         return Right(workspaces);
@@ -105,12 +102,9 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
 
       if (isOnline) {
         // 3a. Online: obtener de API y actualizar caché
-        final workspaceModel = await _remoteDataSource.getWorkspace(
-          workspaceId,
-        );
+        final workspace = await _remoteDataSource.getWorkspace(workspaceId);
 
-        // Convertir a entity y cachear
-        final workspace = workspaceModel.toEntity();
+        // Cachear el workspace
         await _cacheDataSource.cacheWorkspace(workspace);
 
         return Right(workspace);
@@ -161,14 +155,13 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     WorkspaceSettings? settings,
   }) async {
     try {
-      final workspaceModel = await _remoteDataSource.createWorkspace(
+      final workspace = await _remoteDataSource.createWorkspace(
         name: name,
         description: description,
         avatarUrl: avatarUrl,
         type: type,
         settings: settings,
       );
-      final workspace = workspaceModel.toEntity();
 
       try {
         await _cacheDataSource.cacheWorkspace(workspace);
@@ -201,7 +194,7 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     WorkspaceSettings? settings,
   }) async {
     try {
-      final workspaceModel = await _remoteDataSource.updateWorkspace(
+      final workspace = await _remoteDataSource.updateWorkspace(
         workspaceId: workspaceId,
         name: name,
         description: description,
@@ -209,7 +202,6 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
         type: type,
         settings: settings,
       );
-      final workspace = workspaceModel.toEntity();
 
       try {
         await _cacheDataSource.cacheWorkspace(workspace);
@@ -389,8 +381,7 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   @override
   Future<Either<Failure, Workspace>> acceptInvitation(String token) async {
     try {
-      final workspaceModel = await _remoteDataSource.acceptInvitation(token);
-      final workspace = workspaceModel.toEntity();
+      final workspace = await _remoteDataSource.acceptInvitation(token);
 
       // Automáticamente establecer el nuevo workspace como activo
       await _localDataSource.saveActiveWorkspaceId(workspace.id);

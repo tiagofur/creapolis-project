@@ -4,7 +4,7 @@ import '../../data/models/hive/hive_operation_queue.dart';
 import '../../domain/repositories/workspace_repository.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../../domain/repositories/task_repository.dart';
-import '../../domain/entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/entities/task.dart';
 import '../utils/app_logger.dart';
@@ -447,6 +447,3 @@ class SyncOperationExecutor {
     }
   }
 }
-
-
-

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../widgets/navigation/quick_create_speed_dial.dart';
 
 /// Shell principal de la aplicación con Bottom Navigation Bar y FAB contextual.
@@ -128,8 +128,8 @@ class MainShell extends StatelessWidget {
   bool _hasActiveWorkspace(BuildContext context) {
     final workspaceState = context.read<WorkspaceBloc>().state;
 
-    if (workspaceState is WorkspacesLoaded) {
-      return workspaceState.activeWorkspaceId != null;
+    if (workspaceState is WorkspaceLoaded) {
+      return workspaceState.activeWorkspace != null;
     }
 
     return false;
@@ -176,6 +176,3 @@ class MainShell extends StatelessWidget {
     );
   }
 }
-
-
-

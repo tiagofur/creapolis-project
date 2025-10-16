@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../core/errors/failures.dart';
-import '../entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../entities/workspace_invitation.dart';
 import '../entities/workspace_member.dart';
 
@@ -75,6 +75,3 @@ abstract class WorkspaceRepository {
   /// Obtener workspace activo desde local storage
   Future<Either<Failure, int?>> getActiveWorkspaceId();
 }
-
-
-

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/project.dart';
 import '../../../domain/entities/report_template.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../services/report_service.dart';
 import 'report_preview_screen.dart';
 
@@ -59,9 +59,7 @@ class _ReportTemplatesScreenState extends State<ReportTemplatesScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
@@ -122,9 +120,7 @@ class _ReportTemplatesScreenState extends State<ReportTemplatesScreen> {
       body: Column(
         children: [
           _buildCategoryFilter(),
-          Expanded(
-            child: _buildBody(),
-          ),
+          Expanded(child: _buildBody()),
         ],
       ),
     );
@@ -181,17 +177,13 @@ class _ReportTemplatesScreenState extends State<ReportTemplatesScreen> {
     }
 
     if (_templates.isEmpty) {
-      return const Center(
-        child: Text('No hay plantillas disponibles'),
-      );
+      return const Center(child: Text('No hay plantillas disponibles'));
     }
 
     final templates = _filteredTemplates;
 
     if (templates.isEmpty) {
-      return const Center(
-        child: Text('No hay plantillas en esta categoría'),
-      );
+      return const Center(child: Text('No hay plantillas en esta categoría'));
     }
 
     return ListView.builder(
@@ -229,11 +221,7 @@ class _CategoryChip extends StatelessWidget {
       child: FilterChip(
         label: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(icon),
-            const SizedBox(width: 4),
-            Text(label),
-          ],
+          children: [Text(icon), const SizedBox(width: 4), Text(label)],
         ),
         selected: isSelected,
         onSelected: (_) => onTap(),
@@ -247,10 +235,7 @@ class _TemplateCard extends StatelessWidget {
   final ReportTemplate template;
   final VoidCallback onTap;
 
-  const _TemplateCard({
-    required this.template,
-    required this.onTap,
-  });
+  const _TemplateCard({required this.template, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -277,9 +262,8 @@ class _TemplateCard extends StatelessWidget {
                       children: [
                         Text(
                           template.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -334,6 +318,3 @@ class _TemplateCard extends StatelessWidget {
     }
   }
 }
-
-
-

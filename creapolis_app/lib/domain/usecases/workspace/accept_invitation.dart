@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../core/errors/failures.dart';
-import '../../entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../repositories/workspace_repository.dart';
 
 /// Parámetros para aceptar invitación
@@ -24,6 +24,3 @@ class AcceptInvitationUseCase {
     return await _repository.acceptInvitation(params.token);
   }
 }
-
-
-

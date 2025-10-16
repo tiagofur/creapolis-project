@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import 'workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 
 /// Miembro de workspace
 class WorkspaceMember extends Equatable {
@@ -84,6 +84,3 @@ class WorkspaceMember extends Equatable {
     isActive,
   ];
 }
-
-
-

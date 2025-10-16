@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 
 /// Widget para cambiar entre workspaces activos
@@ -29,7 +29,7 @@ class WorkspaceSwitcher extends StatelessWidget {
       builder: (context, state) {
         List<Workspace> workspaces = [];
 
-        if (state is WorkspacesLoaded) {
+        if (state is WorkspaceLoaded) {
           workspaces = state.workspaces;
         }
 
@@ -305,6 +305,3 @@ class WorkspaceSwitcher extends StatelessWidget {
     }
   }
 }
-
-
-

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Widget para mostrar un badge de rol de workspace
 class RoleBadge extends StatelessWidget {
@@ -77,6 +77,3 @@ class RoleBadge extends StatelessWidget {
     }
   }
 }
-
-
-

@@ -105,6 +105,25 @@ class Workspace extends Equatable {
     );
   }
 
+  /// Obtiene las iniciales del workspace
+  String get initials {
+    final words = name.trim().split(' ');
+    if (words.isEmpty) return '';
+    if (words.length == 1) {
+      return words[0].substring(0, words[0].length.clamp(0, 2)).toUpperCase();
+    }
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
+  /// Verifica si el usuario es el propietario del workspace
+  bool get isOwner => userRole == WorkspaceRole.owner;
+
+  /// Verifica si el usuario puede administrar la configuración
+  bool get canManageSettings => userRole.canManage;
+
+  /// Verifica si el usuario puede administrar miembros
+  bool get canManageMembers => userRole.canManage;
+
   @override
   List<Object?> get props => [
     id,
@@ -171,6 +190,17 @@ class WorkspaceSettings extends Equatable {
     required this.timezone,
     required this.language,
   });
+
+  /// Factory constructor con valores por defecto
+  factory WorkspaceSettings.defaults() {
+    return const WorkspaceSettings(
+      allowGuestInvites: true,
+      requireEmailVerification: true,
+      autoAssignNewMembers: false,
+      timezone: 'UTC',
+      language: 'es',
+    );
+  }
 
   factory WorkspaceSettings.fromJson(Map<String, dynamic> json) {
     return WorkspaceSettings(
@@ -241,6 +271,18 @@ enum WorkspaceType {
       orElse: () => WorkspaceType.personal,
     );
   }
+
+  /// Nombre display del tipo de workspace
+  String get displayName {
+    switch (this) {
+      case WorkspaceType.personal:
+        return 'Personal';
+      case WorkspaceType.team:
+        return 'Equipo';
+      case WorkspaceType.enterprise:
+        return 'Empresa';
+    }
+  }
 }
 
 /// Rol del usuario en el workspace
@@ -260,6 +302,20 @@ enum WorkspaceRole {
     );
   }
 
+  /// Nombre display del rol
+  String get displayName {
+    switch (this) {
+      case WorkspaceRole.owner:
+        return 'Propietario';
+      case WorkspaceRole.admin:
+        return 'Administrador';
+      case WorkspaceRole.member:
+        return 'Miembro';
+      case WorkspaceRole.guest:
+        return 'Invitado';
+    }
+  }
+
   /// Verifica si el rol puede administrar el workspace
   bool get canManage =>
       this == WorkspaceRole.owner || this == WorkspaceRole.admin;
@@ -267,9 +323,21 @@ enum WorkspaceRole {
   /// Verifica si el rol puede invitar miembros
   bool get canInvite => this != WorkspaceRole.guest;
 
+  /// Verifica si el rol puede invitar miembros (alias)
+  bool get canInviteMembers => canInvite;
+
   /// Verifica si el rol puede crear proyectos
   bool get canCreateProjects => this != WorkspaceRole.guest;
+
+  /// Verifica si el rol puede administrar miembros
+  bool get canManageMembers => canManage;
+
+  /// Verifica si el rol puede cambiar roles de otros usuarios
+  bool get canChangeRoles => canManage;
+
+  /// Verifica si el rol puede remover miembros
+  bool get canRemoveMembers => canManage;
+
+  /// Verifica si el rol puede eliminar el workspace
+  bool get canDeleteWorkspace => this == WorkspaceRole.owner;
 }
-
-
-

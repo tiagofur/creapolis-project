@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../constants/storage_keys.dart';
 import '../../utils/app_logger.dart';
 
 /// Interceptor para inyectar token JWT en todas las peticiones
@@ -35,7 +36,7 @@ class AuthInterceptor extends Interceptor {
     if (!isPublicEndpoint) {
       try {
         // Leer token del secure storage
-        final token = await _storage.read(key: 'auth_token');
+        final token = await _storage.read(key: StorageKeys.accessToken);
 
         if (token != null && token.isNotEmpty) {
           // Inyectar token en el header
@@ -63,7 +64,7 @@ class AuthInterceptor extends Interceptor {
   /// Guarda el token JWT en el secure storage
   Future<void> saveToken(String token) async {
     try {
-      await _storage.write(key: 'auth_token', value: token);
+      await _storage.write(key: StorageKeys.accessToken, value: token);
       AppLogger.info('Auth: Token guardado exitosamente');
     } catch (e) {
       AppLogger.error('Auth: Error guardando token: $e');
@@ -74,7 +75,7 @@ class AuthInterceptor extends Interceptor {
   /// Elimina el token JWT del secure storage
   Future<void> clearToken() async {
     try {
-      await _storage.delete(key: 'auth_token');
+      await _storage.delete(key: StorageKeys.accessToken);
       AppLogger.info('Auth: Token eliminado exitosamente');
     } catch (e) {
       AppLogger.error('Auth: Error eliminando token: $e');
@@ -85,7 +86,7 @@ class AuthInterceptor extends Interceptor {
   /// Lee el token JWT del secure storage (útil para debugging)
   Future<String?> getToken() async {
     try {
-      final token = await _storage.read(key: 'auth_token');
+      final token = await _storage.read(key: StorageKeys.accessToken);
       return token;
     } catch (e) {
       AppLogger.error('Auth: Error leyendo token: $e');

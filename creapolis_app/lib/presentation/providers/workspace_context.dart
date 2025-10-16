@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../core/utils/app_logger.dart';
-import '../../domain/entities/workspace.dart';
-import '../bloc/workspace/workspace_bloc.dart';
-import '../bloc/workspace/workspace_event.dart';
-import '../bloc/workspace/workspace_state.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
+import '../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../features/workspace/presentation/bloc/workspace_state.dart';
 
 /// Provider para mantener el contexto global del workspace activo
-/// Sincroniza con SharedPreferences y notifica cambios a toda la app
+/// Escucha cambios del WorkspaceBloc y mantiene cache local para acceso rápido
 @singleton
 class WorkspaceContext extends ChangeNotifier {
   final WorkspaceBloc _workspaceBloc;
@@ -18,19 +18,14 @@ class WorkspaceContext extends ChangeNotifier {
   bool _isLoading = false;
 
   WorkspaceContext(this._workspaceBloc) {
-    AppLogger.info('[WorkspaceContext] Inicializando y suscribiéndose al BLoC');
+    AppLogger.info('[WorkspaceContext] Inicializando...');
+
     // Escuchar cambios del BLoC
     _workspaceBloc.stream.listen(_onWorkspaceStateChanged);
 
-    // Verificar si hay un estado inicial
+    // Procesar estado inicial si existe
     final currentState = _workspaceBloc.state;
-    AppLogger.info(
-      '[WorkspaceContext] Estado inicial del BLoC: ${currentState.runtimeType}',
-    );
-    if (currentState is WorkspacesLoaded) {
-      AppLogger.info(
-        '[WorkspaceContext] Procesando estado inicial WorkspacesLoaded',
-      );
+    if (currentState is WorkspaceLoaded) {
       _onWorkspaceStateChanged(currentState);
     }
   }
@@ -48,22 +43,19 @@ class WorkspaceContext extends ChangeNotifier {
   bool get isMember => currentRole == WorkspaceRole.member;
   bool get isGuest => currentRole == WorkspaceRole.guest;
 
-  // Permisos derivados
-  bool get canManageSettings => currentRole?.canManageSettings ?? false;
-  bool get canManageMembers => currentRole?.canManageMembers ?? false;
-  bool get canInviteMembers => currentRole?.canInviteMembers ?? false;
-  bool get canCreateProjects => currentRole?.canCreateProjects ?? false;
-  bool get canDeleteWorkspace => currentRole?.canDeleteWorkspace ?? false;
-  bool get canChangeRoles => currentRole?.canChangeRoles ?? false;
-  bool get canRemoveMembers => currentRole?.canRemoveMembers ?? false;
+  // Permisos derivados (basados en el rol)
+  bool get canManageSettings => isOwner || isAdmin;
+  bool get canManageMembers => isOwner || isAdmin;
+  bool get canInviteMembers => isOwner || isAdmin || isMember;
+  bool get canCreateProjects => isOwner || isAdmin || isMember;
+  bool get canDeleteWorkspace => isOwner;
+  bool get canChangeRoles => isOwner;
+  bool get canRemoveMembers => isOwner || isAdmin;
 
   /// Cargar workspaces del usuario
   Future<void> loadUserWorkspaces() async {
     AppLogger.info('[WorkspaceContext] Cargando workspaces del usuario...');
-    _isLoading = true;
-    notifyListeners();
-
-    _workspaceBloc.add(const LoadUserWorkspacesEvent());
+    _workspaceBloc.add(const LoadWorkspaces());
   }
 
   /// Cambiar workspace activo
@@ -71,27 +63,19 @@ class WorkspaceContext extends ChangeNotifier {
     AppLogger.info(
       '[WorkspaceContext] Cambiando a workspace: ${workspace.name}',
     );
-
-    _activeWorkspace = workspace;
-    notifyListeners();
-
-    // Guardar en storage local
-    _workspaceBloc.add(SetActiveWorkspaceEvent(workspace.id));
+    _workspaceBloc.add(SelectWorkspace(workspace.id));
   }
 
   /// Cambiar workspace por ID
   Future<void> switchWorkspaceById(int workspaceId) async {
-    final workspace = _userWorkspaces.firstWhere(
-      (w) => w.id == workspaceId,
-      orElse: () => throw Exception('Workspace no encontrado'),
-    );
-    await switchWorkspace(workspace);
+    AppLogger.info('[WorkspaceContext] Cambiando a workspace ID: $workspaceId');
+    _workspaceBloc.add(SelectWorkspace(workspaceId));
   }
 
   /// Cargar workspace activo desde storage
   Future<void> loadActiveWorkspace() async {
     AppLogger.info('[WorkspaceContext] Cargando workspace activo...');
-    _workspaceBloc.add(const LoadActiveWorkspaceEvent());
+    _workspaceBloc.add(const LoadWorkspaces());
   }
 
   /// Limpiar workspace activo
@@ -99,13 +83,12 @@ class WorkspaceContext extends ChangeNotifier {
     AppLogger.info('[WorkspaceContext] Limpiando workspace activo');
     _activeWorkspace = null;
     notifyListeners();
-    _workspaceBloc.add(const ClearActiveWorkspaceEvent());
   }
 
   /// Refrescar workspaces
   Future<void> refresh() async {
     AppLogger.info('[WorkspaceContext] Refrescando workspaces...');
-    _workspaceBloc.add(const RefreshWorkspacesEvent());
+    _workspaceBloc.add(const LoadWorkspaces());
   }
 
   /// Verificar si el usuario tiene un permiso específico
@@ -143,83 +126,42 @@ class WorkspaceContext extends ChangeNotifier {
 
   /// Listener de cambios del BLoC
   void _onWorkspaceStateChanged(WorkspaceState state) {
-    AppLogger.info(
-      '[WorkspaceContext] Estado del BLoC cambió: ${state.runtimeType}',
-    );
+    AppLogger.info('[WorkspaceContext] Estado: ${state.runtimeType}');
 
-    if (state is WorkspacesLoaded) {
+    if (state is WorkspaceLoaded) {
+      // Estado principal: workspaces + workspace activo
       _userWorkspaces = state.workspaces;
-      _isLoading = false;
-
-      // Actualizar workspace activo basado en el estado
-      if (state.activeWorkspaceId != null) {
-        _activeWorkspace = state.activeWorkspace;
-        AppLogger.info(
-          '[WorkspaceContext] Workspace activo actualizado desde WorkspacesLoaded: ${_activeWorkspace?.name}',
-        );
-      } else {
-        // Si no hay workspace activo, pero la instancia actual está marcada como activa, limpiarla
-        if (_activeWorkspace != null) {
-          AppLogger.info(
-            '[WorkspaceContext] Limpiando workspace activo - no coincide con el estado',
-          );
-          _activeWorkspace = null;
-        }
-      }
-
-      notifyListeners();
-      AppLogger.info(
-        '[WorkspaceContext] Workspaces actualizados: ${_userWorkspaces.length}, activo: ${state.activeWorkspaceId}',
-      );
-    } else if (state is WorkspaceLoaded) {
-      _activeWorkspace = state.workspace;
+      _activeWorkspace = state.activeWorkspace;
       _isLoading = false;
       notifyListeners();
       AppLogger.info(
-        '[WorkspaceContext] Workspace activo cargado: ${state.workspace.name}',
+        '[WorkspaceContext] ✅ Workspaces: ${_userWorkspaces.length}, '
+        'Activo: ${_activeWorkspace?.name ?? "ninguno"}',
       );
-    } else if (state is ActiveWorkspaceSet) {
-      // Buscar el workspace en la lista
-      final workspace = _userWorkspaces.firstWhere(
-        (w) => w.id == state.workspaceId,
-        orElse: () => state.workspace!,
-      );
-      _activeWorkspace = workspace;
-      _isLoading = false;
-      notifyListeners();
-      AppLogger.info(
-        '[WorkspaceContext] Workspace activo establecido: ${workspace.name}',
-      );
-    } else if (state is ActiveWorkspaceCleared) {
-      _activeWorkspace = null;
-      _isLoading = false;
-      notifyListeners();
-      AppLogger.info('[WorkspaceContext] Workspace activo limpiado');
     } else if (state is WorkspaceLoading) {
       _isLoading = true;
       notifyListeners();
-    } else if (state is WorkspaceError) {
+    } else if (state is WorkspaceOperationInProgress) {
+      _isLoading = true;
+      notifyListeners();
+    } else if (state is WorkspaceOperationSuccess) {
+      // Operación exitosa (crear/actualizar/eliminar)
+      _userWorkspaces = state.workspaces;
+      _activeWorkspace = state.activeWorkspace;
       _isLoading = false;
       notifyListeners();
-      AppLogger.error('[WorkspaceContext] Error: ${state.message}');
-    } else if (state is WorkspaceCreated) {
-      // Recargar workspaces después de crear uno nuevo
-      loadUserWorkspaces();
-    } else if (state is WorkspaceUpdated) {
-      // Actualizar workspace activo si fue el que se editó
-      if (_activeWorkspace?.id == state.workspace.id) {
-        _activeWorkspace = state.workspace;
-        notifyListeners();
+      AppLogger.info('[WorkspaceContext] ✅ ${state.message}');
+    } else if (state is WorkspaceError) {
+      // Mantener workspaces previos si existen
+      if (state.workspaces != null) {
+        _userWorkspaces = state.workspaces!;
       }
-      // Recargar lista
-      loadUserWorkspaces();
-    } else if (state is WorkspaceDeleted) {
-      // Si se eliminó el workspace activo, limpiar
-      if (_activeWorkspace?.id == state.workspaceId) {
-        clearActiveWorkspace();
+      if (state.activeWorkspace != null) {
+        _activeWorkspace = state.activeWorkspace;
       }
-      // Recargar lista
-      loadUserWorkspaces();
+      _isLoading = false;
+      notifyListeners();
+      AppLogger.error('[WorkspaceContext] ❌ ${state.message}');
     }
   }
 
@@ -229,6 +171,3 @@ class WorkspaceContext extends ChangeNotifier {
     super.dispose();
   }
 }
-
-
-

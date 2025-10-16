@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart'
+    hide WorkspaceMembersLoaded;
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
@@ -41,9 +42,10 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   Widget build(BuildContext context) {
     return BlocListener<WorkspaceBloc, WorkspaceState>(
       listener: (context, state) {
-        if (state is WorkspaceUpdated && state.workspace.id == _workspace.id) {
-          setState(() => _workspace = state.workspace);
-        } else if (state is WorkspacesLoaded) {
+        if (state is WorkspaceOperationSuccess &&
+            state.updatedWorkspace?.id == _workspace.id) {
+          setState(() => _workspace = state.updatedWorkspace!);
+        } else if (state is WorkspaceLoaded) {
           try {
             final workspace = state.workspaces.firstWhere(
               (w) => w.id == _workspace.id,
@@ -521,7 +523,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
     context.read<WorkspaceMemberBloc>().add(
       RefreshWorkspaceMembersEvent(_workspace.id),
     );
-    context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
+    context.read<WorkspaceBloc>().add(const LoadWorkspaces());
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -537,7 +539,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
     if (result is Workspace) {
       setState(() => _workspace = result);
-      context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
       context.read<WorkspaceMemberBloc>().add(
         RefreshWorkspaceMembersEvent(_workspace.id),
       );
@@ -610,7 +612,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Manejar eliminación
   void _handleDelete() {
-    context.read<WorkspaceBloc>().add(DeleteWorkspaceEvent(_workspace.id));
+    context.read<WorkspaceBloc>().add(DeleteWorkspace(_workspace.id));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Funcionalidad de eliminación próximamente'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Widget para mostrar un badge del tipo de workspace
 class WorkspaceTypeBadge extends StatelessWidget {
@@ -73,6 +73,3 @@ class WorkspaceTypeBadge extends StatelessWidget {
     }
   }
 }
-
-
-

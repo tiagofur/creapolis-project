@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Eventos del BLoC de miembros de workspace
 abstract class WorkspaceMemberEvent extends Equatable {
@@ -56,6 +56,3 @@ class RemoveMemberEvent extends WorkspaceMemberEvent {
   @override
   List<Object?> get props => [workspaceId, userId];
 }
-
-
-

@@ -4,16 +4,16 @@ import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
 import '../../../core/animations/page_transitions.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/workspace/workspace_card.dart';
 import '../../widgets/error/friendly_error_widget.dart';
 import '../../widgets/feedback/feedback_widgets.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import 'workspace_create_screen.dart';
 import 'workspace_detail_screen.dart';
 import 'workspace_invitations_screen.dart';
@@ -33,7 +33,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
   void initState() {
     super.initState();
     // Cargar workspaces al iniciar
-    context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
+    context.read<WorkspaceBloc>().add(const LoadWorkspaces());
   }
 
   @override
@@ -61,9 +61,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () {
-                  context.read<WorkspaceBloc>().add(
-                    const RefreshWorkspacesEvent(),
-                  );
+                  context.read<WorkspaceBloc>().add(const LoadWorkspaces());
                 },
                 tooltip: 'Refrescar',
               ),
@@ -77,24 +75,15 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                   _activatingWorkspaceId = null;
                 });
                 context.showError(state.message);
-              } else if (state is WorkspaceCreated) {
-                context.showSuccess(
-                  'Workspace "${state.workspace.name}" creado',
-                );
-              } else if (state is ActiveWorkspaceSet) {
-                // Cuando se establece el workspace activo, limpiar estado de activating
-                if (_activatingWorkspaceId == state.workspaceId) {
-                  final workspace = state.workspace;
-                  if (workspace != null) {
-                    context.showSuccess(
-                      'Workspace "${workspace.name}" activado',
-                    );
-                  }
-                  // Limpiar estado de activating
-                  setState(() {
-                    _activatingWorkspaceId = null;
-                  });
+              } else if (state is WorkspaceOperationSuccess) {
+                // Operación exitosa (crear, actualizar, etc)
+                if (state.updatedWorkspace != null) {
+                  context.showSuccess(state.message);
                 }
+                // Limpiar estado de activating
+                setState(() {
+                  _activatingWorkspaceId = null;
+                });
               }
             },
             builder: (context, state) {
@@ -107,13 +96,12 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
               if (state is WorkspaceError) {
                 return NoConnectionWidget(
-                  onRetry: () => context.read<WorkspaceBloc>().add(
-                    const LoadUserWorkspacesEvent(),
-                  ),
+                  onRetry: () =>
+                      context.read<WorkspaceBloc>().add(const LoadWorkspaces()),
                 );
               }
 
-              if (state is WorkspacesLoaded) {
+              if (state is WorkspaceLoaded) {
                 final workspaces = state.workspaces;
 
                 if (workspaces.isEmpty) {
@@ -126,9 +114,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    context.read<WorkspaceBloc>().add(
-                      const RefreshWorkspacesEvent(),
-                    );
+                    context.read<WorkspaceBloc>().add(const LoadWorkspaces());
                     // Esperar un poco para que se complete el refresh
                     await Future.delayed(const Duration(milliseconds: 500));
                   },
@@ -177,7 +163,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
           floatingActionButton: BlocBuilder<WorkspaceBloc, WorkspaceState>(
             builder: (context, state) {
               // Si hay workspaces pero ninguno activo, cambiar el botón
-              if (state is WorkspacesLoaded &&
+              if (state is WorkspaceLoaded &&
                   state.workspaces.isNotEmpty &&
                   workspaceContext.activeWorkspace == null) {
                 return FloatingActionButton.extended(
@@ -293,7 +279,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
     // Refrescar después de volver
     if (mounted) {
-      context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
     }
   }
 
@@ -311,7 +297,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
     // Buscar el workspace en la lista actual
     final currentState = context.read<WorkspaceBloc>().state;
-    if (currentState is WorkspacesLoaded) {
+    if (currentState is WorkspaceLoaded) {
       final workspace = currentState.workspaces.firstWhere(
         (w) => w.id == workspaceId,
       );
@@ -337,10 +323,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
     // Si se creó un workspace, recargar la lista
     if (result != null && mounted) {
-      context.read<WorkspaceBloc>().add(const RefreshWorkspacesEvent());
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
     }
   }
 }
-
-
-

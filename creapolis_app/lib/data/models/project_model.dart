@@ -22,31 +22,44 @@ class ProjectModel extends Project {
   ///
   /// Usado para deserializar respuestas de la API.
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
-    // El backend puede no incluir startDate, endDate y status
-    // Si no están presentes, usar valores por defecto
     final now = DateTime.now();
-    final defaultEndDate = now.add(const Duration(days: 30));
+
+    final id = _readInt(json['id']);
+    final name = _readString(json['name']);
+
+    if (id == null || name == null) {
+      throw const FormatException('ProjectModel requiere id y name válidos');
+    }
+
+    final managerInfo = _extractManager(json);
+    final startDate = _parseDate(json['startDate']) ?? now;
+    final endDate =
+        _parseDate(json['endDate']) ??
+        (startDate.isAfter(now) ? startDate : now).add(
+          const Duration(days: 30),
+        );
+    final createdAt = _parseDate(json['createdAt']) ?? now;
+    final updatedAt = _parseDate(json['updatedAt']) ?? createdAt;
+    final workspace = json['workspace'];
+    final workspaceId =
+        _readInt(json['workspaceId']) ??
+        (workspace is Map<String, dynamic>
+            ? _readInt(workspace['id'])
+            : null) ??
+        1;
 
     return ProjectModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String? ?? '',
-      startDate: json['startDate'] != null
-          ? DateTime.parse(json['startDate'] as String)
-          : now,
-      endDate: json['endDate'] != null
-          ? DateTime.parse(json['endDate'] as String)
-          : defaultEndDate,
-      status: json['status'] != null
-          ? _statusFromString(json['status'] as String)
-          : ProjectStatus.planned,
-      managerId: json['managerId'] as int?,
-      managerName: json['managerName'] as String?,
-      workspaceId:
-          json['workspaceId'] as int? ??
-          1, // Default workspace si no está presente
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      id: id,
+      name: name,
+      description: _readString(json['description']) ?? '',
+      startDate: startDate,
+      endDate: endDate,
+      status: _parseStatus(json['status']),
+      managerId: _readInt(json['managerId']) ?? managerInfo?.$1,
+      managerName: _readString(json['managerName']) ?? managerInfo?.$2,
+      workspaceId: workspaceId,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 
@@ -149,7 +162,178 @@ class ProjectModel extends Project {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  static (int?, String?)? _extractManager(Map<String, dynamic> json) {
+    final manager = json['manager'] ?? json['owner'];
+
+    if (manager is Map<String, dynamic>) {
+      return (_readInt(manager['id']), _readString(manager['name']));
+    }
+
+    final members = json['members'];
+    if (members is List) {
+      for (final member in members) {
+        if (member is Map<String, dynamic>) {
+          final role = _readString(member['role'] ?? member['memberRole']);
+          final isManager =
+              (member['isManager'] as bool?) ??
+              (role != null && role.toUpperCase().contains('MANAGER'));
+
+          if (isManager) {
+            final user = member['user'] as Map<String, dynamic>?;
+            return (
+              _readInt(member['userId']) ?? _readInt(user?['id']),
+              _readString(member['name']) ?? _readString(user?['name']),
+            );
+          }
+        }
+      }
+
+      if (members.isNotEmpty) {
+        final first = members.first;
+        if (first is Map<String, dynamic>) {
+          final user = first['user'] as Map<String, dynamic>?;
+          return (
+            _readInt(first['userId']) ?? _readInt(user?['id']),
+            _readString(first['name']) ?? _readString(user?['name']),
+          );
+        }
+      }
+    }
+
+    return null;
+  }
+
+  static ProjectStatus _parseStatus(dynamic value) {
+    if (value is ProjectStatus) {
+      return value;
+    }
+
+    if (value is String && value.isNotEmpty) {
+      return _statusFromString(value);
+    }
+
+    if (value is Map<String, dynamic>) {
+      for (final key in ['value', 'code', 'status', 'name', 'label']) {
+        final nested = value[key];
+        if (nested is String && nested.isNotEmpty) {
+          return _statusFromString(nested);
+        }
+      }
+    }
+
+    return ProjectStatus.planned;
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        (value * 1000).round(),
+        isUtc: true,
+      ).toLocal();
+    }
+
+    if (value is Map<String, dynamic>) {
+      for (final key in ['iso', 'isoString', 'value', 'date', 'timestamp']) {
+        final nested = value[key];
+        final parsed = _parseDate(nested);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+
+      final seconds = value['seconds'];
+      final nanoseconds = value['nanoseconds'];
+
+      if (seconds is num) {
+        final baseMs = seconds * 1000;
+        final extraMs = nanoseconds is num ? nanoseconds / 1e6 : 0;
+        return DateTime.fromMillisecondsSinceEpoch(
+          (baseMs + extraMs).round(),
+          isUtc: true,
+        ).toLocal();
+      }
+    }
+
+    return null;
+  }
+
+  static int? _readInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is int) {
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    if (value is String) {
+      return int.tryParse(value);
+    }
+
+    if (value is Map<String, dynamic>) {
+      for (final key in ['id', 'value', 'count']) {
+        final nested = value[key];
+        final parsed = _readInt(nested);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  static String? _readString(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is String) {
+      return value;
+    }
+
+    if (value is num || value is bool) {
+      return value.toString();
+    }
+
+    if (value is Map<String, dynamic>) {
+      for (final key in [
+        'value',
+        'name',
+        'label',
+        'text',
+        'title',
+        'description',
+      ]) {
+        final nested = value[key];
+        final parsed = _readString(nested);
+        if (parsed != null && parsed.isNotEmpty) {
+          return parsed;
+        }
+      }
+    }
+
+    return null;
+  }
 }
-
-
-

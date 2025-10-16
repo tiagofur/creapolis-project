@@ -7,15 +7,15 @@ import '../../../core/constants/view_constants.dart';
 import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../bloc/project/project_bloc.dart';
 import '../../bloc/project/project_event.dart';
 import '../../bloc/project/project_state.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
 import '../../widgets/loading/skeleton_list.dart';
@@ -56,14 +56,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       _currentDensity = _viewPrefs.getProjectViewDensity();
     }
 
-    // Cargar workspaces y workspace activo
+    // Cargar workspaces
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // IMPORTANTE: Cargar workspace activo ANTES que la lista de workspaces
-      // Esto permite que el BLoC use el ID pendiente cuando cargue los workspaces
-      context.read<WorkspaceBloc>().add(const LoadActiveWorkspaceEvent());
-
-      // Luego cargar lista de workspaces (que usará el ID activo si existe)
-      context.read<WorkspaceBloc>().add(const LoadUserWorkspacesEvent());
+      // Cargar workspaces (el BLoC automáticamente carga el activo)
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
 
       // NO cargar proyectos aquí - se cargarán cuando se establezca el workspace activo
     });
@@ -556,7 +552,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     // Verificar si hay workspaces disponibles
     bool hasWorkspaces = false;
-    if (currentState is WorkspacesLoaded) {
+    if (currentState is WorkspaceLoaded) {
       hasWorkspaces = currentState.workspaces.isNotEmpty;
     } else if (workspaceContext.userWorkspaces.isNotEmpty) {
       hasWorkspaces = true;
@@ -571,6 +567,3 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     }
   }
 }
-
-
-

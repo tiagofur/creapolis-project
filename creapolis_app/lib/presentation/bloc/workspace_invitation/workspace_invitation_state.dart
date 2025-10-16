@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../domain/entities/workspace_invitation.dart';
 
 /// Estados del BLoC de invitaciones
@@ -80,6 +80,3 @@ class WorkspaceInvitationError extends WorkspaceInvitationState {
   @override
   List<Object?> get props => [message];
 }
-
-
-

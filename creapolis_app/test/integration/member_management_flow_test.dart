@@ -4,6 +4,7 @@ import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
 import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart';
+import 'package:creapolis_app/domain/usecases/workspace/decline_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_pending_invitations.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_workspace_members.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
@@ -26,6 +27,7 @@ import 'member_management_flow_test.mocks.dart';
   GetPendingInvitationsUseCase,
   CreateInvitationUseCase,
   AcceptInvitationUseCase,
+  DeclineInvitationUseCase,
 ])
 void main() {
   group('Member Management Flow Integration Tests', () {
@@ -33,6 +35,7 @@ void main() {
     late MockGetPendingInvitationsUseCase mockGetPendingInvitations;
     late MockCreateInvitationUseCase mockCreateInvitation;
     late MockAcceptInvitationUseCase mockAcceptInvitation;
+    late MockDeclineInvitationUseCase mockDeclineInvitation;
     late WorkspaceMemberBloc memberBloc;
     late WorkspaceInvitationBloc invitationBloc;
 
@@ -41,6 +44,7 @@ void main() {
       mockGetPendingInvitations = MockGetPendingInvitationsUseCase();
       mockCreateInvitation = MockCreateInvitationUseCase();
       mockAcceptInvitation = MockAcceptInvitationUseCase();
+      mockDeclineInvitation = MockDeclineInvitationUseCase();
 
       memberBloc = WorkspaceMemberBloc(mockGetWorkspaceMembers);
 
@@ -48,7 +52,12 @@ void main() {
         mockGetPendingInvitations,
         mockCreateInvitation,
         mockAcceptInvitation,
+        mockDeclineInvitation,
       );
+
+      when(
+        mockDeclineInvitation.call(any),
+      ).thenAnswer((_) async => const Right(null));
     });
 
     tearDown(() {
@@ -376,6 +385,9 @@ void main() {
         when(
           mockAcceptInvitation.call(any),
         ).thenAnswer((_) async => Right(tWorkspace));
+        when(
+          mockDeclineInvitation.call(any),
+        ).thenAnswer((_) async => const Right(null));
 
         // Act
         await tester.pumpWidget(createInvitationsApp());
@@ -536,6 +548,3 @@ void main() {
     });
   });
 }
-
-
-

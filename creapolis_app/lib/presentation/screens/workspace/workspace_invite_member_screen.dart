@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Pantalla para invitar a un nuevo miembro al workspace
 /// TODO: Implementar cuando el backend tenga el endpoint de invitaciones
@@ -289,6 +289,3 @@ class _WorkspaceInviteMemberScreenState
     }
   }
 }
-
-
-

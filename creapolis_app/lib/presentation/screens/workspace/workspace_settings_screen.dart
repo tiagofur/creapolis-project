@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../injection.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 
 /// Pantalla de configuración avanzada de workspace
 class WorkspaceSettingsScreen extends StatefulWidget {
@@ -65,7 +65,7 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
 
   void _handleSave() {
     context.read<WorkspaceBloc>().add(
-      UpdateWorkspaceEvent(
+      UpdateWorkspace(
         workspaceId: widget.workspace.id,
         name: widget.workspace.name,
         description: widget.workspace.description,
@@ -91,9 +91,10 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
         },
         child: BlocConsumer<WorkspaceBloc, WorkspaceState>(
           listener: (context, state) {
-            if (state is WorkspaceLoading) {
+            if (state is WorkspaceLoading ||
+                state is WorkspaceOperationInProgress) {
               setState(() => _isLoading = true);
-            } else if (state is WorkspaceUpdated) {
+            } else if (state is WorkspaceOperationSuccess) {
               setState(() {
                 _isLoading = false;
                 _hasChanges = false;
@@ -517,7 +518,7 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<WorkspaceBloc>().add(
-                DeleteWorkspaceEvent(widget.workspace.id),
+                DeleteWorkspace(widget.workspace.id),
               );
               Navigator.of(context).pop(); // Salir de settings
               Navigator.of(context).pop(); // Salir de detail
@@ -530,6 +531,3 @@ class _WorkspaceSettingsScreenState extends State<WorkspaceSettingsScreen> {
     );
   }
 }
-
-
-

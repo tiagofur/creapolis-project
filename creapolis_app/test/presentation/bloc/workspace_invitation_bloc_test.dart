@@ -4,6 +4,7 @@ import 'package:creapolis_app/domain/entities/workspace.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart';
+import 'package:creapolis_app/domain/usecases/workspace/decline_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_pending_invitations.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_invitation/workspace_invitation_event.dart';
@@ -19,21 +20,25 @@ import 'workspace_invitation_bloc_test.mocks.dart';
   GetPendingInvitationsUseCase,
   CreateInvitationUseCase,
   AcceptInvitationUseCase,
+  DeclineInvitationUseCase,
 ])
 void main() {
   late WorkspaceInvitationBloc bloc;
   late MockGetPendingInvitationsUseCase mockGetPendingInvitationsUseCase;
   late MockCreateInvitationUseCase mockCreateInvitationUseCase;
   late MockAcceptInvitationUseCase mockAcceptInvitationUseCase;
+  late MockDeclineInvitationUseCase mockDeclineInvitationUseCase;
 
   setUp(() {
     mockGetPendingInvitationsUseCase = MockGetPendingInvitationsUseCase();
     mockCreateInvitationUseCase = MockCreateInvitationUseCase();
     mockAcceptInvitationUseCase = MockAcceptInvitationUseCase();
+    mockDeclineInvitationUseCase = MockDeclineInvitationUseCase();
     bloc = WorkspaceInvitationBloc(
       mockGetPendingInvitationsUseCase,
       mockCreateInvitationUseCase,
       mockAcceptInvitationUseCase,
+      mockDeclineInvitationUseCase,
     );
   });
 
@@ -347,17 +352,47 @@ void main() {
 
     group('DeclineInvitationEvent', () {
       blocTest<WorkspaceInvitationBloc, WorkspaceInvitationState>(
-        'should emit [WorkspaceInvitationLoading, WorkspaceInvitationError] for not implemented feature',
-        build: () => bloc,
+        'should emit [WorkspaceInvitationLoading, InvitationDeclined, WorkspaceInvitationLoading, PendingInvitationsLoaded] when decline succeeds',
+        build: () {
+          when(
+            mockDeclineInvitationUseCase.call(any),
+          ).thenAnswer((_) async => const Right(null));
+          when(
+            mockGetPendingInvitationsUseCase.call(),
+          ).thenAnswer((_) async => const Right([]));
+          return bloc;
+        },
         act: (bloc) => bloc.add(const DeclineInvitationEvent('test-token')),
         expect: () => [
           const WorkspaceInvitationLoading(),
-          const WorkspaceInvitationError('Funcionalidad no implementada'),
+          const InvitationDeclined('test-token'),
+          const WorkspaceInvitationLoading(),
+          const PendingInvitationsLoaded([]),
+        ],
+        verify: (_) {
+          verify(
+            mockDeclineInvitationUseCase.call(
+              const DeclineInvitationParams(token: 'test-token'),
+            ),
+          );
+          verify(mockGetPendingInvitationsUseCase.call());
+        },
+      );
+
+      blocTest<WorkspaceInvitationBloc, WorkspaceInvitationState>(
+        'should emit [WorkspaceInvitationLoading, WorkspaceInvitationError] when decline fails',
+        build: () {
+          when(
+            mockDeclineInvitationUseCase.call(any),
+          ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DeclineInvitationEvent('test-token')),
+        expect: () => [
+          const WorkspaceInvitationLoading(),
+          const WorkspaceInvitationError('Server error'),
         ],
       );
     });
   });
 }
-
-
-

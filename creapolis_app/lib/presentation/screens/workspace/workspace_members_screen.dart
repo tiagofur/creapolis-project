@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../domain/entities/workspace_member.dart';
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';

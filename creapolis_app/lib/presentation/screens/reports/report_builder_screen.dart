@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../domain/entities/project.dart';
 import '../../../domain/entities/report.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../services/report_service.dart';
 import '../widgets/metrics_selector_widget.dart';
 import 'report_preview_screen.dart';
@@ -27,7 +27,7 @@ class ReportBuilderScreen extends StatefulWidget {
 
 class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   String _reportName = '';
   ReportMetrics _metrics = const ReportMetrics();
   DateTime? _startDate;
@@ -65,7 +65,7 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
 
     try {
       Report report;
-      
+
       if (_reportType == ReportType.project) {
         report = await widget.reportService.generateProjectReport(
           projectId: _entityId,
@@ -95,7 +95,7 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al generar reporte: $e'),
@@ -152,8 +152,8 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
             Text(
               'Reporte para',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -172,9 +172,8 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
                     children: [
                       Text(
                         _entityName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -219,9 +218,9 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
           children: [
             Text(
               'Rango de Fechas (Opcional)',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Row(
@@ -271,9 +270,9 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
           children: [
             Text(
               'Métricas a Incluir',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             MetricsSelectorWidget(
@@ -333,14 +332,9 @@ class _ReportBuilderScreenState extends State<ReportBuilderScreen> {
                 '3. Métricas',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text(
-                'Seleccione las métricas que desea incluir en el reporte.',
-              ),
+              Text('Seleccione las métricas que desea incluir en el reporte.'),
               SizedBox(height: 12),
-              Text(
-                '4. Generar',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              Text('4. Generar', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(
                 'Click en "Generar Reporte" para ver el resultado y exportarlo en el formato deseado.',
               ),
@@ -387,22 +381,16 @@ class _DatePickerButton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
           Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-          Text(
-            date != null ? DateFormat('dd/MM/yyyy').format(date!) : 'Seleccionar',
+            date != null
+                ? DateFormat('dd/MM/yyyy').format(date!)
+                : 'Seleccionar',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.all(12),
-      ),
+      style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(12)),
     );
   }
 }
-
-
-

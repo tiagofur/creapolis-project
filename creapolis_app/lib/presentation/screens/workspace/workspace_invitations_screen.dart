@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../domain/entities/workspace_invitation.dart';
 import '../../bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import '../../bloc/workspace_invitation/workspace_invitation_event.dart';
@@ -513,6 +513,3 @@ class _WorkspaceInvitationsScreenState
     );
   }
 }
-
-
-

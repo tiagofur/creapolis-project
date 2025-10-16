@@ -12,6 +12,8 @@ import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart'
     as _i8;
 import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart'
     as _i7;
+import 'package:creapolis_app/domain/usecases/workspace/decline_invitation.dart'
+    as _i10;
 import 'package:creapolis_app/domain/usecases/workspace/get_pending_invitations.dart'
     as _i3;
 import 'package:dartz/dartz.dart' as _i2;
@@ -123,4 +125,32 @@ class MockAcceptInvitationUseCase extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, _i9.Workspace>>);
+}
+
+/// A class which mocks [DeclineInvitationUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDeclineInvitationUseCase extends _i1.Mock
+    implements _i10.DeclineInvitationUseCase {
+  MockDeclineInvitationUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> call(
+          _i10.DeclineInvitationParams? params) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [params],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+            _FakeEither_0<_i5.Failure, void>(
+          this,
+          Invocation.method(
+            #call,
+            [params],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
 }

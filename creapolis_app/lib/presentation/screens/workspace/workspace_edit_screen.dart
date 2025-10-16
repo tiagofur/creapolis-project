@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_logger.dart';
-import '../../../domain/entities/workspace.dart';
-import '../../bloc/workspace/workspace_bloc.dart';
-import '../../bloc/workspace/workspace_event.dart';
-import '../../bloc/workspace/workspace_state.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 
 /// Pantalla para editar un workspace existente
 class WorkspaceEditScreen extends StatefulWidget {
@@ -87,26 +87,28 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
         ),
         body: BlocListener<WorkspaceBloc, WorkspaceState>(
           listener: (context, state) {
-            if (state is WorkspaceLoading) {
+            if (state is WorkspaceLoading ||
+                state is WorkspaceOperationInProgress) {
               setState(() => _isLoading = true);
             } else {
               setState(() => _isLoading = false);
             }
 
-            if (state is WorkspaceUpdated) {
+            if (state is WorkspaceOperationSuccess &&
+                state.updatedWorkspace != null) {
               AppLogger.info(
-                'Workspace actualizado exitosamente: ${state.workspace.id}',
+                'Workspace actualizado exitosamente: ${state.updatedWorkspace!.id}',
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Workspace "${state.workspace.name}" actualizado',
+                    'Workspace "${state.updatedWorkspace!.name}" actualizado',
                   ),
                   backgroundColor: Colors.green,
                 ),
               );
               // Regresar con el workspace actualizado
-              Navigator.of(context).pop(state.workspace);
+              Navigator.of(context).pop(state.updatedWorkspace);
             } else if (state is WorkspaceError) {
               AppLogger.error(
                 'Error al actualizar workspace: ${state.message}',
@@ -488,7 +490,7 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
 
     // Enviar evento al BLoC
     context.read<WorkspaceBloc>().add(
-      UpdateWorkspaceEvent(
+      UpdateWorkspace(
         workspaceId: widget.workspace.id,
         name: name != widget.workspace.name ? name : null,
         description: description != (widget.workspace.description ?? '')
@@ -523,6 +525,3 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
     );
   }
 }
-
-
-

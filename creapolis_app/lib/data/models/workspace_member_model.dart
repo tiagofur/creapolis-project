@@ -1,4 +1,4 @@
-import '../../domain/entities/workspace.dart';
+import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/workspace_member.dart';
 
 /// Model para WorkspaceMember que maneja serialización JSON
@@ -93,6 +93,3 @@ class WorkspaceMemberModel {
     );
   }
 }
-
-
-

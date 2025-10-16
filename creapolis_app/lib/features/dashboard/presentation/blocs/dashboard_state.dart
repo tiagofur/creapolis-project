@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
 import 'package:creapolis_app/domain/entities/task.dart';
 
@@ -93,6 +93,3 @@ class DashboardStats {
     );
   }
 }
-
-
-

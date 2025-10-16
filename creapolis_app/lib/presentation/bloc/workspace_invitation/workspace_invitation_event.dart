@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/entities/workspace.dart';
+import '../../../features/workspace/data/models/workspace_model.dart';
 
 /// Eventos del BLoC de invitaciones
 abstract class WorkspaceInvitationEvent extends Equatable {
@@ -55,6 +55,3 @@ class DeclineInvitationEvent extends WorkspaceInvitationEvent {
   @override
   List<Object?> get props => [token];
 }
-
-
-

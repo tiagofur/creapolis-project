@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../domain/entities/workspace.dart';
+import '../../../../features/workspace/data/models/workspace_model.dart';
 import '../../../bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import '../../../bloc/workspace_invitation/workspace_invitation_event.dart';
 import '../../../bloc/workspace_invitation/workspace_invitation_state.dart';

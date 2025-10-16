@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/usecases/workspace/accept_invitation.dart';
 import '../../../domain/usecases/workspace/create_invitation.dart';
+import '../../../domain/usecases/workspace/decline_invitation.dart';
 import '../../../domain/usecases/workspace/get_pending_invitations.dart';
 import 'workspace_invitation_event.dart';
 import 'workspace_invitation_state.dart';
@@ -15,11 +16,13 @@ class WorkspaceInvitationBloc
   final GetPendingInvitationsUseCase _getPendingInvitationsUseCase;
   final CreateInvitationUseCase _createInvitationUseCase;
   final AcceptInvitationUseCase _acceptInvitationUseCase;
+  final DeclineInvitationUseCase _declineInvitationUseCase;
 
   WorkspaceInvitationBloc(
     this._getPendingInvitationsUseCase,
     this._createInvitationUseCase,
     this._acceptInvitationUseCase,
+    this._declineInvitationUseCase,
   ) : super(const WorkspaceInvitationInitial()) {
     on<LoadPendingInvitationsEvent>(_onLoadPendingInvitations);
     on<RefreshPendingInvitationsEvent>(_onRefreshPendingInvitations);
@@ -160,13 +163,25 @@ class WorkspaceInvitationBloc
     );
     emit(const WorkspaceInvitationLoading());
 
-    // TODO: Implementar cuando se cree el DeclineInvitationUseCase
-    AppLogger.warning(
-      'WorkspaceInvitationBloc: DeclineInvitation no implementado aún',
+    final params = DeclineInvitationParams(token: event.token);
+    final result = await _declineInvitationUseCase(params);
+
+    await result.fold(
+      (failure) async {
+        AppLogger.error(
+          'WorkspaceInvitationBloc: Error al rechazar invitación - ${failure.message}',
+        );
+        emit(WorkspaceInvitationError(failure.message));
+      },
+      (_) async {
+        AppLogger.info(
+          'WorkspaceInvitationBloc: Invitación rechazada correctamente',
+        );
+        emit(InvitationDeclined(event.token));
+
+        // Recargar invitaciones después de rechazar
+        add(const LoadPendingInvitationsEvent());
+      },
     );
-    emit(const WorkspaceInvitationError('Funcionalidad no implementada'));
   }
 }
-
-
-
