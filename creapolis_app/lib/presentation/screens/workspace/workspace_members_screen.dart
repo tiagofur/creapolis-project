@@ -601,10 +601,78 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
 
   /// Remover miembro
   void _removeMember(WorkspaceMember member) {
-    context.read<WorkspaceMemberBloc>().add(
-      RemoveMemberEvent(
-        workspaceId: widget.workspace.id,
-        userId: member.userId,
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange[700],
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text('Remover Miembro'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Estás seguro de que deseas remover a ${member.userName} del workspace?',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: Colors.blue[700]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'El usuario perderá acceso a todos los proyectos y tareas de este workspace.',
+                      style: TextStyle(color: Colors.blue[900], fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Podrás invitarlo nuevamente en el futuro.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<WorkspaceMemberBloc>().add(
+                RemoveMemberEvent(
+                  workspaceId: widget.workspace.id,
+                  userId: member.userId,
+                ),
+              );
+            },
+            child: const Text('Sí, Remover'),
+          ),
+        ],
       ),
     );
   }

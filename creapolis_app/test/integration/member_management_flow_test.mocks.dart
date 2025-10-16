@@ -6,7 +6,6 @@
 import 'dart:async' as _i4;
 
 import 'package:creapolis_app/core/errors/failures.dart' as _i5;
-import 'package:creapolis_app/domain/entities/workspace.dart' as _i11;
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart' as _i8;
 import 'package:creapolis_app/domain/entities/workspace_member.dart' as _i6;
 import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart'
@@ -19,6 +18,8 @@ import 'package:creapolis_app/domain/usecases/workspace/get_pending_invitations.
     as _i7;
 import 'package:creapolis_app/domain/usecases/workspace/get_workspace_members.dart'
     as _i3;
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart'
+    as _i11;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 

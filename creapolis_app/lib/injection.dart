@@ -61,6 +61,8 @@ Future<void> initializeDependencies() async {
     ApiClient(
       baseUrl: EnvironmentConfig.apiBaseUrl,
       authInterceptor: getIt<AuthInterceptor>(),
+      storage: getIt<FlutterSecureStorage>(),
+      lastRouteService: getIt<LastRouteService>(),
     ),
   );
 

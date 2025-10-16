@@ -28,11 +28,15 @@ class KanbanBoardView extends StatefulWidget {
 }
 
 class _KanbanBoardViewState extends State<KanbanBoardView> {
-  // Mapa para rastrear tareas por columna (para drag & drop)
-  Map<TaskStatus, List<Task>> _tasksByColumn = {};
+  final ScrollController _horizontalScrollController = ScrollController();
 
   // Configuración del tablero Kanban
   late KanbanBoardConfig _boardConfig;
+  String _lastExternalSignature = '';
+
+  // Estado local de tareas y columnas
+  late List<Task> _localTasks;
+  final Map<TaskStatus, List<Task>> _tasksByColumn = {};
 
   // Métricas por columna
   Map<TaskStatus, KanbanColumnMetrics> _metrics = {};
@@ -70,18 +74,30 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
   void initState() {
     super.initState();
     _loadConfig();
-    _organizeTasks();
-    _calculateMetrics();
+    _initializeBoardState(widget.tasks);
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(KanbanBoardView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Solo reorganizar si las tareas cambiaron desde el exterior
-    if (oldWidget.tasks != widget.tasks) {
-      _organizeTasks();
-      _calculateMetrics();
+    final externalSignature = _computeTasksSignature(widget.tasks);
+    if (externalSignature == _lastExternalSignature) {
+      return;
     }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _initializeBoardState(widget.tasks);
+    });
   }
 
   /// Cargar configuración del tablero
@@ -91,36 +107,99 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     );
   }
 
-  /// Organizar tareas por columna
-  void _organizeTasks() {
-    _tasksByColumn = {};
-    for (var column in _columns) {
-      _tasksByColumn[column.status] = widget.tasks
-          .where((t) => t.status == column.status)
-          .toList();
+  /// Inicializa el estado interno del tablero a partir de las tareas recibidas
+  void _initializeBoardState(List<Task> sourceTasks) {
+    _localTasks = List<Task>.from(sourceTasks);
+    _rebuildColumnBuckets();
+    _calculateMetrics();
+    _lastExternalSignature = _computeTasksSignature(sourceTasks);
+  }
+
+  /// Reconstruye el mapa de tareas por columna manteniendo el orden actual
+  void _rebuildColumnBuckets() {
+    _tasksByColumn.clear();
+
+    for (final column in _columns) {
+      _tasksByColumn[column.status] = [];
     }
+
+    for (final task in _localTasks) {
+      _tasksByColumn.putIfAbsent(task.status, () => []);
+      _tasksByColumn[task.status]!.add(task);
+    }
+  }
+
+  /// Sincroniza la lista plana de tareas con el contenido actual de las columnas
+  void _syncLocalTasksFromColumns() {
+    final orderedStatuses = _columns.map((column) => column.status).toList();
+
+    final updated = <Task>[];
+    for (final status in orderedStatuses) {
+      final tasks = _tasksByColumn[status];
+      if (tasks != null) {
+        updated.addAll(tasks);
+      }
+    }
+
+    // Manejar cualquier estado adicional que no esté explícitamente configurado.
+    final handledStatuses = orderedStatuses.toSet();
+    for (final entry in _tasksByColumn.entries) {
+      if (!handledStatuses.contains(entry.key)) {
+        updated.addAll(entry.value);
+      }
+    }
+
+    _localTasks = updated;
   }
 
   /// Calcular métricas de las columnas
   void _calculateMetrics() {
-    _metrics = KanbanMetricsCalculator.calculateAllMetrics(widget.tasks);
+    _metrics = KanbanMetricsCalculator.calculateAllMetrics(_localTasks);
+  }
+
+  /// Crea una firma ligera de las tareas para detectar cambios externos
+  String _computeTasksSignature(List<Task> tasks) {
+    if (tasks.isEmpty) {
+      return 'empty';
+    }
+
+    final buffer = StringBuffer();
+    for (final task in tasks) {
+      buffer
+        ..write(task.id)
+        ..write(':')
+        ..write(task.status.index)
+        ..write(':')
+        ..write(task.updatedAt.millisecondsSinceEpoch)
+        ..write(':')
+        ..write(task.title.hashCode)
+        ..write(':')
+        ..write(task.priority.index)
+        ..write(':')
+        ..write(task.assignee?.id ?? -1)
+        ..write('|');
+    }
+
+    return buffer.toString();
   }
 
   /// Construir listas para drag_and_drop_lists
   List<DragAndDropList> _buildLists(BuildContext context) {
     return _columns.map((column) {
       // Obtener tareas de esta columna desde el mapa interno
-      final columnTasks = _tasksByColumn[column.status] ?? [];
+      final columnTasks = _tasksByColumn[column.status] ?? <Task>[];
 
       // Obtener configuración de la columna
       final columnConfig = _boardConfig.getColumnConfig(column.status);
 
       return DragAndDropList(
+        key: ValueKey(column.status),
         header: _buildHeader(context, column, columnTasks.length, columnConfig),
         canDrag: false, // No permitir reordenar columnas
         children: columnTasks
             .map(
               (task) => DragAndDropItem(
+                key: ValueKey(task.id),
                 canDrag: true, // ✅ Habilitar drag de tareas
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -153,10 +232,13 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
         Expanded(
           child: DragAndDropLists(
             children: lists,
+            scrollController: _horizontalScrollController,
             onItemReorder: _onItemReorder,
             onListReorder: (oldListIndex, newListIndex) {
               // No permitimos reordenar las columnas
             },
+            itemDragOnLongPress: false,
+            constrainDraggingAxis: false,
             listPadding: const EdgeInsets.all(16),
             listInnerDecoration: BoxDecoration(
               color: Colors.grey.shade50,
@@ -390,22 +472,29 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     final oldStatus = _columns[oldListIndex].status;
     final newStatus = _columns[newListIndex].status;
 
-    // Obtener la tarea que se está moviendo
-    final oldColumnTasks = _tasksByColumn[oldStatus] ?? [];
-    if (oldItemIndex >= oldColumnTasks.length) {
-      AppLogger.warning('KanbanBoard: Índice fuera de rango');
+    final sourceList = _tasksByColumn[oldStatus];
+    if (sourceList == null ||
+        oldItemIndex < 0 ||
+        oldItemIndex >= sourceList.length) {
+      AppLogger.warning(
+        'KanbanBoard: Índice fuera de rango o lista inexistente',
+      );
       return;
     }
 
-    final task = oldColumnTasks[oldItemIndex];
+    final isStatusChange = oldStatus != newStatus;
+    var targetIndex = newItemIndex;
+    final currentTargetList = _tasksByColumn[newStatus] ?? <Task>[];
 
-    // Verificar WIP limit antes de mover
-    if (oldListIndex != newListIndex) {
+    if (targetIndex < 0 || targetIndex > currentTargetList.length) {
+      targetIndex = currentTargetList.length;
+    }
+
+    if (isStatusChange) {
       final newColumnConfig = _boardConfig.getColumnConfig(newStatus);
-      final newColumnCount = (_tasksByColumn[newStatus]?.length ?? 0);
+      final projectedCount = currentTargetList.length + 1;
 
-      if (newColumnConfig?.isWipExceeded(newColumnCount + 1) ?? false) {
-        // Mostrar advertencia pero permitir el movimiento
+      if (newColumnConfig?.isWipExceeded(projectedCount) ?? false) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -414,7 +503,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '⚠️ WIP limit excedido en "${newStatus.displayName}" (${newColumnCount + 1}/${newColumnConfig!.wipLimit})',
+                    '⚠️ WIP limit excedido en "${newStatus.displayName}" ($projectedCount/${newColumnConfig!.wipLimit})',
                   ),
                 ),
               ],
@@ -427,50 +516,55 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
       }
     }
 
-    // PASO 1: Actualizar el estado visual inmediatamente
+    final movingTask = sourceList[oldItemIndex];
+    final updatedTask = isStatusChange
+        ? movingTask.copyWith(status: newStatus)
+        : movingTask;
+
     setState(() {
-      // Remover de la columna antigua
-      _tasksByColumn[oldStatus]!.removeAt(oldItemIndex);
+      sourceList.removeAt(oldItemIndex);
 
-      // Insertar en la nueva columna
-      if (_tasksByColumn[newStatus] == null) {
-        _tasksByColumn[newStatus] = [];
+      final destinationList = _tasksByColumn.putIfAbsent(
+        newStatus,
+        () => <Task>[],
+      );
+
+      if (targetIndex > destinationList.length) {
+        targetIndex = destinationList.length;
       }
-      _tasksByColumn[newStatus]!.insert(newItemIndex, task);
 
-      // Recalcular métricas
+      destinationList.insert(targetIndex, updatedTask);
+
+      _syncLocalTasksFromColumns();
       _calculateMetrics();
     });
 
-    // PASO 2: Si cambió de columna, actualizar en el backend
-    if (oldListIndex != newListIndex) {
+    if (isStatusChange) {
       AppLogger.info(
-        'KanbanBoard: Guardando tarea ${task.id} - ${task.title} de ${oldStatus.displayName} a ${newStatus.displayName}',
+        'KanbanBoard: Guardando tarea ${movingTask.id} - ${movingTask.title} de ${oldStatus.displayName} a ${newStatus.displayName}',
       );
 
-      // Actualizar tarea en el backend con el nuevo estado
       context.read<TaskBloc>().add(
         UpdateTaskEvent(
           projectId: widget.projectId,
-          id: task.id,
-          title: task.title,
-          description: task.description,
-          status: newStatus, // ✅ Nuevo estado
-          priority: task.priority,
-          startDate: task.startDate,
-          endDate: task.endDate,
-          estimatedHours: task.estimatedHours,
-          actualHours: task.actualHours,
-          assignedUserId: task.assignee?.id,
-          dependencyIds: task.dependencyIds,
+          id: movingTask.id,
+          title: movingTask.title,
+          description: movingTask.description,
+          status: newStatus,
+          priority: movingTask.priority,
+          startDate: movingTask.startDate,
+          endDate: movingTask.endDate,
+          estimatedHours: movingTask.estimatedHours,
+          actualHours: movingTask.actualHours,
+          assignedUserId: movingTask.assignee?.id,
+          dependencyIds: movingTask.dependencyIds,
         ),
       );
 
-      // Feedback visual al usuario
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '✓ Tarea "${task.title}" movida a "${newStatus.displayName}"',
+            '✓ Tarea "${movingTask.title}" movida a "${newStatus.displayName}"',
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -501,7 +595,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     showDialog(
       context: context,
       builder: (context) =>
-          _KanbanMetricsDialog(metrics: _metrics, tasks: widget.tasks),
+          _KanbanMetricsDialog(metrics: _metrics, tasks: _localTasks),
     );
   }
 }

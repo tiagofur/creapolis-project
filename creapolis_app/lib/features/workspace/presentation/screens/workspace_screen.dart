@@ -505,9 +505,88 @@ class _WorkspaceScreenContent extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar Workspace'),
-        content: Text(
-          '¿Estás seguro de que deseas eliminar "${workspace.name}"?\n\nEsta acción no se puede deshacer y se eliminarán todos los proyectos y tareas asociados.',
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 28),
+            const SizedBox(width: 12),
+            const Text('Eliminar Workspace'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Estás seguro de que deseas eliminar "${workspace.name}"?',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.folder_outlined,
+                        size: 18,
+                        color: Colors.red[700],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${workspace.projectCount} proyecto${workspace.projectCount != 1 ? 's' : ''}',
+                        style: TextStyle(color: Colors.red[900]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.people_outline,
+                        size: 18,
+                        color: Colors.red[700],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${workspace.memberCount} miembro${workspace.memberCount != 1 ? 's' : ''}',
+                        style: TextStyle(color: Colors.red[900]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: Colors.orange[800]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '⚠️ Esta acción NO se puede deshacer',
+                      style: TextStyle(
+                        color: Colors.orange[900],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -515,12 +594,15 @@ class _WorkspaceScreenContent extends StatelessWidget {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.of(dialogContext).pop();
               context.read<WorkspaceBloc>().add(DeleteWorkspace(workspace.id));
             },
-            child: const Text('Eliminar'),
+            child: const Text('Sí, Eliminar'),
           ),
         ],
       ),

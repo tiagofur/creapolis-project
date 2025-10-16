@@ -291,9 +291,7 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Construir tarjeta del propietario
   Widget _buildOwnerCard() {
-    if (_workspace.owner == null) return const SizedBox.shrink();
-
-    final owner = _workspace.owner!;
+    final owner = _workspace.owner;
 
     return Card(
       child: ListTile(

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_bloc.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_event.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_state.dart';
 import 'package:creapolis_app/features/tasks/presentation/widgets/task_card.dart';
 import 'package:creapolis_app/features/tasks/presentation/widgets/create_task_dialog.dart';
 import 'package:creapolis_app/features/tasks/presentation/widgets/edit_task_dialog.dart';
+import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
 import 'package:creapolis_app/domain/entities/task.dart';
+import 'package:creapolis_app/presentation/providers/workspace_context.dart';
+import 'package:provider/provider.dart';
 
 /// Pantalla principal de gestión de tareas
 class TasksScreen extends StatefulWidget {
@@ -211,8 +215,9 @@ class _TasksScreenState extends State<TasksScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: _showSearch
+      appBar: CreopolisAppBar(
+        title: 'Tareas',
+        titleWidget: _showSearch
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
@@ -224,7 +229,8 @@ class _TasksScreenState extends State<TasksScreen> {
                   context.read<TaskBloc>().add(SearchTasks(query));
                 },
               )
-            : const Text('Tareas'),
+            : null,
+        showWorkspaceSwitcher: !_showSearch,
         actions: [
           if (_showSearch)
             IconButton(
@@ -324,10 +330,22 @@ class _TasksScreenState extends State<TasksScreen> {
                   return TaskCard(
                     task: task,
                     onTap: () {
-                      // TODO: Navegar a task detail
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Ver detalles: ${task.title}')),
-                      );
+                      // Obtener workspaceId del contexto
+                      final workspaceContext = context.read<WorkspaceContext>();
+                      final workspaceId = workspaceContext.activeWorkspace?.id;
+
+                      if (workspaceId != null) {
+                        // Navegar a task detail usando push para mantener el contexto del shell
+                        context.push(
+                          '/more/workspaces/$workspaceId/projects/${widget.projectId}/tasks/${task.id}',
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error: No hay workspace activo'),
+                          ),
+                        );
+                      }
                     },
                     onEdit: () => _showEditTaskDialog(task),
                     onDelete: () => _showDeleteTaskDialog(task),
@@ -489,6 +507,3 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-
-
-

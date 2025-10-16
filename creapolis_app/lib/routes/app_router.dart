@@ -17,6 +17,8 @@ import '../presentation/screens/profile/profile_screen.dart';
 import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
 import '../features/projects/presentation/screens/projects_screen.dart';
+import '../features/projects/presentation/blocs/project_bloc.dart';
+import '../features/projects/presentation/blocs/project_event.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../features/tasks/presentation/blocs/task_bloc.dart';
 import '../features/tasks/presentation/blocs/task_event.dart';
@@ -43,6 +45,7 @@ class AppRouter {
     initialLocation: RoutePaths.splash,
     redirect: _handleRedirect,
     routes: [
+      // ========== RUTAS SIN BOTTOM NAVIGATION ==========
       // Splash Screen
       GoRoute(
         path: RoutePaths.splash,
@@ -69,35 +72,8 @@ class AppRouter {
         builder: (context, state) => const OnboardingScreen(),
       ),
 
-      // Settings Routes (global)
-      GoRoute(
-        path: RoutePaths.settings,
-        name: RouteNames.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-
-      // Profile Route (global)
-      GoRoute(
-        path: RoutePaths.profile,
-        name: RouteNames.profile,
-        builder: (context, state) => const ProfileScreen(),
-      ),
-
-      // Role-Based Preferences Route
-      GoRoute(
-        path: RoutePaths.rolePreferences,
-        name: RouteNames.rolePreferences,
-        builder: (context, state) => const RoleBasedPreferencesScreen(),
-      ),
-
-      // Customization Metrics Route (admin only)
-      GoRoute(
-        path: RoutePaths.customizationMetrics,
-        name: RouteNames.customizationMetrics,
-        builder: (context, state) => const CustomizationMetricsScreen(),
-      ),
-
-      // Main Shell con Bottom Navigation (4 tabs)
+      // ========== SHELL CON BOTTOM NAVIGATION PERSISTENTE ==========
+      // Envuelve TODAS las pantallas autenticadas para tener navegación consistente
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainShell(
@@ -106,7 +82,7 @@ class AppRouter {
           );
         },
         branches: [
-          // Branch 0: Dashboard (Home)
+          // ===== Branch 0: Dashboard (Home) =====
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -117,7 +93,7 @@ class AppRouter {
             ],
           ),
 
-          // Branch 1: All Projects
+          // ===== Branch 1: Projects =====
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -128,7 +104,7 @@ class AppRouter {
             ],
           ),
 
-          // Branch 2: All Tasks
+          // ===== Branch 2: Tasks =====
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -139,149 +115,197 @@ class AppRouter {
             ],
           ),
 
-          // Branch 3: More (Menu)
+          // ===== Branch 3: More (Menu) =====
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: RoutePaths.more,
                 name: RouteNames.more,
                 builder: (context, state) => const MoreScreen(),
-              ),
-            ],
-          ),
-        ],
-      ),
-
-      // Workspace Routes con rutas anidadas
-      GoRoute(
-        path: RoutePaths.workspaces,
-        name: RouteNames.workspaces,
-        builder: (context, state) => const WorkspaceListScreen(),
-        routes: [
-          // Create workspace (no requiere ID)
-          GoRoute(
-            path: 'create',
-            name: RouteNames.workspaceCreate,
-            builder: (context, state) => const WorkspaceCreateScreen(),
-          ),
-
-          // Invitations (global de workspaces)
-          GoRoute(
-            path: 'invitations',
-            name: RouteNames.invitations,
-            builder: (context, state) => const WorkspaceInvitationsScreen(),
-          ),
-
-          // Rutas específicas de un workspace (anidadas bajo :wId)
-          GoRoute(
-            path: ':wId',
-            name: RouteNames.workspaceDetail,
-            builder: (context, state) {
-              // TODO: Cargar workspace por ID
-              return const WorkspaceListScreen(); // Temporal
-            },
-            routes: [
-              // Members del workspace
-              GoRoute(
-                path: 'members',
-                name: RouteNames.workspaceMembers,
-                builder: (context, state) {
-                  // TODO: Cargar workspace por ID y pasar a MembersScreen
-                  return const WorkspaceListScreen(); // Temporal
-                },
-              ),
-
-              // Settings del workspace
-              GoRoute(
-                path: 'settings',
-                name: RouteNames.workspaceSettings,
-                builder: (context, state) {
-                  // TODO: Cargar workspace por ID y pasar a SettingsScreen
-                  return const WorkspaceListScreen(); // Temporal
-                },
-              ),
-
-              // Projects list dentro de un workspace
-              GoRoute(
-                path: 'projects',
-                name: RouteNames.projects,
-                builder: (context, state) {
-                  final wId = state.pathParameters['wId'] ?? '0';
-                  return ProjectsScreen(workspaceId: int.parse(wId));
-                },
                 routes: [
-                  // Project detail con todas sus sub-rutas
+                  // Settings (anidado bajo More)
                   GoRoute(
-                    path: ':pId',
-                    name: RouteNames.projectDetail,
-                    builder: (context, state) {
-                      final id = state.pathParameters['pId'] ?? '0';
-                      return ProjectDetailScreen(projectId: id);
-                    },
+                    path: 'settings',
+                    name: RouteNames.settings,
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+
+                  // Profile (anidado bajo More)
+                  GoRoute(
+                    path: 'profile',
+                    name: RouteNames.profile,
+                    builder: (context, state) => const ProfileScreen(),
+                  ),
+
+                  // Role-Based Preferences (anidado bajo More)
+                  GoRoute(
+                    path: 'role-preferences',
+                    name: RouteNames.rolePreferences,
+                    builder: (context, state) =>
+                        const RoleBasedPreferencesScreen(),
+                  ),
+
+                  // Customization Metrics (anidado bajo More - admin only)
+                  GoRoute(
+                    path: 'customization-metrics',
+                    name: RouteNames.customizationMetrics,
+                    builder: (context, state) =>
+                        const CustomizationMetricsScreen(),
+                  ),
+
+                  // ===== WORKSPACES (anidado bajo More) =====
+                  GoRoute(
+                    path: 'workspaces',
+                    name: RouteNames.workspaces,
+                    builder: (context, state) => const WorkspaceListScreen(),
                     routes: [
-                      // Tasks list del proyecto
+                      // Create workspace
                       GoRoute(
-                        path: 'tasks',
-                        name: RouteNames.tasks,
-                        builder: (context, state) {
-                          final pId = state.pathParameters['pId'] ?? '0';
-                          return BlocProvider(
-                            create: (context) =>
-                                getIt<TaskBloc>()
-                                  ..add(LoadTasks(int.parse(pId))),
-                            child: TasksScreen(projectId: int.parse(pId)),
-                          );
-                        },
+                        path: 'create',
+                        name: RouteNames.workspaceCreate,
+                        builder: (context, state) =>
+                            const WorkspaceCreateScreen(),
                       ),
 
-                      // Gantt chart del proyecto
+                      // Invitations
                       GoRoute(
-                        path: 'gantt',
-                        name: RouteNames.gantt,
-                        builder: (context, state) {
-                          final projectId = state.pathParameters['pId'] ?? '0';
-                          return GanttChartScreen(
-                            projectId: int.parse(projectId),
-                          );
-                        },
+                        path: 'invitations',
+                        name: RouteNames.invitations,
+                        builder: (context, state) =>
+                            const WorkspaceInvitationsScreen(),
                       ),
 
-                      // Workload del proyecto
+                      // Workspace Detail y rutas anidadas
                       GoRoute(
-                        path: 'workload',
-                        name: RouteNames.workload,
+                        path: ':wId',
+                        name: RouteNames.workspaceDetail,
                         builder: (context, state) {
-                          final projectId = state.pathParameters['pId'] ?? '0';
-                          return WorkloadScreen(
-                            projectId: int.parse(projectId),
-                          );
+                          // TODO: Cargar workspace por ID
+                          return const WorkspaceListScreen(); // Temporal
                         },
-                      ),
+                        routes: [
+                          // Workspace Members
+                          GoRoute(
+                            path: 'members',
+                            name: RouteNames.workspaceMembers,
+                            builder: (context, state) {
+                              // TODO: Implementar
+                              return const WorkspaceListScreen(); // Temporal
+                            },
+                          ),
 
-                      // Mapa de recursos del proyecto
-                      GoRoute(
-                        path: 'resource-map',
-                        name: RouteNames.resourceMap,
-                        builder: (context, state) {
-                          final projectId = state.pathParameters['pId'] ?? '0';
-                          return ResourceAllocationMapScreen(
-                            projectId: int.parse(projectId),
-                          );
-                        },
-                      ),
+                          // Workspace Settings
+                          GoRoute(
+                            path: 'settings',
+                            name: RouteNames.workspaceSettings,
+                            builder: (context, state) {
+                              // TODO: Implementar
+                              return const WorkspaceListScreen(); // Temporal
+                            },
+                          ),
 
-                      // Task detail dentro del proyecto
-                      GoRoute(
-                        path: 'tasks/:tId',
-                        name: RouteNames.taskDetail,
-                        builder: (context, state) {
-                          final projectId = state.pathParameters['pId'] ?? '0';
-                          final taskId = state.pathParameters['tId'] ?? '0';
-                          return TaskDetailScreen(
-                            taskId: int.parse(taskId),
-                            projectId: int.parse(projectId),
-                          );
-                        },
+                          // Projects list dentro de workspace
+                          GoRoute(
+                            path: 'projects',
+                            name: RouteNames.projects,
+                            builder: (context, state) {
+                              final wId = state.pathParameters['wId'] ?? '0';
+                              return BlocProvider(
+                                create: (context) =>
+                                    getIt<ProjectBloc>()
+                                      ..add(LoadProjects(int.parse(wId))),
+                                child: ProjectsScreen(
+                                  workspaceId: int.parse(wId),
+                                ),
+                              );
+                            },
+                            routes: [
+                              // Project Detail
+                              GoRoute(
+                                path: ':pId',
+                                name: RouteNames.projectDetail,
+                                builder: (context, state) {
+                                  final id = state.pathParameters['pId'] ?? '0';
+                                  return ProjectDetailScreen(projectId: id);
+                                },
+                                routes: [
+                                  // Tasks list del proyecto
+                                  GoRoute(
+                                    path: 'tasks',
+                                    name: RouteNames.tasks,
+                                    builder: (context, state) {
+                                      final pId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return BlocProvider(
+                                        create: (context) =>
+                                            getIt<TaskBloc>()
+                                              ..add(LoadTasks(int.parse(pId))),
+                                        child: TasksScreen(
+                                          projectId: int.parse(pId),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                  // Gantt chart del proyecto
+                                  GoRoute(
+                                    path: 'gantt',
+                                    name: RouteNames.gantt,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return GanttChartScreen(
+                                        projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+
+                                  // Workload del proyecto
+                                  GoRoute(
+                                    path: 'workload',
+                                    name: RouteNames.workload,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return WorkloadScreen(
+                                        projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+
+                                  // Mapa de recursos del proyecto
+                                  GoRoute(
+                                    path: 'resource-map',
+                                    name: RouteNames.resourceMap,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return ResourceAllocationMapScreen(
+                                        projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+
+                                  // Task detail dentro del proyecto
+                                  GoRoute(
+                                    path: 'tasks/:tId',
+                                    name: RouteNames.taskDetail,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      final taskId =
+                                          state.pathParameters['tId'] ?? '0';
+                                      return TaskDetailScreen(
+                                        taskId: int.parse(taskId),
+                                        projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -426,45 +450,50 @@ class AppRouter {
 
 /// Rutas de la aplicación
 class RoutePaths {
+  // Rutas sin bottom navigation
   static const String splash = '/splash';
+  static const String login = '/auth/login';
+  static const String register = '/auth/register';
+  static const String onboarding = '/onboarding';
+
+  // Rutas principales con bottom navigation
   static const String dashboard = '/';
   static const String allProjects = '/projects';
   static const String allTasks = '/tasks';
   static const String more = '/more';
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
-  static const String onboarding = '/onboarding';
-  static const String settings = '/settings';
-  static const String profile = '/profile';
-  static const String rolePreferences = '/role-preferences';
-  static const String customizationMetrics = '/customization-metrics';
 
-  // Workspace routes
-  static const String workspaces = '/workspaces';
-  static const String workspaceCreate = '/workspaces/create';
-  static const String invitations = '/workspaces/invitations';
+  // Rutas anidadas bajo More (con bottom navigation)
+  static const String settings = '/more/settings';
+  static const String profile = '/more/profile';
+  static const String rolePreferences = '/more/role-preferences';
+  static const String customizationMetrics = '/more/customization-metrics';
+
+  // Workspace routes (anidadas bajo More, con bottom navigation)
+  static const String workspaces = '/more/workspaces';
+  static const String workspaceCreate = '/more/workspaces/create';
+  static const String invitations = '/more/workspaces/invitations';
 
   // Dynamic workspace routes (requieren workspaceId)
-  static String workspaceDetail(int wId) => '/workspaces/$wId';
-  static String workspaceMembers(int wId) => '/workspaces/$wId/members';
-  static String workspaceSettings(int wId) => '/workspaces/$wId/settings';
+  static String workspaceDetail(int wId) => '/more/workspaces/$wId';
+  static String workspaceMembers(int wId) => '/more/workspaces/$wId/members';
+  static String workspaceSettings(int wId) => '/more/workspaces/$wId/settings';
 
   // Project routes (requieren workspaceId)
-  static String projects(int wId) => '/workspaces/$wId/projects';
+  static String projects(int wId) => '/more/workspaces/$wId/projects';
   static String projectDetail(int wId, int pId) =>
-      '/workspaces/$wId/projects/$pId';
+      '/more/workspaces/$wId/projects/$pId';
 
   // Project views (requieren workspaceId y projectId)
   static String gantt(int wId, int pId) =>
-      '/workspaces/$wId/projects/$pId/gantt';
+      '/more/workspaces/$wId/projects/$pId/gantt';
   static String workload(int wId, int pId) =>
-      '/workspaces/$wId/projects/$pId/workload';
+      '/more/workspaces/$wId/projects/$pId/workload';
   static String resourceMap(int wId, int pId) =>
-      '/workspaces/$wId/projects/$pId/resource-map';
+      '/more/workspaces/$wId/projects/$pId/resource-map';
 
   // Task routes (requieren workspaceId, projectId y taskId)
   static String taskDetail(int wId, int pId, int tId) =>
-      '/workspaces/$wId/projects/$pId/tasks/$tId';
+      '/more/workspaces/$wId/projects/$pId/tasks/$tId';
 }
 
 /// Nombres de rutas para navegación con nombre
@@ -499,6 +528,3 @@ class RouteNames {
   static const String workspaceSettings = 'workspace-settings';
   static const String invitations = 'invitations';
 }
-
-
-

@@ -17,6 +17,12 @@ export const createProjectValidation = [
     .isLength({ max: 500 })
     .withMessage("Description must not exceed 500 characters"),
 
+  body("workspaceId")
+    .notEmpty()
+    .withMessage("Workspace ID is required")
+    .isInt()
+    .withMessage("Workspace ID must be an integer"),
+
   body("memberIds")
     .optional()
     .isArray()
@@ -26,6 +32,30 @@ export const createProjectValidation = [
     .optional()
     .isInt()
     .withMessage("Each member ID must be an integer"),
+
+  body("status")
+    .optional()
+    .isIn(["PLANNED", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"])
+    .withMessage(
+      "Status must be one of: PLANNED, ACTIVE, PAUSED, COMPLETED, CANCELLED"
+    ),
+
+  body("startDate")
+    .notEmpty()
+    .withMessage("Start date is required")
+    .isISO8601()
+    .withMessage("Start date must be a valid ISO8601 date"),
+
+  body("endDate")
+    .notEmpty()
+    .withMessage("End date is required")
+    .isISO8601()
+    .withMessage("End date must be a valid ISO8601 date"),
+
+  body("managerId")
+    .optional()
+    .isInt()
+    .withMessage("Manager ID must be an integer"),
 ];
 
 export const updateProjectValidation = [
@@ -44,6 +74,33 @@ export const updateProjectValidation = [
     .trim()
     .isLength({ max: 500 })
     .withMessage("Description must not exceed 500 characters"),
+
+  body("status")
+    .optional()
+    .isIn(["PLANNED", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"])
+    .withMessage(
+      "Status must be one of: PLANNED, ACTIVE, PAUSED, COMPLETED, CANCELLED"
+    ),
+
+  body("startDate")
+    .optional()
+    .isISO8601()
+    .withMessage("Start date must be a valid ISO8601 date"),
+
+  body("endDate")
+    .optional()
+    .isISO8601()
+    .withMessage("End date must be a valid ISO8601 date"),
+
+  body("managerId")
+    .optional()
+    .isInt()
+    .withMessage("Manager ID must be an integer"),
+
+  body("progress")
+    .optional()
+    .isFloat({ min: 0, max: 1 })
+    .withMessage("Progress must be a number between 0 and 1"),
 ];
 
 export const projectIdValidation = [
@@ -54,6 +111,23 @@ export const addMemberValidation = [
   param("id").isInt().withMessage("Project ID must be an integer"),
 
   body("userId").isInt().withMessage("User ID must be an integer"),
+
+  body("role")
+    .optional()
+    .isIn(["OWNER", "ADMIN", "MEMBER", "VIEWER"])
+    .withMessage("Role must be one of: OWNER, ADMIN, MEMBER, VIEWER"),
+];
+
+export const updateMemberRoleValidation = [
+  param("id").isInt().withMessage("Project ID must be an integer"),
+
+  param("userId").isInt().withMessage("User ID must be an integer"),
+
+  body("role")
+    .notEmpty()
+    .withMessage("Role is required")
+    .isIn(["OWNER", "ADMIN", "MEMBER", "VIEWER"])
+    .withMessage("Role must be one of: OWNER, ADMIN, MEMBER, VIEWER"),
 ];
 
 export const removeMemberValidation = [

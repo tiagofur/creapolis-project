@@ -27,12 +27,16 @@ class WorkspaceLoaded extends WorkspaceState {
   final Workspace? activeWorkspace;
   final List<WorkspaceMember>? members;
   final List<WorkspaceInvitation>? pendingInvitations;
+  final bool isFromCache; // Indica si los datos vienen del caché
+  final DateTime? lastSync; // Timestamp de última sincronización con servidor
 
   const WorkspaceLoaded({
     required this.workspaces,
     this.activeWorkspace,
     this.members,
     this.pendingInvitations,
+    this.isFromCache = false,
+    this.lastSync,
   });
 
   WorkspaceLoaded copyWith({
@@ -40,12 +44,16 @@ class WorkspaceLoaded extends WorkspaceState {
     Workspace? activeWorkspace,
     List<WorkspaceMember>? members,
     List<WorkspaceInvitation>? pendingInvitations,
+    bool? isFromCache,
+    DateTime? lastSync,
   }) {
     return WorkspaceLoaded(
       workspaces: workspaces ?? this.workspaces,
       activeWorkspace: activeWorkspace ?? this.activeWorkspace,
       members: members ?? this.members,
       pendingInvitations: pendingInvitations ?? this.pendingInvitations,
+      isFromCache: isFromCache ?? this.isFromCache,
+      lastSync: lastSync ?? this.lastSync,
     );
   }
 
@@ -55,6 +63,8 @@ class WorkspaceLoaded extends WorkspaceState {
     activeWorkspace,
     members,
     pendingInvitations,
+    isFromCache,
+    lastSync,
   ];
 }
 
@@ -154,6 +164,3 @@ class InvitationHandled extends WorkspaceState {
   @override
   List<Object?> get props => [message, accepted];
 }
-
-
-

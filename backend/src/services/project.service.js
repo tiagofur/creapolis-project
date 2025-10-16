@@ -32,6 +32,13 @@ class ProjectService {
         skip,
         take: limit,
         include: {
+          manager: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
           members: {
             include: {
               user: {
@@ -75,6 +82,13 @@ class ProjectService {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
+        manager: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         members: {
           include: {
             user: {
@@ -127,11 +141,29 @@ class ProjectService {
    */
   async createProject(
     userId,
-    { name, description, workspaceId, memberIds = [] }
+    {
+      name,
+      description,
+      workspaceId,
+      memberIds = [],
+      status = "PLANNED",
+      startDate,
+      endDate,
+      managerId,
+    }
   ) {
     // Validate workspaceId is provided
     if (!workspaceId) {
       throw ErrorResponses.badRequest("Workspace ID is required");
+    }
+
+    // Validate dates
+    if (!startDate || !endDate) {
+      throw ErrorResponses.badRequest("Start and end dates are required");
+    }
+
+    if (new Date(endDate) <= new Date(startDate)) {
+      throw ErrorResponses.badRequest("End date must be after start date");
     }
 
     // Verify workspace exists and user has access
@@ -173,13 +205,27 @@ class ProjectService {
         name,
         description,
         workspaceId,
+        status,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        managerId: managerId || userId, // El creador es manager por defecto
+        progress: 0.0,
         members: {
           create: uniqueMemberIds.map((memberId) => ({
             userId: memberId,
+            // El creador es OWNER, los demás MEMBER por defecto
+            role: memberId === userId ? "OWNER" : "MEMBER",
           })),
         },
       },
       include: {
+        manager: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         members: {
           include: {
             user: {
@@ -201,17 +247,42 @@ class ProjectService {
   /**
    * Update project
    */
-  async updateProject(projectId, userId, { name, description }) {
+  async updateProject(
+    projectId,
+    userId,
+    { name, description, status, startDate, endDate, managerId, progress }
+  ) {
     // Check access
     await this.getProjectById(projectId, userId);
 
+    // Build update data
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (status !== undefined) updateData.status = status;
+    if (startDate !== undefined) updateData.startDate = new Date(startDate);
+    if (endDate !== undefined) updateData.endDate = new Date(endDate);
+    if (managerId !== undefined) updateData.managerId = managerId;
+    if (progress !== undefined) updateData.progress = progress;
+
+    // Validate dates if both are provided
+    if (updateData.startDate && updateData.endDate) {
+      if (updateData.endDate <= updateData.startDate) {
+        throw ErrorResponses.badRequest("End date must be after start date");
+      }
+    }
+
     const project = await prisma.project.update({
       where: { id: projectId },
-      data: {
-        name,
-        description,
-      },
+      data: updateData,
       include: {
+        manager: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         members: {
           include: {
             user: {
@@ -247,9 +318,17 @@ class ProjectService {
   /**
    * Add member to project
    */
-  async addMember(projectId, userId, memberId) {
+  async addMember(projectId, userId, memberId, role = "MEMBER") {
     // Check access
     await this.getProjectById(projectId, userId);
+
+    // Validate role
+    const validRoles = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
+    if (!validRoles.includes(role)) {
+      throw ErrorResponses.badRequest(
+        `Invalid role. Must be one of: ${validRoles.join(", ")}`
+      );
+    }
 
     // Check if member exists
     const user = await prisma.user.findUnique({
@@ -278,6 +357,7 @@ class ProjectService {
       data: {
         userId: memberId,
         projectId,
+        role,
       },
       include: {
         user: {
@@ -335,6 +415,61 @@ class ProjectService {
     });
 
     return { message: "Member removed successfully" };
+  }
+
+  /**
+   * Update member role in project
+   */
+  async updateMemberRole(projectId, userId, memberId, newRole) {
+    // Check access
+    await this.getProjectById(projectId, userId);
+
+    // Validate role
+    const validRoles = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
+    if (!validRoles.includes(newRole)) {
+      throw ErrorResponses.badRequest(
+        `Invalid role. Must be one of: ${validRoles.join(", ")}`
+      );
+    }
+
+    // Check if member exists in project
+    const member = await prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: memberId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw ErrorResponses.notFound("Member not found in project");
+    }
+
+    // Update role
+    const updatedMember = await prisma.projectMember.update({
+      where: {
+        userId_projectId: {
+          userId: memberId,
+          projectId,
+        },
+      },
+      data: {
+        role: newRole,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return updatedMember;
   }
 }
 

@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/environment_config.dart';
+import '../services/last_route_service.dart';
 import '../utils/app_logger.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
@@ -20,6 +22,8 @@ class ApiClient {
   ApiClient({
     required String baseUrl,
     required AuthInterceptor authInterceptor,
+    FlutterSecureStorage? storage,
+    LastRouteService? lastRouteService,
   }) {
     _dio = Dio(
       BaseOptions(
@@ -37,7 +41,10 @@ class ApiClient {
     _dio.interceptors.addAll([
       authInterceptor, // 1. Inyecta token JWT
       RetryInterceptor(), // 2. Reintentos automáticos
-      ErrorInterceptor(), // 3. Maneja errores HTTP
+      ErrorInterceptor(
+        storage: storage,
+        lastRouteService: lastRouteService,
+      ), // 3. Maneja errores HTTP y limpia sesión en 401
     ]);
 
     if (EnvironmentConfig.enableHttpLogs) {

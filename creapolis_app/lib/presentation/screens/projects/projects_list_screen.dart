@@ -13,9 +13,9 @@ import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
-import '../../bloc/project/project_bloc.dart';
-import '../../bloc/project/project_event.dart';
-import '../../bloc/project/project_state.dart';
+import '../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../features/projects/presentation/blocs/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
 import '../../widgets/loading/skeleton_list.dart';
@@ -72,9 +72,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
       // Solo cargar proyectos si hay un workspace activo
       if (workspaceId != null) {
-        context.read<ProjectBloc>().add(
-          LoadProjectsEvent(workspaceId: workspaceId),
-        );
+        context.read<ProjectBloc>().add(LoadProjects(workspaceId));
       }
     }
   }
@@ -206,27 +204,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       ),
       body: BlocConsumer<ProjectBloc, ProjectState>(
         listener: (context, state) {
-          if (state is ProjectCreated) {
-            context.showSuccess(
-              'Proyecto "${state.project.name}" creado exitosamente',
-            );
+          if (state is ProjectOperationSuccess) {
+            final message = state.message;
+            context.showSuccess(message);
             // Recargar lista filtrada por workspace activo
             final workspaceContext = context.read<WorkspaceContext>();
             final activeWorkspace = workspaceContext.activeWorkspace;
             if (activeWorkspace != null) {
-              context.read<ProjectBloc>().add(
-                LoadProjectsEvent(workspaceId: activeWorkspace.id),
-              );
-            }
-          } else if (state is ProjectDeleted) {
-            context.showSuccess('Proyecto eliminado exitosamente');
-            // Recargar lista filtrada por workspace activo
-            final workspaceContext = context.read<WorkspaceContext>();
-            final activeWorkspace = workspaceContext.activeWorkspace;
-            if (activeWorkspace != null) {
-              context.read<ProjectBloc>().add(
-                LoadProjectsEvent(workspaceId: activeWorkspace.id),
-              );
+              context.read<ProjectBloc>().add(LoadProjects(activeWorkspace.id));
             }
           } else if (state is ProjectError) {
             context.showError(state.message);
@@ -295,9 +280,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       onRefresh: () async {
         final workspace = context.read<WorkspaceContext>().activeWorkspace;
         if (workspace != null) {
-          context.read<ProjectBloc>().add(
-            RefreshProjectsEvent(workspaceId: workspace.id),
-          );
+          context.read<ProjectBloc>().add(RefreshProjects(workspace.id));
           // Esperar a que se complete
           await Future.delayed(const Duration(seconds: 1));
         }
@@ -322,14 +305,18 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                 index: index,
                 delay: const Duration(milliseconds: 40),
                 duration: const Duration(milliseconds: 350),
-                child: ProjectCard(
-                  project: project,
-                  currentUserId: currentUserId,
-                  hasOtherMembers: false, // TODO: Obtener del backend
-                  density: _currentDensity,
-                  onTap: () => _navigateToDetail(context, project.id),
-                  onEdit: () => _showEditProjectSheet(context, project),
-                  onDelete: () => _confirmDelete(context, project),
+                child: SizedBox(
+                  height:
+                      180, // Altura fija para evitar problemas de constraints
+                  child: ProjectCard(
+                    project: project,
+                    currentUserId: currentUserId,
+                    hasOtherMembers: false, // TODO: Obtener del backend
+                    density: _currentDensity,
+                    onTap: () => _navigateToDetail(context, project.id),
+                    onEdit: () => _showEditProjectSheet(context, project),
+                    onDelete: () => _confirmDelete(context, project),
+                  ),
                 ),
               );
             },
@@ -412,9 +399,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     return NoConnectionWidget(
       onRetry: () {
         if (activeWorkspace != null) {
-          context.read<ProjectBloc>().add(
-            LoadProjectsEvent(workspaceId: activeWorkspace.id),
-          );
+          context.read<ProjectBloc>().add(LoadProjects(activeWorkspace.id));
         }
       },
     );
@@ -485,7 +470,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
     if (confirmed == true && context.mounted) {
       AppLogger.info('ProjectsListScreen: Eliminando proyecto ${project.id}');
-      context.read<ProjectBloc>().add(DeleteProjectEvent(project.id));
+      context.read<ProjectBloc>().add(DeleteProject(project.id));
     }
   }
 

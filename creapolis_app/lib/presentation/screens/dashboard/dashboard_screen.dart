@@ -5,9 +5,10 @@ import 'package:provider/provider.dart';
 import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/dashboard_widget_config.dart';
-import '../../bloc/project/project_bloc.dart';
-import '../../bloc/project/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../features/projects/presentation/blocs/project_event.dart';
 import '../../providers/workspace_context.dart';
+import '../../widgets/workspace/workspace_switcher.dart';
 import 'widgets/add_widget_bottom_sheet.dart';
 import 'widgets/dashboard_widget_factory.dart';
 import 'widgets/dashboard_filter_bar.dart';
@@ -68,9 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'Dashboard: Cargando datos del workspace ${activeWorkspace.id}',
       );
       // Cargar proyectos del workspace activo
-      context.read<ProjectBloc>().add(
-        LoadProjectsEvent(workspaceId: activeWorkspace.id),
-      );
+      context.read<ProjectBloc>().add(LoadProjects(activeWorkspace.id));
     } else {
       AppLogger.warning('Dashboard: No hay workspace activo');
     }
@@ -82,9 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (activeWorkspace != null) {
       AppLogger.info('Dashboard: Refrescando datos');
-      context.read<ProjectBloc>().add(
-        RefreshProjectsEvent(workspaceId: activeWorkspace.id),
-      );
+      context.read<ProjectBloc>().add(RefreshProjects(activeWorkspace.id));
     }
 
     await Future.delayed(const Duration(milliseconds: 500));
@@ -218,6 +215,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Creapolis'),
         actions: [
+          // Workspace switcher
+          const WorkspaceSwitcher(compact: true),
+          const SizedBox(width: 8),
           // Edit mode toggle
           IconButton(
             icon: Icon(_isEditMode ? Icons.check : Icons.edit),
@@ -364,6 +364,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-
-
-

@@ -144,10 +144,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       // GET /projects/:projectId/tasks?page=1&limit=20
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/projects/$projectId/tasks',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
 
       // Extraer el campo 'data' de la respuesta
@@ -175,10 +172,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         'TaskRemoteDataSource: ${tasks.length} tareas obtenidas (${metadata.toString()})',
       );
 
-      return PaginatedResponse<TaskModel>(
-        items: tasks,
-        metadata: metadata,
-      );
+      return PaginatedResponse<TaskModel>(items: tasks, metadata: metadata);
     } on AuthException {
       rethrow;
     } on NotFoundException {
@@ -187,7 +181,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       AppLogger.error(
         'TaskRemoteDataSource: Error al obtener tareas paginadas - $e',
       );
-      throw ServerException('Error al obtener tareas paginadas: ${e.toString()}');
+      throw ServerException(
+        'Error al obtener tareas paginadas: ${e.toString()}',
+      );
     }
   }
 
@@ -294,8 +290,12 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       if (description != null) data['description'] = description;
       if (status != null) data['status'] = TaskModel.statusToString(status);
       // Note: Backend no soporta priority aún
-      if (startDate != null) data['startDate'] = startDate.toIso8601String();
-      if (endDate != null) data['endDate'] = endDate.toIso8601String();
+      if (startDate != null) {
+        data['startDate'] = startDate.toUtc().toIso8601String();
+      }
+      if (endDate != null) {
+        data['endDate'] = endDate.toUtc().toIso8601String();
+      }
       if (estimatedHours != null) data['estimatedHours'] = estimatedHours;
       // Note: Backend no soporta actualizar actualHours directamente
       if (assignedUserId != null) data['assigneeId'] = assignedUserId;
@@ -551,6 +551,3 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     }
   }
 }
-
-
-

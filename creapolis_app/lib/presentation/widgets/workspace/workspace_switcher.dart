@@ -6,6 +6,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
 import '../../../features/workspace/presentation/bloc/workspace_state.dart';
+import '../../../routes/app_router.dart';
 import '../../providers/workspace_context.dart';
 
 /// Widget para cambiar entre workspaces activos
@@ -174,9 +175,9 @@ class WorkspaceSwitcher extends StatelessWidget {
           },
           onSelected: (value) {
             if (value == 'create_workspace') {
-              context.push('/workspaces/create');
+              context.push(RoutePaths.workspaceCreate);
             } else if (value == 'view_all') {
-              context.push('/workspaces');
+              context.push(RoutePaths.workspaces);
             } else if (value.startsWith('workspace_')) {
               final workspaceId = int.parse(
                 value.replaceFirst('workspace_', ''),
@@ -284,13 +285,51 @@ class WorkspaceSwitcher extends StatelessWidget {
     final workspaceContext = context.read<WorkspaceContext>();
     workspaceContext.switchWorkspace(workspace);
 
-    // Feedback visual
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Cambiado a "${workspace.name}"'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    // Determinar la ruta actual
+    final currentRoute = GoRouterState.of(context).uri.path;
+    AppLogger.info('WorkspaceSwitcher: Ruta actual: $currentRoute');
+
+    // Decidir si redireccionar o solo actualizar
+    if (currentRoute.contains('/tasks')) {
+      // Si estamos en Tareas, redireccionar a Proyectos del nuevo workspace
+      AppLogger.info(
+        'WorkspaceSwitcher: Redireccionando desde Tareas a Proyectos',
+      );
+      context.go(RoutePaths.projects(workspace.id));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cambiado a "${workspace.name}" - Mostrando proyectos'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (currentRoute.contains('/projects') ||
+        currentRoute.contains('/dashboard') ||
+        currentRoute.contains('/home')) {
+      // Si estamos en Home o Proyectos, solo actualizar el contenido
+      // El BLoC correspondiente se actualizará automáticamente via WorkspaceContext
+      AppLogger.info('WorkspaceSwitcher: Actualizando contenido sin navegar');
+
+      // Si estamos en proyectos de un workspace específico, navegar a los proyectos del nuevo workspace
+      if (currentRoute.contains('/projects')) {
+        context.go(RoutePaths.projects(workspace.id));
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cambiado a "${workspace.name}"'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Para otras rutas, solo feedback visual
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cambiado a "${workspace.name}"'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   /// Obtener icono del tipo de workspace

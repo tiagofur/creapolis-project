@@ -2,7 +2,9 @@ export const taskTypeDefs = `#graphql
   enum TaskStatus {
     PLANNED
     IN_PROGRESS
+    BLOCKED
     COMPLETED
+    CANCELLED
   }
 
   enum DependencyType {

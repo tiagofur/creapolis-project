@@ -1,19 +1,33 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logger/logger.dart';
 import 'package:injectable/injectable.dart';
 import 'project_event.dart';
 import 'project_state.dart';
-import 'package:creapolis_app/domain/repositories/project_repository.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/domain/usecases/get_projects_usecase.dart';
+import 'package:creapolis_app/domain/usecases/get_project_by_id_usecase.dart';
+import 'package:creapolis_app/domain/usecases/create_project_usecase.dart';
+import 'package:creapolis_app/domain/usecases/update_project_usecase.dart';
+import 'package:creapolis_app/domain/usecases/delete_project_usecase.dart';
+import 'package:creapolis_app/core/utils/app_logger.dart';
 
-/// BLoC para gestionar proyectos
+/// BLoC para gestionar proyectos (Unificado - Fase 3)
+/// Combina UseCases (arquitectura limpia) con funcionalidades avanzadas
+/// (filtrado, búsqueda, estados ricos)
 @injectable
 class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
-  final ProjectRepository projectRepository;
-  final Logger logger = Logger();
+  final GetProjectsUseCase _getProjectsUseCase;
+  final GetProjectByIdUseCase _getProjectByIdUseCase;
+  final CreateProjectUseCase _createProjectUseCase;
+  final UpdateProjectUseCase _updateProjectUseCase;
+  final DeleteProjectUseCase _deleteProjectUseCase;
 
-  ProjectBloc({required this.projectRepository})
-    : super(const ProjectInitial()) {
+  ProjectBloc(
+    this._getProjectsUseCase,
+    this._getProjectByIdUseCase,
+    this._createProjectUseCase,
+    this._updateProjectUseCase,
+    this._deleteProjectUseCase,
+  ) : super(const ProjectInitial()) {
     on<LoadProjects>(_onLoadProjects);
     on<LoadProjectById>(_onLoadProjectById);
     on<CreateProject>(_onCreateProject);
@@ -32,26 +46,20 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       emit(const ProjectLoading());
 
-      final result = await projectRepository.getProjects(
-        workspaceId: event.workspaceId,
-      );
+      final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
 
       result.fold(
         (failure) {
-          logger.e('Error loading projects: ${failure.message}');
+          AppLogger.error('Error loading projects: ${failure.message}');
           emit(ProjectError(failure.message));
         },
         (projects) {
-          logger.i('Projects loaded successfully: ${projects.length}');
+          AppLogger.info('Projects loaded successfully: ${projects.length}');
           emit(ProjectsLoaded(projects: projects, filteredProjects: projects));
         },
       );
-    } catch (e, stackTrace) {
-      logger.e(
-        'Unexpected error loading projects',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      AppLogger.error('Unexpected error loading projects: $e');
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -69,15 +77,15 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         currentProjects = currentState.projects;
       }
 
-      final result = await projectRepository.getProjectById(event.projectId);
+      final result = await _getProjectByIdUseCase(event.projectId);
 
       result.fold(
         (failure) {
-          logger.e('Error loading project: ${failure.message}');
+          AppLogger.error('Error loading project: ${failure.message}');
           emit(ProjectError(failure.message, currentProjects: currentProjects));
         },
         (project) {
-          logger.i('Project loaded successfully: ${project.name}');
+          AppLogger.info('Project loaded successfully: ${project.name}');
 
           if (currentProjects != null) {
             // Actualizar el proyecto en la lista si ya existe
@@ -104,12 +112,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           }
         },
       );
-    } catch (e, stackTrace) {
-      logger.e(
-        'Unexpected error loading project',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      AppLogger.error('Unexpected error loading project: $e');
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -134,23 +138,25 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         ),
       );
 
-      final result = await projectRepository.createProject(
-        name: event.name,
-        description: event.description,
-        startDate: event.startDate,
-        endDate: event.endDate,
-        status: event.status,
-        managerId: event.managerId,
-        workspaceId: event.workspaceId,
+      final result = await _createProjectUseCase(
+        CreateProjectParams(
+          name: event.name,
+          description: event.description,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          status: event.status,
+          managerId: event.managerId,
+          workspaceId: event.workspaceId,
+        ),
       );
 
       result.fold(
         (failure) {
-          logger.e('Error creating project: ${failure.message}');
+          AppLogger.error('Error creating project: ${failure.message}');
           emit(ProjectError(failure.message, currentProjects: currentProjects));
         },
         (newProject) {
-          logger.i('Project created successfully: ${newProject.name}');
+          AppLogger.info('Project created successfully: ${newProject.name}');
 
           // Agregar el nuevo proyecto a la lista
           final updatedProjects = currentProjects != null
@@ -174,12 +180,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           );
         },
       );
-    } catch (e, stackTrace) {
-      logger.e(
-        'Unexpected error creating project',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      AppLogger.error('Unexpected error creating project: $e');
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -204,23 +206,27 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         ),
       );
 
-      final result = await projectRepository.updateProject(
-        id: event.id,
-        name: event.name,
-        description: event.description,
-        startDate: event.startDate,
-        endDate: event.endDate,
-        status: event.status,
-        managerId: event.managerId,
+      final result = await _updateProjectUseCase(
+        UpdateProjectParams(
+          id: event.id,
+          name: event.name,
+          description: event.description,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          status: event.status,
+          managerId: event.managerId,
+        ),
       );
 
       result.fold(
         (failure) {
-          logger.e('Error updating project: ${failure.message}');
+          AppLogger.error('Error updating project: ${failure.message}');
           emit(ProjectError(failure.message, currentProjects: currentProjects));
         },
         (updatedProject) {
-          logger.i('Project updated successfully: ${updatedProject.name}');
+          AppLogger.info(
+            'Project updated successfully: ${updatedProject.name}',
+          );
 
           // Actualizar el proyecto en la lista
           final updatedProjects =
@@ -245,12 +251,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           );
         },
       );
-    } catch (e, stackTrace) {
-      logger.e(
-        'Unexpected error updating project',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      AppLogger.error('Unexpected error updating project: $e');
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -275,15 +277,15 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         ),
       );
 
-      final result = await projectRepository.deleteProject(event.projectId);
+      final result = await _deleteProjectUseCase(event.projectId);
 
       result.fold(
         (failure) {
-          logger.e('Error deleting project: ${failure.message}');
+          AppLogger.error('Error deleting project: ${failure.message}');
           emit(ProjectError(failure.message, currentProjects: currentProjects));
         },
         (_) {
-          logger.i('Project deleted successfully');
+          AppLogger.info('Project deleted successfully');
 
           // Eliminar el proyecto de la lista
           final updatedProjects =
@@ -302,12 +304,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           );
         },
       );
-    } catch (e, stackTrace) {
-      logger.e(
-        'Unexpected error deleting project',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      AppLogger.error('Unexpected error deleting project: $e');
       emit(ProjectError('Error inesperado: ${e.toString()}'));
     }
   }
@@ -342,7 +340,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         ),
       );
 
-      logger.i(
+      AppLogger.info(
         'Projects filtered by status: ${event.status} (${filtered.length} results)',
       );
     }
@@ -390,13 +388,10 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           ),
         );
 
-        logger.i(
+        AppLogger.info(
           'Projects searched: "${event.query}" (${filtered.length} results)',
         );
       }
     }
   }
 }
-
-
-

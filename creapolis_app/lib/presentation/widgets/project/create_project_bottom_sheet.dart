@@ -6,9 +6,14 @@ import 'package:provider/provider.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
-import '../../bloc/project/project_bloc.dart';
-import '../../bloc/project/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../features/projects/presentation/blocs/project_event.dart';
+import '../../bloc/workspace_member/workspace_member_bloc.dart';
+import '../../bloc/workspace_member/workspace_member_event.dart';
+import '../../bloc/workspace_member/workspace_member_state.dart';
 import '../../providers/workspace_context.dart';
+import 'manager_selector.dart';
+import 'project_date_picker.dart';
 
 /// Bottom sheet para crear o editar un proyecto
 class CreateProjectBottomSheet extends StatefulWidget {
@@ -26,6 +31,7 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
   ProjectStatus _selectedStatus = ProjectStatus.planned;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
+  int? _selectedManagerId;
 
   @override
   void initState() {
@@ -45,6 +51,11 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
             duration: const Duration(seconds: 3),
           ),
         );
+      } else {
+        // Cargar miembros del workspace
+        context.read<WorkspaceMemberBloc>().add(
+          LoadWorkspaceMembersEvent(workspaceContext.activeWorkspace!.id),
+        );
       }
     });
 
@@ -52,6 +63,7 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
       _selectedStatus = widget.project!.status;
       _startDate = widget.project!.startDate;
       _endDate = widget.project!.endDate;
+      _selectedManagerId = widget.project!.managerId;
     }
   }
 
@@ -176,52 +188,58 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Fechas
-              Row(
-                children: [
-                  // Fecha inicio
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _selectStartDate(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Fecha Inicio',
-                          prefixIcon: const Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          '${_startDate.day}/${_startDate.month}/${_startDate.year}',
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+              // Fechas con nuevo widget
+              ProjectDatePicker(
+                startDate: _startDate,
+                endDate: _endDate,
+                onStartDateChanged: (date) {
+                  if (date != null) {
+                    setState(() => _startDate = date);
+                  }
+                },
+                onEndDateChanged: (date) {
+                  if (date != null) {
+                    setState(() => _endDate = date);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
 
-                  // Fecha fin
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _selectEndDate(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Fecha Fin',
-                          prefixIcon: const Icon(Icons.event),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          '${_endDate.day}/${_endDate.month}/${_endDate.year}',
-                          style: theme.textTheme.bodyLarge,
+              // Manager Selector
+              BlocBuilder<WorkspaceMemberBloc, WorkspaceMemberState>(
+                builder: (context, state) {
+                  if (state is WorkspaceMembersLoaded) {
+                    return ManagerSelector(
+                      members: state.members,
+                      selectedManagerId: _selectedManagerId,
+                      onManagerSelected: (userId) {
+                        setState(() => _selectedManagerId = userId);
+                        AppLogger.info(
+                          'CreateProjectBottomSheet: Manager seleccionado: $userId',
+                        );
+                      },
+                      allowNull: true,
+                    );
+                  } else if (state is WorkspaceMemberLoading) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  } else if (state is WorkspaceMemberError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Error al cargar miembros: ${state.message}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
               const SizedBox(height: 24),
 
@@ -261,40 +279,6 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
         ),
       ),
     );
-  }
-
-  /// Seleccionar fecha de inicio
-  Future<void> _selectStartDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _startDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-
-    if (picked != null && picked != _startDate) {
-      setState(() {
-        _startDate = picked;
-        // Si la fecha de fin es anterior, ajustarla
-        if (_endDate.isBefore(_startDate)) {
-          _endDate = _startDate.add(const Duration(days: 30));
-        }
-      });
-    }
-  }
-
-  /// Seleccionar fecha de fin
-  Future<void> _selectEndDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate,
-      firstDate: _startDate,
-      lastDate: DateTime(2030),
-    );
-
-    if (picked != null && picked != _endDate) {
-      setState(() => _endDate = picked);
-    }
   }
 
   /// Manejar envío del formulario
@@ -337,13 +321,14 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
           'CreateProjectBottomSheet: Actualizando proyecto ${widget.project!.id}',
         );
         context.read<ProjectBloc>().add(
-          UpdateProjectEvent(
+          UpdateProject(
             id: widget.project!.id,
             name: name,
             description: description,
             startDate: _startDate,
             endDate: _endDate,
             status: _selectedStatus,
+            managerId: _selectedManagerId,
           ),
         );
       } else {
@@ -352,12 +337,13 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
           'CreateProjectBottomSheet: Creando nuevo proyecto en workspace ${activeWorkspace.id}',
         );
         context.read<ProjectBloc>().add(
-          CreateProjectEvent(
+          CreateProject(
             name: name,
             description: description,
             startDate: _startDate,
             endDate: _endDate,
             status: _selectedStatus,
+            managerId: _selectedManagerId,
             workspaceId: activeWorkspace.id,
           ),
         );
@@ -383,6 +369,3 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
     }
   }
 }
-
-
-

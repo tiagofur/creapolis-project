@@ -308,6 +308,3 @@ class _ProjectCardState extends State<ProjectCard> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-
-
-

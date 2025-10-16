@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../domain/entities/task.dart';
+import '../../widgets/common/common_widgets.dart';
+import '../../providers/workspace_context.dart';
 
 /// Pantalla que muestra todas las tareas del usuario con mejoras avanzadas.
 ///
@@ -55,8 +59,9 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     if (_filterPriority != null) activeFilters++;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tareas'),
+      appBar: CreopolisAppBar(
+        title: 'Tareas',
+        showWorkspaceSwitcher: true,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -591,13 +596,23 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         margin: const EdgeInsets.only(bottom: 12),
         child: InkWell(
           onTap: () {
-            // TODO: Navegar a detalle de tarea
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Abrir tarea: ${task.title}'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+            // Obtener workspaceId del contexto
+            final workspaceContext = context.read<WorkspaceContext>();
+            final workspaceId = workspaceContext.activeWorkspace?.id;
+
+            if (workspaceId != null) {
+              // Navegar a task detail usando push para mantener el contexto del shell
+              context.push(
+                '/more/workspaces/$workspaceId/projects/${task.projectId}/tasks/${task.id}',
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error: No hay workspace activo'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -1101,6 +1116,3 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     }
   }
 }
-
-
-

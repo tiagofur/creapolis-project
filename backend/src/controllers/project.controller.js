@@ -39,13 +39,26 @@ class ProjectController {
    * POST /api/projects
    */
   create = asyncHandler(async (req, res) => {
-    const { name, description, workspaceId, memberIds } = req.body;
+    const {
+      name,
+      description,
+      workspaceId,
+      memberIds,
+      status,
+      startDate,
+      endDate,
+      managerId,
+    } = req.body;
 
     const project = await projectService.createProject(req.user.id, {
       name,
       description,
       workspaceId,
       memberIds,
+      status,
+      startDate,
+      endDate,
+      managerId,
     });
 
     return successResponse(res, project, "Project created successfully", 201);
@@ -57,11 +70,24 @@ class ProjectController {
    */
   update = asyncHandler(async (req, res) => {
     const projectId = parseInt(req.params.id);
-    const { name, description } = req.body;
+    const {
+      name,
+      description,
+      status,
+      startDate,
+      endDate,
+      managerId,
+      progress,
+    } = req.body;
 
     const project = await projectService.updateProject(projectId, req.user.id, {
       name,
       description,
+      status,
+      startDate,
+      endDate,
+      managerId,
+      progress,
     });
 
     return successResponse(res, project, "Project updated successfully");
@@ -85,15 +111,35 @@ class ProjectController {
    */
   addMember = asyncHandler(async (req, res) => {
     const projectId = parseInt(req.params.id);
-    const { userId } = req.body;
+    const { userId, role } = req.body;
 
     const member = await projectService.addMember(
       projectId,
       req.user.id,
-      userId
+      userId,
+      role
     );
 
     return successResponse(res, member, "Member added successfully", 201);
+  });
+
+  /**
+   * Update member role in project
+   * PUT /api/projects/:id/members/:userId/role
+   */
+  updateMemberRole = asyncHandler(async (req, res) => {
+    const projectId = parseInt(req.params.id);
+    const memberId = parseInt(req.params.userId);
+    const { role } = req.body;
+
+    const member = await projectService.updateMemberRole(
+      projectId,
+      req.user.id,
+      memberId,
+      role
+    );
+
+    return successResponse(res, member, "Member role updated successfully");
   });
 
   /**

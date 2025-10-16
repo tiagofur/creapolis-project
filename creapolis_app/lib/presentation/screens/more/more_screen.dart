@@ -213,7 +213,7 @@ class MoreScreen extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () => context.push('/profile'),
+            onPressed: () => context.go(RoutePaths.profile),
             icon: const Icon(Icons.edit),
             tooltip: 'Editar perfil',
           ),
@@ -304,6 +304,3 @@ class MoreScreen extends StatelessWidget {
     }
   }
 }
-
-
-

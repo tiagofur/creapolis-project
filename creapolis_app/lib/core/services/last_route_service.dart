@@ -97,7 +97,9 @@ class LastRouteService {
     return route.contains('/workspaces/') &&
         !route.endsWith('/workspaces') &&
         !route.contains('/workspaces/create') &&
-        !route.contains('/workspaces/invitations');
+        !route.contains('/more/workspaces/create') &&
+        !route.contains('/workspaces/invitations') &&
+        !route.contains('/more/workspaces/invitations');
   }
 
   /// Extraer workspace ID de una ruta
@@ -122,6 +124,3 @@ class LastRouteService {
     return true;
   }
 }
-
-
-

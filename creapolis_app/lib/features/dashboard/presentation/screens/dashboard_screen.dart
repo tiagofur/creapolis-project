@@ -9,8 +9,12 @@ import 'package:creapolis_app/features/dashboard/presentation/widgets/stats_over
 import 'package:creapolis_app/features/dashboard/presentation/widgets/recent_items_list.dart';
 import 'package:creapolis_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:creapolis_app/presentation/bloc/auth/auth_state.dart';
+import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
+import 'package:creapolis_app/presentation/providers/workspace_context.dart';
+import 'package:creapolis_app/presentation/widgets/project/create_project_bottom_sheet.dart';
 import 'package:creapolis_app/injection.dart';
 import 'package:go_router/go_router.dart';
+import 'package:creapolis_app/routes/app_router.dart';
 
 /// Pantalla principal del Dashboard
 class DashboardScreen extends StatelessWidget {
@@ -29,8 +33,30 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardView extends StatelessWidget {
+class _DashboardView extends StatefulWidget {
   const _DashboardView();
+
+  @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<_DashboardView> {
+  int? _lastWorkspaceId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Escuchar cambios en el workspace activo
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final currentWorkspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (currentWorkspaceId != null && _lastWorkspaceId != currentWorkspaceId) {
+      _lastWorkspaceId = currentWorkspaceId;
+      // Recargar datos del dashboard cuando cambia el workspace
+      context.read<DashboardBloc>().add(const RefreshDashboardData());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,19 +70,11 @@ class _DashboardView extends StatelessWidget {
         : 'Usuario';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_getGreeting(), style: theme.textTheme.titleMedium),
-            Text(
-              userName,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+      appBar: CreopolisAppBarWithSubtitle(
+        title: _getGreeting(),
+        subtitle: userName,
+        showWorkspaceSwitcher: true,
+        compactWorkspaceSwitcher: false,
         actions: [
           // Avatar del usuario
           Padding(
@@ -132,16 +150,9 @@ class _DashboardView extends StatelessWidget {
             if (state.activeProjects.isEmpty && state.pendingTasks.isEmpty) {
               return _EmptyProjectsTasksState(
                 workspacesCount: state.workspaces.length,
-                onCreateProject: () {
-                  // TODO: Navegar a crear proyecto
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Crear proyecto próximamente'),
-                    ),
-                  );
-                },
+                onCreateProject: () => _showCreateProjectSheet(context),
                 onCreateTask: () {
-                  // TODO: Navegar a crear tarea
+                  // TODO: Implementar cuando tengamos CreateTaskSheet
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Crear tarea próximamente')),
                   );
@@ -179,16 +190,9 @@ class _DashboardView extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     QuickActionsGrid(
-                      onNewProject: () {
-                        // TODO: Navegar a crear proyecto
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Crear proyecto próximamente'),
-                          ),
-                        );
-                      },
+                      onNewProject: () => _showCreateProjectSheet(context),
                       onNewTask: () {
-                        // TODO: Navegar a crear tarea
+                        // TODO: Implementar cuando tengamos CreateTaskSheet
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Crear tarea próximamente'),
@@ -196,12 +200,13 @@ class _DashboardView extends StatelessWidget {
                         );
                       },
                       onViewProjects: () {
-                        // TODO: Navegar a lista de proyectos
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ver proyectos próximamente'),
-                          ),
-                        );
+                        final workspaceContext = context
+                            .read<WorkspaceContext>();
+                        final workspaceId =
+                            workspaceContext.activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.go(RoutePaths.projects(workspaceId));
+                        }
                       },
                       onViewTasks: () {
                         context.go('/tasks');
@@ -221,12 +226,15 @@ class _DashboardView extends StatelessWidget {
                         context.go('/tasks/${task.id}');
                       },
                       onProjectTap: (project) {
-                        // TODO: Navegar a detalle de proyecto
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Ver proyecto: ${project.name}'),
-                          ),
-                        );
+                        final workspaceContext = context
+                            .read<WorkspaceContext>();
+                        final workspaceId =
+                            workspaceContext.activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.go(
+                            RoutePaths.projectDetail(workspaceId, project.id),
+                          );
+                        }
                       },
                     ),
                   ],
@@ -239,6 +247,15 @@ class _DashboardView extends StatelessWidget {
           return const SizedBox.shrink();
         },
       ),
+    );
+  }
+
+  /// Mostrar bottom sheet para crear proyecto
+  void _showCreateProjectSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const CreateProjectBottomSheet(),
     );
   }
 
@@ -395,6 +412,3 @@ class _EmptyProjectsTasksState extends StatelessWidget {
     );
   }
 }
-
-
-

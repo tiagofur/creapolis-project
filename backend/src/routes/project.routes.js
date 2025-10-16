@@ -8,6 +8,7 @@ import {
   updateProjectValidation,
   projectIdValidation,
   addMemberValidation,
+  updateMemberRoleValidation,
   removeMemberValidation,
   listProjectsValidation,
 } from "../validators/project.validator.js";
@@ -66,6 +67,18 @@ router.post(
 );
 
 /**
+ * @route   PUT /api/projects/:id/members/:userId/role
+ * @desc    Update member role in project
+ * @access  Private
+ */
+router.put(
+  "/:id/members/:userId/role",
+  updateMemberRoleValidation,
+  validate,
+  projectController.updateMemberRole
+);
+
+/**
  * @route   DELETE /api/projects/:id/members/:userId
  * @desc    Remove member from project
  * @access  Private
@@ -82,7 +95,10 @@ router.delete(
  * @desc    Get all comments for a project
  * @access  Private
  */
-router.get("/:id/comments", commentController.getProjectComments.bind(commentController));
+router.get(
+  "/:id/comments",
+  commentController.getProjectComments.bind(commentController)
+);
 
 // Scheduler routes - nested under /api/projects/:projectId/schedule
 router.use("/:projectId/schedule", schedulerRoutes);

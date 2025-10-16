@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
 import '../../../bloc/task/task_state.dart';
-import '../../../bloc/project/project_bloc.dart';
-import '../../../bloc/project/project_state.dart';
+import '../../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../../features/projects/presentation/blocs/project_state.dart';
 
 /// Card que muestra el resumen del día.
 ///
@@ -298,6 +298,3 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
-
-
-

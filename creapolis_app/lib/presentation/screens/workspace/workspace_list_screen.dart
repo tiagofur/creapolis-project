@@ -10,12 +10,15 @@ import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/workspace/workspace_card.dart';
+import '../../widgets/workspace/workspace_search_bar.dart';
 import '../../widgets/error/friendly_error_widget.dart';
 import '../../widgets/feedback/feedback_widgets.dart';
+import '../../widgets/common/connectivity_banner.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
 import 'workspace_create_screen.dart';
 import 'workspace_detail_screen.dart';
+import 'empty_workspace_screen.dart';
 import 'workspace_invitations_screen.dart';
 
 /// Pantalla de lista de workspaces
@@ -28,6 +31,8 @@ class WorkspaceListScreen extends StatefulWidget {
 
 class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
   int? _activatingWorkspaceId;
+  List<Workspace> _filteredWorkspaces = [];
+  bool _isFiltering = false;
 
   @override
   void initState() {
@@ -45,17 +50,37 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
           appBar: AppBar(
             title: const Text('Mis Workspaces'),
             actions: [
-              // Invitaciones pendientes
-              IconButton(
-                icon: const Icon(Icons.mail_outline),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const WorkspaceInvitationsScreen(),
+              // Invitaciones pendientes con badge
+              BlocBuilder<WorkspaceBloc, WorkspaceState>(
+                builder: (context, state) {
+                  // Obtener número de invitaciones pendientes del estado
+                  int invitationCount = 0;
+                  if (state is WorkspaceLoaded &&
+                      state.pendingInvitations != null) {
+                    invitationCount = state.pendingInvitations!.length;
+                  }
+
+                  return IconButton(
+                    icon: Badge(
+                      isLabelVisible: invitationCount > 0,
+                      label: Text('$invitationCount'),
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      child: const Icon(Icons.mail_outline),
                     ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const WorkspaceInvitationsScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: invitationCount > 0
+                        ? '$invitationCount invitación${invitationCount != 1 ? "es" : ""}'
+                        : 'Invitaciones',
                   );
                 },
-                tooltip: 'Invitaciones',
               ),
               // Refrescar
               IconButton(
@@ -108,6 +133,11 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                   return _buildEmptyState(context);
                 }
 
+                // Usar lista filtrada si existe, sino la original
+                final displayWorkspaces = _isFiltering
+                    ? _filteredWorkspaces
+                    : workspaces;
+
                 // Usar WorkspaceContext en lugar del state para determinar el workspace activo
                 final hasActiveWorkspace =
                     workspaceContext.activeWorkspace != null;
@@ -120,38 +150,95 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                   },
                   child: Column(
                     children: [
+                      // Banner de conectividad/caché
+                      ConnectivityBanner(
+                        isFromCache: state.isFromCache,
+                        lastSync: state.lastSync,
+                        onRefresh: () {
+                          context.read<WorkspaceBloc>().add(
+                            const LoadWorkspaces(),
+                          );
+                        },
+                        isLoading:
+                            false, // Se actualiza con el estado de loading
+                      ),
+                      // Barra de búsqueda y filtros
+                      WorkspaceSearchBar(
+                        workspaces: workspaces,
+                        onFiltered: (filtered) {
+                          setState(() {
+                            _filteredWorkspaces = filtered;
+                            _isFiltering = true;
+                          });
+                        },
+                        onClear: () {
+                          setState(() {
+                            _isFiltering = false;
+                            _filteredWorkspaces = [];
+                          });
+                        },
+                      ),
                       // Mostrar mensaje si no hay workspace activo
                       if (!hasActiveWorkspace)
                         _buildSelectWorkspaceHeader(context),
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: workspaces.length,
-                          itemBuilder: (context, index) {
-                            final workspace = workspaces[index];
-                            // Usar WorkspaceContext para verificar si es activo
-                            final isActive =
-                                workspaceContext.activeWorkspace?.id ==
-                                workspace.id;
+                      // Lista de workspaces
+                      if (displayWorkspaces.isEmpty && _isFiltering)
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 80,
+                                  color: Colors.grey.shade300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No se encontraron workspaces',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(color: Colors.grey.shade600),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Intenta con otros términos de búsqueda',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(color: Colors.grey.shade500),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: displayWorkspaces.length,
+                            itemBuilder: (context, index) {
+                              final workspace = displayWorkspaces[index];
+                              // Usar WorkspaceContext para verificar si es activo
+                              final isActive =
+                                  workspaceContext.activeWorkspace?.id ==
+                                  workspace.id;
 
-                            return StaggeredListAnimation(
-                              index: index,
-                              delay: const Duration(milliseconds: 50),
-                              duration: const Duration(milliseconds: 400),
-                              child: WorkspaceCard(
-                                workspace: workspace,
-                                isActive: isActive,
-                                isActivating:
-                                    _activatingWorkspaceId == workspace.id,
-                                onTap: () =>
-                                    _navigateToWorkspaceDetail(workspace),
-                                onSetActive: () =>
-                                    _setActiveWorkspace(workspace.id),
-                              ),
-                            );
-                          },
+                              return StaggeredListAnimation(
+                                index: index,
+                                delay: const Duration(milliseconds: 50),
+                                duration: const Duration(milliseconds: 400),
+                                child: WorkspaceCard(
+                                  workspace: workspace,
+                                  isActive: isActive,
+                                  isActivating:
+                                      _activatingWorkspaceId == workspace.id,
+                                  onTap: () =>
+                                      _navigateToWorkspaceDetail(workspace),
+                                  onSetActive: () =>
+                                      _setActiveWorkspace(workspace.id),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 );
@@ -235,35 +322,26 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
 
   /// Construir estado vacío
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.workspaces_outlined, size: 100, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No tienes workspaces',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Crea tu primer workspace para empezar',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => _navigateToCreateWorkspace(),
-            icon: const Icon(Icons.add),
-            label: const Text('Crear Workspace'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-          ),
-        ],
-      ),
+    return EmptyWorkspaceScreen(
+      onCreateWorkspace: _navigateToCreateWorkspace,
+      onCheckInvitations: _navigateToInvitations,
     );
+  }
+
+  /// Navegar a invitaciones pendientes
+  void _navigateToInvitations() async {
+    AppLogger.info('Navegando a invitaciones pendientes');
+
+    await context.pushWithTransition(
+      const WorkspaceInvitationsScreen(),
+      type: PageTransitionType.slideFromRight,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    // Refrescar después de volver (por si aceptó/rechazó invitaciones)
+    if (mounted) {
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+    }
   }
 
   /// Navegar a detalle de workspace

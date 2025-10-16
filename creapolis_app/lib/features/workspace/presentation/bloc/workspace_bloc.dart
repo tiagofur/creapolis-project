@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/network/exceptions/api_exceptions.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../data/datasources/workspace_remote_datasource.dart';
+import '../../data/models/workspace_member_model.dart';
 import '../../data/models/workspace_model.dart';
 import 'workspace_event.dart';
 import 'workspace_state.dart';
@@ -53,7 +54,17 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     try {
       emit(const WorkspaceLoading());
 
+      // Cargar workspaces e invitaciones en paralelo
       final workspaces = await _dataSource.getWorkspaces();
+      List<WorkspaceInvitation> invitations = [];
+
+      try {
+        invitations = await _dataSource.getPendingInvitations();
+      } catch (e) {
+        AppLogger.warning('No se pudieron cargar invitaciones: $e');
+        // Continuar sin invitaciones si falla
+      }
+
       _workspaces = workspaces;
 
       // Cargar workspace activo de SharedPreferences
@@ -63,10 +74,15 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
         WorkspaceLoaded(
           workspaces: workspaces,
           activeWorkspace: activeWorkspace,
+          pendingInvitations: invitations,
+          isFromCache: false, // Datos frescos del servidor
+          lastSync: DateTime.now(), // Timestamp de esta sincronización
         ),
       );
 
-      AppLogger.info('WorkspaceBloc: ${workspaces.length} workspaces cargados');
+      AppLogger.info(
+        'WorkspaceBloc: ${workspaces.length} workspaces y ${invitations.length} invitaciones cargados',
+      );
     } on UnauthorizedException catch (e) {
       emit(
         WorkspaceError(
@@ -123,6 +139,8 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
         WorkspaceLoaded(
           workspaces: _workspaces,
           activeWorkspace: _activeWorkspace,
+          isFromCache: false,
+          lastSync: DateTime.now(),
         ),
       );
     } on NotFoundException catch (e) {
@@ -362,7 +380,12 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
       await _saveActiveWorkspace(workspace.id);
 
       emit(
-        WorkspaceLoaded(workspaces: _workspaces, activeWorkspace: workspace),
+        WorkspaceLoaded(
+          workspaces: _workspaces,
+          activeWorkspace: workspace,
+          isFromCache: true, // Selección local, no requiere sync
+          lastSync: DateTime.now(),
+        ),
       );
 
       AppLogger.info('WorkspaceBloc: Workspace ${workspace.name} seleccionado');

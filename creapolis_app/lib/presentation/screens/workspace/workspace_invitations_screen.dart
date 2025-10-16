@@ -485,28 +485,62 @@ class _WorkspaceInvitationsScreenState
   void _declineInvitation(WorkspaceInvitation invitation) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rechazar Invitación'),
-        content: Text(
-          '¿Estás seguro de que deseas rechazar la invitación de "${invitation.workspaceName}"?',
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.cancel_outlined, color: Colors.orange[700], size: 28),
+            const SizedBox(width: 12),
+            const Text('Rechazar Invitación'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Estás seguro de que deseas rechazar la invitación de "${invitation.workspaceName}"?',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: Colors.blue[700]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'El administrador puede enviarte una nueva invitación en el futuro.',
+                      style: TextStyle(color: Colors.blue[900], fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               context.read<WorkspaceInvitationBloc>().add(
                 DeclineInvitationEvent(invitation.token),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.orange,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Rechazar'),
+            child: const Text('Sí, Rechazar'),
           ),
         ],
       ),

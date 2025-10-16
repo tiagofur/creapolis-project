@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
@@ -15,7 +16,7 @@ import 'core/sync/sync_manager.dart';
 import 'core/utils/app_logger.dart';
 import 'injection.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
-import 'presentation/bloc/project/project_bloc.dart';
+import 'features/projects/presentation/blocs/project_bloc.dart';
 import 'presentation/bloc/task/task_bloc.dart';
 import 'features/workspace/presentation/bloc/workspace_bloc.dart';
 import 'presentation/bloc/workspace_member/workspace_member_bloc.dart';
@@ -35,6 +36,12 @@ void main() async {
   }
 
   try {
+    // Inicializar datos de localización para formateo de fechas
+    AppLogger.info('main: Inicializando localización de fechas...');
+    await initializeDateFormatting('es', null);
+    await initializeDateFormatting('es_ES', null);
+    AppLogger.info('main: ✅ Localización de fechas inicializada');
+
     // Inicializar Hive (base de datos local para soporte offline)
     AppLogger.info('main: Inicializando Hive...');
     await HiveManager.init();

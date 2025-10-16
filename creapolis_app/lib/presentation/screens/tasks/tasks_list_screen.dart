@@ -40,6 +40,7 @@ class _TasksListScreenState extends State<TasksListScreen>
   late ScrollController _scrollController;
   final bool _enablePagination =
       true; // Flag para habilitar/deshabilitar paginación
+  TasksLoaded? _lastLoadedState;
 
   @override
   void initState() {
@@ -256,19 +257,33 @@ class _TasksListScreenState extends State<TasksListScreen>
                 }
               },
               builder: (context, state) {
-                if (state is TaskLoading && state is! TasksLoaded) {
+                if (state is TasksLoaded) {
+                  _lastLoadedState = state;
+                  return _buildTasksList(context, state.filteredTasks);
+                }
+
+                if (state is TaskLoading) {
+                  if (_lastLoadedState != null) {
+                    return _buildTasksList(
+                      context,
+                      _lastLoadedState!.filteredTasks,
+                    );
+                  }
                   return const SkeletonList(
                     type: SkeletonType.task,
                     itemCount: 8,
                   );
                 }
 
-                if (state is TasksLoaded) {
-                  return _buildTasksList(context, state.filteredTasks);
-                }
-
                 if (state is TaskError) {
                   return _buildErrorState(context, state.message);
+                }
+
+                if (_lastLoadedState != null) {
+                  return _buildTasksList(
+                    context,
+                    _lastLoadedState!.filteredTasks,
+                  );
                 }
 
                 return const Center(child: CircularProgressIndicator());

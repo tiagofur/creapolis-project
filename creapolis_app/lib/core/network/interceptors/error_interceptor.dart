@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../constants/storage_keys.dart';
+import '../../services/last_route_service.dart';
 import '../../utils/app_logger.dart';
 import '../exceptions/api_exceptions.dart';
 
@@ -7,12 +10,22 @@ import '../exceptions/api_exceptions.dart';
 ///
 /// Mapea códigos de error HTTP a excepciones custom:
 /// - 400 → BadRequestException
-/// - 401 → UnauthorizedException (auto-logout)
+/// - 401 → UnauthorizedException (auto-logout y limpieza)
 /// - 403 → ForbiddenException
 /// - 404 → NotFoundException
 /// - 500-599 → ServerException
 /// - Network errors → NetworkException
 class ErrorInterceptor extends Interceptor {
+  final FlutterSecureStorage _storage;
+  final LastRouteService _lastRouteService;
+
+  ErrorInterceptor({
+    FlutterSecureStorage? storage,
+    LastRouteService? lastRouteService,
+  }) : _storage = storage ?? const FlutterSecureStorage(),
+       _lastRouteService =
+           lastRouteService ?? LastRouteService(const FlutterSecureStorage());
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     AppLogger.error(
@@ -21,6 +34,14 @@ class ErrorInterceptor extends Interceptor {
     AppLogger.error('Status Code: ${err.response?.statusCode}');
     AppLogger.error('Error Type: ${err.type}');
     AppLogger.error('Message: ${err.message}');
+
+    // Si es error 401, limpiar tokens y rutas automáticamente
+    if (err.response?.statusCode == 401) {
+      AppLogger.warning(
+        '⚠️ Error 401: Token inválido o usuario no encontrado. Limpiando sesión...',
+      );
+      _clearAuthenticationData();
+    }
 
     // Mapear DioException a nuestras excepciones custom
     final exception = _mapDioExceptionToApiException(err);
@@ -66,12 +87,7 @@ class ErrorInterceptor extends Interceptor {
         final responseData = error.response?.data;
 
         // Extraer mensaje del backend si existe
-        String? message;
-        if (responseData is Map<String, dynamic>) {
-          message =
-              responseData['message'] as String? ??
-              responseData['error'] as String?;
-        }
+        final message = _extractMessage(responseData);
 
         switch (statusCode) {
           case 400:
@@ -153,7 +169,55 @@ class ErrorInterceptor extends Interceptor {
     }
     return null;
   }
+
+  /// Intenta convertir los campos comunes de mensaje en un string legible
+  String? _extractMessage(dynamic responseData) {
+    if (responseData == null) return null;
+
+    String? asString(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value;
+      if (value is List) {
+        return value
+            .map((element) => asString(element) ?? element.toString())
+            .join(', ');
+      }
+      if (value is Map<String, dynamic>) {
+        // Buscar campos comunes dentro del objeto
+        final nested =
+            asString(value['message']) ??
+            asString(value['error']) ??
+            asString(value['detail']) ??
+            asString(value['description']);
+        return nested ?? value.toString();
+      }
+      return value.toString();
+    }
+
+    if (responseData is Map<String, dynamic>) {
+      return asString(responseData['message']) ??
+          asString(responseData['error']) ??
+          asString(responseData['detail']) ??
+          asString(responseData['description']);
+    }
+
+    return asString(responseData);
+  }
+
+  /// Limpia los datos de autenticación cuando hay un error 401
+  /// Esto evita que la app intente restaurar rutas con un token inválido
+  Future<void> _clearAuthenticationData() async {
+    try {
+      // Limpiar tokens
+      await _storage.delete(key: StorageKeys.accessToken);
+      await _storage.delete(key: StorageKeys.refreshToken);
+      AppLogger.info('🔐 Tokens de autenticación eliminados');
+
+      // Limpiar rutas guardadas
+      await _lastRouteService.clearAll();
+      AppLogger.info('🧹 Rutas guardadas limpiadas');
+    } catch (e) {
+      AppLogger.error('❌ Error al limpiar datos de autenticación: $e');
+    }
+  }
 }
-
-
-

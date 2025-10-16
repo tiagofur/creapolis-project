@@ -7,6 +7,8 @@ import 'package:creapolis_app/features/projects/presentation/blocs/project_state
 import 'package:creapolis_app/features/projects/presentation/widgets/project_card.dart';
 import 'package:creapolis_app/features/projects/presentation/widgets/create_project_dialog.dart';
 import 'package:creapolis_app/features/projects/presentation/widgets/edit_project_dialog.dart';
+import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
+import 'package:creapolis_app/presentation/providers/workspace_context.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
 
 /// Pantalla principal de gestión de proyectos
@@ -23,11 +25,37 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   ProjectStatus? _currentFilter;
   bool _showSearch = false;
   final _searchController = TextEditingController();
+  int? _lastWorkspaceId;
 
   @override
   void initState() {
     super.initState();
+    _lastWorkspaceId = widget.workspaceId;
     _loadProjects();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Detectar cambios en el workspace activo
+    final workspaceContext = context.watch<WorkspaceContext>();
+    final currentWorkspaceId = workspaceContext.activeWorkspace?.id;
+
+    // Si el workspace cambió y coincide con el de esta pantalla, recargar
+    if (currentWorkspaceId != null &&
+        currentWorkspaceId != _lastWorkspaceId &&
+        currentWorkspaceId == widget.workspaceId) {
+      _lastWorkspaceId = currentWorkspaceId;
+
+      // Limpiar filtros y búsqueda al cambiar workspace
+      setState(() {
+        _currentFilter = null;
+        _searchController.clear();
+      });
+
+      _loadProjects();
+    }
   }
 
   @override
@@ -110,8 +138,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: _showSearch
+      appBar: CreopolisAppBar(
+        title: 'Proyectos',
+        titleWidget: _showSearch
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
@@ -123,7 +152,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   context.read<ProjectBloc>().add(SearchProjects(query));
                 },
               )
-            : const Text('Proyectos'),
+            : null,
+        showWorkspaceSwitcher: !_showSearch, // Ocultar durante búsqueda
         actions: [
           if (_showSearch)
             IconButton(
@@ -216,17 +246,15 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   return ProjectCard(
                     project: project,
                     onTap: () {
-                      // TODO: Navegar a project detail
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Ver detalles: ${project.name}'),
-                        ),
+                      // Navegar a project detail
+                      context.push(
+                        '/more/workspaces/${widget.workspaceId}/projects/${project.id}',
                       );
                     },
                     onViewTasks: () {
                       // Navegar a tasks del proyecto
-                      context.go(
-                        '/workspaces/${widget.workspaceId}/projects/${project.id}/tasks',
+                      context.push(
+                        '/more/workspaces/${widget.workspaceId}/projects/${project.id}/tasks',
                       );
                     },
                     onEdit: () => _showEditProjectDialog(project),
@@ -476,6 +504,3 @@ class _FilterOption extends StatelessWidget {
     );
   }
 }
-
-
-

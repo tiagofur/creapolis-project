@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/utils/pagination_helper.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/repositories/task_repository.dart';
@@ -276,6 +277,18 @@ class TaskRepositoryImpl implements TaskRepository {
         assignedUserId: assignedUserId,
         dependencyIds: dependencyIds,
       );
+
+      // Mantener el caché local alineado para que la UI reciba los cambios inmediatamente
+      try {
+        await _cacheDataSource.cacheTask(task);
+      } catch (cacheError, cacheStackTrace) {
+        AppLogger.error(
+          'TaskRepository: Error al cachear tarea ${task.id} tras actualizarla',
+          cacheError,
+          cacheStackTrace,
+        );
+      }
+
       return Right(task);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));

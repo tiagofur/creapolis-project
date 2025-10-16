@@ -20,47 +20,51 @@ class RouteBuilder {
   static String allTasks() => '/tasks';
   static String more() => '/more';
 
-  // Workspace routes
-  static String workspaces() => '/workspaces';
+  // Workspace routes (anidados bajo More)
+  static String workspaces() => '/more/workspaces';
 
-  static String workspaceDetail(int workspaceId) => '/workspaces/$workspaceId';
+  static String workspaceDetail(int workspaceId) =>
+      '/more/workspaces/$workspaceId';
 
-  static String workspaceCreate() => '/workspaces/create';
+  static String workspaceCreate() => '/more/workspaces/create';
 
   static String workspaceMembers(int workspaceId) =>
-      '/workspaces/$workspaceId/members';
+      '/more/workspaces/$workspaceId/members';
 
   static String workspaceSettings(int workspaceId) =>
-      '/workspaces/$workspaceId/settings';
+      '/more/workspaces/$workspaceId/settings';
 
-  static String workspaceInvitations() => '/workspaces/invitations';
+  static String workspaceInvitations() => '/more/workspaces/invitations';
 
-  // Project routes
+  // Project routes (anidados bajo More/Workspaces)
   static String projects(int workspaceId) =>
-      '/workspaces/$workspaceId/projects';
+      '/more/workspaces/$workspaceId/projects';
 
   static String projectDetail(int workspaceId, int projectId) =>
-      '/workspaces/$workspaceId/projects/$projectId';
+      '/more/workspaces/$workspaceId/projects/$projectId';
 
   static String projectCreate(int workspaceId) =>
-      '/workspaces/$workspaceId/projects/create';
+      '/more/workspaces/$workspaceId/projects/create';
 
-  // Task routes
+  // Task routes (anidados bajo More/Workspaces/Projects)
   static String taskDetail(int workspaceId, int projectId, int taskId) =>
-      '/workspaces/$workspaceId/projects/$projectId/tasks/$taskId';
+      '/more/workspaces/$workspaceId/projects/$projectId/tasks/$taskId';
 
-  // Other project views
+  // Other project views (anidados bajo More/Workspaces/Projects)
   static String gantt(int workspaceId, int projectId) =>
-      '/workspaces/$workspaceId/projects/$projectId/gantt';
+      '/more/workspaces/$workspaceId/projects/$projectId/gantt';
 
   static String workload(int workspaceId, int projectId) =>
-      '/workspaces/$workspaceId/projects/$projectId/workload';
+      '/more/workspaces/$workspaceId/projects/$projectId/workload';
 
   static String resourceMap(int workspaceId, int projectId) =>
-      '/workspaces/$workspaceId/projects/$projectId/resource-map';
+      '/more/workspaces/$workspaceId/projects/$projectId/resource-map';
 
-  // Settings
-  static String settings() => '/settings';
+  // Settings and More sub-routes
+  static String settings() => '/more/settings';
+  static String profile() => '/more/profile';
+  static String rolePreferences() => '/more/role-preferences';
+  static String customizationMetrics() => '/more/customization-metrics';
 }
 
 /// Extension methods para facilitar navegación desde cualquier BuildContext
@@ -108,8 +112,11 @@ extension RouteNavigationExtension on BuildContext {
   void goToResourceMap(int workspaceId, int projectId) =>
       go(RouteBuilder.resourceMap(workspaceId, projectId));
 
-  // Settings navigation
+  // Settings and More navigation
   void goToSettings() => go(RouteBuilder.settings());
+  void goToProfile() => go(RouteBuilder.profile());
+  void goToRolePreferences() => go(RouteBuilder.rolePreferences());
+  void goToCustomizationMetrics() => go(RouteBuilder.customizationMetrics());
 
   // Push variants (para mantener en el stack)
   void pushToProject(int workspaceId, int projectId) =>
@@ -117,6 +124,3 @@ extension RouteNavigationExtension on BuildContext {
   void pushToTask(int workspaceId, int projectId, int taskId) =>
       push(RouteBuilder.taskDetail(workspaceId, projectId, taskId));
 }
-
-
-

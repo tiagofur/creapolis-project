@@ -231,7 +231,7 @@ class _WorkspaceEditScreenState extends State<WorkspaceEditScreen> {
                           _buildInfoRow(
                             Icons.person,
                             'Propietario',
-                            widget.workspace.owner?.name ?? 'Desconocido',
+                            widget.workspace.owner.name,
                           ),
                           const Divider(),
                           _buildInfoRow(

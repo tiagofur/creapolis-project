@@ -60,8 +60,10 @@ export const updateTaskValidation = [
 
   body("status")
     .optional()
-    .isIn(["PLANNED", "IN_PROGRESS", "COMPLETED"])
-    .withMessage("Status must be PLANNED, IN_PROGRESS, or COMPLETED"),
+    .isIn(["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED", "CANCELLED"])
+    .withMessage(
+      "Status must be PLANNED, IN_PROGRESS, BLOCKED, COMPLETED, or CANCELLED"
+    ),
 
   body("estimatedHours")
     .optional()
@@ -95,8 +97,10 @@ export const listTasksValidation = [
 
   query("status")
     .optional()
-    .isIn(["PLANNED", "IN_PROGRESS", "COMPLETED"])
-    .withMessage("Status must be PLANNED, IN_PROGRESS, or COMPLETED"),
+    .isIn(["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED", "CANCELLED"])
+    .withMessage(
+      "Status must be PLANNED, IN_PROGRESS, BLOCKED, COMPLETED, or CANCELLED"
+    ),
 
   query("assigneeId")
     .optional()

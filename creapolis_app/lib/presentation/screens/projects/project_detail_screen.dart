@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/constants/storage_keys.dart';
 import '../../../core/services/view_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
+import '../../../domain/entities/workspace_member.dart';
 import '../../../routes/route_builder.dart';
-import '../../bloc/project/project_bloc.dart';
-import '../../bloc/project/project_event.dart';
-import '../../bloc/project/project_state.dart';
+import '../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../features/projects/presentation/blocs/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_state.dart';
+import '../../bloc/workspace_member/workspace_member_bloc.dart';
+import '../../bloc/workspace_member/workspace_member_event.dart';
+import '../../bloc/workspace_member/workspace_member_state.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/collapsible_section.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
+import '../../widgets/project/manager_selector.dart';
+import '../../widgets/project/project_date_picker.dart';
+import '../../widgets/project/project_status_dropdown.dart';
+import '../../widgets/project/project_timeline.dart';
+import '../../widgets/project/transfer_ownership_dialog.dart';
 import '../tasks/tasks_list_screen.dart';
 
 /// Pantalla de detalle del proyecto con Progressive Disclosure y Tabs
@@ -43,8 +54,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     // Cargar proyecto
     final id = int.tryParse(widget.projectId);
     if (id != null) {
-      context.read<ProjectBloc>().add(LoadProjectByIdEvent(id));
+      context.read<ProjectBloc>().add(LoadProjectById(id));
     }
+
+    // Cargar miembros del workspace
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final workspaceContext = context.read<WorkspaceContext>();
+      if (workspaceContext.hasActiveWorkspace) {
+        context.read<WorkspaceMemberBloc>().add(
+          LoadWorkspaceMembersEvent(workspaceContext.activeWorkspace!.id),
+        );
+      }
+    });
   }
 
   @override
@@ -74,26 +95,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     return Scaffold(
       body: BlocConsumer<ProjectBloc, ProjectState>(
         listener: (context, state) {
-          if (state is ProjectUpdated) {
+          if (state is ProjectOperationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Proyecto actualizado exitosamente'),
+              SnackBar(
+                content: Text(state.message),
                 backgroundColor: Colors.green,
               ),
             );
-            // Recargar proyecto
-            final id = int.tryParse(widget.projectId);
-            if (id != null) {
-              context.read<ProjectBloc>().add(LoadProjectByIdEvent(id));
+            // Si menciona "eliminado", navegar de vuelta
+            if (state.message.toLowerCase().contains('eliminado')) {
+              _navigateToProjects();
+            } else {
+              // Recargar proyecto
+              final id = int.tryParse(widget.projectId);
+              if (id != null) {
+                context.read<ProjectBloc>().add(LoadProjectById(id));
+              }
             }
-          } else if (state is ProjectDeleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Proyecto eliminado exitosamente'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            _navigateToProjects();
           } else if (state is ProjectError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -108,8 +126,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is ProjectLoaded) {
-            return _buildProjectDetail(context, state.project);
+          if (state is ProjectsLoaded && state.selectedProject != null) {
+            return _buildProjectDetail(context, state.selectedProject!);
           }
 
           if (state is ProjectError) {
@@ -187,12 +205,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 children: [
                   Row(
                     children: [
-                      Chip(
-                        label: Text(
-                          project.status.label,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: _getStatusColor(project.status),
+                      // Dropdown interactivo de status
+                      ProjectStatusDropdown(
+                        currentStatus: project.status,
+                        onStatusChanged: (newStatus) {
+                          // Disparar evento UpdateProject con el nuevo status
+                          context.read<ProjectBloc>().add(
+                            UpdateProject(id: project.id, status: newStatus),
+                          );
+                        },
                       ),
                       const SizedBox(width: 8),
                       if (project.isOverdue)
@@ -316,6 +337,192 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ),
         ),
 
+        // Editar Fechas (colapsable)
+        CollapsibleSection(
+          title: 'Editar Fechas',
+          icon: Icons.edit_calendar,
+          storageKey: 'project_${project.id}_edit_dates',
+          initiallyExpanded: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Actualiza las fechas del proyecto',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ProjectDatePicker(
+                startDate: project.startDate,
+                endDate: project.endDate,
+                onStartDateChanged: (newDate) {
+                  if (newDate != null) {
+                    context.read<ProjectBloc>().add(
+                      UpdateProject(id: project.id, startDate: newDate),
+                    );
+                  }
+                },
+                onEndDateChanged: (newDate) {
+                  if (newDate != null) {
+                    context.read<ProjectBloc>().add(
+                      UpdateProject(id: project.id, endDate: newDate),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+
+        // Gestión de Manager (colapsable)
+        CollapsibleSection(
+          title: 'Gestión de Manager',
+          icon: Icons.manage_accounts,
+          storageKey: 'project_${project.id}_manager',
+          initiallyExpanded: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Asigna o cambia el manager del proyecto',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              BlocBuilder<WorkspaceMemberBloc, WorkspaceMemberState>(
+                builder: (context, state) {
+                  if (state is WorkspaceMembersLoaded) {
+                    return FutureBuilder<bool>(
+                      future: _canChangeManager(project),
+                      builder: (context, snapshot) {
+                        final canChange = snapshot.data ?? false;
+
+                        // Mostrar mensaje si no tiene permiso
+                        if (snapshot.hasData && !canChange) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.errorContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: colorScheme.error,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lock,
+                                      size: 20,
+                                      color: colorScheme.onErrorContainer,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Solo el manager actual o los administradores pueden cambiar el manager del proyecto',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color:
+                                                  colorScheme.onErrorContainer,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Mostrar el manager actual como disabled
+                              ManagerSelector(
+                                members: state.members,
+                                selectedManagerId: project.managerId,
+                                onManagerSelected: (_) {}, // No hacer nada
+                                allowNull: true,
+                                enabled: false, // Deshabilitar
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Si tiene permiso, mostrar selector habilitado
+                        return ManagerSelector(
+                          members: state.members,
+                          selectedManagerId: project.managerId,
+                          enabled: canChange,
+                          onManagerSelected: (userId) async {
+                            // Verificar permisos primero
+                            final hasPermission = await _canChangeManager(
+                              project,
+                            );
+
+                            if (!hasPermission) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'No tienes permiso para cambiar el manager de este proyecto',
+                                    ),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.error,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            // Si tiene permiso, proceder con el cambio
+                            if (userId == null) {
+                              // Remover manager (asignar null)
+                              _confirmManagerChange(
+                                context,
+                                project,
+                                state.members,
+                                null,
+                              );
+                            } else if (userId != project.managerId) {
+                              // Cambiar a un nuevo manager
+                              _confirmManagerChange(
+                                context,
+                                project,
+                                state.members,
+                                userId,
+                              );
+                            }
+                            // Si userId == project.managerId, no hacer nada (mismo manager)
+                          },
+                          allowNull: true,
+                        );
+                      },
+                    );
+                  } else if (state is WorkspaceMemberLoading) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  } else if (state is WorkspaceMemberError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Error al cargar miembros: ${state.message}',
+                        style: TextStyle(color: colorScheme.error),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+          ),
+        ),
+
         // Estadísticas (expandido por defecto)
         CollapsibleSection(
           title: 'Estadísticas',
@@ -405,135 +612,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   /// Tab de Timeline
   Widget _buildTimelineTab(BuildContext context, Project project) {
-    final theme = Theme.of(context);
-
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Línea de Tiempo',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildTimelineItem(
-                  context,
-                  'Inicio del proyecto',
-                  _formatDate(project.startDate),
-                  Icons.play_circle,
-                  Colors.green,
-                ),
-                _buildTimelineItem(
-                  context,
-                  'Fecha actual',
-                  _formatDate(DateTime.now()),
-                  Icons.today,
-                  Colors.blue,
-                ),
-                _buildTimelineItem(
-                  context,
-                  'Fin del proyecto',
-                  _formatDate(project.endDate),
-                  Icons.flag,
-                  project.isOverdue ? Colors.red : Colors.orange,
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Métricas de Tiempo',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildInfoRow(
-                  context,
-                  Icons.calendar_month,
-                  'Duración Total',
-                  '${project.durationInDays} días',
-                ),
-                const Divider(height: 24),
-                _buildInfoRow(
-                  context,
-                  Icons.access_time,
-                  'Días Transcurridos',
-                  '${_calculateElapsedDays(project)} días',
-                ),
-                const Divider(height: 24),
-                _buildInfoRow(
-                  context,
-                  Icons.hourglass_empty,
-                  'Días Restantes',
-                  '${_calculateRemainingDays(project)} días',
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Nuevo widget de Timeline visual
+        ProjectTimeline(project: project),
       ],
-    );
-  }
-
-  /// Construir item de timeline
-  Widget _buildTimelineItem(
-    BuildContext context,
-    String title,
-    String date,
-    IconData icon,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  date,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -582,13 +666,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     );
   }
 
-  /// Calcular días transcurridos
-  int _calculateElapsedDays(Project project) {
-    final now = DateTime.now();
-    return now.difference(project.startDate).inDays;
-  }
-
-  /// Calcular días restantes
+  /// Calcular días restantes (usado en Overview tab)
   int _calculateRemainingDays(Project project) {
     final now = DateTime.now();
     return project.endDate.difference(now).inDays;
@@ -702,7 +780,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     if (confirmed == true && context.mounted) {
       AppLogger.info('ProjectDetailScreen: Eliminando proyecto ${project.id}');
-      context.read<ProjectBloc>().add(DeleteProjectEvent(project.id));
+      context.read<ProjectBloc>().add(DeleteProject(project.id));
     }
   }
 
@@ -725,6 +803,140 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   /// Formatea fecha
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Verificar si el usuario actual puede cambiar el manager del proyecto
+  Future<bool> _canChangeManager(Project project) async {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getInt(StorageKeys.userId);
+
+    // Si no hay userId, no se puede cambiar
+    if (currentUserId == null) {
+      AppLogger.warning(
+        'ProjectDetailScreen: No se pudo obtener el userId actual',
+      );
+      return false;
+    }
+
+    // Owner y Admin del workspace pueden cambiar el manager
+    if (workspaceContext.isOwner || workspaceContext.isAdmin) {
+      AppLogger.info(
+        'ProjectDetailScreen: Usuario tiene permiso como ${workspaceContext.currentRole}',
+      );
+      return true;
+    }
+
+    // El manager actual del proyecto puede cambiarlo
+    if (project.managerId == currentUserId) {
+      AppLogger.info(
+        'ProjectDetailScreen: Usuario es el manager actual del proyecto',
+      );
+      return true;
+    }
+
+    // En cualquier otro caso, no tiene permiso
+    AppLogger.warning(
+      'ProjectDetailScreen: Usuario no tiene permiso para cambiar manager',
+    );
+    return false;
+  }
+
+  /// Confirmar cambio de manager
+  Future<void> _confirmManagerChange(
+    BuildContext context,
+    Project project,
+    List<WorkspaceMember> members,
+    int? newManagerId,
+  ) async {
+    // Si se está removiendo el manager (null)
+    if (newManagerId == null) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Remover Manager'),
+          content: Text(
+            '¿Estás seguro de que deseas remover el manager del proyecto "${project.name}"?\n\n'
+            'El proyecto quedará sin manager asignado.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true && context.mounted) {
+        context.read<ProjectBloc>().add(
+          UpdateProject(id: project.id, managerId: null),
+        );
+        AppLogger.info(
+          'ProjectDetailScreen: Manager removido del proyecto ${project.id}',
+        );
+      }
+      return;
+    }
+
+    // Buscar el manager actual y el nuevo
+    WorkspaceMember? currentManager;
+    if (project.managerId != null) {
+      try {
+        currentManager = members.firstWhere(
+          (m) => m.userId == project.managerId,
+        );
+      } catch (e) {
+        AppLogger.warning(
+          'ProjectDetailScreen: Manager actual no encontrado en lista de miembros',
+        );
+      }
+    }
+
+    // Buscar el nuevo manager
+    WorkspaceMember? foundManager;
+    try {
+      foundManager = members.firstWhere((m) => m.userId == newManagerId);
+    } catch (e) {
+      AppLogger.error(
+        'ProjectDetailScreen: Nuevo manager no encontrado en lista de miembros',
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Manager seleccionado no encontrado'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return; // No se puede continuar sin el nuevo manager
+    }
+
+    final newManager = foundManager; // Ya sabemos que no es null aquí
+
+    // Mostrar diálogo de confirmación
+    if (context.mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => TransferOwnershipDialog(
+          currentManager: currentManager,
+          newManager: newManager,
+          projectName: project.name,
+          onConfirm: () {
+            context.read<ProjectBloc>().add(
+              UpdateProject(id: project.id, managerId: newManagerId),
+            );
+            AppLogger.info(
+              'ProjectDetailScreen: Manager cambiado a usuario $newManagerId en proyecto ${project.id}',
+            );
+          },
+        ),
+      );
+    }
   }
 }
 
@@ -757,6 +969,3 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     return false;
   }
 }
-
-
-

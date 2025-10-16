@@ -27,33 +27,83 @@ class TaskModel extends Task {
     final projectId = json['projectId'] ?? json['project_id'];
     final estimatedHours = json['estimatedHours'] ?? json['estimated_hours'];
     final actualHours = json['actualHours'] ?? json['actual_hours'];
-    final startDateStr = json['startDate'] ?? json['start_date'];
-    final endDateStr = json['endDate'] ?? json['end_date'];
-    final createdAtStr = json['createdAt'] ?? json['created_at'];
-    final updatedAtStr = json['updatedAt'] ?? json['updated_at'];
+    final startDateRaw = json['startDate'] ?? json['start_date'];
+    final endDateRaw = json['endDate'] ?? json['end_date'];
+    final createdAtRaw = json['createdAt'] ?? json['created_at'];
+    final updatedAtRaw = json['updatedAt'] ?? json['updated_at'];
+    final statusRaw = json['status'];
+    final priorityRaw = json['priority'];
+
+    // Helper to safely parse dates - handles both String and DateTime objects
+    DateTime parseDate(dynamic dateValue, DateTime defaultValue) {
+      if (dateValue == null) return defaultValue;
+      if (dateValue is DateTime) return dateValue;
+      if (dateValue is String) return DateTime.parse(dateValue);
+      return defaultValue;
+    }
+
+    // Helper to safely parse task status - handles both String and Map
+    TaskStatus parseStatus(dynamic statusValue) {
+      if (statusValue == null) return TaskStatus.planned;
+      if (statusValue is String) return statusFromString(statusValue);
+      if (statusValue is Map) {
+        final statusString =
+            statusValue['code'] ??
+            statusValue['value'] ??
+            statusValue['status'] ??
+            statusValue['name'] ??
+            statusValue['label'];
+        if (statusString is String) {
+          return statusFromString(statusString);
+        }
+      }
+      return TaskStatus.planned;
+    }
+
+    // Helper to safely parse task priority - handles both String and Map
+    TaskPriority parsePriority(dynamic priorityValue) {
+      if (priorityValue == null) return TaskPriority.medium;
+      if (priorityValue is String) return priorityFromString(priorityValue);
+      if (priorityValue is Map) {
+        final priorityString =
+            priorityValue['code'] ??
+            priorityValue['value'] ??
+            priorityValue['priority'] ??
+            priorityValue['name'] ??
+            priorityValue['label'];
+        if (priorityString is String) {
+          return priorityFromString(priorityString);
+        }
+      }
+      return TaskPriority.medium;
+    }
+
+    // Helper to safely get description - handles both String and Map
+    String getDescription(dynamic desc) {
+      if (desc == null) return '';
+      if (desc is String) return desc;
+      if (desc is Map && desc.containsKey('text'))
+        return desc['text'] as String? ?? '';
+      return desc.toString();
+    }
 
     return TaskModel(
       id: json['id'] as int,
       projectId: projectId as int,
       title: json['title'] as String,
-      description: json['description'] as String,
-      status: statusFromString(json['status'] as String),
-      priority: json['priority'] != null
-          ? priorityFromString(json['priority'] as String)
-          : TaskPriority.medium, // Default si no viene
+      description: getDescription(json['description']),
+      status: parseStatus(statusRaw),
+      priority: parsePriority(priorityRaw),
       estimatedHours: (estimatedHours as num).toDouble(),
       actualHours: actualHours != null ? (actualHours as num).toDouble() : 0.0,
       assignee: json['assignee'] != null
           ? UserModel.fromJson(json['assignee'] as Map<String, dynamic>)
           : null,
-      startDate: startDateStr != null
-          ? DateTime.parse(startDateStr as String)
-          : DateTime.now(), // Default a fecha actual si no viene
-      endDate: endDateStr != null
-          ? DateTime.parse(endDateStr as String)
-          : DateTime.now().add(
-              const Duration(days: 7),
-            ), // Default a 7 días después
+      startDate: parseDate(startDateRaw, DateTime.now()),
+      endDate: parseDate(
+        endDateRaw,
+        DateTime.now().add(const Duration(days: 7)),
+      ),
       dependencyIds: json['dependency_ids'] != null
           ? List<int>.from(json['dependency_ids'] as List)
           : (json['predecessors'] != null && json['predecessors'] is List
@@ -61,8 +111,8 @@ class TaskModel extends Task {
                       .map((p) => p['id'] as int)
                       .toList()
                 : const []),
-      createdAt: DateTime.parse(createdAtStr as String),
-      updatedAt: DateTime.parse(updatedAtStr as String),
+      createdAt: parseDate(createdAtRaw, DateTime.now()),
+      updatedAt: parseDate(updatedAtRaw, DateTime.now()),
     );
   }
 
@@ -260,6 +310,3 @@ class TaskDependencyModel extends TaskDependency {
     );
   }
 }
-
-
-

@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
 import '../../../features/workspace/presentation/bloc/workspace_state.dart';
+import '../../../routes/app_router.dart';
 import '../../widgets/navigation/quick_create_speed_dial.dart';
+import '../../widgets/project/create_project_bottom_sheet.dart';
 
 /// Shell principal de la aplicación con Bottom Navigation Bar y FAB contextual.
 ///
@@ -91,7 +93,10 @@ class MainShell extends StatelessWidget {
   /// Handler: Crear nueva tarea
   void _handleCreateTask(BuildContext context) {
     // Validar workspace activo
-    if (!_hasActiveWorkspace(context)) {
+    final workspaceState = context.read<WorkspaceBloc>().state;
+
+    if (workspaceState is! WorkspaceLoaded ||
+        workspaceState.activeWorkspace == null) {
       _showNoWorkspaceDialog(
         context,
         'Para crear tareas, primero debes seleccionar o crear un workspace.',
@@ -99,14 +104,29 @@ class MainShell extends StatelessWidget {
       return;
     }
 
-    // TODO: Navegar a crear tarea
-    context.push('/create-task');
+    final workspaceId = workspaceState.activeWorkspace!.id;
+
+    // Navegar a la lista de proyectos para seleccionar uno
+    // TODO: Cuando tengamos una pantalla de crear tarea independiente, usar:
+    // context.go(RoutePaths.taskCreate(workspaceId));
+    context.go(RoutePaths.projects(workspaceId));
+
+    // Mostrar mensaje temporal
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Selecciona un proyecto para crear una tarea'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Handler: Crear nuevo proyecto
   void _handleCreateProject(BuildContext context) {
     // Validar workspace activo
-    if (!_hasActiveWorkspace(context)) {
+    final workspaceState = context.read<WorkspaceBloc>().state;
+
+    if (workspaceState is! WorkspaceLoaded ||
+        workspaceState.activeWorkspace == null) {
       _showNoWorkspaceDialog(
         context,
         'Para crear proyectos, primero debes seleccionar o crear un workspace.',
@@ -114,25 +134,23 @@ class MainShell extends StatelessWidget {
       return;
     }
 
-    // TODO: Navegar a crear proyecto
-    context.push('/create-project');
+    // Importar y mostrar el CreateProjectBottomSheet
+    _showCreateProjectSheet(context);
+  }
+
+  /// Mostrar bottom sheet para crear proyecto
+  void _showCreateProjectSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const CreateProjectBottomSheet(),
+    );
   }
 
   /// Handler: Crear nuevo workspace
   void _handleCreateWorkspace(BuildContext context) {
-    // TODO: Navegar a crear workspace
-    context.push('/create-workspace');
-  }
-
-  /// Verificar si hay workspace activo
-  bool _hasActiveWorkspace(BuildContext context) {
-    final workspaceState = context.read<WorkspaceBloc>().state;
-
-    if (workspaceState is WorkspaceLoaded) {
-      return workspaceState.activeWorkspace != null;
-    }
-
-    return false;
+    // Navegar a la pantalla de crear workspace
+    context.go(RoutePaths.workspaceCreate);
   }
 
   /// Mostrar diálogo cuando no hay workspace activo
@@ -156,7 +174,7 @@ class MainShell extends StatelessWidget {
           FilledButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              context.push('/create-workspace');
+              context.go(RoutePaths.workspaceCreate);
             },
             icon: const Icon(Icons.add),
             label: const Text('Crear Workspace'),

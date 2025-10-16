@@ -159,11 +159,10 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
         'name': name,
         'description': description,
         'workspaceId': workspaceId,
-        // TODO: El backend actual no soporta estos campos, agregar cuando esté disponible
-        // 'startDate': startDate.toIso8601String(),
-        // 'endDate': endDate.toIso8601String(),
-        // 'status': _statusToString(status),
-        // if (managerId != null) 'managerId': managerId,
+        'startDate': startDate.toIso8601String(),
+        'endDate': endDate.toIso8601String(),
+        'status': _statusToString(status),
+        if (managerId != null) 'managerId': managerId,
       };
 
       final response = await _apiClient.post<Map<String, dynamic>>(
@@ -207,11 +206,11 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       final requestData = <String, dynamic>{};
       if (name != null) requestData['name'] = name;
       if (description != null) requestData['description'] = description;
-      // TODO: El backend actual no soporta estos campos, agregar cuando esté disponible
-      // if (startDate != null) requestData['startDate'] = startDate.toIso8601String();
-      // if (endDate != null) requestData['endDate'] = endDate.toIso8601String();
-      // if (status != null) requestData['status'] = _statusToString(status);
-      // if (managerId != null) requestData['managerId'] = managerId;
+      if (startDate != null)
+        requestData['startDate'] = startDate.toIso8601String();
+      if (endDate != null) requestData['endDate'] = endDate.toIso8601String();
+      if (status != null) requestData['status'] = _statusToString(status);
+      if (managerId != null) requestData['managerId'] = managerId;
 
       // PUT /projects/:id
       final response = await _apiClient.put<Map<String, dynamic>>(
@@ -259,8 +258,6 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   }
 
   /// Convertir ProjectStatus a string para API
-  /// TODO: Usado cuando el backend soporte campos status, startDate, endDate
-  // ignore: unused_element
   String _statusToString(ProjectStatus status) {
     switch (status) {
       case ProjectStatus.planned:
@@ -276,6 +273,3 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     }
   }
 }
-
-
-
