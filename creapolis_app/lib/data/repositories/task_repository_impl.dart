@@ -112,8 +112,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Either<Failure, PaginatedResponse<Task>>>
-      getTasksByProjectPaginated(
+  Future<Either<Failure, PaginatedResponse<Task>>> getTasksByProjectPaginated(
     int projectId, {
     required int page,
     required int limit,
@@ -443,6 +442,3 @@ class TaskRepositoryImpl implements TaskRepository {
     }
   }
 }
-
-
-
