@@ -1,6 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:creapolis_app/core/errors/failures.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart';
@@ -69,12 +69,18 @@ void main() {
       name: 'Test Workspace',
       description: 'Description',
       ownerId: 1,
+      owner: const WorkspaceOwner(
+        id: 1,
+        name: 'Test Owner',
+        email: 'owner@test.com',
+      ),
       type: WorkspaceType.team,
       createdAt: DateTime(2025, 1, 1),
       updatedAt: DateTime(2025, 1, 1),
-      settings: const WorkspaceSettings(),
+      settings: WorkspaceSettings.defaults(),
       userRole: WorkspaceRole.member,
       memberCount: 2,
+      projectCount: 0,
     );
 
     test('initial state should be WorkspaceInvitationInitial', () {

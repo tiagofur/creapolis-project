@@ -1,5 +1,5 @@
 import 'package:creapolis_app/core/errors/failures.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_invitation.dart';
@@ -222,6 +222,3 @@ void main() {
     );
   });
 }
-
-
-

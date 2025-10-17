@@ -1,4 +1,4 @@
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/invitation_card.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/role_badge.dart';

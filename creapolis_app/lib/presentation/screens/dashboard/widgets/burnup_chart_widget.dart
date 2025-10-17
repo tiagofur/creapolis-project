@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
@@ -194,8 +197,8 @@ class _BurnupChartWidgetState extends State<BurnupChartWidget> {
                                 LineChartBarData(
                                   spots: chartData['totalScopeSpots'],
                                   isCurved: false,
-                                  color: theme.colorScheme.tertiary.withValues(alpha: 
-                                    0.7,
+                                  color: theme.colorScheme.tertiary.withValues(
+                                    alpha: 0.7,
                                   ),
                                   barWidth: 2,
                                   isStrokeCapRound: true,
@@ -207,8 +210,8 @@ class _BurnupChartWidgetState extends State<BurnupChartWidget> {
                                 LineChartBarData(
                                   spots: chartData['idealSpots'],
                                   isCurved: false,
-                                  color: theme.colorScheme.primary.withValues(alpha: 
-                                    0.5,
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.5,
                                   ),
                                   barWidth: 2,
                                   isStrokeCapRound: true,
@@ -410,7 +413,7 @@ class _BurnupChartWidgetState extends State<BurnupChartWidget> {
         _chartKey,
         'Burnup_Chart',
       );
-      Navigator.of(context).pop(); // Close loading
+      context.pop(); // Close loading
       if (path != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -420,7 +423,7 @@ class _BurnupChartWidgetState extends State<BurnupChartWidget> {
         );
       }
     } catch (e) {
-      Navigator.of(context).pop(); // Close loading
+      context.pop(); // Close loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al exportar: $e'),
@@ -434,9 +437,9 @@ class _BurnupChartWidgetState extends State<BurnupChartWidget> {
     try {
       _showLoadingDialog();
       await ChartExportService.exportAsImage(_chartKey, 'Burnup Chart');
-      Navigator.of(context).pop(); // Close loading
+      context.pop(); // Close loading
     } catch (e) {
-      Navigator.of(context).pop(); // Close loading
+      context.pop(); // Close loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al compartir: $e'),
@@ -666,6 +669,3 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-
-

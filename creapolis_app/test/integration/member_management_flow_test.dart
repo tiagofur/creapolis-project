@@ -1,5 +1,5 @@
 import 'package:creapolis_app/core/errors/failures.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
 import 'package:creapolis_app/domain/usecases/workspace/accept_invitation.dart';
@@ -71,8 +71,15 @@ void main() {
       description: 'Test workspace description',
       type: WorkspaceType.team,
       ownerId: 1,
+      owner: const WorkspaceOwner(
+        id: 1,
+        name: 'Test Owner',
+        email: 'owner@test.com',
+      ),
       userRole: WorkspaceRole.owner,
-      settings: const WorkspaceSettings(),
+      memberCount: 1,
+      projectCount: 0,
+      settings: WorkspaceSettings.defaults(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

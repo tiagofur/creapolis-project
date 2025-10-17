@@ -225,11 +225,11 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
     final colorScheme = theme.colorScheme;
     final columnBackground = colorScheme.surfaceContainerHigh;
     final columnBorderColor = colorScheme.outlineVariant;
-    final ghostBackground = colorScheme.surfaceContainerHighest.withOpacity(
-      0.7,
+    final ghostBackground = colorScheme.surfaceContainerHighest.withAlpha(
+      (0.7 * 255).round(),
     );
     final dragBackground = colorScheme.surfaceContainerHighest;
-    final shadowColor = colorScheme.shadow.withOpacity(0.3);
+    final shadowColor = colorScheme.shadow.withAlpha((0.3 * 255).round());
 
     return Column(
       children: [

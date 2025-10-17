@@ -1,7 +1,13 @@
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/workspace_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+const _defaultOwner = WorkspaceOwner(
+  id: 1,
+  name: 'Test Owner',
+  email: 'owner@test.com',
+);
 
 void main() {
   group('WorkspaceCard Widget', () {
@@ -14,8 +20,15 @@ void main() {
         description: 'Test Description',
         type: WorkspaceType.team,
         ownerId: 1,
+        owner: const WorkspaceOwner(
+          id: 1,
+          name: 'Test Owner',
+          email: 'owner@test.com',
+        ),
         userRole: WorkspaceRole.owner,
-        settings: const WorkspaceSettings(),
+        memberCount: 1,
+        projectCount: 0,
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -52,8 +65,15 @@ void main() {
         name: 'Test Workspace',
         type: WorkspaceType.team,
         ownerId: 1,
+        owner: const WorkspaceOwner(
+          id: 1,
+          name: 'Test Owner',
+          email: 'owner@test.com',
+        ),
         userRole: WorkspaceRole.member,
-        settings: const WorkspaceSettings(),
+        memberCount: 1,
+        projectCount: 0,
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -128,8 +148,11 @@ void main() {
         name: 'Personal',
         type: WorkspaceType.personal,
         ownerId: 1,
+        owner: _defaultOwner,
         userRole: WorkspaceRole.owner,
-        settings: const WorkspaceSettings(),
+        memberCount: 1,
+        projectCount: 0,
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -149,8 +172,11 @@ void main() {
         name: 'Team',
         type: WorkspaceType.team,
         ownerId: 1,
+        owner: _defaultOwner,
         userRole: WorkspaceRole.admin,
-        settings: const WorkspaceSettings(),
+        memberCount: 1,
+        projectCount: 0,
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -169,8 +195,11 @@ void main() {
         name: 'Enterprise',
         type: WorkspaceType.enterprise,
         ownerId: 1,
+        owner: _defaultOwner,
         userRole: WorkspaceRole.member,
-        settings: const WorkspaceSettings(),
+        memberCount: 1,
+        projectCount: 0,
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -210,9 +239,12 @@ void main() {
         name: 'Test',
         type: WorkspaceType.team,
         ownerId: 1,
+        owner: _defaultOwner,
         userRole: WorkspaceRole.member,
+        memberCount: 1,
+        projectCount: 0,
         avatarUrl: 'https://example.com/avatar.png',
-        settings: const WorkspaceSettings(),
+        settings: WorkspaceSettings.defaults(),
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
@@ -270,8 +302,11 @@ void main() {
           name: 'Test',
           type: WorkspaceType.team,
           ownerId: 1,
+          owner: _defaultOwner,
           userRole: role,
-          settings: const WorkspaceSettings(),
+          memberCount: 1,
+          projectCount: 0,
+          settings: WorkspaceSettings.defaults(),
           createdAt: DateTime(2024, 1, 1),
           updatedAt: DateTime(2024, 1, 1),
         );
@@ -283,6 +318,3 @@ void main() {
     });
   });
 }
-
-
-

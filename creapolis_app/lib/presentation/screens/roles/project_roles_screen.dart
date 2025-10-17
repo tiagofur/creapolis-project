@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../domain/entities/project_role.dart';
+import '../../../routes/app_router.dart';
 import '../../bloc/role/role_bloc.dart';
 import '../../bloc/role/role_event.dart';
 import '../../bloc/role/role_state.dart';
-import 'role_detail_screen.dart';
-import 'create_role_screen.dart';
 
 /// Screen for managing project roles
 class ProjectRolesScreen extends StatefulWidget {
+  final int workspaceId;
   final int projectId;
   final String projectName;
 
   const ProjectRolesScreen({
     super.key,
+    required this.workspaceId,
     required this.projectId,
     required this.projectName,
   });
@@ -106,9 +108,9 @@ class _ProjectRolesScreenState extends State<ProjectRolesScreen> {
           const SizedBox(height: 8),
           Text(
             'Crea roles personalizados para tu proyecto',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -171,20 +173,14 @@ class _ProjectRolesScreenState extends State<ProjectRolesScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '${role.permissions.length} permisos',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     const SizedBox(width: 16),
                     Icon(Icons.people, size: 14, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       '${role.memberCount} miembros',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -233,18 +229,25 @@ class _ProjectRolesScreenState extends State<ProjectRolesScreen> {
   }
 
   void _navigateToCreateRole(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateRoleScreen(projectId: widget.projectId),
-      ),
+    context.pushNamed(
+      RouteNames.createRole,
+      pathParameters: {
+        'wId': widget.workspaceId.toString(),
+        'pId': widget.projectId.toString(),
+      },
+      extra: {'projectId': widget.projectId},
     );
   }
 
   void _navigateToRoleDetail(BuildContext context, ProjectRole role) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => RoleDetailScreen(role: role),
-      ),
+    context.pushNamed(
+      RouteNames.roleDetail,
+      pathParameters: {
+        'wId': widget.workspaceId.toString(),
+        'pId': widget.projectId.toString(),
+        'roleId': role.id.toString(),
+      },
+      extra: {'role': role},
     );
   }
 
@@ -278,6 +281,3 @@ class _ProjectRolesScreenState extends State<ProjectRolesScreen> {
     );
   }
 }
-
-
-

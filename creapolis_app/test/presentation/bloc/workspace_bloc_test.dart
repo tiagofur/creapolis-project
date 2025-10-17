@@ -34,7 +34,7 @@ void main() {
       type: WorkspaceType.team,
       createdAt: DateTime(2025, 1, 1),
       updatedAt: DateTime(2025, 1, 1),
-      settings: const WorkspaceSettings(),
+      settings: WorkspaceSettings.defaults(),
       userRole: WorkspaceRole.owner,
       memberCount: 1,
     );

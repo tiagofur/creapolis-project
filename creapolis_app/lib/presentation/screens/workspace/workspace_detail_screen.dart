@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:creapolis_app/routes/app_router.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
@@ -11,9 +13,6 @@ import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
 import 'widgets/invite_member_dialog.dart';
-import 'workspace_edit_screen.dart';
-import 'workspace_members_screen.dart';
-import 'workspace_settings_screen.dart';
 
 /// Pantalla de detalles del workspace
 class WorkspaceDetailScreen extends StatefulWidget {
@@ -527,10 +526,10 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Navegar a editar workspace
   void _navigateToEditWorkspace() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => WorkspaceEditScreen(workspace: _workspace),
-      ),
+    final result = await context.pushNamed(
+      RouteNames.workspaceEdit,
+      pathParameters: {'wId': _workspace.id.toString()},
+      extra: _workspace,
     );
 
     if (!mounted) return;
@@ -546,19 +545,19 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
   /// Navegar a pantalla de miembros
   void _navigateToMembersScreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => WorkspaceMembersScreen(workspace: _workspace),
-      ),
+    context.pushNamed(
+      RouteNames.workspaceMembers,
+      pathParameters: {'wId': _workspace.id.toString()},
+      extra: _workspace,
     );
   }
 
   /// Navegar a pantalla de configuración
   void _navigateToSettingsScreen() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => WorkspaceSettingsScreen(workspace: _workspace),
-      ),
+    final result = await context.pushNamed(
+      RouteNames.workspaceSettings,
+      pathParameters: {'wId': _workspace.id.toString()},
+      extra: _workspace,
     );
 
     // Si se actualizó, refrescar

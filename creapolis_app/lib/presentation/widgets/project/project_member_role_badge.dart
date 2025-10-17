@@ -26,9 +26,12 @@ class ProjectMemberRoleBadge extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withAlpha((0.15 * 255).round()),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withOpacity(0.5), width: 1),
+          border: Border.all(
+            color: color.withAlpha((0.5 * 255).round()),
+            width: 1,
+          ),
         ),
         child: Text(
           role.displayName.toUpperCase(),
@@ -45,9 +48,12 @@ class ProjectMemberRoleBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withAlpha((0.15 * 255).round()),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+        border: Border.all(
+          color: color.withAlpha((0.5 * 255).round()),
+          width: 1.5,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

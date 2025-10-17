@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_bloc.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_event.dart';
 import 'package:creapolis_app/features/tasks/presentation/blocs/task_state.dart';
@@ -12,7 +11,8 @@ import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_ev
 import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
 import 'package:creapolis_app/domain/entities/task.dart';
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
-import 'package:provider/provider.dart';
+import 'package:creapolis_app/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 /// Pantalla principal de gestión de tareas
 class TasksScreen extends StatefulWidget {
@@ -349,9 +349,14 @@ class _TasksScreenState extends State<TasksScreen> {
                       final workspaceId = workspaceContext.activeWorkspace?.id;
 
                       if (workspaceId != null) {
-                        // Navegar a task detail usando push para mantener el contexto del shell
-                        context.push(
-                          '/more/workspaces/$workspaceId/projects/${widget.projectId}/tasks/${task.id}',
+                        // Navegar a task detail usando rutas nombradas para mantener URL consistente
+                        context.pushNamed(
+                          RouteNames.taskDetail,
+                          pathParameters: {
+                            'wId': workspaceId.toString(),
+                            'pId': widget.projectId.toString(),
+                            'tId': task.id.toString(),
+                          },
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(

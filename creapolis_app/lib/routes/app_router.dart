@@ -33,6 +33,16 @@ import '../presentation/screens/resource_map/resource_allocation_map_screen.dart
 import '../presentation/screens/workspace/workspace_create_screen.dart';
 import '../presentation/screens/workspace/workspace_invitations_screen.dart';
 import '../presentation/screens/workspace/workspace_list_screen.dart';
+import '../presentation/screens/workspace/workspace_detail_screen.dart';
+import '../presentation/screens/workspace/workspace_edit_screen.dart';
+import '../presentation/screens/workspace/workspace_members_screen.dart';
+import '../presentation/screens/workspace/workspace_settings_screen.dart';
+import '../presentation/screens/roles/project_roles_screen.dart';
+import '../presentation/screens/roles/create_role_screen.dart';
+import '../presentation/screens/roles/role_detail_screen.dart';
+import '../presentation/screens/reports/report_builder_screen.dart';
+import '../presentation/screens/reports/report_templates_screen.dart';
+import './_workspace_loader.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -180,17 +190,36 @@ class AppRouter {
                         path: ':wId',
                         name: RouteNames.workspaceDetail,
                         builder: (context, state) {
-                          // TODO: Cargar workspace por ID
-                          return const WorkspaceListScreen(); // Temporal
+                          final workspace = state.extra as dynamic;
+                          final wId =
+                              int.tryParse(state.pathParameters['wId'] ?? '') ??
+                              0;
+                          if (workspace != null) {
+                            return WorkspaceDetailScreen(workspace: workspace);
+                          }
+                          // Si workspace es null, cargarlo por ID
+                          return WorkspaceLoader(workspaceId: wId);
                         },
                         routes: [
+                          // Workspace Edit
+                          GoRoute(
+                            path: 'edit',
+                            name: RouteNames.workspaceEdit,
+                            builder: (context, state) {
+                              final workspace = state.extra as dynamic;
+                              return WorkspaceEditScreen(workspace: workspace);
+                            },
+                          ),
+
                           // Workspace Members
                           GoRoute(
                             path: 'members',
                             name: RouteNames.workspaceMembers,
                             builder: (context, state) {
-                              // TODO: Implementar
-                              return const WorkspaceListScreen(); // Temporal
+                              final workspace = state.extra as dynamic;
+                              return WorkspaceMembersScreen(
+                                workspace: workspace,
+                              );
                             },
                           ),
 
@@ -199,8 +228,10 @@ class AppRouter {
                             path: 'settings',
                             name: RouteNames.workspaceSettings,
                             builder: (context, state) {
-                              // TODO: Implementar
-                              return const WorkspaceListScreen(); // Temporal
+                              final workspace = state.extra as dynamic;
+                              return WorkspaceSettingsScreen(
+                                workspace: workspace,
+                              );
                             },
                           ),
 
@@ -284,6 +315,87 @@ class AppRouter {
                                         projectId: int.parse(projectId),
                                       );
                                     },
+                                  ),
+
+                                  // Roles del proyecto
+                                  GoRoute(
+                                    path: 'roles',
+                                    name: RouteNames.projectRoles,
+                                    builder: (context, state) {
+                                      final wId =
+                                          state.pathParameters['wId'] ?? '0';
+                                      final pId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      final extra =
+                                          state.extra as Map<String, dynamic>?;
+                                      final projectName =
+                                          extra?['projectName'] ?? 'Proyecto';
+                                      return ProjectRolesScreen(
+                                        workspaceId: int.parse(wId),
+                                        projectId: int.parse(pId),
+                                        projectName: projectName,
+                                      );
+                                    },
+                                    routes: [
+                                      // Crear rol
+                                      GoRoute(
+                                        path: 'create',
+                                        name: RouteNames.createRole,
+                                        builder: (context, state) {
+                                          final pId =
+                                              state.pathParameters['pId'] ??
+                                              '0';
+                                          return CreateRoleScreen(
+                                            projectId: int.parse(pId),
+                                          );
+                                        },
+                                      ),
+                                      // Detalle de rol
+                                      GoRoute(
+                                        path: ':roleId',
+                                        name: RouteNames.roleDetail,
+                                        builder: (context, state) {
+                                          final role = state.extra as dynamic;
+                                          return RoleDetailScreen(role: role);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Reports del proyecto
+                                  GoRoute(
+                                    path: 'reports',
+                                    name: RouteNames.reports,
+                                    builder: (context, state) {
+                                      final extra =
+                                          state.extra as Map<String, dynamic>?;
+                                      final reportService =
+                                          extra?['reportService'];
+                                      final project = extra?['project'];
+                                      return ReportTemplatesScreen(
+                                        reportService: reportService,
+                                        project: project,
+                                      );
+                                    },
+                                    routes: [
+                                      // Report builder
+                                      GoRoute(
+                                        path: 'builder',
+                                        name: RouteNames.reportBuilder,
+                                        builder: (context, state) {
+                                          final extra =
+                                              state.extra
+                                                  as Map<String, dynamic>?;
+                                          final reportService =
+                                              extra?['reportService'];
+                                          final project = extra?['project'];
+                                          return ReportBuilderScreen(
+                                            reportService: reportService,
+                                            project: project,
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
 
                                   // Task detail dentro del proyecto
@@ -494,6 +606,20 @@ class RoutePaths {
   // Task routes (requieren workspaceId, projectId y taskId)
   static String taskDetail(int wId, int pId, int tId) =>
       '/more/workspaces/$wId/projects/$pId/tasks/$tId';
+
+  // Role routes (requieren workspaceId y projectId)
+  static String projectRoles(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/roles';
+  static String createRole(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/roles/create';
+  static String roleDetail(int wId, int pId, int roleId) =>
+      '/more/workspaces/$wId/projects/$pId/roles/$roleId';
+
+  // Report routes (requieren workspaceId y projectId)
+  static String reports(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/reports';
+  static String reportBuilder(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/reports/builder';
 }
 
 /// Nombres de rutas para navegación con nombre
@@ -527,4 +653,13 @@ class RouteNames {
   static const String workspaceMembers = 'workspace-members';
   static const String workspaceSettings = 'workspace-settings';
   static const String invitations = 'invitations';
+
+  // Role route names
+  static const String projectRoles = 'project-roles';
+  static const String createRole = 'create-role';
+  static const String roleDetail = 'role-detail';
+
+  // Report route names
+  static const String reports = 'reports';
+  static const String reportBuilder = 'report-builder';
 }

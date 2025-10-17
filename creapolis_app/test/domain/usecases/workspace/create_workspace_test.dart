@@ -1,5 +1,5 @@
 import 'package:creapolis_app/core/errors/failures.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
 import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart';
 import 'package:dartz/dartz.dart';
@@ -40,7 +40,7 @@ void main() {
     userRole: WorkspaceRole.owner,
     memberCount: 1,
     projectCount: 0,
-    settings: const WorkspaceSettings(),
+    settings: WorkspaceSettings.defaults(),
     createdAt: DateTime(2024, 1, 1),
     updatedAt: DateTime(2024, 1, 1),
   );
@@ -155,6 +155,3 @@ void main() {
     );
   });
 }
-
-
-

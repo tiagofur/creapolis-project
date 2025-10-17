@@ -52,7 +52,7 @@ class ProjectMemberTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getRoleColor().withOpacity(0.2),
+          backgroundColor: _getRoleColor().withAlpha((0.2 * 255).round()),
           child: Text(
             member.userName[0].toUpperCase(),
             style: TextStyle(

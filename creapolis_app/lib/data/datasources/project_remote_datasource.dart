@@ -206,8 +206,9 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       final requestData = <String, dynamic>{};
       if (name != null) requestData['name'] = name;
       if (description != null) requestData['description'] = description;
-      if (startDate != null)
+      if (startDate != null) {
         requestData['startDate'] = startDate.toIso8601String();
+      }
       if (endDate != null) requestData['endDate'] = endDate.toIso8601String();
       if (status != null) requestData['status'] = _statusToString(status);
       if (managerId != null) requestData['managerId'] = managerId;

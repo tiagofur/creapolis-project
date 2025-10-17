@@ -351,7 +351,7 @@ class _ProjectMembersScreenState extends State<ProjectMembersScreen> {
               const Text('Rol:', style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               DropdownButtonFormField<ProjectMemberRole>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(

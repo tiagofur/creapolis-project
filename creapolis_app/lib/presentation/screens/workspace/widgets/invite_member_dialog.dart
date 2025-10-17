@@ -131,7 +131,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<WorkspaceRole>(
-                value: _selectedRole,
+                initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Rol'),
                 items: roles
                     .map(

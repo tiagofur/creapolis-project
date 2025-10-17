@@ -1,6 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:creapolis_app/core/errors/failures.dart';
-import 'package:creapolis_app/domain/entities/workspace.dart';
+import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_workspace_members.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_bloc.dart';

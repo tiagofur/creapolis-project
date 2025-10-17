@@ -481,7 +481,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         }
 
         return DropdownButtonFormField<int?>(
-          value: _selectedAssigneeId,
+          initialValue: _selectedAssigneeId,
           isExpanded: true,
           decoration: InputDecoration(
             labelText: 'Responsable',

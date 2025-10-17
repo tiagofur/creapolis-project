@@ -105,7 +105,7 @@ class _ManagerSelectorState extends State<ManagerSelector> {
     }
 
     return DropdownButtonFormField<int?>(
-      value: _selectedId,
+      initialValue: _selectedId,
       decoration: InputDecoration(
         labelText: widget.label,
         prefixIcon: const Icon(Icons.person_outline),

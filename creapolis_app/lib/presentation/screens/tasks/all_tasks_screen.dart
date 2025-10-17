@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:creapolis_app/routes/app_router.dart';
 
 import '../../../domain/entities/project.dart';
 import '../../../domain/entities/task.dart';
@@ -745,8 +746,13 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
             if (workspaceId != null) {
               // Navegar a task detail usando push para mantener el contexto del shell
-              await context.push(
-                '/more/workspaces/$workspaceId/projects/${task.projectId}/tasks/${task.id}',
+              await context.pushNamed(
+                RouteNames.taskDetail,
+                pathParameters: {
+                  'wId': workspaceId.toString(),
+                  'pId': task.projectId.toString(),
+                  'tId': task.id.toString(),
+                },
               );
               if (!mounted) return;
               await _loadTasks(refresh: true);

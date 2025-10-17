@@ -293,7 +293,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
             duration: const Duration(milliseconds: 350),
             child: ProjectCard(
               project: project,
-              onTap: () => _navigateToDetail(context, project.id),
+              onTap: () {
+                if (workspaceId != null) {
+                  context.goToProject(workspaceId, project.id);
+                }
+              },
               onViewTasks: workspaceId != null
                   ? () => _navigateToTasks(context, workspaceId, project.id)
                   : null,
@@ -405,23 +409,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   }
 
   /// Navegar a detalle del proyecto
-  void _navigateToDetail(BuildContext context, int projectId) {
-    final workspaceContext = context.read<WorkspaceContext>();
-    final workspaceId = workspaceContext.activeWorkspace?.id;
-
-    if (workspaceId == null) {
-      AppLogger.warning(
-        'ProjectsListScreen: No hay workspace activo, redirigiendo a lista de workspaces',
-      );
-      context.goToWorkspaces();
-      return;
-    }
-
-    AppLogger.info(
-      'ProjectsListScreen: Navegando a detalle del proyecto $projectId en workspace $workspaceId',
-    );
-    context.goToProject(workspaceId, projectId);
-  }
+  // Removed unused method since ProjectCard onTap now uses context.goToProject directly.
 
   /// Navegar a las tareas del proyecto
   void _navigateToTasks(BuildContext context, int workspaceId, int projectId) {

@@ -177,32 +177,40 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
 
   /// Construir selector de tipo de workspace
   Widget _buildTypeSelector() {
-    return Column(
-      children: [
-        _buildTypeOption(
-          WorkspaceType.personal,
-          Icons.person,
-          'Personal',
-          'Para uso individual y proyectos personales',
-          Colors.blue,
-        ),
-        const SizedBox(height: 12),
-        _buildTypeOption(
-          WorkspaceType.team,
-          Icons.group,
-          'Equipo',
-          'Para colaborar con un equipo pequeño o mediano',
-          Colors.orange,
-        ),
-        const SizedBox(height: 12),
-        _buildTypeOption(
-          WorkspaceType.enterprise,
-          Icons.business,
-          'Empresa',
-          'Para organizaciones grandes con múltiples equipos',
-          Colors.purple,
-        ),
-      ],
+    return RadioGroup<WorkspaceType>(
+      groupValue: _selectedType,
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _selectedType = value);
+        }
+      },
+      child: Column(
+        children: [
+          _buildTypeOption(
+            WorkspaceType.personal,
+            Icons.person,
+            'Personal',
+            'Para uso individual y proyectos personales',
+            Colors.blue,
+          ),
+          const SizedBox(height: 12),
+          _buildTypeOption(
+            WorkspaceType.team,
+            Icons.group,
+            'Equipo',
+            'Para colaborar con un equipo pequeño o mediano',
+            Colors.orange,
+          ),
+          const SizedBox(height: 12),
+          _buildTypeOption(
+            WorkspaceType.enterprise,
+            Icons.business,
+            'Empresa',
+            'Para organizaciones grandes con múltiples equipos',
+            Colors.purple,
+          ),
+        ],
+      ),
     );
   }
 
@@ -238,15 +246,7 @@ class _WorkspaceCreateScreenState extends State<WorkspaceCreateScreen> {
                   fillColor: WidgetStateProperty.all(color),
                 ),
               ),
-              child: Radio<WorkspaceType>(
-                value: type,
-                groupValue: _selectedType,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedType = value);
-                  }
-                },
-              ),
+              child: Radio<WorkspaceType>(value: type, toggleable: false),
             ),
             // Icono
             Container(

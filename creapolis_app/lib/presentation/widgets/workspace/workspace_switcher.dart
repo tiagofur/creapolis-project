@@ -175,9 +175,9 @@ class WorkspaceSwitcher extends StatelessWidget {
           },
           onSelected: (value) {
             if (value == 'create_workspace') {
-              context.push(RoutePaths.workspaceCreate);
+              context.pushNamed(RouteNames.workspaceCreate);
             } else if (value == 'view_all') {
-              context.push(RoutePaths.workspaces);
+              context.pushNamed(RouteNames.workspaces);
             } else if (value.startsWith('workspace_')) {
               final workspaceId = int.parse(
                 value.replaceFirst('workspace_', ''),
@@ -295,8 +295,7 @@ class WorkspaceSwitcher extends StatelessWidget {
       AppLogger.info(
         'WorkspaceSwitcher: Redireccionando desde Tareas a Proyectos',
       );
-      context.go(RoutePaths.projects(workspace.id));
-
+      context.goToWorkspace(workspace.id);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Cambiado a "${workspace.name}" - Mostrando proyectos'),
@@ -312,7 +311,7 @@ class WorkspaceSwitcher extends StatelessWidget {
 
       // Si estamos en proyectos de un workspace específico, navegar a los proyectos del nuevo workspace
       if (currentRoute.contains('/projects')) {
-        context.go(RoutePaths.projects(workspace.id));
+        context.goToWorkspace(workspace.id);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -343,4 +342,8 @@ class WorkspaceSwitcher extends StatelessWidget {
         return Icons.business;
     }
   }
+}
+
+extension WorkspaceNavigationExtension on BuildContext {
+  void goToWorkspace(int workspaceId) => go('/more/workspaces/$workspaceId');
 }

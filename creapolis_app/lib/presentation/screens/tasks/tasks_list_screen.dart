@@ -507,7 +507,7 @@ class _TasksListScreenState extends State<TasksListScreen>
     }
 
     AppLogger.info('TasksListScreen: Navegando a detalle de tarea $taskId');
-    context.pushToTask(workspaceId, widget.projectId, taskId);
+    context.goToTask(workspaceId, widget.projectId, taskId);
   }
 
   /// Confirmar eliminación de tarea

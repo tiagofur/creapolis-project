@@ -78,42 +78,44 @@ class _CategoryFeedbackDialogState extends State<CategoryFeedbackDialog> {
                   Theme.of(context).primaryColor,
                 ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: const Text('Sí, fue correcta'),
-                          value: true,
-                          selected: _wasCorrect == true,
-                          onChanged: (value) {
-                            setState(() {
-                              _wasCorrect = value!;
-                              _correctedCategory = null;
-                            });
-                          },
+              child: RadioGroup<bool>(
+                groupValue: _wasCorrect,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _wasCorrect = value;
+                      if (value) {
+                        _correctedCategory = null;
+                      }
+                    });
+                  }
+                },
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: const Text('Sí, fue correcta'),
+                            value: true,
+                            selected: _wasCorrect == true,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: const Text('No, fue incorrecta'),
-                          value: false,
-                          selected: _wasCorrect == false,
-                          onChanged: (value) {
-                            setState(() {
-                              _wasCorrect = value!;
-                            });
-                          },
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: const Text('No, fue incorrecta'),
+                            value: false,
+                            selected: _wasCorrect == false,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),

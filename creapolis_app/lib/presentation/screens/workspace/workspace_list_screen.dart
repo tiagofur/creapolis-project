@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:creapolis_app/routes/app_router.dart';
 
 import '../../../core/animations/list_animations.dart';
 import '../../../core/animations/page_transitions.dart';
@@ -69,12 +71,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                       child: const Icon(Icons.mail_outline),
                     ),
                     onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const WorkspaceInvitationsScreen(),
-                        ),
-                      );
+                      context.pushNamed(RouteNames.invitations);
                     },
                     tooltip: invitationCount > 0
                         ? '$invitationCount invitación${invitationCount != 1 ? "es" : ""}'

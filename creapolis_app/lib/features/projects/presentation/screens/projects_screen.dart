@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_bloc.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_event.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_state.dart';
@@ -10,6 +9,8 @@ import 'package:creapolis_app/features/projects/presentation/widgets/edit_projec
 import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 /// Pantalla principal de gestión de proyectos
 class ProjectsScreen extends StatefulWidget {
@@ -247,14 +248,22 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     project: project,
                     onTap: () {
                       // Navegar a project detail
-                      context.push(
-                        '/more/workspaces/${widget.workspaceId}/projects/${project.id}',
+                      context.pushNamed(
+                        RouteNames.projectDetail,
+                        pathParameters: {
+                          'wId': widget.workspaceId.toString(),
+                          'pId': project.id.toString(),
+                        },
                       );
                     },
                     onViewTasks: () {
                       // Navegar a tasks del proyecto
-                      context.push(
-                        '/more/workspaces/${widget.workspaceId}/projects/${project.id}/tasks',
+                      context.pushNamed(
+                        RouteNames.tasks,
+                        pathParameters: {
+                          'wId': widget.workspaceId.toString(),
+                          'pId': project.id.toString(),
+                        },
                       );
                     },
                     onEdit: () => _showEditProjectDialog(project),
