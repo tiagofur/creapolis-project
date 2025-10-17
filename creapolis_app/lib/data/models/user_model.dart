@@ -27,15 +27,11 @@ class UserModel extends User {
     if (json['name'] == null) {
       throw Exception('User name is required but was null');
     }
-    if (json['role'] == null) {
-      throw Exception('User role is required but was null');
-    }
-
     return UserModel(
       id: json['id'] as int,
       email: json['email'] as String,
       name: json['name'] as String,
-      role: _roleFromString(json['role'] as String),
+      role: _parseRole(json['role']),
       googleAccessToken: json['googleAccessToken'] as String?,
       googleRefreshToken: json['googleRefreshToken'] as String?,
     );
@@ -68,6 +64,27 @@ class UserModel extends User {
   }
 
   /// Convertir string a UserRole
+  static UserRole _parseRole(dynamic role) {
+    if (role == null) {
+      return UserRole.teamMember;
+    }
+
+    if (role is String) {
+      return _roleFromString(role);
+    }
+
+    if (role is Map) {
+      final dynamic value =
+          role['code'] ?? role['value'] ?? role['role'] ?? role['name'];
+
+      if (value is String) {
+        return _roleFromString(value);
+      }
+    }
+
+    return UserRole.teamMember;
+  }
+
   static UserRole _roleFromString(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -115,6 +132,3 @@ class UserModel extends User {
     );
   }
 }
-
-
-

@@ -27,6 +27,8 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
       actualHours: fields[7] as double,
       assigneeId: fields[8] as int?,
       assigneeName: fields[9] as String?,
+      assigneeEmail: fields[17] as String?,
+      assigneeRole: fields[18] as String?,
       startDate: fields[10] as DateTime,
       endDate: fields[11] as DateTime,
       dependencyIds: (fields[12] as List).cast<int>(),
@@ -40,7 +42,7 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
   @override
   void write(BinaryWriter writer, HiveTask obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -61,6 +63,10 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
       ..write(obj.assigneeId)
       ..writeByte(9)
       ..write(obj.assigneeName)
+      ..writeByte(17)
+      ..write(obj.assigneeEmail)
+      ..writeByte(18)
+      ..write(obj.assigneeRole)
       ..writeByte(10)
       ..write(obj.startDate)
       ..writeByte(11)

@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
+
 import '../../../domain/entities/task.dart';
+import '../../../domain/entities/user.dart';
 
 part 'hive_task.g.dart';
 
@@ -37,6 +39,12 @@ class HiveTask extends HiveObject {
   @HiveField(9)
   String? assigneeName;
 
+  @HiveField(17)
+  String? assigneeEmail;
+
+  @HiveField(18)
+  String? assigneeRole;
+
   @HiveField(10)
   DateTime startDate;
 
@@ -69,6 +77,8 @@ class HiveTask extends HiveObject {
     this.actualHours = 0.0,
     this.assigneeId,
     this.assigneeName,
+    this.assigneeEmail,
+    this.assigneeRole,
     required this.startDate,
     required this.endDate,
     this.dependencyIds = const [],
@@ -91,6 +101,8 @@ class HiveTask extends HiveObject {
       actualHours: entity.actualHours,
       assigneeId: entity.assignee?.id,
       assigneeName: entity.assignee?.name,
+      assigneeEmail: entity.assignee?.email,
+      assigneeRole: entity.assignee?.role.name,
       startDate: entity.startDate,
       endDate: entity.endDate,
       dependencyIds: List.from(entity.dependencyIds),
@@ -103,6 +115,8 @@ class HiveTask extends HiveObject {
 
   /// Convertir desde Hive a Entity
   Task toEntity() {
+    final assignee = _buildAssignee();
+
     return Task(
       id: id,
       projectId: projectId,
@@ -112,13 +126,25 @@ class HiveTask extends HiveObject {
       priority: _parsePriority(priority),
       estimatedHours: estimatedHours,
       actualHours: actualHours,
-      assignee: null, // No guardamos el objeto User completo en caché
+      assignee: assignee,
       startDate: startDate,
       endDate: endDate,
       dependencyIds: List.from(dependencyIds),
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
+  }
+
+  User? _buildAssignee() {
+    if (assigneeId == null) {
+      return null;
+    }
+
+    final role = _parseUserRole(assigneeRole);
+    final name = assigneeName ?? 'Usuario $assigneeId';
+    final email = assigneeEmail ?? _fallbackEmailForAssignee(name, assigneeId!);
+
+    return User(id: assigneeId!, email: email, name: name, role: role);
   }
 
   /// Parse status string to enum
@@ -155,6 +181,29 @@ class HiveTask extends HiveObject {
     }
   }
 
+  UserRole _parseUserRole(String? roleStr) {
+    switch (roleStr?.toLowerCase()) {
+      case 'admin':
+        return UserRole.admin;
+      case 'projectmanager':
+      case 'project_manager':
+        return UserRole.projectManager;
+      case 'team_member':
+      case 'teammember':
+      case 'member':
+      default:
+        return UserRole.teamMember;
+    }
+  }
+
+  String _fallbackEmailForAssignee(String name, int id) {
+    final normalized = name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '')
+        .padRight(3, 'x');
+    return '${normalized}_$id@cached.local';
+  }
+
   /// Convertir a JSON (para operation queue)
   Map<String, dynamic> toJson() {
     return {
@@ -168,6 +217,8 @@ class HiveTask extends HiveObject {
       'actualHours': actualHours,
       'assigneeId': assigneeId,
       'assigneeName': assigneeName,
+      'assigneeEmail': assigneeEmail,
+      'assigneeRole': assigneeRole,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
       'dependencyIds': dependencyIds,
@@ -191,6 +242,8 @@ class HiveTask extends HiveObject {
       actualHours: (json['actualHours'] as num?)?.toDouble() ?? 0.0,
       assigneeId: json['assigneeId'] as int?,
       assigneeName: json['assigneeName'] as String?,
+      assigneeEmail: json['assigneeEmail'] as String?,
+      assigneeRole: json['assigneeRole'] as String?,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       dependencyIds:
@@ -209,6 +262,3 @@ class HiveTask extends HiveObject {
     return 'HiveTask(id: $id, title: $title, projectId: $projectId, isPendingSync: $isPendingSync)';
   }
 }
-
-
-
