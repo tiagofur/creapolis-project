@@ -236,6 +236,10 @@ class TaskService {
       description,
       estimatedHours,
       assigneeId,
+      status,
+      priority,
+      startDate,
+      endDate,
       predecessorIds = [],
     } = taskData;
 
@@ -280,6 +284,10 @@ class TaskService {
         estimatedHours,
         projectId,
         assigneeId,
+        ...(status && { status }),
+        ...(priority && { priority }),
+        ...(startDate && { startDate: new Date(startDate) }),
+        ...(endDate && { endDate: new Date(endDate) }),
         predecessors: {
           create: predecessorIds.map((predId) => ({
             predecessorId: predId,
@@ -321,6 +329,7 @@ class TaskService {
       title,
       description,
       status,
+      priority,
       estimatedHours,
       assigneeId,
       startDate,
@@ -353,10 +362,11 @@ class TaskService {
         ...(title && { title }),
         ...(description !== undefined && { description }),
         ...(status && { status }),
+        ...(priority && { priority }),
         ...(estimatedHours !== undefined && { estimatedHours }),
         ...(assigneeId !== undefined && { assigneeId }),
-        ...(startDate !== undefined && { startDate }),
-        ...(endDate !== undefined && { endDate }),
+        ...(startDate !== undefined && { startDate: new Date(startDate) }),
+        ...(endDate !== undefined && { endDate: new Date(endDate) }),
       },
       include: {
         assignee: {

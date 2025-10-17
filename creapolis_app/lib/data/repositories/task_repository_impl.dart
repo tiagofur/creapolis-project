@@ -260,6 +260,7 @@ class TaskRepositoryImpl implements TaskRepository {
     double? actualHours,
     int? assignedUserId,
     List<int>? dependencyIds,
+    bool updateAssignee = false,
   }) async {
     try {
       final task = await _remoteDataSource.updateTask(
@@ -275,6 +276,7 @@ class TaskRepositoryImpl implements TaskRepository {
         actualHours: actualHours,
         assignedUserId: assignedUserId,
         dependencyIds: dependencyIds,
+        updateAssignee: updateAssignee,
       );
 
       // Mantener el caché local alineado para que la UI reciba los cambios inmediatamente

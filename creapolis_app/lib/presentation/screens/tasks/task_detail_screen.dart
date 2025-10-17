@@ -9,6 +9,8 @@ import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
 import '../../bloc/time_tracking/time_tracking_bloc.dart';
 import '../../bloc/time_tracking/time_tracking_event.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
 import '../../widgets/time_tracking/time_tracker_widget.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
@@ -33,6 +35,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TimeTrackingBloc _timeTrackingBloc;
   late final TaskBloc _taskBloc;
+  late final ProjectMemberBloc _projectMemberBloc;
   late final TabController _tabController;
 
   @override
@@ -41,9 +44,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
     _tabController = TabController(length: 3, vsync: this);
     _timeTrackingBloc = getIt<TimeTrackingBloc>();
     _taskBloc = getIt<TaskBloc>();
+    _projectMemberBloc = getIt<ProjectMemberBloc>();
 
     // Cargar tarea en el BLoC local
     _taskBloc.add(LoadTaskByIdEvent(widget.projectId, widget.taskId));
+    _projectMemberBloc.add(LoadProjectMembers(widget.projectId));
 
     // Cargar time logs
     _timeTrackingBloc.add(LoadTimeLogsEvent(widget.taskId));
@@ -54,6 +59,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
     _tabController.dispose();
     _taskBloc.close();
     _timeTrackingBloc.close();
+    _projectMemberBloc.close();
     super.dispose();
   }
 
@@ -63,6 +69,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
       providers: [
         BlocProvider<TimeTrackingBloc>.value(value: _timeTrackingBloc),
         BlocProvider<TaskBloc>.value(value: _taskBloc),
+        BlocProvider<ProjectMemberBloc>.value(value: _projectMemberBloc),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -90,12 +97,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
         ),
         body: BlocConsumer<TaskBloc, TaskState>(
           listener: (context, state) {
-            // Cuando la tarea se actualiza, recargar los datos
             if (state is TaskUpdated) {
-              AppLogger.info(
-                'TaskDetailScreen: Tarea actualizada, recargando datos',
-              );
-              _taskBloc.add(LoadTaskByIdEvent(widget.projectId, widget.taskId));
+              AppLogger.info('TaskDetailScreen: Tarea actualizada');
             }
           },
           builder: (context, state) {
@@ -139,13 +142,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
               );
             }
 
-            if (state is TaskLoaded) {
+            if (state is TaskLoaded || state is TaskUpdated) {
+              final task = state is TaskLoaded
+                  ? state.task
+                  : (state as TaskUpdated).task;
               return TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildOverviewTab(context, state.task),
-                  _buildTimeTrackingTab(context, state.task),
-                  _buildDependenciesTab(context, state.task),
+                  _buildOverviewTab(context, task),
+                  _buildTimeTrackingTab(context, task),
+                  _buildDependenciesTab(context, task),
                 ],
               );
             }
@@ -471,11 +477,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: _taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: _projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: task.projectId, task: task),
         ),
-        child: CreateTaskBottomSheet(projectId: task.projectId, task: task),
       ),
     );
   }

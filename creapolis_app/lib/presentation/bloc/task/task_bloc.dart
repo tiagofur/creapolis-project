@@ -294,6 +294,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       actualHours: event.actualHours,
       assignedUserId: event.assignedUserId,
       dependencyIds: event.dependencyIds,
+      updateAssignee: event.updateAssignee,
     );
 
     final result = await _updateTaskUseCase(params);

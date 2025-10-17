@@ -7,6 +7,10 @@ import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
+import '../../blocs/project_member/project_member_state.dart';
+import '../../../domain/entities/project_member.dart';
 
 /// Bottom sheet para crear o editar una tarea
 class CreateTaskBottomSheet extends StatefulWidget {
@@ -25,6 +29,11 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   TaskPriority _selectedPriority = TaskPriority.medium;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 7));
+  int? _selectedAssigneeId;
+  int? _initialAssigneeId;
+
+  ProjectMemberBloc? _projectMemberBloc;
+  bool _membersRequested = false;
 
   @override
   void initState() {
@@ -34,6 +43,25 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _selectedPriority = widget.task!.priority;
       _startDate = widget.task!.startDate;
       _endDate = widget.task!.endDate;
+      _selectedAssigneeId = widget.task!.assignee?.id;
+    }
+    _initialAssigneeId = _selectedAssigneeId;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_projectMemberBloc == null) {
+      try {
+        _projectMemberBloc = context.read<ProjectMemberBloc>();
+      } catch (_) {
+        _projectMemberBloc = null;
+      }
+    }
+
+    if (!_membersRequested && _projectMemberBloc != null) {
+      _projectMemberBloc!.add(LoadProjectMembers(widget.projectId));
+      _membersRequested = true;
     }
   }
 
@@ -177,6 +205,10 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Asignación
+              _buildAssigneeSelector(context),
               const SizedBox(height: 16),
 
               // Fechas
@@ -336,6 +368,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       final title = values['title'] as String;
       final description = values['description'] as String;
       final estimatedHours = double.parse(values['estimatedHours'] as String);
+      final assigneeChanged = _initialAssigneeId != _selectedAssigneeId;
+      final assigneeIdForRequest = assigneeChanged ? _selectedAssigneeId : null;
 
       // Validar fechas
       if (_endDate.isBefore(_startDate)) {
@@ -366,6 +400,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             startDate: _startDate,
             endDate: _endDate,
             estimatedHours: estimatedHours,
+            assignedUserId: assigneeIdForRequest,
+            updateAssignee: assigneeChanged,
           ),
         );
       } else {
@@ -381,11 +417,121 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             endDate: _endDate,
             estimatedHours: estimatedHours,
             projectId: widget.projectId,
+            assignedUserId: assigneeIdForRequest,
           ),
         );
       }
 
       Navigator.of(context).pop();
     }
+  }
+
+  Widget _buildAssigneeSelector(BuildContext context) {
+    if (_projectMemberBloc == null) {
+      return const SizedBox.shrink();
+    }
+
+    return BlocBuilder<ProjectMemberBloc, ProjectMemberState>(
+      builder: (context, state) {
+        final members = _extractMembers(state);
+        final isLoading =
+            state is ProjectMemberLoading ||
+            state is ProjectMemberInitial ||
+            state is ProjectMemberOperationInProgress;
+        final errorMessage = state is ProjectMemberError ? state.message : null;
+
+        if (isLoading && members.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (errorMessage != null && members.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'No se pudieron cargar los miembros del proyecto.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  _projectMemberBloc?.add(LoadProjectMembers(widget.projectId));
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          );
+        }
+
+        if (members.isEmpty) {
+          return InputDecorator(
+            decoration: InputDecoration(
+              labelText: 'Responsable',
+              prefixIcon: const Icon(Icons.person_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'No hay miembros disponibles para asignar.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          );
+        }
+
+        return DropdownButtonFormField<int?>(
+          value: _selectedAssigneeId,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'Responsable',
+            prefixIcon: const Icon(Icons.person_outline),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          hint: const Text('Selecciona un responsable (opcional)'),
+          items: [
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: Text('Sin asignar'),
+            ),
+            ...members.map(
+              (member) => DropdownMenuItem<int?>(
+                value: member.userId,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      child: Text(
+                        member.userName.isNotEmpty
+                            ? member.userName[0].toUpperCase()
+                            : '?',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(member.userName)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() => _selectedAssigneeId = value);
+          },
+        );
+      },
+    );
+  }
+
+  List<ProjectMember> _extractMembers(ProjectMemberState state) {
+    if (state is ProjectMemberLoaded) {
+      return state.members;
+    }
+    if (state is ProjectMemberOperationSuccess) {
+      return state.members;
+    }
+    if (state is ProjectMemberOperationInProgress) {
+      return state.currentMembers;
+    }
+    return const [];
   }
 }

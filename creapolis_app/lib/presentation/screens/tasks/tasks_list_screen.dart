@@ -6,6 +6,7 @@ import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/pagination_helper.dart';
 import '../../../domain/entities/task.dart';
+import '../../../injection.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
@@ -18,6 +19,8 @@ import '../../widgets/task/task_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
 import '../../widgets/error/friendly_error_widget.dart';
 import '../../widgets/feedback/feedback_widgets.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
 
 /// Pantalla de lista de tareas de un proyecto
 class TasksListScreen extends StatefulWidget {
@@ -434,11 +437,26 @@ class _TasksListScreenState extends State<TasksListScreen>
       return;
     }
 
+    final taskBloc = context.read<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(widget.projectId));
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => CreateTaskBottomSheet(projectId: widget.projectId),
-    );
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: widget.projectId),
+        ),
+      ),
+    ).whenComplete(projectMemberBloc.close);
   }
 
   /// Mostrar sheet para editar tarea
@@ -453,12 +471,26 @@ class _TasksListScreenState extends State<TasksListScreen>
       return;
     }
 
+    final taskBloc = context.read<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(widget.projectId));
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) =>
-          CreateTaskBottomSheet(projectId: widget.projectId, task: task),
-    );
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: widget.projectId, task: task),
+        ),
+      ),
+    ).whenComplete(projectMemberBloc.close);
   }
 
   /// Navegar a detalle de la tarea

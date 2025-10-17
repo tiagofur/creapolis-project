@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../../domain/entities/project.dart';
 import '../../../domain/entities/task.dart';
-import '../../widgets/common/common_widgets.dart';
+import '../../../domain/usecases/delete_task_usecase.dart';
+import '../../../domain/usecases/get_workspace_tasks_usecase.dart';
+import '../../../domain/usecases/update_task_usecase.dart';
+import '../../../injection.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 import '../../providers/workspace_context.dart';
+import '../../widgets/common/common_widgets.dart';
 
 /// Pantalla que muestra todas las tareas del usuario con mejoras avanzadas.
 ///
@@ -33,16 +41,54 @@ enum TaskTimeGroup { today, thisWeek, upcoming, noDate }
 class _AllTasksScreenState extends State<AllTasksScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GetWorkspaceTasksUseCase _getWorkspaceTasksUseCase =
+      getIt<GetWorkspaceTasksUseCase>();
+  final UpdateTaskUseCase _updateTaskUseCase = getIt<UpdateTaskUseCase>();
+  final DeleteTaskUseCase _deleteTaskUseCase = getIt<DeleteTaskUseCase>();
+
   String _searchQuery = '';
   TaskStatus? _filterStatus;
   TaskPriority? _filterPriority;
   String _sortBy = 'date'; // date, priority, name
   bool _sortAscending = true;
 
+  List<Task> _allTasks = [];
+  Map<int, Project> _projectById = {};
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+  String? _errorMessage;
+  int? _activeWorkspaceId;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final workspaceContext = Provider.of<WorkspaceContext>(context);
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId != _activeWorkspaceId) {
+      _activeWorkspaceId = workspaceId;
+
+      if (workspaceId != null) {
+        _loadTasks();
+      } else {
+        setState(() {
+          _allTasks = [];
+          _projectById = {};
+          _errorMessage = 'Selecciona un workspace para ver las tareas.';
+          _isLoading = false;
+        });
+      }
+    } else if (!_isLoading && _allTasks.isEmpty && workspaceId != null) {
+      // Cargar datos si no se han cargado todavía
+      _loadTasks();
+    }
   }
 
   @override
@@ -212,6 +258,60 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     );
   }
 
+  Future<void> _loadTasks({bool refresh = false}) async {
+    final workspaceId = _activeWorkspaceId;
+    if (workspaceId == null) {
+      if (mounted) {
+        setState(() {
+          _allTasks = [];
+          _projectById = {};
+          _errorMessage = 'Selecciona un workspace para ver las tareas.';
+          _isLoading = false;
+          _isRefreshing = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        if (refresh) {
+          _isRefreshing = true;
+        } else {
+          _isLoading = true;
+        }
+        _errorMessage = null;
+      });
+    }
+
+    final result = await _getWorkspaceTasksUseCase(workspaceId: workspaceId);
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        setState(() {
+          _allTasks = [];
+          _projectById = {};
+          _errorMessage = failure.message;
+          _isLoading = false;
+          _isRefreshing = false;
+        });
+      },
+      (data) {
+        setState(() {
+          _allTasks = data.tasks;
+          _projectById = {
+            for (final project in data.projects) project.id: project,
+          };
+          _errorMessage = null;
+          _isLoading = false;
+          _isRefreshing = false;
+        });
+      },
+    );
+  }
+
   /// Contenido de un tab (Mis Tareas o Todas)
   Widget _buildTabContent(BuildContext context, {required bool myTasksOnly}) {
     return RefreshIndicator(
@@ -221,19 +321,70 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }
 
   Widget _buildContent(BuildContext context, {required bool myTasksOnly}) {
-    // TODO: Verificar si hay workspace activo - por ahora se asume que siempre hay workspace
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated
+        ? authState.user.id
+        : null;
+    final hasWorkspace = _activeWorkspaceId != null;
 
-    // TODO: Obtener tareas del BLoC
-    // Aquí usaríamos el bloc para filtrar por usuario si myTasksOnly == true
-    final allTasks = _getDemoTasks(); // Temporal: datos de prueba
+    if (_isLoading && !_isRefreshing) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 180),
+          Center(child: CircularProgressIndicator()),
+          SizedBox(height: 180),
+        ],
+      );
+    }
 
-    // Aplicar filtros
-    List<Task> filteredTasks = allTasks;
+    if (!hasWorkspace) {
+      return _buildMessageState(
+        context,
+        icon: Icons.workspaces_outline,
+        title: 'Selecciona un workspace',
+        message:
+            'Elige un workspace desde el selector superior para ver las tareas disponibles.',
+      );
+    }
+
+    if (_errorMessage != null) {
+      return _buildMessageState(
+        context,
+        icon: Icons.error_outline,
+        title: 'No se pudieron cargar las tareas',
+        message: _errorMessage!,
+        actions: [
+          FilledButton(
+            onPressed: () => _loadTasks(refresh: true),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      );
+    }
+
+    if (myTasksOnly && currentUserId == null) {
+      return _buildMessageState(
+        context,
+        icon: Icons.person_off_outlined,
+        title: 'Inicia sesión para ver tus tareas',
+        message: 'Necesitas iniciar sesión para ver las tareas asignadas a ti.',
+      );
+    }
+
+    var filteredTasks = List<Task>.from(_allTasks);
+
+    if (myTasksOnly && currentUserId != null) {
+      filteredTasks = filteredTasks
+          .where((task) => task.assignee?.id == currentUserId)
+          .toList();
+    }
 
     if (_searchQuery.isNotEmpty) {
       filteredTasks = filteredTasks.where((task) {
-        return task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            task.description.toLowerCase().contains(_searchQuery.toLowerCase());
+        final search = _searchQuery.toLowerCase();
+        return task.title.toLowerCase().contains(search) ||
+            task.description.toLowerCase().contains(search);
       }).toList();
     }
 
@@ -249,20 +400,26 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           .toList();
     }
 
-    // Aplicar ordenamiento
     filteredTasks = _sortTasks(filteredTasks);
 
     if (filteredTasks.isEmpty) {
-      return _buildEmptyState(context);
+      final hasFiltersApplied =
+          _searchQuery.isNotEmpty ||
+          _filterStatus != null ||
+          _filterPriority != null;
+      return _buildEmptyState(
+        context,
+        myTasksOnly: myTasksOnly,
+        hasActiveFilters: hasFiltersApplied,
+      );
     }
 
-    // Agrupar tareas por temporalidad
     final groupedTasks = _groupTasksByTime(filteredTasks);
 
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        // Grupo: Hoy
         if (groupedTasks[TaskTimeGroup.today]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
@@ -271,8 +428,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             Icons.today,
             Colors.red,
           ),
-
-        // Grupo: Esta Semana
         if (groupedTasks[TaskTimeGroup.thisWeek]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
@@ -281,8 +436,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             Icons.calendar_view_week,
             Colors.orange,
           ),
-
-        // Grupo: Próximas
         if (groupedTasks[TaskTimeGroup.upcoming]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
@@ -291,12 +444,10 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             Icons.upcoming,
             Colors.blue,
           ),
-
-        // Grupo: Sin Fecha
         if (groupedTasks[TaskTimeGroup.noDate]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
-            'Sin Fecha',
+            'Vencidas o sin fecha',
             groupedTasks[TaskTimeGroup.noDate]!,
             Icons.event_busy,
             Colors.grey,
@@ -319,15 +470,12 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     };
 
     for (var task in tasks) {
-      final taskDate = DateTime(
-        task.startDate.year,
-        task.startDate.month,
-        task.startDate.day,
-      );
+      final dueDate = task.dueDate ?? task.startDate;
+      final taskDate = DateTime(dueDate.year, dueDate.month, dueDate.day);
 
-      if (taskDate == today) {
+      if (_isSameDay(taskDate, today)) {
         groups[TaskTimeGroup.today]!.add(task);
-      } else if (taskDate.isAfter(today) && taskDate.isBefore(endOfWeek)) {
+      } else if (taskDate.isAfter(today) && !taskDate.isAfter(endOfWeek)) {
         groups[TaskTimeGroup.thisWeek]!.add(task);
       } else if (taskDate.isAfter(endOfWeek)) {
         groups[TaskTimeGroup.upcoming]!.add(task);
@@ -337,6 +485,10 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     }
 
     return groups;
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   /// Ordenar tareas según criterio seleccionado
@@ -373,6 +525,50 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     }
 
     return sortedTasks;
+  }
+
+  Widget _buildMessageState(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String message,
+    List<Widget>? actions,
+  }) {
+    final theme = Theme.of(context);
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(32),
+      children: [
+        const SizedBox(height: 24),
+        Icon(icon, size: 80, color: theme.colorScheme.outline),
+        const SizedBox(height: 24),
+        Text(
+          title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          message,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        if (actions != null && actions.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: actions,
+          ),
+        ],
+      ],
+    );
   }
 
   /// Header de grupo con contador
@@ -425,69 +621,12 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     );
   }
 
-  /// Datos de prueba temporales
-  List<Task> _getDemoTasks() {
-    final now = DateTime.now();
-    return [
-      Task(
-        id: 1,
-        title: 'Reunión con cliente',
-        description: 'Presentar propuesta del proyecto',
-        status: TaskStatus.planned,
-        priority: TaskPriority.high,
-        startDate: now,
-        endDate: now.add(const Duration(hours: 2)),
-        estimatedHours: 2.0,
-        projectId: 1,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      Task(
-        id: 2,
-        title: 'Revisar diseño UI',
-        description: 'Validar mockups de la nueva funcionalidad',
-        status: TaskStatus.inProgress,
-        priority: TaskPriority.medium,
-        startDate: now.add(const Duration(days: 2)),
-        endDate: now.add(const Duration(days: 3)),
-        estimatedHours: 4.0,
-        actualHours: 1.5,
-        projectId: 1,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      Task(
-        id: 3,
-        title: 'Implementar API de pagos',
-        description: 'Integración con pasarela de pagos',
-        status: TaskStatus.planned,
-        priority: TaskPriority.critical,
-        startDate: now.add(const Duration(days: 1)),
-        endDate: now.add(const Duration(days: 2)),
-        estimatedHours: 8.0,
-        projectId: 1,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      Task(
-        id: 4,
-        title: 'Actualizar documentación',
-        description: 'Documentar nuevas features',
-        status: TaskStatus.planned,
-        priority: TaskPriority.low,
-        startDate: now.add(const Duration(days: 10)),
-        endDate: now.add(const Duration(days: 11)),
-        estimatedHours: 3.0,
-        projectId: 1,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
-  }
-
   /// Card de tarea individual con Swipe Actions y Quick Complete
   Widget _buildTaskCard(BuildContext context, Task task) {
     final theme = Theme.of(context);
+    final projectName = _projectById[task.projectId]?.name;
+    final assigneeName = task.assignee?.name;
+    final dueDate = task.endDate;
 
     // Color de prioridad
     Color priorityColor;
@@ -528,6 +667,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
     return Dismissible(
       key: Key('task-${task.id}'),
+      direction: DismissDirection.horizontal,
       // Swipe derecha: Completar
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -578,33 +718,38 @@ class _AllTasksScreenState extends State<AllTasksScreen>
       ),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
-          // Swipe derecha: Completar
-          return await _confirmComplete(context, task);
+          if (task.isCompleted) {
+            _showSnackBar(context, 'La tarea ya está completada');
+            return false;
+          }
+          final confirm = await _confirmComplete(context, task);
+          if (!confirm) return false;
+          await _completeTask(task);
+          if (!mounted) return false;
+          return false;
         } else {
-          // Swipe izquierda: Eliminar
-          return await _confirmDelete(context, task);
-        }
-      },
-      onDismissed: (direction) {
-        if (direction == DismissDirection.startToEnd) {
-          _handleCompleteTask(task);
-        } else {
-          _handleDeleteTask(task);
+          final confirm = await _confirmDelete(context, task);
+          if (!confirm) return false;
+          final deleted = await _handleDeleteTask(task);
+          if (!mounted) return false;
+          return deleted;
         }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         child: InkWell(
-          onTap: () {
+          onTap: () async {
             // Obtener workspaceId del contexto
             final workspaceContext = context.read<WorkspaceContext>();
             final workspaceId = workspaceContext.activeWorkspace?.id;
 
             if (workspaceId != null) {
               // Navegar a task detail usando push para mantener el contexto del shell
-              context.push(
+              await context.push(
                 '/more/workspaces/$workspaceId/projects/${task.projectId}/tasks/${task.id}',
               );
+              if (!mounted) return;
+              await _loadTasks(refresh: true);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -664,6 +809,61 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                          if (projectName != null || assigneeName != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (projectName != null)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.folder_open,
+                                          size: 14,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          projectName,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.primary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  if (assigneeName != null)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.person_outline,
+                                          size: 14,
+                                          color: theme
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          assigneeName,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -710,7 +910,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${task.startDate.day}/${task.startDate.month}/${task.startDate.year}',
+                      '${dueDate.day}/${dueDate.month}/${dueDate.year}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -825,82 +1025,186 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }
 
   /// Handler: Quick Complete
-  void _handleQuickComplete(BuildContext context, Task task) {
+  Future<void> _handleQuickComplete(BuildContext context, Task task) async {
+    if (task.isCompleted) {
+      _showSnackBar(context, 'La tarea ya está completada');
+      return;
+    }
+
+    await _completeTask(task);
+  }
+
+  Future<bool> _completeTask(Task task) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+
+    final result = await _updateTaskUseCase(
+      UpdateTaskParams(
+        projectId: task.projectId,
+        id: task.id,
+        status: TaskStatus.completed,
+      ),
+    );
+
+    if (!mounted) return false;
+
+    return result.fold(
+      (failure) {
+        _showSnackBarWithMessenger(
+          messenger,
+          theme,
+          failure.message,
+          isError: true,
+        );
+        return false;
+      },
+      (updatedTask) {
+        setState(() {
+          _allTasks = _allTasks
+              .map(
+                (existing) =>
+                    existing.id == updatedTask.id ? updatedTask : existing,
+              )
+              .toList();
+        });
+        _showSnackBarWithMessenger(
+          messenger,
+          theme,
+          '✓ ${updatedTask.title} completada',
+        );
+        return true;
+      },
+    );
+  }
+
+  Future<bool> _handleDeleteTask(Task task) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final result = await _deleteTaskUseCase(task.projectId, task.id);
+
+    if (!mounted) return false;
+
+    return result.fold(
+      (failure) {
+        _showSnackBarWithMessenger(
+          messenger,
+          theme,
+          failure.message,
+          isError: true,
+        );
+        return false;
+      },
+      (_) {
+        setState(() {
+          _allTasks = _allTasks
+              .where((existing) => existing.id != task.id)
+              .toList();
+        });
+        _showSnackBarWithMessenger(messenger, theme, 'Tarea eliminada');
+        return true;
+      },
+    );
+  }
+
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✓ "${task.title}" completada'),
-        action: SnackBarAction(
-          label: 'Deshacer',
-          onPressed: () {
-            // TODO: Deshacer completar
-          },
+        content: Text(
+          message,
+          style: isError ? TextStyle(color: theme.colorScheme.onError) : null,
         ),
+        backgroundColor: isError ? theme.colorScheme.error : null,
+        behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),
     );
-    // TODO: Dispatch event al BLoC
   }
 
-  /// Handler: Completar tarea
-  void _handleCompleteTask(Task task) {
-    // TODO: Dispatch event al BLoC
-  }
-
-  /// Handler: Eliminar tarea
-  void _handleDeleteTask(Task task) {
-    // TODO: Dispatch event al BLoC
+  void _showSnackBarWithMessenger(
+    ScaffoldMessengerState messenger,
+    ThemeData theme,
+    String message, {
+    bool isError = false,
+  }) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: isError ? TextStyle(color: theme.colorScheme.onError) : null,
+        ),
+        backgroundColor: isError ? theme.colorScheme.error : null,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   /// Estado cuando no hay workspace seleccionado
 
   /// Estado cuando no hay tareas
-  Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required bool myTasksOnly,
+    required bool hasActiveFilters,
+  }) {
+    if (hasActiveFilters) {
+      return _buildMessageState(
+        context,
+        icon: Icons.filter_alt_off_outlined,
+        title: 'Sin resultados',
+        message:
+            'No encontramos tareas que coincidan con la búsqueda o filtros seleccionados.',
+        actions: [
+          FilledButton(
+            onPressed: () {
+              setState(() {
+                _searchQuery = '';
+                _filterStatus = null;
+                _filterPriority = null;
+              });
+            },
+            child: const Text('Limpiar filtros'),
+          ),
+        ],
+      );
+    }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              size: 80,
-              color: theme.colorScheme.outline,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '¡Todo al día!',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+    if (myTasksOnly) {
+      return _buildMessageState(
+        context,
+        icon: Icons.person_pin_circle_outlined,
+        title: 'Sin tareas asignadas',
+        message:
+            'Todavía no tienes tareas asignadas en este workspace. Vuelve más tarde o revisa la pestaña de todas las tareas.',
+      );
+    }
+
+    return _buildMessageState(
+      context,
+      icon: Icons.check_circle_outline,
+      title: '¡Todo al día!',
+      message:
+          'No hay tareas pendientes en este workspace. Crea una nueva para comenzar.',
+      actions: [
+        FilledButton.icon(
+          onPressed: () {
+            // TODO: Navegar a crear tarea
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Crear tarea - Por implementar'),
+                duration: Duration(seconds: 2),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No tienes tareas pendientes. Crea una nueva para comenzar.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                // TODO: Navegar a crear tarea
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Crear tarea - Por implementar'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Crear Tarea'),
-            ),
-          ],
+            );
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Crear tarea'),
         ),
-      ),
+      ],
     );
   }
 
@@ -1104,15 +1408,14 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
   /// Refrescar lista de tareas
   Future<void> _refreshTasks() async {
-    // TODO: Recargar tareas desde BLoC
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tareas actualizadas'),
-          duration: Duration(seconds: 1),
-        ),
-      );
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+
+    await _loadTasks(refresh: true);
+
+    if (!mounted) return;
+    if (_errorMessage == null) {
+      _showSnackBarWithMessenger(messenger, theme, 'Tareas actualizadas');
     }
   }
 }

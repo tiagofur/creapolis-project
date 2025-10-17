@@ -94,6 +94,7 @@ import 'domain/usecases/get_tasks_by_project_usecase.dart' as _i725;
 import 'domain/usecases/get_time_logs_by_task_usecase.dart' as _i630;
 import 'domain/usecases/get_user_workload_usecase.dart' as _i971;
 import 'domain/usecases/get_workload_stats_usecase.dart' as _i353;
+import 'domain/usecases/get_workspace_tasks_usecase.dart' as _i666;
 import 'domain/usecases/login_usecase.dart' as _i883;
 import 'domain/usecases/logout_usecase.dart' as _i808;
 import 'domain/usecases/parse_task_instruction_usecase.dart' as _i82;
@@ -357,6 +358,11 @@ extension GetItInjectableX on _i174.GetIt {
             gh<_i916.CalendarRepository>()));
     gh.factory<_i587.GetCalendarEventsUseCase>(
         () => _i587.GetCalendarEventsUseCase(gh<_i916.CalendarRepository>()));
+    gh.factory<_i666.GetWorkspaceTasksUseCase>(
+        () => _i666.GetWorkspaceTasksUseCase(
+              gh<_i32.GetProjectsUseCase>(),
+              gh<_i725.GetTasksByProjectUseCase>(),
+            ));
     gh.factory<_i605.AuthBloc>(() => _i605.AuthBloc(
           gh<_i883.LoginUseCase>(),
           gh<_i784.RegisterUseCase>(),

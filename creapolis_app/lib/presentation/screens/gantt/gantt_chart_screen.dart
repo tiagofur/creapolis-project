@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/task.dart';
+import '../../../injection.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
 import '../../bloc/task/task_state.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
 import '../../widgets/gantt/gantt_chart_widget.dart';
 import '../../widgets/gantt/gantt_resource_panel.dart';
 import '../../widgets/task/create_task_bottom_sheet.dart';
@@ -548,16 +551,26 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
 
   /// Editar una tarea
   void _editTask(Task task) {
+    final taskBloc = context.read<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(widget.projectId));
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: widget.projectId, task: task),
         ),
-        child: CreateTaskBottomSheet(projectId: widget.projectId, task: task),
       ),
-    );
+    ).whenComplete(projectMemberBloc.close);
   }
 
   /// Mostrar diálogo de replanificación

@@ -68,6 +68,7 @@ class UpdateTaskUseCase {
       actualHours: params.actualHours,
       assignedUserId: params.assignedUserId,
       dependencyIds: params.dependencyIds,
+      updateAssignee: params.updateAssignee,
     );
   }
 }
@@ -86,6 +87,7 @@ class UpdateTaskParams extends Equatable {
   final double? actualHours;
   final int? assignedUserId;
   final List<int>? dependencyIds;
+  final bool updateAssignee;
 
   const UpdateTaskParams({
     required this.projectId,
@@ -100,6 +102,7 @@ class UpdateTaskParams extends Equatable {
     this.actualHours,
     this.assignedUserId,
     this.dependencyIds,
+    this.updateAssignee = false,
   });
 
   @override
@@ -116,8 +119,6 @@ class UpdateTaskParams extends Equatable {
     actualHours,
     assignedUserId,
     dependencyIds,
+    updateAssignee,
   ];
 }
-
-
-

@@ -221,6 +221,15 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
   Widget build(BuildContext context) {
     // ✅ Construir listas desde el mapa de tareas
     final lists = _buildLists(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final columnBackground = colorScheme.surfaceContainerHigh;
+    final columnBorderColor = colorScheme.outlineVariant;
+    final ghostBackground = colorScheme.surfaceContainerHighest.withOpacity(
+      0.7,
+    );
+    final dragBackground = colorScheme.surfaceContainerHighest;
+    final shadowColor = colorScheme.shadow.withOpacity(0.3);
 
     return Column(
       children: [
@@ -237,13 +246,12 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
             onListReorder: (oldListIndex, newListIndex) {
               // No permitimos reordenar las columnas
             },
-            itemDragOnLongPress: false,
             constrainDraggingAxis: false,
             listPadding: const EdgeInsets.all(16),
             listInnerDecoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: columnBackground,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: columnBorderColor),
             ),
             listWidth: 300,
             listDraggingWidth: 300,
@@ -251,9 +259,9 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
             listGhost: Container(
               width: 300,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: ghostBackground,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade400, width: 2),
+                border: Border.all(color: columnBorderColor, width: 2),
               ),
             ),
             itemDivider: const Divider(
@@ -262,11 +270,11 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
               color: Colors.transparent,
             ),
             itemDecorationWhileDragging: BoxDecoration(
-              color: Colors.white,
+              color: dragBackground,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: shadowColor,
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -289,6 +297,16 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 12),
+          Tooltip(
+            message:
+                'Mantén presionada una tarjeta para arrastrarla a otra columna.',
+            child: Icon(
+              Icons.touch_app_outlined,
+              color: Colors.grey.shade600,
+              size: 20,
+            ),
           ),
           const Spacer(),
           IconButton(

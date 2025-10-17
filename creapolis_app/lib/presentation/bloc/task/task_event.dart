@@ -96,6 +96,7 @@ class UpdateTaskEvent extends TaskEvent {
   final double? actualHours;
   final int? assignedUserId;
   final List<int>? dependencyIds;
+  final bool updateAssignee;
 
   const UpdateTaskEvent({
     required this.projectId,
@@ -110,6 +111,7 @@ class UpdateTaskEvent extends TaskEvent {
     this.actualHours,
     this.assignedUserId,
     this.dependencyIds,
+    this.updateAssignee = false,
   });
 
   @override
@@ -126,6 +128,7 @@ class UpdateTaskEvent extends TaskEvent {
     actualHours,
     assignedUserId,
     dependencyIds,
+    updateAssignee,
   ];
 }
 

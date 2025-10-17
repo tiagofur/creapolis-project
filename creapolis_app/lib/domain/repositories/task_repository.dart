@@ -51,6 +51,7 @@ abstract class TaskRepository {
     double? actualHours,
     int? assignedUserId,
     List<int>? dependencyIds,
+    bool updateAssignee = false,
   });
 
   /// Eliminar una tarea
@@ -86,6 +87,3 @@ abstract class TaskRepository {
     int triggerTaskId,
   );
 }
-
-
-

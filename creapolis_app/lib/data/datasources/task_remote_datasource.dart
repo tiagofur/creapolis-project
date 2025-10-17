@@ -45,6 +45,7 @@ abstract class TaskRemoteDataSource {
     double? actualHours,
     int? assignedUserId,
     List<int>? dependencyIds,
+    bool updateAssignee = false,
   });
   Future<void> deleteTask(int projectId, int taskId);
   Future<List<TaskDependencyModel>> getTaskDependencies(
@@ -241,7 +242,11 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
         data: {
           'title': title,
           'description': description,
+          'status': TaskModel.statusToString(status),
+          'priority': TaskModel.priorityToString(priority),
           'estimatedHours': estimatedHours,
+          'startDate': startDate.toUtc().toIso8601String(),
+          'endDate': endDate.toUtc().toIso8601String(),
           if (assignedUserId != null) 'assigneeId': assignedUserId,
           if (dependencyIds != null && dependencyIds.isNotEmpty)
             'predecessorIds': dependencyIds,
@@ -282,6 +287,7 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
     double? actualHours,
     int? assignedUserId,
     List<int>? dependencyIds,
+    bool updateAssignee = false,
   }) async {
     try {
       final data = <String, dynamic>{};
@@ -289,7 +295,9 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       if (title != null) data['title'] = title;
       if (description != null) data['description'] = description;
       if (status != null) data['status'] = TaskModel.statusToString(status);
-      // Note: Backend no soporta priority aún
+      if (priority != null) {
+        data['priority'] = TaskModel.priorityToString(priority);
+      }
       if (startDate != null) {
         data['startDate'] = startDate.toUtc().toIso8601String();
       }
@@ -298,7 +306,11 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
       }
       if (estimatedHours != null) data['estimatedHours'] = estimatedHours;
       // Note: Backend no soporta actualizar actualHours directamente
-      if (assignedUserId != null) data['assigneeId'] = assignedUserId;
+      if (updateAssignee) {
+        data['assigneeId'] = assignedUserId;
+      } else if (assignedUserId != null) {
+        data['assigneeId'] = assignedUserId;
+      }
       // Note: Dependencies se manejan con endpoints separados
 
       AppLogger.info(
