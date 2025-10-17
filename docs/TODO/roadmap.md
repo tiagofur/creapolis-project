@@ -6,9 +6,9 @@ Este documento complementa el plan-todo.md y muestra el avance y orden recomenda
 
 ## Roadmap Fase 1: TODOs fáciles y útiles
 
-1. Conectar AllProjectsScreen con ProjectsBloc para datos reales
-2. Navegar a /projects desde MyProjectsWidget
-3. Navegar a project detail desde ProjectsScreen
+1. ~~Conectar AllProjectsScreen con ProjectsBloc para datos reales~~ ✅
+2. ~~Navegar a /projects desde MyProjectsWidget~~ ✅
+3. ~~Navegar a project detail desde ProjectsScreen~~ ✅
 4. Implementar búsqueda y filtros cuando se integre con backend
 5. Obtener proyectos del BLoC
 6. Agregar soporte para nuevos campos en Project (startDate, endDate, status, managerId)

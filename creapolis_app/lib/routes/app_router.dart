@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/storage_keys.dart';
 import '../core/services/last_route_service.dart';
 import '../core/utils/app_logger.dart';
-import '../injection.dart';
+// ...existing code...
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -18,7 +18,7 @@ import '../presentation/screens/projects/all_projects_screen.dart';
 import '../presentation/screens/projects/project_detail_screen.dart';
 import '../features/projects/presentation/screens/projects_screen.dart';
 import '../features/projects/presentation/blocs/project_bloc.dart';
-import '../features/projects/presentation/blocs/project_event.dart';
+import '../injection.dart';
 import '../features/tasks/presentation/screens/tasks_screen.dart';
 import '../features/tasks/presentation/blocs/task_bloc.dart';
 import '../features/tasks/presentation/blocs/task_event.dart';
@@ -109,7 +109,10 @@ class AppRouter {
               GoRoute(
                 path: RoutePaths.allProjects,
                 name: RouteNames.allProjects,
-                builder: (context, state) => const AllProjectsScreen(),
+                builder: (context, state) => BlocProvider(
+                  create: (context) => getIt<ProjectBloc>(),
+                  child: const AllProjectsScreen(),
+                ),
               ),
             ],
           ),
@@ -242,9 +245,7 @@ class AppRouter {
                             builder: (context, state) {
                               final wId = state.pathParameters['wId'] ?? '0';
                               return BlocProvider(
-                                create: (context) =>
-                                    getIt<ProjectBloc>()
-                                      ..add(LoadProjects(int.parse(wId))),
+                                create: (context) => getIt<ProjectBloc>(),
                                 child: ProjectsScreen(
                                   workspaceId: int.parse(wId),
                                 ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../routes/app_router.dart';
 import '../../../../domain/entities/project.dart';
 
 /// Widget que muestra los proyectos del usuario en el Dashboard.
@@ -46,15 +48,7 @@ class MyProjectsWidget extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    // TODO: Navegar a /projects
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Ver todos los proyectos - Por implementar',
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    GoRouter.of(context).go(RoutePaths.allProjects);
                   },
                   child: const Text('Ver todos'),
                 ),
@@ -197,8 +191,8 @@ class MyProjectsWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: theme.colorScheme.outline.withValues(alpha: 
-                        0.2,
+                      backgroundColor: theme.colorScheme.outline.withValues(
+                        alpha: 0.2,
                       ),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       minHeight: 6,
@@ -220,6 +214,3 @@ class MyProjectsWidget extends StatelessWidget {
     return project.progress;
   }
 }
-
-
-
