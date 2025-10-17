@@ -2,10 +2,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
-import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
+import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/domain/entities/task.dart';
 import 'package:creapolis_app/domain/repositories/project_repository.dart';
 import 'package:creapolis_app/domain/repositories/task_repository.dart';
-import 'package:creapolis_app/domain/entities/task.dart';
+import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
 
 /// BLoC para gestionar el dashboard principal
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
@@ -44,7 +45,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
             // Sin workspaces, mostrar estado vacío
             emit(
               DashboardLoaded(
-                workspaces: [],
+                workspaces: const [],
+                allProjects: const <Project>[],
                 activeProjects: [],
                 pendingTasks: [],
                 recentTasks: [],
@@ -62,8 +64,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           }
 
           // Cargar proyectos de todos los workspaces
-          final allProjects = <dynamic>[];
-          final allTasks = <dynamic>[];
+          final allProjects = <Project>[];
+          final allTasks = <Task>[];
 
           for (final workspace in workspaces) {
             // Obtener proyectos del workspace
@@ -102,18 +104,19 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           }
 
           // Filtrar proyectos activos (status ACTIVE o IN_PROGRESS)
-          final activeProjects = allProjects.where((p) {
-            return p.status == 'ACTIVE' || p.status == 'IN_PROGRESS';
+          final activeProjects = allProjects.where((project) {
+            return project.status != ProjectStatus.completed &&
+                project.status != ProjectStatus.cancelled;
           }).toList();
 
           // Filtrar tareas pendientes (status != COMPLETED && != CANCELLED)
-          final pendingTasks = allTasks.where((t) {
-            return t.status != TaskStatus.completed &&
-                t.status != TaskStatus.cancelled;
+          final pendingTasks = allTasks.where((task) {
+            return task.status != TaskStatus.completed &&
+                task.status != TaskStatus.cancelled;
           }).toList();
 
           // Ordenar tareas por fecha de actualización (más recientes primero)
-          final recentTasks = List.from(allTasks)
+          final recentTasks = List<Task>.from(allTasks)
             ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
           final top5RecentTasks = recentTasks.take(5).toList();
 
@@ -140,9 +143,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           emit(
             DashboardLoaded(
               workspaces: workspaces,
-              activeProjects: activeProjects.cast(),
-              pendingTasks: pendingTasks.cast(),
-              recentTasks: top5RecentTasks.cast(),
+              allProjects: allProjects,
+              activeProjects: activeProjects,
+              pendingTasks: pendingTasks,
+              recentTasks: top5RecentTasks,
               stats: stats,
             ),
           );
@@ -169,6 +173,3 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     await _onLoadDashboardData(const LoadDashboardData(), emit);
   }
 }
-
-
-

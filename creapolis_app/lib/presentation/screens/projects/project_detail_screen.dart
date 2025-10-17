@@ -105,13 +105,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             // Si menciona "eliminado", navegar de vuelta
             if (state.message.toLowerCase().contains('eliminado')) {
               _navigateToProjects();
-            } else {
-              // Recargar proyecto
-              final id = int.tryParse(widget.projectId);
-              if (id != null) {
-                context.read<ProjectBloc>().add(LoadProjectById(id));
-              }
             }
+            // No es necesario recargar - el BLoC ya actualizó el estado
+            // con el proyecto actualizado en ProjectsLoaded.selectedProject
           } else if (state is ProjectError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

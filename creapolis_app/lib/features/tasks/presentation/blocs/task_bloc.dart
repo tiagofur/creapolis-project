@@ -153,6 +153,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   /// Crear nueva tarea
   Future<void> _onCreateTask(CreateTask event, Emitter<TaskState> emit) async {
     try {
+      final previousState = state;
+      final tasksState = previousState is TasksLoaded ? previousState : null;
+
       emit(const TaskOperationInProgress('Creando tarea...'));
       logger.i('Creating task: ${event.title}');
 
@@ -171,7 +174,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       result.fold(
         (failure) {
           logger.e('Failed to create task: ${failure.message}');
-          emit(TaskError(failure.message));
+          emit(TaskError(failure.message, currentTasks: tasksState?.tasks));
         },
         (task) {
           logger.i('Task created successfully: ${task.title}');
@@ -180,14 +183,18 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           emit(TaskOperationSuccess('Tarea creada exitosamente', task: task));
 
           // Actualizar lista de tareas
-          if (state is TasksLoaded) {
-            final currentState = state as TasksLoaded;
-            final updatedTasks = List<Task>.from(currentState.tasks)..add(task);
+          if (tasksState != null) {
+            final updatedTasks = List<Task>.from(tasksState.tasks)..add(task);
+            final filteredTasks = _rebuildFilteredTasks(
+              tasksState,
+              updatedTasks,
+            );
 
             emit(
-              currentState.copyWith(
+              tasksState.copyWith(
                 tasks: updatedTasks,
-                filteredTasks: updatedTasks,
+                filteredTasks: filteredTasks,
+                selectedTask: task,
               ),
             );
           } else {
@@ -196,6 +203,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
                 projectId: task.projectId,
                 tasks: [task],
                 filteredTasks: [task],
+                selectedTask: task,
               ),
             );
           }
@@ -210,21 +218,22 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   /// Actualizar tarea existente
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
+      final previousState = state;
+      final tasksState = previousState is TasksLoaded ? previousState : null;
+
       emit(const TaskOperationInProgress('Actualizando tarea...'));
       logger.i('Updating task: ${event.id}');
 
       // Obtener projectId del state actual
-      if (state is! TasksLoaded) {
+      if (tasksState == null) {
         emit(
           const TaskError('No hay contexto de proyecto para actualizar tarea'),
         );
         return;
       }
 
-      final currentState = state as TasksLoaded;
-
       final result = await taskRepository.updateTask(
-        projectId: currentState.projectId,
+        projectId: tasksState.projectId,
         taskId: event.id,
         title: event.title,
         description: event.description,
@@ -240,7 +249,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       result.fold(
         (failure) {
           logger.e('Failed to update task: ${failure.message}');
-          emit(TaskError(failure.message));
+          emit(TaskError(failure.message, currentTasks: tasksState.tasks));
         },
         (task) {
           logger.i('Task updated successfully: ${task.title}');
@@ -251,20 +260,18 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           );
 
           // Actualizar en la lista
-          if (state is TasksLoaded) {
-            final currentState = state as TasksLoaded;
-            final updatedTasks = currentState.tasks
-                .map((t) => t.id == task.id ? task : t)
-                .toList();
+          final updatedTasks = tasksState.tasks
+              .map((t) => t.id == task.id ? task : t)
+              .toList();
+          final filteredTasks = _rebuildFilteredTasks(tasksState, updatedTasks);
 
-            emit(
-              currentState.copyWith(
-                tasks: updatedTasks,
-                filteredTasks: updatedTasks,
-                selectedTask: task,
-              ),
-            );
-          }
+          emit(
+            tasksState.copyWith(
+              tasks: updatedTasks,
+              filteredTasks: filteredTasks,
+              selectedTask: task,
+            ),
+          );
         },
       );
     } catch (e) {
@@ -276,28 +283,29 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   /// Eliminar tarea
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     try {
+      final previousState = state;
+      final tasksState = previousState is TasksLoaded ? previousState : null;
+
       emit(const TaskOperationInProgress('Eliminando tarea...'));
       logger.i('Deleting task: ${event.taskId}');
 
       // Obtener projectId del state actual
-      if (state is! TasksLoaded) {
+      if (tasksState == null) {
         emit(
           const TaskError('No hay contexto de proyecto para eliminar tarea'),
         );
         return;
       }
 
-      final currentState = state as TasksLoaded;
-
       final result = await taskRepository.deleteTask(
-        currentState.projectId,
+        tasksState.projectId,
         event.taskId,
       );
 
       result.fold(
         (failure) {
           logger.e('Failed to delete task: ${failure.message}');
-          emit(TaskError(failure.message));
+          emit(TaskError(failure.message, currentTasks: tasksState.tasks));
         },
         (_) {
           logger.i('Task deleted successfully');
@@ -306,20 +314,18 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           emit(const TaskOperationSuccess('Tarea eliminada exitosamente'));
 
           // Remover de la lista
-          if (state is TasksLoaded) {
-            final currentState = state as TasksLoaded;
-            final updatedTasks = currentState.tasks
-                .where((t) => t.id != event.taskId)
-                .toList();
+          final updatedTasks = tasksState.tasks
+              .where((t) => t.id != event.taskId)
+              .toList();
+          final filteredTasks = _rebuildFilteredTasks(tasksState, updatedTasks);
 
-            emit(
-              currentState.copyWith(
-                tasks: updatedTasks,
-                filteredTasks: updatedTasks,
-                clearSelectedTask: true,
-              ),
-            );
-          }
+          emit(
+            tasksState.copyWith(
+              tasks: updatedTasks,
+              filteredTasks: filteredTasks,
+              clearSelectedTask: tasksState.selectedTask?.id == event.taskId,
+            ),
+          );
         },
       );
     } catch (e) {
@@ -521,7 +527,26 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     return filtered;
   }
+
+  List<Task> _rebuildFilteredTasks(TasksLoaded baseState, List<Task> allTasks) {
+    var filtered = _applyCurrentFilters(
+      allTasks,
+      baseState.currentStatusFilter,
+      baseState.currentPriorityFilter,
+    );
+
+    final query = baseState.searchQuery;
+    if (query != null && query.isNotEmpty) {
+      final lowerQuery = query.toLowerCase();
+      filtered = filtered
+          .where(
+            (task) =>
+                task.title.toLowerCase().contains(lowerQuery) ||
+                task.description.toLowerCase().contains(lowerQuery),
+          )
+          .toList();
+    }
+
+    return filtered;
+  }
 }
-
-
-

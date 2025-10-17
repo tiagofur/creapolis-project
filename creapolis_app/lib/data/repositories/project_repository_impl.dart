@@ -164,6 +164,13 @@ class ProjectRepositoryImpl implements ProjectRepository {
         managerId: managerId,
         workspaceId: workspaceId,
       );
+
+      // Invalidar el caché de la lista de proyectos del workspace
+      await _cacheDataSource.invalidateCache(workspaceId);
+
+      // Cachear el nuevo proyecto
+      await _cacheDataSource.cacheProject(project);
+
       return Right(project);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
@@ -198,6 +205,13 @@ class ProjectRepositoryImpl implements ProjectRepository {
         status: status,
         managerId: managerId,
       );
+
+      // Invalidar el caché de la lista de proyectos del workspace
+      await _cacheDataSource.invalidateCache(project.workspaceId);
+
+      // Actualizar el proyecto específico en el caché
+      await _cacheDataSource.cacheProject(project);
+
       return Right(project);
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
@@ -219,7 +233,21 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<Either<Failure, void>> deleteProject(int id) async {
     try {
+      // Primero obtener el proyecto para conocer su workspaceId
+      final cachedProject = await _cacheDataSource.getCachedProjectById(id);
+      final workspaceId = cachedProject?.workspaceId;
+
+      // Eliminar del servidor
       await _remoteDataSource.deleteProject(id);
+
+      // Invalidar el caché si conocemos el workspaceId
+      if (workspaceId != null) {
+        await _cacheDataSource.invalidateCache(workspaceId);
+      }
+
+      // Eliminar del caché individual
+      await _cacheDataSource.deleteCachedProject(id);
+
       return const Right(null);
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
@@ -232,6 +260,3 @@ class ProjectRepositoryImpl implements ProjectRepository {
     }
   }
 }
-
-
-

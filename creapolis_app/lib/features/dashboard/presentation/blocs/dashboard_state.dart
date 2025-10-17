@@ -24,6 +24,7 @@ class DashboardLoading extends DashboardState {
 /// Estado con datos cargados
 class DashboardLoaded extends DashboardState {
   final List<Workspace> workspaces;
+  final List<Project> allProjects;
   final List<Project> activeProjects;
   final List<Task> pendingTasks;
   final List<Task> recentTasks;
@@ -31,6 +32,7 @@ class DashboardLoaded extends DashboardState {
 
   const DashboardLoaded({
     required this.workspaces,
+    required this.allProjects,
     required this.activeProjects,
     required this.pendingTasks,
     required this.recentTasks,
@@ -40,6 +42,7 @@ class DashboardLoaded extends DashboardState {
   @override
   List<Object?> get props => [
     workspaces,
+    allProjects,
     activeProjects,
     pendingTasks,
     recentTasks,

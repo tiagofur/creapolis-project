@@ -191,8 +191,14 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
         settings: event.settings,
       );
 
-      // Añadir al cache
-      _workspaces.add(workspace);
+      // Añadir al cache (inserta al inicio para visibilidad inmediata)
+      _workspaces = List.from(_workspaces)..insert(0, workspace);
+
+      // Si no había workspace activo, seleccionar el recién creado
+      if (_activeWorkspace == null) {
+        _activeWorkspace = workspace;
+        await _saveActiveWorkspace(workspace.id);
+      }
 
       emit(
         WorkspaceOperationSuccess(

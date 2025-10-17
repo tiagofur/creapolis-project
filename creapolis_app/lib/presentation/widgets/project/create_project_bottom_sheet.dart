@@ -8,6 +8,7 @@ import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/project.dart';
 import '../../../features/projects/presentation/blocs/project_bloc.dart';
 import '../../../features/projects/presentation/blocs/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_state.dart';
 import '../../bloc/workspace_member/workspace_member_bloc.dart';
 import '../../bloc/workspace_member/workspace_member_event.dart';
 import '../../bloc/workspace_member/workspace_member_state.dart';
@@ -72,209 +73,241 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
     final theme = Theme.of(context);
     final isEditing = widget.project != null;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: SingleChildScrollView(
-        child: FormBuilder(
-          key: _formKey,
-          initialValue: {
-            'name': widget.project?.name ?? '',
-            'description': widget.project?.description ?? '',
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+    return BlocListener<ProjectBloc, ProjectState>(
+      listener: (context, state) {
+        if (state is ProjectOperationSuccess) {
+          // Cerrar el bottom sheet cuando la operación sea exitosa
+          Navigator.of(context).pop();
+        } else if (state is ProjectError) {
+          // Mostrar error sin cerrar el bottom sheet
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: SingleChildScrollView(
+          child: FormBuilder(
+            key: _formKey,
+            initialValue: {
+              'name': widget.project?.name ?? '',
+              'description': widget.project?.description ?? '',
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Nombre
+                FormBuilderTextField(
+                  name: 'name',
+                  decoration: InputDecoration(
+                    labelText: 'Nombre del Proyecto *',
+                    hintText: 'Ej: Desarrollo Urbano Centro',
+                    prefixIcon: const Icon(Icons.business),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  textCapitalization: TextCapitalization.words,
+                  validator: FormBuilderValidators.compose([
+                    FormBuilderValidators.required(
+                      errorText: 'El nombre es requerido',
+                    ),
+                    FormBuilderValidators.minLength(
+                      3,
+                      errorText: 'El nombre debe tener al menos 3 caracteres',
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 16),
 
-              // Nombre
-              FormBuilderTextField(
-                name: 'name',
-                decoration: InputDecoration(
-                  labelText: 'Nombre del Proyecto *',
-                  hintText: 'Ej: Desarrollo Urbano Centro',
-                  prefixIcon: const Icon(Icons.business),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                // Descripción
+                FormBuilderTextField(
+                  name: 'description',
+                  decoration: InputDecoration(
+                    labelText: 'Descripción *',
+                    hintText: 'Describe el proyecto...',
+                    prefixIcon: const Icon(Icons.description),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  validator: FormBuilderValidators.required(
+                    errorText: 'La descripción es requerida',
                   ),
                 ),
-                textCapitalization: TextCapitalization.words,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(
-                    errorText: 'El nombre es requerido',
-                  ),
-                  FormBuilderValidators.minLength(
-                    3,
-                    errorText: 'El nombre debe tener al menos 3 caracteres',
-                  ),
-                ]),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // Descripción
-              FormBuilderTextField(
-                name: 'description',
-                decoration: InputDecoration(
-                  labelText: 'Descripción *',
-                  hintText: 'Describe el proyecto...',
-                  prefixIcon: const Icon(Icons.description),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                // Estado
+                DropdownButtonFormField<ProjectStatus>(
+                  initialValue: _selectedStatus,
+                  decoration: InputDecoration(
+                    labelText: 'Estado',
+                    prefixIcon: const Icon(Icons.flag),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  items: ProjectStatus.values.map((status) {
+                    return DropdownMenuItem(
+                      value: status,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(status),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(status.label),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedStatus = value);
+                    }
+                  },
                 ),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-                validator: FormBuilderValidators.required(
-                  errorText: 'La descripción es requerida',
-                ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // Estado
-              DropdownButtonFormField<ProjectStatus>(
-                initialValue: _selectedStatus,
-                decoration: InputDecoration(
-                  labelText: 'Estado',
-                  prefixIcon: const Icon(Icons.flag),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                // Fechas con nuevo widget
+                ProjectDatePicker(
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  onStartDateChanged: (date) {
+                    if (date != null) {
+                      setState(() => _startDate = date);
+                    }
+                  },
+                  onEndDateChanged: (date) {
+                    if (date != null) {
+                      setState(() => _endDate = date);
+                    }
+                  },
                 ),
-                items: ProjectStatus.values.map((status) {
-                  return DropdownMenuItem(
-                    value: status,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(status),
-                            shape: BoxShape.circle,
+                const SizedBox(height: 16),
+
+                // Manager Selector
+                BlocBuilder<WorkspaceMemberBloc, WorkspaceMemberState>(
+                  builder: (context, state) {
+                    if (state is WorkspaceMembersLoaded) {
+                      return ManagerSelector(
+                        members: state.members,
+                        selectedManagerId: _selectedManagerId,
+                        onManagerSelected: (userId) {
+                          setState(() => _selectedManagerId = userId);
+                          AppLogger.info(
+                            'CreateProjectBottomSheet: Manager seleccionado: $userId',
+                          );
+                        },
+                        allowNull: true,
+                      );
+                    } else if (state is WorkspaceMemberLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    } else if (state is WorkspaceMemberError) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'Error al cargar miembros: ${state.message}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(status.label),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // Botones
+                BlocBuilder<ProjectBloc, ProjectState>(
+                  builder: (context, state) {
+                    final isLoading = state is ProjectOperationInProgress;
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: isLoading ? null : _handleSubmit,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Text(isEditing ? 'Actualizar' : 'Crear'),
+                          ),
+                        ),
                       ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedStatus = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Fechas con nuevo widget
-              ProjectDatePicker(
-                startDate: _startDate,
-                endDate: _endDate,
-                onStartDateChanged: (date) {
-                  if (date != null) {
-                    setState(() => _startDate = date);
-                  }
-                },
-                onEndDateChanged: (date) {
-                  if (date != null) {
-                    setState(() => _endDate = date);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Manager Selector
-              BlocBuilder<WorkspaceMemberBloc, WorkspaceMemberState>(
-                builder: (context, state) {
-                  if (state is WorkspaceMembersLoaded) {
-                    return ManagerSelector(
-                      members: state.members,
-                      selectedManagerId: _selectedManagerId,
-                      onManagerSelected: (userId) {
-                        setState(() => _selectedManagerId = userId);
-                        AppLogger.info(
-                          'CreateProjectBottomSheet: Manager seleccionado: $userId',
-                        );
-                      },
-                      allowNull: true,
                     );
-                  } else if (state is WorkspaceMemberLoading) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  } else if (state is WorkspaceMemberError) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        'Error al cargar miembros: ${state.message}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Botones
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Cancelar'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _handleSubmit,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(isEditing ? 'Actualizar' : 'Crear'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -348,8 +381,7 @@ class _CreateProjectBottomSheetState extends State<CreateProjectBottomSheet> {
           ),
         );
       }
-
-      Navigator.of(context).pop();
+      // No cerramos aquí - el BlocListener se encargará cuando la operación sea exitosa
     }
   }
 

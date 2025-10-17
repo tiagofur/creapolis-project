@@ -232,6 +232,17 @@ class TaskRepositoryImpl implements TaskRepository {
         assignedUserId: assignedUserId,
         dependencyIds: dependencyIds,
       );
+
+      try {
+        await _cacheDataSource.cacheTask(task);
+      } catch (cacheError, cacheStackTrace) {
+        AppLogger.error(
+          'TaskRepository: Error al cachear tarea ${task.id} tras crearla',
+          cacheError,
+          cacheStackTrace,
+        );
+      }
+
       return Right(task);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
@@ -310,6 +321,17 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<Either<Failure, void>> deleteTask(int projectId, int taskId) async {
     try {
       await _remoteDataSource.deleteTask(projectId, taskId);
+
+      try {
+        await _cacheDataSource.deleteCachedTask(taskId);
+      } catch (cacheError, cacheStackTrace) {
+        AppLogger.error(
+          'TaskRepository: Error al eliminar tarea $taskId del caché tras borrarla',
+          cacheError,
+          cacheStackTrace,
+        );
+      }
+
       return const Right(null);
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));

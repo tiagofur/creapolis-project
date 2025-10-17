@@ -7,6 +7,8 @@ import 'package:creapolis_app/features/tasks/presentation/blocs/task_state.dart'
 import 'package:creapolis_app/features/tasks/presentation/widgets/task_card.dart';
 import 'package:creapolis_app/features/tasks/presentation/widgets/create_task_dialog.dart';
 import 'package:creapolis_app/features/tasks/presentation/widgets/edit_task_dialog.dart';
+import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_bloc.dart';
+import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_event.dart';
 import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
 import 'package:creapolis_app/domain/entities/task.dart';
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
@@ -27,6 +29,14 @@ class _TasksScreenState extends State<TasksScreen> {
   TaskPriority? _currentPriorityFilter;
   bool _showSearch = false;
   final _searchController = TextEditingController();
+
+  DashboardBloc? _maybeGetDashboardBloc(BuildContext context) {
+    try {
+      return context.read<DashboardBloc>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
 
   @override
   void dispose() {
@@ -273,6 +283,10 @@ class _TasksScreenState extends State<TasksScreen> {
                 backgroundColor: theme.colorScheme.primary,
               ),
             );
+
+            // Refrescar dashboard si está disponible
+            final dashboardBloc = _maybeGetDashboardBloc(context);
+            dashboardBloc?.add(const RefreshDashboardData());
           } else if (state is TaskError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

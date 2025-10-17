@@ -7,7 +7,8 @@ import 'package:creapolis_app/features/projects/presentation/blocs/project_bloc.
 import 'package:creapolis_app/features/projects/presentation/blocs/project_event.dart';
 import 'package:creapolis_app/features/projects/presentation/blocs/project_state.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
-import 'package:creapolis_app/presentation/widgets/project/project_card.dart';
+import 'package:creapolis_app/features/projects/presentation/widgets/project_card.dart';
+import 'package:creapolis_app/presentation/widgets/project/create_project_bottom_sheet.dart';
 import 'package:creapolis_app/routes/app_router.dart';
 
 /// Pantalla que muestra todos los proyectos del workspace activo.
@@ -125,6 +126,13 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         onRefresh: _refreshProjects,
         child: _buildContent(context, activeWorkspace),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: activeWorkspace != null
+            ? () => _showCreateProjectSheet(context)
+            : null,
+        icon: const Icon(Icons.add),
+        label: const Text('Crear Proyecto'),
+      ),
     );
   }
 
@@ -161,27 +169,24 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
 
   Widget _buildProjectsList(BuildContext context, List<Project> projects) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: SizedBox(
-            height: 180, // Altura fija para evitar problemas de constraints
-            child: ProjectCard(
-              project: project,
-              onTap: () {
-                final workspaceId = context
-                    .read<WorkspaceContext>()
-                    .activeWorkspace
-                    ?.id;
-                if (workspaceId != null) {
-                  context.go(RoutePaths.projectDetail(workspaceId, project.id));
-                }
-              },
-            ),
-          ),
+        final workspaceId = context
+            .read<WorkspaceContext>()
+            .activeWorkspace
+            ?.id;
+
+        return ProjectCard(
+          project: project,
+          onTap: () => _navigateToProjectDetail(project),
+          onViewTasks: workspaceId != null
+              ? () => _navigateToTasks(workspaceId, project.id)
+              : null,
+          onEdit: () => _showEditProjectSheet(context, project),
+          onDelete: () => _confirmDelete(context, project),
+          showActions: true,
         );
       },
     );
@@ -381,5 +386,69 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         );
       }
     }
+  }
+
+  void _showCreateProjectSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: const CreateProjectBottomSheet(),
+      ),
+    );
+  }
+
+  void _showEditProjectSheet(BuildContext context, Project project) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: CreateProjectBottomSheet(project: project),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Project project) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar Proyecto'),
+        content: Text(
+          '¿Eliminar "${project.name}"? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      context.read<ProjectBloc>().add(DeleteProject(project.id));
+    }
+  }
+
+  void _navigateToProjectDetail(Project project) {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId != null) {
+      context.go(RoutePaths.projectDetail(workspaceId, project.id));
+    }
+  }
+
+  void _navigateToTasks(int workspaceId, int projectId) {
+    GoRouter.of(
+      context,
+    ).go('/more/workspaces/$workspaceId/projects/$projectId/tasks');
   }
 }

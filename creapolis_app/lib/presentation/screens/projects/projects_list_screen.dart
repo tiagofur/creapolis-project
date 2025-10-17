@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/animations/list_animations.dart';
@@ -11,8 +12,6 @@ import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
 import '../../../features/workspace/presentation/bloc/workspace_event.dart';
 import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../../routes/route_builder.dart';
-import '../../bloc/auth/auth_bloc.dart';
-import '../../bloc/auth/auth_state.dart';
 import '../../../features/projects/presentation/blocs/project_bloc.dart';
 import '../../../features/projects/presentation/blocs/project_event.dart';
 import '../../../features/projects/presentation/blocs/project_state.dart';
@@ -20,7 +19,8 @@ import '../../providers/workspace_context.dart';
 import '../../widgets/common/main_drawer.dart';
 import '../../widgets/loading/skeleton_list.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
-import '../../widgets/project/project_card.dart';
+// Usar el ProjectCard de features (el bonito)
+import '../../../features/projects/presentation/widgets/project_card.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
 import '../../widgets/error/friendly_error_widget.dart';
 import '../../widgets/feedback/feedback_widgets.dart';
@@ -270,12 +270,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       return _buildEmptyState(context);
     }
 
-    // Obtener el ID del usuario actual
-    final authState = context.watch<AuthBloc>().state;
-    final currentUserId = authState is AuthAuthenticated
-        ? authState.user.id
-        : null;
-
     return RefreshIndicator(
       onRefresh: () async {
         final workspace = context.read<WorkspaceContext>().activeWorkspace;
@@ -285,41 +279,28 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           await Future.delayed(const Duration(seconds: 1));
         }
       },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Responsive: usar grid en tablets/desktop
-          final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: projects.length,
+        itemBuilder: (context, index) {
+          final project = projects[index];
+          final workspaceContext = context.read<WorkspaceContext>();
+          final workspaceId = workspaceContext.activeWorkspace?.id;
 
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+          return StaggeredListAnimation(
+            index: index,
+            delay: const Duration(milliseconds: 40),
+            duration: const Duration(milliseconds: 350),
+            child: ProjectCard(
+              project: project,
+              onTap: () => _navigateToDetail(context, project.id),
+              onViewTasks: workspaceId != null
+                  ? () => _navigateToTasks(context, workspaceId, project.id)
+                  : null,
+              onEdit: () => _showEditProjectSheet(context, project),
+              onDelete: () => _confirmDelete(context, project),
+              showActions: true,
             ),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index];
-              return StaggeredListAnimation(
-                index: index,
-                delay: const Duration(milliseconds: 40),
-                duration: const Duration(milliseconds: 350),
-                child: SizedBox(
-                  height:
-                      180, // Altura fija para evitar problemas de constraints
-                  child: ProjectCard(
-                    project: project,
-                    currentUserId: currentUserId,
-                    hasOtherMembers: false, // TODO: Obtener del backend
-                    density: _currentDensity,
-                    onTap: () => _navigateToDetail(context, project.id),
-                    onEdit: () => _showEditProjectSheet(context, project),
-                    onDelete: () => _confirmDelete(context, project),
-                  ),
-                ),
-              );
-            },
           );
         },
       ),
@@ -440,6 +421,16 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       'ProjectsListScreen: Navegando a detalle del proyecto $projectId en workspace $workspaceId',
     );
     context.goToProject(workspaceId, projectId);
+  }
+
+  /// Navegar a las tareas del proyecto
+  void _navigateToTasks(BuildContext context, int workspaceId, int projectId) {
+    AppLogger.info(
+      'ProjectsListScreen: Navegando a tareas del proyecto $projectId en workspace $workspaceId',
+    );
+    GoRouter.of(
+      context,
+    ).go('/more/workspaces/$workspaceId/projects/$projectId/tasks');
   }
 
   /// Confirmar eliminación de proyecto
