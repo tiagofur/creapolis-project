@@ -21,6 +21,7 @@ class ProjectLoading extends ProjectState {
 
 /// Estado con proyectos cargados
 class ProjectsLoaded extends ProjectState {
+  final int workspaceId;
   final List<Project> projects;
   final List<Project> filteredProjects;
   final Project? selectedProject;
@@ -28,6 +29,7 @@ class ProjectsLoaded extends ProjectState {
   final String? searchQuery;
 
   const ProjectsLoaded({
+    required this.workspaceId,
     required this.projects,
     required this.filteredProjects,
     this.selectedProject,
@@ -37,6 +39,7 @@ class ProjectsLoaded extends ProjectState {
 
   @override
   List<Object?> get props => [
+    workspaceId,
     projects,
     filteredProjects,
     selectedProject,
@@ -45,6 +48,7 @@ class ProjectsLoaded extends ProjectState {
   ];
 
   ProjectsLoaded copyWith({
+    int? workspaceId,
     List<Project>? projects,
     List<Project>? filteredProjects,
     Project? selectedProject,
@@ -55,6 +59,7 @@ class ProjectsLoaded extends ProjectState {
     bool clearSearch = false,
   }) {
     return ProjectsLoaded(
+      workspaceId: workspaceId ?? this.workspaceId,
       projects: projects ?? this.projects,
       filteredProjects: filteredProjects ?? this.filteredProjects,
       selectedProject: clearSelectedProject
@@ -98,6 +103,3 @@ class ProjectError extends ProjectState {
   @override
   List<Object?> get props => [message, currentProjects];
 }
-
-
-

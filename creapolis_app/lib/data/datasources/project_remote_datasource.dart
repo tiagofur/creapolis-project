@@ -10,7 +10,11 @@ abstract class ProjectRemoteDataSource {
   /// Obtener lista de proyectos de un workspace
   ///
   /// [workspaceId] ID del workspace (requerido)
-  Future<List<ProjectModel>> getProjects(int workspaceId);
+  Future<List<ProjectModel>> getProjects(
+    int workspaceId, {
+    ProjectStatus? status,
+    String? search,
+  });
 
   /// Obtener proyecto por ID
   Future<ProjectModel> getProjectById(int id);
@@ -49,16 +53,29 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   ProjectRemoteDataSourceImpl(this._apiClient);
 
   @override
-  Future<List<ProjectModel>> getProjects(int workspaceId) async {
+  Future<List<ProjectModel>> getProjects(
+    int workspaceId, {
+    ProjectStatus? status,
+    String? search,
+  }) async {
+    final trimmedSearch = search?.trim();
     AppLogger.info(
-      'ProjectRemoteDataSource: Obteniendo proyectos del workspace $workspaceId',
+      'ProjectRemoteDataSource: Obteniendo proyectos del workspace $workspaceId'
+      '${status != null ? ' con estado ${_statusToString(status)}' : ''}'
+      '${trimmedSearch?.isNotEmpty == true ? ' con búsqueda "$trimmedSearch"' : ''}',
     );
 
     try {
+      final queryParameters = <String, dynamic>{
+        'workspaceId': workspaceId,
+        if (status != null) 'status': _statusToString(status),
+        if (trimmedSearch?.isNotEmpty == true) 'search': trimmedSearch,
+      };
+
       // GET /projects?workspaceId=X
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/projects',
-        queryParameters: {'workspaceId': workspaceId},
+        queryParameters: queryParameters,
       );
 
       AppLogger.debug('ProjectRemoteDataSource: Response - ${response.data}');

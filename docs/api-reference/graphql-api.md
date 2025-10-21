@@ -237,6 +237,15 @@ query {
     id
     name
     description
+    status
+    startDate
+    endDate
+    progress
+    manager {
+      id
+      name
+      email
+    }
     workspace {
       name
     }
@@ -263,12 +272,24 @@ query {
 
 ```graphql
 query {
-  projects(page: 1, limit: 10, workspaceId: 1, search: "mobile") {
+  projects(
+    page: 1
+    limit: 10
+    workspaceId: 1
+    status: ACTIVE
+    search: "mobile"
+  ) {
     edges {
       node {
         id
         name
         description
+        status
+        startDate
+        endDate
+        manager {
+          name
+        }
         statistics {
           totalTasks
           completionPercentage
@@ -339,13 +360,7 @@ query {
 
 ```graphql
 query {
-  tasks(
-    projectId: 1
-    status: IN_PROGRESS
-    page: 1
-    limit: 10
-    search: "api"
-  ) {
+  tasks(projectId: 1, status: IN_PROGRESS, page: 1, limit: 10, search: "api") {
     edges {
       node {
         id
@@ -596,11 +611,20 @@ mutation {
       name: "Mobile App"
       description: "iOS and Android app"
       workspaceId: 1
+      status: ACTIVE
+      startDate: "2024-02-01T09:00:00Z"
+      endDate: "2024-05-31T18:00:00Z"
+      managerId: 2
+      memberIds: [2, 3]
     }
   ) {
     id
     name
     description
+    status
+    startDate
+    endDate
+    managerId
   }
 }
 ```
@@ -611,11 +635,27 @@ mutation {
 mutation {
   updateProject(
     id: "1"
-    input: { name: "Mobile App v2", description: "Updated description" }
+    input: {
+      name: "Mobile App v2"
+      description: "Updated description"
+      status: IN_PROGRESS
+      startDate: "2024-02-05T09:00:00Z"
+      endDate: "2024-06-15T18:00:00Z"
+      managerId: 4
+      progress: 0.5
+    }
   ) {
     id
     name
     description
+    status
+    startDate
+    endDate
+    manager {
+      id
+      name
+    }
+    progress
   }
 }
 ```
@@ -707,11 +747,7 @@ mutation {
 ```graphql
 mutation {
   addTaskDependency(
-    input: {
-      predecessorId: 1
-      successorId: 2
-      type: FINISH_TO_START
-    }
+    input: { predecessorId: 1, successorId: 2, type: FINISH_TO_START }
   ) {
     id
     predecessor {
@@ -800,12 +836,7 @@ mutation {
 
 ```graphql
 mutation {
-  createComment(
-    input: {
-      content: "Great work on this task!"
-      taskId: 1
-    }
-  ) {
+  createComment(input: { content: "Great work on this task!", taskId: 1 }) {
     id
     content
     author {
@@ -900,27 +931,32 @@ subscription {
 ### Enums
 
 #### Role
+
 - `ADMIN`
 - `PROJECT_MANAGER`
 - `TEAM_MEMBER`
 
 #### TaskStatus
+
 - `PLANNED`
 - `IN_PROGRESS`
 - `COMPLETED`
 
 #### WorkspaceType
+
 - `PERSONAL`
 - `TEAM`
 - `ENTERPRISE`
 
 #### WorkspaceRole
+
 - `OWNER`
 - `ADMIN`
 - `MEMBER`
 - `GUEST`
 
 #### NotificationType
+
 - `MENTION`
 - `COMMENT_REPLY`
 - `TASK_ASSIGNED`
@@ -942,21 +978,26 @@ subscription {
 #### 1. Apollo Client Setup
 
 ```javascript
-import { ApolloClient, InMemoryCache, HttpLink, ApolloProvider } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import {
+  ApolloClient,
+  InMemoryCache,
+  HttpLink,
+  ApolloProvider,
+} from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:3001/graphql',
+  uri: "http://localhost:3001/graphql",
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   return {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : "",
-    }
-  }
+    },
+  };
 });
 
 const client = new ApolloClient({
@@ -966,9 +1007,7 @@ const client = new ApolloClient({
 
 function App() {
   return (
-    <ApolloProvider client={client}>
-      {/* Your app components */}
-    </ApolloProvider>
+    <ApolloProvider client={client}>{/* Your app components */}</ApolloProvider>
   );
 }
 ```
@@ -976,7 +1015,7 @@ function App() {
 #### 2. Using Queries
 
 ```javascript
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql } from "@apollo/client";
 
 const GET_MY_TASKS = gql`
   query GetMyTasks {
@@ -1016,7 +1055,7 @@ function MyTasks() {
 #### 3. Using Mutations
 
 ```javascript
-import { useMutation, gql } from '@apollo/client';
+import { useMutation, gql } from "@apollo/client";
 
 const CREATE_TASK = gql`
   mutation CreateTask($input: CreateTaskInput!) {
@@ -1034,22 +1073,22 @@ function CreateTaskForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
+
     try {
       const { data } = await createTask({
         variables: {
           input: {
-            title: formData.get('title'),
-            description: formData.get('description'),
-            estimatedHours: parseFloat(formData.get('hours')),
-            projectId: parseInt(formData.get('projectId')),
-          }
-        }
+            title: formData.get("title"),
+            description: formData.get("description"),
+            estimatedHours: parseFloat(formData.get("hours")),
+            projectId: parseInt(formData.get("projectId")),
+          },
+        },
       });
-      
-      console.log('Task created:', data.createTask);
+
+      console.log("Task created:", data.createTask);
     } catch (err) {
-      console.error('Error creating task:', err);
+      console.error("Error creating task:", err);
     }
   };
 
@@ -1057,10 +1096,15 @@ function CreateTaskForm() {
     <form onSubmit={handleSubmit}>
       <input name="title" placeholder="Task title" required />
       <input name="description" placeholder="Description" />
-      <input name="hours" type="number" placeholder="Estimated hours" required />
+      <input
+        name="hours"
+        type="number"
+        placeholder="Estimated hours"
+        required
+      />
       <input name="projectId" type="number" placeholder="Project ID" required />
       <button type="submit" disabled={loading}>
-        {loading ? 'Creating...' : 'Create Task'}
+        {loading ? "Creating..." : "Create Task"}
       </button>
       {error && <p>Error: {error.message}</p>}
     </form>
@@ -1071,7 +1115,7 @@ function CreateTaskForm() {
 #### 4. Using Subscriptions
 
 ```javascript
-import { useSubscription, gql } from '@apollo/client';
+import { useSubscription, gql } from "@apollo/client";
 
 const NOTIFICATION_SUBSCRIPTION = gql`
   subscription OnNotificationReceived {
@@ -1092,7 +1136,7 @@ function NotificationListener() {
 
   if (data) {
     // Show notification (you could use a toast library)
-    console.log('New notification:', data.notificationReceived);
+    console.log("New notification:", data.notificationReceived);
   }
 
   return null;
@@ -1116,13 +1160,13 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 class GraphQLService {
   static GraphQLClient getClient(String? token) {
     final HttpLink httpLink = HttpLink('http://localhost:3001/graphql');
-    
+
     final AuthLink authLink = AuthLink(
       getToken: () async => token != null ? 'Bearer $token' : null,
     );
-    
+
     final Link link = authLink.concat(httpLink);
-    
+
     return GraphQLClient(
       cache: GraphQLCache(store: InMemoryStore()),
       link: link,
@@ -1392,7 +1436,7 @@ Never concatenate strings to build queries. Use variables:
 // Good
 const { data } = await client.query({
   query: GET_PROJECT,
-  variables: { id: projectId }
+  variables: { id: projectId },
 });
 
 // Bad
@@ -1411,15 +1455,15 @@ For better UX, update the UI optimistically:
 const [createTask] = useMutation(CREATE_TASK, {
   optimisticResponse: {
     createTask: {
-      __typename: 'Task',
-      id: 'temp-id',
+      __typename: "Task",
+      id: "temp-id",
       title: variables.input.title,
-      status: 'PLANNED',
-    }
+      status: "PLANNED",
+    },
   },
   update: (cache, { data }) => {
     // Update cache
-  }
+  },
 });
 ```
 

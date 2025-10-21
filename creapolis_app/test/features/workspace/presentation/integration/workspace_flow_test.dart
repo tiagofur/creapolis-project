@@ -34,7 +34,7 @@ void main() {
       id: 1,
       name: 'Test Workspace',
       description: 'Test Description',
-      avatarUrl: null,
+      avatarUrl: 'https://example.com/workspace-1.png',
       type: WorkspaceType.team,
       ownerId: 1,
       owner: tOwner,
@@ -50,14 +50,18 @@ void main() {
       id: 1,
       name: 'Updated Workspace',
       description: 'Updated Description',
-      avatarUrl: null,
-      type: WorkspaceType.team,
+      avatarUrl: 'https://example.com/workspace-1-updated.png',
+      type: WorkspaceType.enterprise,
       ownerId: 1,
       owner: tOwner,
       userRole: WorkspaceRole.owner,
       memberCount: 1,
       projectCount: 0,
-      settings: tSettings,
+      settings: tSettings.copyWith(
+        autoAssignNewMembers: true,
+        language: 'en',
+        defaultProjectTemplate: 'kanban',
+      ),
       createdAt: DateTime(2025, 1, 1),
       updatedAt: DateTime(2025, 1, 2),
     );
@@ -66,7 +70,7 @@ void main() {
       id: 1,
       workspaceId: 2,
       workspaceName: 'Invited Workspace',
-      workspaceAvatarUrl: null,
+      workspaceAvatarUrl: 'https://example.com/workspace-2.png',
       workspaceType: WorkspaceType.team,
       inviterName: 'Jane Doe',
       inviterEmail: 'jane@example.com',
@@ -143,11 +147,18 @@ void main() {
           );
 
           // Act & Assert - Paso 2: Crear workspace
+          final createSettings = tSettings.copyWith(
+            allowGuestInvites: false,
+            language: 'en',
+          );
+
           bloc.add(
-            const CreateWorkspace(
+            CreateWorkspace(
               name: 'Test Workspace',
               description: 'Test Description',
               type: WorkspaceType.team,
+              avatarUrl: 'https://example.com/workspace-1.png',
+              settings: createSettings,
             ),
           );
           await expectLater(
@@ -169,11 +180,16 @@ void main() {
           expect(bloc.workspaces.first.name, 'Test Workspace');
 
           // Act & Assert - Paso 3: Actualizar workspace
+          final updateSettings = tWorkspace1Updated.settings;
+
           bloc.add(
-            const UpdateWorkspace(
+            UpdateWorkspace(
               workspaceId: 1,
               name: 'Updated Workspace',
               description: 'Updated Description',
+              avatarUrl: 'https://example.com/workspace-1-updated.png',
+              type: WorkspaceType.enterprise,
+              settings: updateSettings,
             ),
           );
           await expectLater(
@@ -228,8 +244,8 @@ void main() {
               name: 'Test Workspace',
               description: 'Test Description',
               type: WorkspaceType.team,
-              avatarUrl: null,
-              settings: null,
+              avatarUrl: 'https://example.com/workspace-1.png',
+              settings: createSettings,
             ),
           ).called(1);
           verify(
@@ -237,9 +253,9 @@ void main() {
               id: 1,
               name: 'Updated Workspace',
               description: 'Updated Description',
-              avatarUrl: null,
-              type: null,
-              settings: null,
+              avatarUrl: 'https://example.com/workspace-1-updated.png',
+              type: WorkspaceType.enterprise,
+              settings: updateSettings,
             ),
           ).called(1);
           verify(() => mockDataSource.deleteWorkspace(1)).called(1);
@@ -256,7 +272,7 @@ void main() {
             id: 2,
             name: 'Invited Workspace',
             description: 'Workspace from invitation',
-            avatarUrl: null,
+            avatarUrl: 'https://example.com/workspace-2.png',
             type: WorkspaceType.team,
             ownerId: 2,
             owner: WorkspaceOwner(
@@ -353,7 +369,7 @@ void main() {
             id: 2,
             name: 'Second Workspace',
             description: 'Another workspace',
-            avatarUrl: null,
+            avatarUrl: 'https://example.com/workspace-2.png',
             type: WorkspaceType.personal,
             ownerId: 1,
             owner: tOwner,
@@ -440,7 +456,7 @@ void main() {
           id: 2,
           name: 'Second Workspace',
           description: 'Another workspace',
-          avatarUrl: null,
+          avatarUrl: 'https://example.com/workspace-2.png',
           type: WorkspaceType.personal,
           ownerId: 1,
           owner: tOwner,

@@ -19,10 +19,13 @@ class GetProjectsUseCase {
   /// Retorna `Left(Failure)` si hay error.
   Future<Either<Failure, List<Project>>> call({
     required int workspaceId,
+    ProjectStatus? status,
+    String? search,
   }) async {
-    return await repository.getProjects(workspaceId: workspaceId);
+    return await repository.getProjects(
+      workspaceId: workspaceId,
+      status: status,
+      search: search,
+    );
   }
 }
-
-
-

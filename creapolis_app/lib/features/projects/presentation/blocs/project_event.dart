@@ -12,11 +12,13 @@ abstract class ProjectEvent extends Equatable {
 /// Evento para cargar proyectos de un workspace
 class LoadProjects extends ProjectEvent {
   final int workspaceId;
+  final ProjectStatus? status;
+  final String? search;
 
-  const LoadProjects(this.workspaceId);
+  const LoadProjects(this.workspaceId, {this.status, this.search});
 
   @override
-  List<Object?> get props => [workspaceId];
+  List<Object?> get props => [workspaceId, status, search];
 }
 
 /// Evento para cargar un proyecto específico por ID
@@ -132,6 +134,3 @@ class SearchProjects extends ProjectEvent {
   @override
   List<Object?> get props => [query];
 }
-
-
-

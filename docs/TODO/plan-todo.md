@@ -11,17 +11,18 @@ Este documento centraliza el plan para eliminar los TODOs del proyecto Creapolis
 - Conectar AllProjectsScreen con ProjectsBloc para datos reales
 - Navegar a /projects desde MyProjectsWidget
 - Navegar a project detail desde ProjectsScreen
-- Implementar búsqueda y filtros cuando se integre con backend
-- Obtener proyectos del BLoC
+- ~~Implementar búsqueda y filtros cuando se integre con backend~~ ✅
+- ~~Obtener proyectos del BLoC~~ ✅
 
 ### Backend
 
-- Agregar soporte para nuevos campos en Project (startDate, endDate, status, managerId)
+- ~~Agregar soporte para nuevos campos en Project (startDate, endDate, status, managerId)~~ ✅
+  - Backend (GraphQL/REST), Flutter UI/BLoC y pruebas unitarias actualizados para los cuatro campos
 
 ### Testing
 
-- Actualizar workspace_flow_test.dart con nuevos args
-- Actualizar workspace_bloc_test.dart con nuevos args
+- ~~Actualizar workspace_flow_test.dart con nuevos args~~ ✅
+- ~~Actualizar workspace_bloc_test.dart con nuevos args~~ ✅
 
 ---
 
@@ -68,4 +69,4 @@ Este documento centraliza el plan para eliminar los TODOs del proyecto Creapolis
 
 ---
 
-> Última actualización: 2025-10-17
+> Última actualización: 2025-10-21

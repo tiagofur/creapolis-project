@@ -49,6 +49,7 @@ void main() {
     id: 1,
     name: 'Test Workspace 1',
     description: 'Test Description 1',
+    avatarUrl: 'https://example.com/workspace-1.png',
     type: WorkspaceType.team,
     ownerId: 1,
     owner: tOwner,
@@ -64,6 +65,7 @@ void main() {
     id: 2,
     name: 'Test Workspace 2',
     description: 'Test Description 2',
+    avatarUrl: 'https://example.com/workspace-2.png',
     type: WorkspaceType.personal,
     ownerId: 1,
     owner: tOwner,
@@ -82,9 +84,11 @@ void main() {
     token: 'test-token-123',
     workspaceId: 3,
     workspaceName: 'Invited Workspace',
+    workspaceAvatarUrl: 'https://example.com/workspace-3.png',
     workspaceType: WorkspaceType.team,
     inviterName: 'Jane Smith',
     inviterEmail: 'jane@example.com',
+    inviterAvatarUrl: 'https://example.com/jane.png',
     inviteeEmail: 'test@example.com',
     role: WorkspaceRole.member,
     status: InvitationStatus.pending,
@@ -254,23 +258,31 @@ void main() {
     });
 
     group('CreateWorkspace', () {
-      const tCreateParams = CreateWorkspace(
+      final createSettings = tSettings.copyWith(
+        allowGuestInvites: false,
+        language: 'en',
+      );
+
+      final tCreateParams = CreateWorkspace(
         name: 'New Workspace',
         description: 'A new workspace',
         type: WorkspaceType.team,
+        avatarUrl: 'https://example.com/new-workspace.png',
+        settings: createSettings,
       );
 
       final tCreatedWorkspace = Workspace(
         id: 3,
         name: 'New Workspace',
         description: 'A new workspace',
+        avatarUrl: 'https://example.com/new-workspace.png',
         type: WorkspaceType.team,
         ownerId: 1,
         owner: tOwner,
         userRole: WorkspaceRole.owner,
         memberCount: 1,
         projectCount: 0,
-        settings: tSettings,
+        settings: createSettings,
         createdAt: DateTime(2025, 1, 3),
         updatedAt: DateTime(2025, 1, 3),
       );
@@ -308,11 +320,11 @@ void main() {
         verify: (_) {
           verify(
             () => mockDataSource.createWorkspace(
-              name: 'New Workspace',
-              description: 'A new workspace',
-              type: WorkspaceType.team,
-              avatarUrl: null,
-              settings: null,
+              name: tCreateParams.name,
+              description: tCreateParams.description,
+              type: tCreateParams.type,
+              avatarUrl: tCreateParams.avatarUrl,
+              settings: tCreateParams.settings,
             ),
           ).called(1);
         },
@@ -350,23 +362,33 @@ void main() {
     });
 
     group('UpdateWorkspace', () {
+      final updateSettings = tSettings.copyWith(
+        autoAssignNewMembers: true,
+        defaultProjectTemplate: 'scrum',
+        language: 'fr',
+      );
+
       final tUpdateParams = UpdateWorkspace(
         workspaceId: 1,
         name: 'Updated Name',
         description: 'Updated Description',
+        avatarUrl: 'https://example.com/workspace-1-updated.png',
+        type: WorkspaceType.enterprise,
+        settings: updateSettings,
       );
 
       final tUpdatedWorkspace = Workspace(
         id: 1,
         name: 'Updated Name',
         description: 'Updated Description',
-        type: WorkspaceType.team,
+        avatarUrl: 'https://example.com/workspace-1-updated.png',
+        type: WorkspaceType.enterprise,
         ownerId: 1,
         owner: tOwner,
         userRole: WorkspaceRole.owner,
         memberCount: 5,
         projectCount: 3,
-        settings: tSettings,
+        settings: updateSettings,
         createdAt: DateTime(2025, 1, 1),
         updatedAt: DateTime(2025, 1, 4),
       );
@@ -408,9 +430,9 @@ void main() {
               id: 1,
               name: 'Updated Name',
               description: 'Updated Description',
-              avatarUrl: null,
-              type: null,
-              settings: null,
+              avatarUrl: 'https://example.com/workspace-1-updated.png',
+              type: WorkspaceType.enterprise,
+              settings: updateSettings,
             ),
           ).called(1);
         },

@@ -3,6 +3,12 @@ export const projectTypeDefs = `#graphql
     id: ID!
     name: String!
     description: String
+    status: ProjectStatus!
+    startDate: DateTime!
+    endDate: DateTime!
+    managerId: Int
+    manager: User
+    progress: Float!
     workspaceId: Int!
     workspace: Workspace!
     createdAt: DateTime!
@@ -11,6 +17,14 @@ export const projectTypeDefs = `#graphql
     tasks: [Task!]!
     comments: [Comment!]!
     statistics: ProjectStatistics!
+  }
+
+  enum ProjectStatus {
+    PLANNED
+    ACTIVE
+    PAUSED
+    COMPLETED
+    CANCELLED
   }
 
   type ProjectMember {
@@ -36,11 +50,21 @@ export const projectTypeDefs = `#graphql
     name: String!
     description: String
     workspaceId: Int!
+    status: ProjectStatus
+    startDate: DateTime!
+    endDate: DateTime!
+    managerId: Int
+    memberIds: [Int!]
   }
 
   input UpdateProjectInput {
     name: String
     description: String
+    status: ProjectStatus
+    startDate: DateTime
+    endDate: DateTime
+    managerId: Int
+    progress: Float
   }
 
   input AddProjectMemberInput {
@@ -57,6 +81,7 @@ export const projectTypeDefs = `#graphql
       limit: Int
       workspaceId: Int
       search: String
+      status: ProjectStatus
     ): ProjectsConnection!
     
     # Get project statistics

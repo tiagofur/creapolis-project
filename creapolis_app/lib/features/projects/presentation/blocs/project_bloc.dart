@@ -21,6 +21,10 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   final UpdateProjectUseCase _updateProjectUseCase;
   final DeleteProjectUseCase _deleteProjectUseCase;
 
+  int? _currentWorkspaceId;
+  ProjectStatus? _activeStatusFilter;
+  String? _activeSearchQuery;
+
   ProjectBloc(
     this._getProjectsUseCase,
     this._getProjectByIdUseCase,
@@ -46,16 +50,45 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       emit(const ProjectLoading());
 
-      final result = await _getProjectsUseCase(workspaceId: event.workspaceId);
+      final trimmedSearch = event.search?.trim();
+      final effectiveSearch =
+          (trimmedSearch != null && trimmedSearch.isNotEmpty)
+          ? trimmedSearch
+          : null;
+
+      final result = await _getProjectsUseCase(
+        workspaceId: event.workspaceId,
+        status: event.status,
+        search: effectiveSearch,
+      );
+
+      final previousState = state;
 
       result.fold(
         (failure) {
           AppLogger.error('Error loading projects: ${failure.message}');
-          emit(ProjectError(failure.message));
+          List<Project>? fallbackProjects;
+          if (previousState is ProjectsLoaded) {
+            fallbackProjects = previousState.filteredProjects;
+          }
+          emit(
+            ProjectError(failure.message, currentProjects: fallbackProjects),
+          );
         },
         (projects) {
           AppLogger.info('Projects loaded successfully: ${projects.length}');
-          emit(ProjectsLoaded(projects: projects, filteredProjects: projects));
+          _currentWorkspaceId = event.workspaceId;
+          _activeStatusFilter = event.status;
+          _activeSearchQuery = effectiveSearch;
+          emit(
+            ProjectsLoaded(
+              workspaceId: event.workspaceId,
+              projects: projects,
+              filteredProjects: projects,
+              currentFilter: event.status,
+              searchQuery: effectiveSearch,
+            ),
+          );
         },
       );
     } catch (e) {
@@ -72,9 +105,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       final currentState = state;
       List<Project>? currentProjects;
+      ProjectStatus? activeFilter;
+      String? activeSearch;
 
       if (currentState is ProjectsLoaded) {
         currentProjects = currentState.projects;
+        activeFilter = currentState.currentFilter;
+        activeSearch = currentState.searchQuery;
       }
 
       final result = await _getProjectByIdUseCase(event.projectId);
@@ -87,26 +124,47 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         (project) {
           AppLogger.info('Project loaded successfully: ${project.name}');
 
+          final workspaceId = currentProjects?.isNotEmpty == true
+              ? currentProjects!.first.workspaceId
+              : project.workspaceId;
+          _currentWorkspaceId ??= workspaceId;
+
           if (currentProjects != null) {
             // Actualizar el proyecto en la lista si ya existe
             final updatedProjects = currentProjects.map((p) {
               return p.id == project.id ? project : p;
             }).toList();
+            final visibleProjects = _filterProjectsForView(
+              updatedProjects,
+              status: activeFilter ?? _activeStatusFilter,
+              search: activeSearch ?? _activeSearchQuery,
+            );
 
             emit(
               ProjectsLoaded(
+                workspaceId: workspaceId,
                 projects: updatedProjects,
-                filteredProjects: updatedProjects,
+                filteredProjects: visibleProjects,
                 selectedProject: project,
+                currentFilter: activeFilter,
+                searchQuery: activeSearch,
               ),
             );
           } else {
             // Si no hay lista, crear una nueva con solo este proyecto
+            final visibleProjects = _filterProjectsForView(
+              [project],
+              status: activeFilter ?? _activeStatusFilter,
+              search: activeSearch ?? _activeSearchQuery,
+            );
             emit(
               ProjectsLoaded(
+                workspaceId: workspaceId,
                 projects: [project],
-                filteredProjects: [project],
+                filteredProjects: visibleProjects,
                 selectedProject: project,
+                currentFilter: activeFilter,
+                searchQuery: activeSearch,
               ),
             );
           }
@@ -126,9 +184,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       final currentState = state;
       List<Project>? currentProjects;
+      ProjectStatus? activeFilter;
+      String? activeSearch;
 
       if (currentState is ProjectsLoaded) {
         currentProjects = currentState.projects;
+        activeFilter = currentState.currentFilter;
+        activeSearch = currentState.searchQuery;
       }
 
       emit(
@@ -162,6 +224,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           final updatedProjects = currentProjects != null
               ? [...currentProjects, newProject]
               : [newProject];
+          final workspaceId = newProject.workspaceId;
+          _currentWorkspaceId = workspaceId;
 
           emit(
             ProjectOperationSuccess(
@@ -171,11 +235,19 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           );
 
           // Emitir el estado actualizado con la lista completa
+          final visibleProjects = _filterProjectsForView(
+            updatedProjects,
+            status: activeFilter ?? _activeStatusFilter,
+            search: activeSearch ?? _activeSearchQuery,
+          );
           emit(
             ProjectsLoaded(
+              workspaceId: workspaceId,
               projects: updatedProjects,
-              filteredProjects: updatedProjects,
+              filteredProjects: visibleProjects,
               selectedProject: newProject,
+              currentFilter: activeFilter,
+              searchQuery: activeSearch,
             ),
           );
         },
@@ -194,9 +266,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       final currentState = state;
       List<Project>? currentProjects;
+      ProjectStatus? activeFilter;
+      String? activeSearch;
 
       if (currentState is ProjectsLoaded) {
         currentProjects = currentState.projects;
+        activeFilter = currentState.currentFilter;
+        activeSearch = currentState.searchQuery;
       }
 
       emit(
@@ -234,6 +310,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
                 return p.id == updatedProject.id ? updatedProject : p;
               }).toList() ??
               [updatedProject];
+          final workspaceId = updatedProject.workspaceId;
+          _currentWorkspaceId = workspaceId;
 
           emit(
             ProjectOperationSuccess(
@@ -242,11 +320,19 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
             ),
           );
 
+          final visibleProjects = _filterProjectsForView(
+            updatedProjects,
+            status: activeFilter ?? _activeStatusFilter,
+            search: activeSearch ?? _activeSearchQuery,
+          );
           emit(
             ProjectsLoaded(
+              workspaceId: workspaceId,
               projects: updatedProjects,
-              filteredProjects: updatedProjects,
+              filteredProjects: visibleProjects,
               selectedProject: updatedProject,
+              currentFilter: activeFilter,
+              searchQuery: activeSearch,
             ),
           );
         },
@@ -265,9 +351,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       final currentState = state;
       List<Project>? currentProjects;
+      ProjectStatus? activeFilter;
+      String? activeSearch;
 
       if (currentState is ProjectsLoaded) {
         currentProjects = currentState.projects;
+        activeFilter = currentState.currentFilter;
+        activeSearch = currentState.searchQuery;
       }
 
       emit(
@@ -291,6 +381,26 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           final updatedProjects =
               currentProjects?.where((p) => p.id != event.projectId).toList() ??
               [];
+          final visibleProjects = _filterProjectsForView(
+            updatedProjects,
+            status: activeFilter ?? _activeStatusFilter,
+            search: activeSearch ?? _activeSearchQuery,
+          );
+
+          int workspaceId;
+          if (currentState is ProjectsLoaded) {
+            workspaceId = currentState.workspaceId;
+          } else if (_currentWorkspaceId != null) {
+            workspaceId = _currentWorkspaceId!;
+          } else if (updatedProjects.isNotEmpty) {
+            workspaceId = updatedProjects.first.workspaceId;
+          } else {
+            throw StateError(
+              'ProjectBloc: workspaceId no disponible tras eliminar proyecto',
+            );
+          }
+
+          _currentWorkspaceId = workspaceId;
 
           emit(
             const ProjectOperationSuccess('Proyecto eliminado exitosamente'),
@@ -298,8 +408,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
           emit(
             ProjectsLoaded(
+              workspaceId: workspaceId,
               projects: updatedProjects,
-              filteredProjects: updatedProjects,
+              filteredProjects: visibleProjects,
             ),
           );
         },
@@ -315,8 +426,57 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     RefreshProjects event,
     Emitter<ProjectState> emit,
   ) async {
-    // Reutilizar la lógica de carga
-    await _onLoadProjects(LoadProjects(event.workspaceId), emit);
+    final previousState = state;
+
+    // Reutilizar la lógica de carga manteniendo filtros aplicados al backend
+    await _onLoadProjects(
+      LoadProjects(
+        event.workspaceId,
+        status: _activeStatusFilter,
+        search: _activeSearchQuery,
+      ),
+      emit,
+    );
+
+    if (previousState is ProjectsLoaded) {
+      final previousFilter = previousState.currentFilter;
+      final previousSearch = previousState.searchQuery;
+
+      if (previousFilter != null && previousFilter != _activeStatusFilter) {
+        add(FilterProjectsByStatus(previousFilter));
+      }
+
+      final hasPreviousSearch =
+          previousSearch != null &&
+          previousSearch.isNotEmpty &&
+          previousSearch != _activeSearchQuery;
+      if (hasPreviousSearch) {
+        add(SearchProjects(previousSearch));
+      }
+    }
+  }
+
+  List<Project> _filterProjectsForView(
+    List<Project> projects, {
+    ProjectStatus? status,
+    String? search,
+  }) {
+    final filteredByStatus = status == null
+        ? projects
+        : projects.where((p) => p.status == status).toList();
+
+    if (search == null || search.isEmpty) {
+      return filteredByStatus;
+    }
+
+    final query = search.toLowerCase();
+    return filteredByStatus.where((project) {
+      final matchesName = project.name.toLowerCase().contains(query);
+      final matchesDescription = project.description.toLowerCase().contains(
+        query,
+      );
+      return matchesName || matchesDescription;
+    }).toList();
   }
 
   /// Maneja el evento de filtrar proyectos por status
@@ -351,7 +511,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     final currentState = state;
 
     if (currentState is ProjectsLoaded) {
-      if (event.query.isEmpty) {
+      final trimmedQuery = event.query.trim();
+
+      if (trimmedQuery.isEmpty) {
         // Si no hay query, mostrar todos los proyectos (aplicando filtro si existe)
         final filtered = currentState.currentFilter == null
             ? currentState.projects
@@ -362,13 +524,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         emit(
           currentState.copyWith(
             filteredProjects: filtered,
-            searchQuery: '',
+            searchQuery: null,
             clearSearch: true,
           ),
         );
       } else {
         // Buscar en nombre y descripción
-        final query = event.query.toLowerCase();
+        final query = trimmedQuery.toLowerCase();
         final filtered = currentState.projects.where((p) {
           final matchesName = p.name.toLowerCase().contains(query);
           final matchesDescription = p.description.toLowerCase().contains(
@@ -384,12 +546,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         emit(
           currentState.copyWith(
             filteredProjects: filtered,
-            searchQuery: event.query,
+            searchQuery: trimmedQuery,
           ),
         );
 
         AppLogger.info(
-          'Projects searched: "${event.query}" (${filtered.length} results)',
+          'Projects searched: "$trimmedQuery" (${filtered.length} results)',
         );
       }
     }

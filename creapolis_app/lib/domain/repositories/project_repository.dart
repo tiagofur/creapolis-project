@@ -14,6 +14,8 @@ abstract class ProjectRepository {
   /// Retorna `Left(Failure)` si hay error.
   Future<Either<Failure, List<Project>>> getProjects({
     required int workspaceId,
+    ProjectStatus? status,
+    String? search,
   });
 
   /// Obtener proyecto por ID
@@ -56,6 +58,3 @@ abstract class ProjectRepository {
   /// Retorna `Left(Failure)` si hay error.
   Future<Either<Failure, void>> deleteProject(int id);
 }
-
-
-

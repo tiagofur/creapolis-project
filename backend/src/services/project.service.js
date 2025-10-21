@@ -9,7 +9,10 @@ class ProjectService {
   /**
    * Get all projects for a user
    */
-  async getUserProjects(userId, { page = 1, limit = 10, search = "" }) {
+  async getUserProjects(
+    userId,
+    { page = 1, limit = 10, search = "", workspaceId, status }
+  ) {
     const skip = (page - 1) * limit;
 
     const where = {
@@ -18,6 +21,8 @@ class ProjectService {
           userId,
         },
       },
+      ...(workspaceId && { workspaceId }),
+      ...(status && { status }),
       ...(search && {
         OR: [
           { name: { contains: search, mode: "insensitive" } },

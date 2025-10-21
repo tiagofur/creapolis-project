@@ -33,6 +33,7 @@ class AllProjectsScreen extends StatefulWidget {
 class _AllProjectsScreenState extends State<AllProjectsScreen> {
   ProjectStatus? _filterStatus;
   int? _lastLoadedWorkspaceId;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -49,9 +50,70 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     final workspaceId = workspaceContext.activeWorkspace?.id;
 
     if (workspaceId != null && _lastLoadedWorkspaceId != workspaceId) {
-      _lastLoadedWorkspaceId = workspaceId;
-      context.read<ProjectBloc>().add(LoadProjects(workspaceId));
+      setState(() {
+        _lastLoadedWorkspaceId = workspaceId;
+        _filterStatus = null;
+        _searchQuery = '';
+      });
+      _requestProjects(workspaceId);
     }
+  }
+
+  void _requestProjects(int workspaceId) {
+    context.read<ProjectBloc>().add(
+      LoadProjects(
+        workspaceId,
+        status: _filterStatus,
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+      ),
+    );
+  }
+
+  void _applyFilter(ProjectStatus? status) {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId == null) return;
+
+    setState(() {
+      _filterStatus = status;
+    });
+
+    _requestProjects(workspaceId);
+  }
+
+  void _applySearch(String query) {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId == null) return;
+
+    final trimmed = query.trim();
+
+    setState(() {
+      _searchQuery = trimmed;
+    });
+
+    _requestProjects(workspaceId);
+  }
+
+  void _clearSearch() {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId == null || _searchQuery.isEmpty) return;
+
+    setState(() {
+      _searchQuery = '';
+    });
+
+    _requestProjects(workspaceId);
+  }
+
+  void _resetFilters() {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId == null) return;
+
+    setState(() {
+      _filterStatus = null;
+      _searchQuery = '';
+    });
+
+    _requestProjects(workspaceId);
   }
 
   @override
@@ -71,6 +133,12 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         title: 'Proyectos',
         showWorkspaceSwitcher: true,
         actions: [
+          if (_searchQuery.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: _clearSearch,
+              tooltip: 'Limpiar búsqueda',
+            ),
           // Botón de búsqueda
           IconButton(
             icon: const Icon(Icons.search),
@@ -81,30 +149,20 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
           ),
           // Botón de filtros
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
+            icon: Badge(
+              isLabelVisible: _filterStatus != null,
+              child: const Icon(Icons.filter_list),
+            ),
             tooltip: 'Filtrar proyectos',
             onSelected: (value) {
-              setState(() {
-                if (value == 'all') {
-                  _filterStatus = null;
-                } else {
-                  _filterStatus = ProjectStatus.values.firstWhere(
-                    (s) => s.name == value,
-                    orElse: () => ProjectStatus.active,
-                  );
-                }
-              });
-
-              if (activeWorkspace != null) {
-                if (_filterStatus != null) {
-                  context.read<ProjectBloc>().add(
-                    FilterProjectsByStatus(_filterStatus),
-                  );
-                } else {
-                  context.read<ProjectBloc>().add(
-                    LoadProjects(activeWorkspace.id),
-                  );
-                }
+              if (value == 'all') {
+                _applyFilter(null);
+              } else {
+                final selected = ProjectStatus.values.firstWhere(
+                  (s) => s.name == value,
+                  orElse: () => ProjectStatus.active,
+                );
+                _applyFilter(selected);
               }
             },
             itemBuilder: (context) => [
@@ -155,9 +213,15 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
 
         if (state is ProjectsLoaded) {
           final projects = state.filteredProjects;
+          final hasFilter = state.currentFilter != null;
+          final hasSearch = state.searchQuery?.isNotEmpty ?? false;
 
           if (projects.isEmpty) {
-            return _buildEmptyState(context, _filterStatus != null);
+            return _buildEmptyState(
+              context,
+              hasFilter: hasFilter,
+              hasSearch: hasSearch,
+            );
           }
 
           return _buildProjectsList(context, projects);
@@ -194,8 +258,23 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, bool hasFilter) {
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required bool hasFilter,
+    required bool hasSearch,
+  }) {
     final theme = Theme.of(context);
+    final hasCriteria = hasFilter || hasSearch;
+    final title = hasCriteria
+        ? 'No hay proyectos que coincidan'
+        : 'No hay proyectos aún';
+    final subtitle = hasCriteria
+        ? hasSearch && hasFilter
+              ? 'Modifica la búsqueda o el filtro de estado'
+              : hasSearch
+              ? 'Intenta con otros términos de búsqueda'
+              : 'Intenta con otro filtro o crea un nuevo proyecto'
+        : 'Crea tu primer proyecto usando el botón +';
 
     return Center(
       child: Padding(
@@ -204,15 +283,13 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              hasFilter ? Icons.filter_list_off : Icons.folder_open,
+              hasCriteria ? Icons.filter_list_off : Icons.folder_open,
               size: 80,
               color: theme.colorScheme.outline,
             ),
             const SizedBox(height: 24),
             Text(
-              hasFilter
-                  ? 'No hay proyectos con este filtro'
-                  : 'No hay proyectos aún',
+              title,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -220,29 +297,18 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              hasFilter
-                  ? 'Intenta con otro filtro o crea un nuevo proyecto'
-                  : 'Crea tu primer proyecto usando el botón +',
+              subtitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
-            if (hasFilter) ...[
+            if (hasCriteria) ...[
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () {
-                  setState(() => _filterStatus = null);
-                  final workspaceId = context
-                      .read<WorkspaceContext>()
-                      .activeWorkspace
-                      ?.id;
-                  if (workspaceId != null) {
-                    context.read<ProjectBloc>().add(LoadProjects(workspaceId));
-                  }
-                },
-                icon: const Icon(Icons.clear),
-                label: const Text('Limpiar Filtro'),
+                onPressed: _resetFilters,
+                icon: const Icon(Icons.clear_all),
+                label: const Text('Limpiar Búsqueda y Filtros'),
               ),
             ],
           ],
@@ -331,13 +397,15 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
 
   /// Mostrar diálogo de búsqueda
   void _showSearchDialog(BuildContext context) {
-    String searchQuery = '';
+    String searchQuery = _searchQuery;
+    final controller = TextEditingController(text: _searchQuery);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Buscar proyectos'),
         content: TextField(
+          controller: controller,
           autofocus: true,
           decoration: const InputDecoration(
             hintText: 'Nombre del proyecto...',
@@ -357,9 +425,7 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              if (searchQuery.isNotEmpty) {
-                context.read<ProjectBloc>().add(SearchProjects(searchQuery));
-              }
+              _applySearch(searchQuery);
             },
             child: const Text('Buscar'),
           ),

@@ -9,11 +9,12 @@ Este documento complementa el plan-todo.md y muestra el avance y orden recomenda
 1. ~~Conectar AllProjectsScreen con ProjectsBloc para datos reales~~ ✅
 2. ~~Navegar a /projects desde MyProjectsWidget~~ ✅
 3. ~~Navegar a project detail desde ProjectsScreen~~ ✅
-4. Implementar búsqueda y filtros cuando se integre con backend
-5. Obtener proyectos del BLoC
-6. Agregar soporte para nuevos campos en Project (startDate, endDate, status, managerId)
-7. Actualizar workspace_flow_test.dart con nuevos args
-8. Actualizar workspace_bloc_test.dart con nuevos args
+4. ~~Implementar búsqueda y filtros cuando se integre con backend~~ ✅
+5. ~~Obtener proyectos del BLoC~~ ✅
+6. ~~Agregar soporte para nuevos campos en Project (startDate, endDate, status, managerId)~~ ✅
+   - Backend (REST/GraphQL), Flutter UI/BLoC y pruebas unitarias adaptadas a startDate/endDate/status/managerId
+7. ~~Actualizar workspace_flow_test.dart con nuevos args~~ ✅
+8. ~~Actualizar workspace_bloc_test.dart con nuevos args~~ ✅
 
 ---
 
@@ -52,4 +53,4 @@ Este documento complementa el plan-todo.md y muestra el avance y orden recomenda
 
 ---
 
-> Última actualización: 2025-10-17
+> Última actualización: 2025-10-21

@@ -25,45 +25,85 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<Either<Failure, List<Project>>> getProjects({
     required int workspaceId,
+    ProjectStatus? status,
+    String? search,
   }) async {
+    final normalizedSearch = search?.trim();
+    final hasFilters =
+        status != null || (normalizedSearch?.isNotEmpty ?? false);
+
     try {
-      // 1. Verificar si el caché tiene datos válidos para este workspace
-      final hasValidCache = await _cacheDataSource.hasValidCache(workspaceId);
-      if (hasValidCache) {
-        final cachedProjects = await _cacheDataSource.getCachedProjects(
-          workspaceId: workspaceId,
-        );
-        return Right(cachedProjects);
-      }
-
-      // 2. Verificar conectividad
-      final isOnline = await _connectivityService.isConnected;
-
-      if (isOnline) {
-        // 3a. Online: obtener de API y actualizar caché
-        final projects = await _remoteDataSource.getProjects(workspaceId);
-
-        // Cachear los proyectos obtenidos
-        await _cacheDataSource.cacheProjects(
-          projects,
-          workspaceId: workspaceId,
-        );
-
-        return Right(projects);
-      } else {
-        // 3b. Offline: usar caché aunque esté expirado
-        final cachedProjects = await _cacheDataSource.getCachedProjects(
-          workspaceId: workspaceId,
-        );
-        if (cachedProjects.isNotEmpty) {
+      if (!hasFilters) {
+        // 1. Verificar si el caché tiene datos válidos para este workspace
+        final hasValidCache = await _cacheDataSource.hasValidCache(workspaceId);
+        if (hasValidCache) {
+          final cachedProjects = await _cacheDataSource.getCachedProjects(
+            workspaceId: workspaceId,
+          );
           return Right(cachedProjects);
         }
 
-        // No hay caché y no hay conexión
-        return const Left(
-          NetworkFailure('Sin conexión a internet y sin datos en caché'),
-        );
+        // 2. Verificar conectividad
+        final isOnline = await _connectivityService.isConnected;
+
+        if (isOnline) {
+          // 3a. Online: obtener de API y actualizar caché
+          final projects = await _remoteDataSource.getProjects(workspaceId);
+
+          // Cachear los proyectos obtenidos
+          await _cacheDataSource.cacheProjects(
+            projects,
+            workspaceId: workspaceId,
+          );
+
+          return Right(projects);
+        } else {
+          // 3b. Offline: usar caché aunque esté expirado
+          final cachedProjects = await _cacheDataSource.getCachedProjects(
+            workspaceId: workspaceId,
+          );
+          if (cachedProjects.isNotEmpty) {
+            return Right(cachedProjects);
+          }
+
+          // No hay caché y no hay conexión
+          return const Left(
+            NetworkFailure('Sin conexión a internet y sin datos en caché'),
+          );
+        }
       }
+
+      // Cuando hay filtros, preferir datos frescos del backend
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        final projects = await _remoteDataSource.getProjects(
+          workspaceId,
+          status: status,
+          search: normalizedSearch,
+        );
+        return Right(projects);
+      }
+
+      // Offline: intentar con caché aplicando filtros manualmente
+      final cachedProjects = await _cacheDataSource.getCachedProjects(
+        workspaceId: workspaceId,
+      );
+      if (cachedProjects.isNotEmpty) {
+        final filteredCached = _applyFilters(
+          cachedProjects,
+          status: status,
+          search: normalizedSearch,
+        );
+        if (filteredCached.isNotEmpty) {
+          return Right(filteredCached);
+        }
+      }
+
+      // No hay datos que coincidan en caché sin conexión
+      return const Left(
+        NetworkFailure('Sin conexión a internet y sin datos en caché'),
+      );
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));
     } on NetworkException catch (e) {
@@ -72,7 +112,14 @@ class ProjectRepositoryImpl implements ProjectRepository {
         workspaceId: workspaceId,
       );
       if (cachedProjects.isNotEmpty) {
-        return Right(cachedProjects);
+        final filteredCached = _applyFilters(
+          cachedProjects,
+          status: status,
+          search: normalizedSearch,
+        );
+        if (filteredCached.isNotEmpty || !hasFilters) {
+          return Right(hasFilters ? filteredCached : cachedProjects);
+        }
       }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
@@ -81,12 +128,42 @@ class ProjectRepositoryImpl implements ProjectRepository {
         workspaceId: workspaceId,
       );
       if (cachedProjects.isNotEmpty) {
-        return Right(cachedProjects);
+        final filteredCached = _applyFilters(
+          cachedProjects,
+          status: status,
+          search: normalizedSearch,
+        );
+        if (filteredCached.isNotEmpty || !hasFilters) {
+          return Right(hasFilters ? filteredCached : cachedProjects);
+        }
       }
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure('Error inesperado al obtener proyectos: $e'));
     }
+  }
+
+  List<Project> _applyFilters(
+    List<Project> projects, {
+    ProjectStatus? status,
+    String? search,
+  }) {
+    final query = search?.toLowerCase();
+
+    return projects.where((project) {
+      final matchesStatus = status == null || project.status == status;
+      if (!matchesStatus) return false;
+
+      if (query != null && query.isNotEmpty) {
+        final nameMatches = project.name.toLowerCase().contains(query);
+        final descriptionMatches = project.description.toLowerCase().contains(
+          query,
+        );
+        return nameMatches || descriptionMatches;
+      }
+
+      return true;
+    }).toList();
   }
 
   @override

@@ -39,7 +39,11 @@ export const projectResolvers = {
       return project;
     },
 
-    projects: async (_, { page = 1, limit = 10, workspaceId, search }, { user }) => {
+    projects: async (
+      _,
+      { page = 1, limit = 10, workspaceId, search, status },
+      { user }
+    ) => {
       if (!user) {
         throw new GraphQLError("Not authenticated", {
           extensions: { code: "UNAUTHENTICATED" },
@@ -60,6 +64,10 @@ export const projectResolvers = {
           { name: { contains: search, mode: "insensitive" } },
           { description: { contains: search, mode: "insensitive" } },
         ];
+      }
+
+      if (status) {
+        where.status = status;
       }
 
       // Only show projects where user is a member (unless admin)
@@ -89,7 +97,10 @@ export const projectResolvers = {
         pageInfo: {
           hasNextPage: skip + limit < totalCount,
           hasPreviousPage: page > 1,
-          startCursor: projects.length > 0 ? Buffer.from(`${skip}`).toString("base64") : null,
+          startCursor:
+            projects.length > 0
+              ? Buffer.from(`${skip}`).toString("base64")
+              : null,
           endCursor:
             projects.length > 0
               ? Buffer.from(`${skip + projects.length - 1}`).toString("base64")
@@ -111,12 +122,20 @@ export const projectResolvers = {
       });
 
       const totalTasks = tasks.length;
-      const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
-      const inProgressTasks = tasks.filter((t) => t.status === "IN_PROGRESS").length;
+      const completedTasks = tasks.filter(
+        (t) => t.status === "COMPLETED"
+      ).length;
+      const inProgressTasks = tasks.filter(
+        (t) => t.status === "IN_PROGRESS"
+      ).length;
       const plannedTasks = tasks.filter((t) => t.status === "PLANNED").length;
-      const totalEstimatedHours = tasks.reduce((sum, t) => sum + t.estimatedHours, 0);
+      const totalEstimatedHours = tasks.reduce(
+        (sum, t) => sum + t.estimatedHours,
+        0
+      );
       const totalActualHours = tasks.reduce((sum, t) => sum + t.actualHours, 0);
-      const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      const completionPercentage =
+        totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
       return {
         totalTasks,
@@ -138,7 +157,43 @@ export const projectResolvers = {
         });
       }
 
-      const { name, description, workspaceId } = input;
+      const {
+        name,
+        description,
+        workspaceId,
+        status = "PLANNED",
+        startDate,
+        endDate,
+        managerId,
+        memberIds = [],
+      } = input;
+
+      if (!startDate || !endDate) {
+        throw new GraphQLError("Start and end dates are required", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      const parsedStartDate = new Date(startDate);
+      const parsedEndDate = new Date(endDate);
+
+      if (Number.isNaN(parsedStartDate.getTime())) {
+        throw new GraphQLError("Invalid start date", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      if (Number.isNaN(parsedEndDate.getTime())) {
+        throw new GraphQLError("Invalid end date", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      if (parsedEndDate <= parsedStartDate) {
+        throw new GraphQLError("End date must be after start date", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
 
       // Check if workspace exists and user has access
       const workspace = await prisma.workspace.findUnique({
@@ -161,10 +216,38 @@ export const projectResolvers = {
         },
       });
 
-      if (!workspaceMember && workspace.ownerId !== user.userId && user.role !== "ADMIN") {
-        throw new GraphQLError("Not authorized to create projects in this workspace", {
-          extensions: { code: "FORBIDDEN" },
+      if (
+        !workspaceMember &&
+        workspace.ownerId !== user.userId &&
+        user.role !== "ADMIN"
+      ) {
+        throw new GraphQLError(
+          "Not authorized to create projects in this workspace",
+          {
+            extensions: { code: "FORBIDDEN" },
+          }
+        );
+      }
+
+      const effectiveManagerId = managerId ?? user.userId;
+      const uniqueMemberIds = Array.from(
+        new Set([user.userId, effectiveManagerId, ...memberIds])
+      );
+
+      if (uniqueMemberIds.length > 0) {
+        const users = await prisma.user.findMany({
+          where: {
+            id: {
+              in: uniqueMemberIds,
+            },
+          },
         });
+
+        if (users.length !== uniqueMemberIds.length) {
+          throw new GraphQLError("One or more users not found", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
       }
 
       // Create project
@@ -173,10 +256,15 @@ export const projectResolvers = {
           name,
           description,
           workspaceId,
+          status,
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
+          managerId: effectiveManagerId,
           members: {
-            create: {
-              userId: user.userId,
-            },
+            create: uniqueMemberIds.map((memberId) => ({
+              userId: memberId,
+              role: memberId === user.userId ? "OWNER" : "MEMBER",
+            })),
           },
         },
       });
@@ -207,9 +295,60 @@ export const projectResolvers = {
         });
       }
 
+      const existingProject = await prisma.project.findUnique({
+        where: { id: parseInt(id) },
+        select: { startDate: true, endDate: true },
+      });
+
+      if (!existingProject) {
+        throw new GraphQLError("Project not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
       const updateData = {};
       if (input.name !== undefined) updateData.name = input.name;
-      if (input.description !== undefined) updateData.description = input.description;
+      if (input.description !== undefined)
+        updateData.description = input.description;
+      if (input.status !== undefined) updateData.status = input.status;
+      if (input.startDate !== undefined) {
+        const parsedStartDate = new Date(input.startDate);
+        if (Number.isNaN(parsedStartDate.getTime())) {
+          throw new GraphQLError("Invalid start date", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        updateData.startDate = parsedStartDate;
+      }
+      if (input.endDate !== undefined) {
+        const parsedEndDate = new Date(input.endDate);
+        if (Number.isNaN(parsedEndDate.getTime())) {
+          throw new GraphQLError("Invalid end date", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+        updateData.endDate = parsedEndDate;
+      }
+      if (input.managerId !== undefined) {
+        updateData.managerId = input.managerId;
+      }
+      if (input.progress !== undefined) {
+        updateData.progress = input.progress;
+      }
+
+      const effectiveStartDate =
+        updateData.startDate ?? existingProject.startDate;
+      const effectiveEndDate = updateData.endDate ?? existingProject.endDate;
+
+      if (
+        effectiveStartDate &&
+        effectiveEndDate &&
+        effectiveEndDate <= effectiveStartDate
+      ) {
+        throw new GraphQLError("End date must be after start date", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
 
       const project = await prisma.project.update({
         where: { id: parseInt(id) },
@@ -267,9 +406,12 @@ export const projectResolvers = {
       });
 
       if (!member && user.role !== "ADMIN") {
-        throw new GraphQLError("Not authorized to add members to this project", {
-          extensions: { code: "FORBIDDEN" },
-        });
+        throw new GraphQLError(
+          "Not authorized to add members to this project",
+          {
+            extensions: { code: "FORBIDDEN" },
+          }
+        );
       }
 
       const newMember = await prisma.projectMember.create({
@@ -300,9 +442,12 @@ export const projectResolvers = {
       });
 
       if (!member && user.role !== "ADMIN") {
-        throw new GraphQLError("Not authorized to remove members from this project", {
-          extensions: { code: "FORBIDDEN" },
-        });
+        throw new GraphQLError(
+          "Not authorized to remove members from this project",
+          {
+            extensions: { code: "FORBIDDEN" },
+          }
+        );
       }
 
       await prisma.projectMember.delete({
@@ -319,6 +464,15 @@ export const projectResolvers = {
   },
 
   Project: {
+    manager: async (parent) => {
+      if (!parent.managerId) {
+        return null;
+      }
+
+      return prisma.user.findUnique({
+        where: { id: parent.managerId },
+      });
+    },
     workspace: async (parent) => {
       return prisma.workspace.findUnique({
         where: { id: parent.workspaceId },
@@ -349,12 +503,20 @@ export const projectResolvers = {
       });
 
       const totalTasks = tasks.length;
-      const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
-      const inProgressTasks = tasks.filter((t) => t.status === "IN_PROGRESS").length;
+      const completedTasks = tasks.filter(
+        (t) => t.status === "COMPLETED"
+      ).length;
+      const inProgressTasks = tasks.filter(
+        (t) => t.status === "IN_PROGRESS"
+      ).length;
       const plannedTasks = tasks.filter((t) => t.status === "PLANNED").length;
-      const totalEstimatedHours = tasks.reduce((sum, t) => sum + t.estimatedHours, 0);
+      const totalEstimatedHours = tasks.reduce(
+        (sum, t) => sum + t.estimatedHours,
+        0
+      );
       const totalActualHours = tasks.reduce((sum, t) => sum + t.actualHours, 0);
-      const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      const completionPercentage =
+        totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
       return {
         totalTasks,

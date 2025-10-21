@@ -222,16 +222,27 @@ describe("GraphQL API Tests", () => {
     });
 
     it("should create a project", async () => {
+      const startDate = new Date().toISOString();
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
       const mutation = `
         mutation {
           createProject(input: {
             name: "Test Project"
             description: "A test project"
             workspaceId: ${workspaceId}
+            status: ACTIVE
+            startDate: "${startDate}"
+            endDate: "${endDate}"
           }) {
             id
             name
             description
+            status
+            startDate
+            endDate
+            managerId
           }
         }
       `;
@@ -245,6 +256,14 @@ describe("GraphQL API Tests", () => {
       expect(res.body.data).toBeDefined();
       expect(res.body.data.createProject).toBeDefined();
       expect(res.body.data.createProject.name).toBe("Test Project");
+      expect(res.body.data.createProject.status).toBe("ACTIVE");
+      expect(
+        new Date(res.body.data.createProject.startDate).toISOString()
+      ).toBe(new Date(startDate).toISOString());
+      expect(new Date(res.body.data.createProject.endDate).toISOString()).toBe(
+        new Date(endDate).toISOString()
+      );
+      expect(res.body.data.createProject.managerId).toBe(parseInt(userId, 10));
 
       projectId = res.body.data.createProject.id;
     });
@@ -258,6 +277,9 @@ describe("GraphQL API Tests", () => {
                 id
                 name
                 description
+                status
+                startDate
+                endDate
               }
             }
             pageInfo {

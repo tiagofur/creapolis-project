@@ -11,12 +11,19 @@ class ProjectController {
    * GET /api/projects
    */
   list = asyncHandler(async (req, res) => {
-    const { page, limit, search } = req.query;
+    const { page, limit, search, workspaceId, status } = req.query;
+
+    const normalizedStatus = status ? status.toUpperCase() : undefined;
+    const parsedWorkspaceId = workspaceId
+      ? parseInt(workspaceId, 10)
+      : undefined;
 
     const result = await projectService.getUserProjects(req.user.id, {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 10,
       search,
+      workspaceId: parsedWorkspaceId,
+      status: normalizedStatus,
     });
 
     return successResponse(res, result, "Projects retrieved successfully");

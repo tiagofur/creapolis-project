@@ -152,4 +152,16 @@ export const listProjectsValidation = [
     .trim()
     .isLength({ max: 100 })
     .withMessage("Search query must not exceed 100 characters"),
+
+  query("workspaceId")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Workspace ID must be a positive integer"),
+
+  query("status")
+    .optional()
+    .isIn(["PLANNED", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"])
+    .withMessage(
+      "Status must be one of: PLANNED, ACTIVE, PAUSED, COMPLETED, CANCELLED"
+    ),
 ];
