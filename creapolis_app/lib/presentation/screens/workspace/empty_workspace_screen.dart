@@ -18,61 +18,64 @@ class EmptyWorkspaceScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 600;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
             padding: EdgeInsets.all(isSmallScreen ? 24 : 48),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Animación/Ilustración
-                  _buildIllustration(context),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Animación/Ilustración
+                    _buildIllustration(context),
 
-                  SizedBox(height: isSmallScreen ? 32 : 48),
+                    SizedBox(height: isSmallScreen ? 32 : 48),
 
-                  // Título principal
-                  Text(
-                    '¡Bienvenido a Creapolis!',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                    // Título principal
+                    Text(
+                      '¡Bienvenido a Creapolis!',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Subtítulo
-                  Text(
-                    'Comienza tu viaje creando tu primer workspace',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.grey.shade600,
+                    // Subtítulo
+                    Text(
+                      'Comienza tu viaje creando tu primer workspace',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
 
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
-                  // Features Cards
-                  _buildFeatureCards(context, isSmallScreen),
+                    // Features Cards
+                    _buildFeatureCards(context, isSmallScreen),
 
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
-                  // Botones de acción
-                  _buildActionButtons(context, isSmallScreen),
+                    // Botones de acción
+                    _buildActionButtons(context, isSmallScreen),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Texto de ayuda
-                  _buildHelpText(context),
-                ],
+                    // Texto de ayuda
+                    _buildHelpText(context),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

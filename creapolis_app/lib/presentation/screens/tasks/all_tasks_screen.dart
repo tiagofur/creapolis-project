@@ -59,6 +59,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   bool _isRefreshing = false;
   String? _errorMessage;
   int? _activeWorkspaceId;
+  bool _hasLoadedWorkspaceData = false;
 
   @override
   void initState() {
@@ -75,6 +76,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
     if (workspaceId != _activeWorkspaceId) {
       _activeWorkspaceId = workspaceId;
+      _hasLoadedWorkspaceData = false;
 
       if (workspaceId != null) {
         _loadTasks();
@@ -84,10 +86,10 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           _projectById = {};
           _errorMessage = 'Selecciona un workspace para ver las tareas.';
           _isLoading = false;
+          _hasLoadedWorkspaceData = true;
         });
       }
-    } else if (!_isLoading && _allTasks.isEmpty && workspaceId != null) {
-      // Cargar datos si no se han cargado todavía
+    } else if (!_hasLoadedWorkspaceData && !_isLoading && workspaceId != null) {
       _loadTasks();
     }
   }
@@ -297,6 +299,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           _errorMessage = failure.message;
           _isLoading = false;
           _isRefreshing = false;
+          _hasLoadedWorkspaceData = true;
         });
       },
       (data) {
@@ -308,6 +311,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           _errorMessage = null;
           _isLoading = false;
           _isRefreshing = false;
+          _hasLoadedWorkspaceData = true;
         });
       },
     );
@@ -323,10 +327,50 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
   Widget _buildContent(BuildContext context, {required bool myTasksOnly}) {
     final authState = context.watch<AuthBloc>().state;
+    final bool isAuthLoading = authState is AuthLoading;
     final currentUserId = authState is AuthAuthenticated
         ? authState.user.id
         : null;
     final hasWorkspace = _activeWorkspaceId != null;
+
+    if (!hasWorkspace) {
+      return _buildMessageState(
+        context,
+        icon: Icons.workspaces_outline,
+        title: 'Selecciona un workspace',
+        message:
+            'Elige un workspace desde el selector superior para ver las tareas disponibles.',
+      );
+    }
+
+    if (myTasksOnly) {
+      if (isAuthLoading) {
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 180),
+            Center(child: CircularProgressIndicator()),
+            SizedBox(height: 180),
+          ],
+        );
+      }
+
+      if (authState is AuthUnauthenticated || authState is AuthError) {
+        return _buildMessageState(
+          context,
+          icon: Icons.person_off_outlined,
+          title: 'Inicia sesión para ver tus tareas',
+          message:
+              'Necesitas iniciar sesión para ver las tareas asignadas a ti.',
+          actions: [
+            FilledButton(
+              onPressed: () => context.go(RoutePaths.login),
+              child: const Text('Ir al login'),
+            ),
+          ],
+        );
+      }
+    }
 
     if (_isLoading && !_isRefreshing) {
       return ListView(
@@ -336,16 +380,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           Center(child: CircularProgressIndicator()),
           SizedBox(height: 180),
         ],
-      );
-    }
-
-    if (!hasWorkspace) {
-      return _buildMessageState(
-        context,
-        icon: Icons.workspaces_outline,
-        title: 'Selecciona un workspace',
-        message:
-            'Elige un workspace desde el selector superior para ver las tareas disponibles.',
       );
     }
 
@@ -361,15 +395,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             child: const Text('Reintentar'),
           ),
         ],
-      );
-    }
-
-    if (myTasksOnly && currentUserId == null) {
-      return _buildMessageState(
-        context,
-        icon: Icons.person_off_outlined,
-        title: 'Inicia sesión para ver tus tareas',
-        message: 'Necesitas iniciar sesión para ver las tareas asignadas a ti.',
       );
     }
 

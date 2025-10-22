@@ -11,6 +11,7 @@ import 'package:creapolis_app/features/projects/presentation/blocs/project_state
 import 'package:creapolis_app/domain/entities/project.dart';
 import 'package:creapolis_app/features/projects/presentation/widgets/project_card.dart';
 import 'package:creapolis_app/presentation/widgets/project/create_project_bottom_sheet.dart';
+import 'package:creapolis_app/presentation/widgets/feedback/feedback_widgets.dart';
 import 'package:creapolis_app/routes/app_router.dart';
 
 /// Pantalla que muestra todos los proyectos del workspace activo.
@@ -34,6 +35,10 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
   ProjectStatus? _filterStatus;
   int? _lastLoadedWorkspaceId;
   String _searchQuery = '';
+  List<Project> _cachedProjects = [];
+  bool _hasLoadedProjects = false;
+  ProjectStatus? _lastAppliedFilter;
+  String? _lastAppliedSearch;
 
   @override
   void initState() {
@@ -186,13 +191,6 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         onRefresh: _refreshProjects,
         child: _buildContent(context, activeWorkspace),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: activeWorkspace != null
-            ? () => _showCreateProjectSheet(context)
-            : null,
-        icon: const Icon(Icons.add),
-        label: const Text('Crear Proyecto'),
-      ),
     );
   }
 
@@ -201,34 +199,89 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
       return _buildNoWorkspaceState(context);
     }
 
-    return BlocBuilder<ProjectBloc, ProjectState>(
+    return BlocConsumer<ProjectBloc, ProjectState>(
+      listener: (context, state) {
+        if (state is ProjectOperationSuccess) {
+          context.showSuccess(state.message);
+        } else if (state is ProjectError) {
+          context.showError(state.message);
+        }
+      },
       builder: (context, state) {
-        if (state is ProjectLoading) {
-          return const Center(child: CircularProgressIndicator());
+        if (state is ProjectsLoaded) {
+          _cachedProjects = List<Project>.from(state.filteredProjects);
+          _lastAppliedFilter = state.currentFilter;
+          _lastAppliedSearch = state.searchQuery;
+          _hasLoadedProjects = true;
+        } else if (state is ProjectOperationSuccess) {
+          final project = state.project;
+          if (project != null) {
+            final existingIndex = _cachedProjects.indexWhere(
+              (p) => p.id == project.id,
+            );
+            if (existingIndex >= 0) {
+              _cachedProjects[existingIndex] = project;
+            } else {
+              _cachedProjects = [project, ..._cachedProjects];
+            }
+          }
+        } else if (state is ProjectOperationInProgress) {
+          _hasLoadedProjects = _hasLoadedProjects || _cachedProjects.isNotEmpty;
         }
 
-        if (state is ProjectError) {
+        final bool isLoading =
+            state is ProjectLoading || state is ProjectOperationInProgress;
+
+        final List<Project> projectsToShow = state is ProjectsLoaded
+            ? state.filteredProjects
+            : List<Project>.from(_cachedProjects);
+
+        final bool hasFilter = state is ProjectsLoaded
+            ? state.currentFilter != null
+            : _lastAppliedFilter != null;
+        final bool hasSearch = state is ProjectsLoaded
+            ? (state.searchQuery?.isNotEmpty ?? false)
+            : (_lastAppliedSearch?.isNotEmpty ?? false);
+
+        if (!_hasLoadedProjects && state is ProjectError) {
           return _buildErrorState(context, state.message);
         }
 
-        if (state is ProjectsLoaded) {
-          final projects = state.filteredProjects;
-          final hasFilter = state.currentFilter != null;
-          final hasSearch = state.searchQuery?.isNotEmpty ?? false;
-
-          if (projects.isEmpty) {
-            return _buildEmptyState(
-              context,
-              hasFilter: hasFilter,
-              hasSearch: hasSearch,
-            );
-          }
-
-          return _buildProjectsList(context, projects);
+        if (!_hasLoadedProjects && isLoading) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        // Estado inicial
-        return const SizedBox.shrink();
+        if (projectsToShow.isEmpty) {
+          return Stack(
+            children: [
+              _buildEmptyState(
+                context,
+                hasFilter: hasFilter,
+                hasSearch: hasSearch,
+              ),
+              if (isLoading)
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+            ],
+          );
+        }
+
+        return Stack(
+          children: [
+            _buildProjectsList(context, projectsToShow),
+            if (isLoading)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+          ],
+        );
       },
     );
   }
@@ -456,24 +509,19 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     }
   }
 
-  void _showCreateProjectSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: const CreateProjectBottomSheet(),
-      ),
-    );
-  }
-
   void _showEditProjectSheet(BuildContext context, Project project) {
+    final projectBloc = context.read<ProjectBloc>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: CreateProjectBottomSheet(project: project),
+      builder: (ctx) => BlocProvider.value(
+        value: projectBloc,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: CreateProjectBottomSheet(project: project),
+        ),
       ),
     );
   }

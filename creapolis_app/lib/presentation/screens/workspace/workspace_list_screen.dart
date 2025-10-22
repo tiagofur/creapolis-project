@@ -16,6 +16,7 @@ import '../../widgets/workspace/workspace_search_bar.dart';
 import '../../widgets/error/friendly_error_widget.dart';
 import '../../widgets/feedback/feedback_widgets.dart';
 import '../../widgets/common/connectivity_banner.dart';
+import '../../widgets/navigation/quick_create_speed_dial.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
 import 'workspace_create_screen.dart';
@@ -35,12 +36,16 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
   int? _activatingWorkspaceId;
   List<Workspace> _filteredWorkspaces = [];
   bool _isFiltering = false;
+  int _pendingInvitationCount = 0;
 
   @override
   void initState() {
     super.initState();
     // Cargar workspaces al iniciar
-    context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+    });
   }
 
   @override
@@ -56,7 +61,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
               BlocBuilder<WorkspaceBloc, WorkspaceState>(
                 builder: (context, state) {
                   // Obtener número de invitaciones pendientes del estado
-                  int invitationCount = 0;
+                  int invitationCount = _pendingInvitationCount;
                   if (state is WorkspaceLoaded &&
                       state.pendingInvitations != null) {
                     invitationCount = state.pendingInvitations!.length;
@@ -106,13 +111,79 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                 setState(() {
                   _activatingWorkspaceId = null;
                 });
+              } else if (state is WorkspaceLoaded) {
+                final newInvitationCount =
+                    state.pendingInvitations?.length ?? 0;
+                if (newInvitationCount != _pendingInvitationCount ||
+                    _activatingWorkspaceId != null) {
+                  setState(() {
+                    _pendingInvitationCount = newInvitationCount;
+                    _activatingWorkspaceId = null;
+                  });
+                }
               }
             },
             builder: (context, state) {
               if (state is WorkspaceLoading) {
-                return const SkeletonList(
-                  type: SkeletonType.workspace,
-                  itemCount: 5,
+                final cachedWorkspaces = workspaceContext.userWorkspaces;
+                if (cachedWorkspaces.isEmpty) {
+                  return const SkeletonList(
+                    type: SkeletonType.workspace,
+                    itemCount: 5,
+                  );
+                }
+
+                return Stack(
+                  children: [
+                    _buildWorkspaceContent(
+                      context,
+                      workspaceContext,
+                      cachedWorkspaces,
+                      isLoading: true,
+                      isFromCache: true,
+                    ),
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
+                  ],
+                );
+              }
+
+              if (state is WorkspaceOperationInProgress) {
+                final workspaces = state.workspaces;
+                if (workspaces.isEmpty) {
+                  return const SkeletonList(
+                    type: SkeletonType.workspace,
+                    itemCount: 5,
+                  );
+                }
+
+                return Stack(
+                  children: [
+                    _buildWorkspaceContent(
+                      context,
+                      workspaceContext,
+                      workspaces,
+                      isLoading: true,
+                    ),
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
+                  ],
+                );
+              }
+
+              if (state is WorkspaceOperationSuccess) {
+                return _buildWorkspaceContent(
+                  context,
+                  workspaceContext,
+                  state.workspaces,
                 );
               }
 
@@ -124,120 +195,21 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
               }
 
               if (state is WorkspaceLoaded) {
-                final workspaces = state.workspaces;
+                return _buildWorkspaceContent(
+                  context,
+                  workspaceContext,
+                  state.workspaces,
+                  isFromCache: state.isFromCache,
+                  lastSync: state.lastSync,
+                );
+              }
 
-                if (workspaces.isEmpty) {
-                  return _buildEmptyState(context);
-                }
-
-                // Usar lista filtrada si existe, sino la original
-                final displayWorkspaces = _isFiltering
-                    ? _filteredWorkspaces
-                    : workspaces;
-
-                // Usar WorkspaceContext en lugar del state para determinar el workspace activo
-                final hasActiveWorkspace =
-                    workspaceContext.activeWorkspace != null;
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<WorkspaceBloc>().add(const LoadWorkspaces());
-                    // Esperar un poco para que se complete el refresh
-                    await Future.delayed(const Duration(milliseconds: 500));
-                  },
-                  child: Column(
-                    children: [
-                      // Banner de conectividad/caché
-                      ConnectivityBanner(
-                        isFromCache: state.isFromCache,
-                        lastSync: state.lastSync,
-                        onRefresh: () {
-                          context.read<WorkspaceBloc>().add(
-                            const LoadWorkspaces(),
-                          );
-                        },
-                        isLoading:
-                            false, // Se actualiza con el estado de loading
-                      ),
-                      // Barra de búsqueda y filtros
-                      WorkspaceSearchBar(
-                        workspaces: workspaces,
-                        onFiltered: (filtered) {
-                          setState(() {
-                            _filteredWorkspaces = filtered;
-                            _isFiltering = true;
-                          });
-                        },
-                        onClear: () {
-                          setState(() {
-                            _isFiltering = false;
-                            _filteredWorkspaces = [];
-                          });
-                        },
-                      ),
-                      // Mostrar mensaje si no hay workspace activo
-                      if (!hasActiveWorkspace)
-                        _buildSelectWorkspaceHeader(context),
-                      // Lista de workspaces
-                      if (displayWorkspaces.isEmpty && _isFiltering)
-                        Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search_off,
-                                  size: 80,
-                                  color: Colors.grey.shade300,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No se encontraron workspaces',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(color: Colors.grey.shade600),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Intenta con otros términos de búsqueda',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(color: Colors.grey.shade500),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        Expanded(
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: displayWorkspaces.length,
-                            itemBuilder: (context, index) {
-                              final workspace = displayWorkspaces[index];
-                              // Usar WorkspaceContext para verificar si es activo
-                              final isActive =
-                                  workspaceContext.activeWorkspace?.id ==
-                                  workspace.id;
-
-                              return StaggeredListAnimation(
-                                index: index,
-                                delay: const Duration(milliseconds: 50),
-                                duration: const Duration(milliseconds: 400),
-                                child: WorkspaceCard(
-                                  workspace: workspace,
-                                  isActive: isActive,
-                                  isActivating:
-                                      _activatingWorkspaceId == workspace.id,
-                                  onTap: () =>
-                                      _navigateToWorkspaceDetail(workspace),
-                                  onSetActive: () =>
-                                      _setActiveWorkspace(workspace.id),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
+              final fallbackWorkspaces = workspaceContext.userWorkspaces;
+              if (fallbackWorkspaces.isNotEmpty) {
+                return _buildWorkspaceContent(
+                  context,
+                  workspaceContext,
+                  fallbackWorkspaces,
                 );
               }
 
@@ -246,10 +218,12 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
           ),
           floatingActionButton: BlocBuilder<WorkspaceBloc, WorkspaceState>(
             builder: (context, state) {
-              // Si hay workspaces pero ninguno activo, cambiar el botón
-              if (state is WorkspaceLoaded &&
+              final bool shouldPromptSelection =
+                  state is WorkspaceLoaded &&
                   state.workspaces.isNotEmpty &&
-                  workspaceContext.activeWorkspace == null) {
+                  workspaceContext.activeWorkspace == null;
+
+              if (shouldPromptSelection) {
                 return FloatingActionButton.extended(
                   onPressed: () => _scrollToWorkspaces(),
                   icon: const Icon(Icons.touch_app),
@@ -258,16 +232,124 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                 );
               }
 
-              // Botón normal para crear workspace
-              return FloatingActionButton.extended(
-                onPressed: () => _navigateToCreateWorkspace(),
-                icon: const Icon(Icons.add),
-                label: const Text('Nuevo Workspace'),
+              return QuickCreateSpeedDial(
+                onCreateWorkspace: _navigateToCreateWorkspace,
+                showWorkspaceOption: true,
               );
             },
           ),
         );
       },
+    );
+  }
+
+  Widget _buildWorkspaceContent(
+    BuildContext context,
+    WorkspaceContext workspaceContext,
+    List<Workspace> workspaces, {
+    bool isLoading = false,
+    bool isFromCache = false,
+    DateTime? lastSync,
+  }) {
+    if (workspaces.isEmpty) {
+      return _buildEmptyState(context);
+    }
+
+    final displayWorkspaces = _isFiltering ? _filteredWorkspaces : workspaces;
+    final hasActiveWorkspace = workspaceContext.activeWorkspace != null;
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: Column(
+        children: [
+          // Banner de conectividad/caché
+          ConnectivityBanner(
+            isFromCache: isFromCache,
+            lastSync: lastSync,
+            onRefresh: () {
+              context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+            },
+            isLoading: isLoading,
+          ),
+          // Barra de búsqueda y filtros
+          WorkspaceSearchBar(
+            workspaces: workspaces,
+            onFiltered: (filtered) {
+              setState(() {
+                _filteredWorkspaces = filtered;
+                _isFiltering = true;
+              });
+            },
+            onClear: () {
+              setState(() {
+                _isFiltering = false;
+                _filteredWorkspaces = [];
+              });
+            },
+          ),
+          // Mostrar mensaje si no hay workspace activo
+          if (!hasActiveWorkspace) _buildSelectWorkspaceHeader(context),
+          // Lista de workspaces
+          if (displayWorkspaces.isEmpty && _isFiltering)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 80,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No se encontraron workspaces',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Intenta con otros términos de búsqueda',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: displayWorkspaces.length,
+                itemBuilder: (context, index) {
+                  final workspace = displayWorkspaces[index];
+                  // Usar WorkspaceContext para verificar si es activo
+                  final isActive =
+                      workspaceContext.activeWorkspace?.id == workspace.id;
+
+                  return StaggeredListAnimation(
+                    index: index,
+                    delay: const Duration(milliseconds: 50),
+                    duration: const Duration(milliseconds: 400),
+                    child: WorkspaceCard(
+                      workspace: workspace,
+                      isActive: isActive,
+                      isActivating: _activatingWorkspaceId == workspace.id,
+                      onTap: () => _navigateToWorkspaceDetail(workspace),
+                      onSetActive: () => _setActiveWorkspace(workspace.id),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 

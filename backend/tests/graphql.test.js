@@ -1,19 +1,35 @@
 import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
-import app from "../src/server.js";
+import app, { serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
 
 describe("GraphQL API Tests", () => {
   let authToken;
   let userId;
+  let workspaceId;
 
   beforeAll(async () => {
+    await serverReady;
     // Clean database before tests
+    await prisma.timeLog.deleteMany({});
+    await prisma.task.deleteMany({});
+    await prisma.projectMember.deleteMany({});
+    await prisma.project.deleteMany({});
+    await prisma.workspaceMember.deleteMany({});
+    await prisma.workspaceInvitation.deleteMany({});
+    await prisma.workspace.deleteMany({});
     await prisma.user.deleteMany({});
   });
 
   afterAll(async () => {
     // Clean up and disconnect
+    await prisma.timeLog.deleteMany({});
+    await prisma.task.deleteMany({});
+    await prisma.projectMember.deleteMany({});
+    await prisma.project.deleteMany({});
+    await prisma.workspaceMember.deleteMany({});
+    await prisma.workspaceInvitation.deleteMany({});
+    await prisma.workspace.deleteMany({});
     await prisma.user.deleteMany({});
     await prisma.$disconnect();
   });
@@ -49,7 +65,7 @@ describe("GraphQL API Tests", () => {
       expect(res.body.data.register.token).toBeDefined();
 
       authToken = res.body.data.register.token;
-      userId = res.body.data.register.user.id;
+      userId = parseInt(res.body.data.register.user.id, 10);
     });
 
     it("should login a user via GraphQL", async () => {
@@ -119,7 +135,7 @@ describe("GraphQL API Tests", () => {
         .expect(200);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].extensions.code).toBe("UNAUTHENTICATED");
+      expect(res.body.errors[0].code).toBe("UNAUTHENTICATED");
     });
 
     it("should update user profile", async () => {
@@ -144,8 +160,6 @@ describe("GraphQL API Tests", () => {
   });
 
   describe("Workspaces", () => {
-    let workspaceId;
-
     it("should create a workspace", async () => {
       const mutation = `
         mutation {
@@ -171,7 +185,7 @@ describe("GraphQL API Tests", () => {
       expect(res.body.data.createWorkspace).toBeDefined();
       expect(res.body.data.createWorkspace.name).toBe("Test Workspace");
 
-      workspaceId = res.body.data.createWorkspace.id;
+      workspaceId = parseInt(res.body.data.createWorkspace.id, 10);
     });
 
     it("should list workspaces", async () => {
@@ -198,7 +212,6 @@ describe("GraphQL API Tests", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .send({ query })
         .expect(200);
-
       expect(res.body.data).toBeDefined();
       expect(res.body.data.workspaces).toBeDefined();
       expect(res.body.data.workspaces.edges.length).toBeGreaterThan(0);
@@ -206,19 +219,30 @@ describe("GraphQL API Tests", () => {
   });
 
   describe("Projects", () => {
-    let workspaceId;
     let projectId;
 
     beforeAll(async () => {
-      // Create a workspace for project tests
-      const workspace = await prisma.workspace.create({
-        data: {
-          name: "Project Test Workspace",
-          ownerId: parseInt(userId),
-          type: "TEAM",
-        },
-      });
-      workspaceId = workspace.id;
+      if (!workspaceId) {
+        const mutation = `
+          mutation {
+            createWorkspace(input: {
+              name: "Project Test Workspace"
+              description: "Workspace created for GraphQL project tests"
+              type: TEAM
+            }) {
+              id
+            }
+          }
+        `;
+
+        const res = await request(app)
+          .post("/graphql")
+          .set("Authorization", `Bearer ${authToken}`)
+          .send({ query: mutation })
+          .expect(200);
+
+        workspaceId = parseInt(res.body.data.createWorkspace.id, 10);
+      }
     });
 
     it("should create a project", async () => {
@@ -263,9 +287,9 @@ describe("GraphQL API Tests", () => {
       expect(new Date(res.body.data.createProject.endDate).toISOString()).toBe(
         new Date(endDate).toISOString()
       );
-      expect(res.body.data.createProject.managerId).toBe(parseInt(userId, 10));
+      expect(res.body.data.createProject.managerId).toBe(userId);
 
-      projectId = res.body.data.createProject.id;
+      projectId = parseInt(res.body.data.createProject.id, 10);
     });
 
     it("should list projects", async () => {
@@ -324,31 +348,58 @@ describe("GraphQL API Tests", () => {
   });
 
   describe("Tasks", () => {
+    let taskWorkspaceId;
     let projectId;
     let taskId;
 
     beforeAll(async () => {
-      // Create a workspace and project for task tests
-      const workspace = await prisma.workspace.create({
-        data: {
-          name: "Task Test Workspace",
-          ownerId: parseInt(userId),
-          type: "TEAM",
-        },
-      });
+      const workspaceMutation = `
+        mutation {
+          createWorkspace(input: {
+            name: "Task Test Workspace"
+            description: "Workspace for GraphQL task tests"
+            type: TEAM
+          }) {
+            id
+          }
+        }
+      `;
 
-      const project = await prisma.project.create({
-        data: {
-          name: "Task Test Project",
-          workspaceId: workspace.id,
-          members: {
-            create: {
-              userId: parseInt(userId),
-            },
-          },
-        },
-      });
-      projectId = project.id;
+      const workspaceRes = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ query: workspaceMutation })
+        .expect(200);
+
+      taskWorkspaceId = parseInt(workspaceRes.body.data.createWorkspace.id, 10);
+
+      const startDate = new Date().toISOString();
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const projectMutation = `
+        mutation {
+          createProject(input: {
+            name: "Task Test Project"
+            description: "Project for GraphQL task tests"
+            workspaceId: ${taskWorkspaceId}
+            status: ACTIVE
+            startDate: "${startDate}"
+            endDate: "${endDate}"
+          }) {
+            id
+          }
+        }
+      `;
+
+      const projectRes = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ query: projectMutation })
+        .expect(200);
+
+      projectId = parseInt(projectRes.body.data.createProject.id, 10);
     });
 
     it("should create a task", async () => {
@@ -454,6 +505,7 @@ describe("GraphQL API Tests", () => {
 
       // GraphQL always returns 200, errors are in the response
       expect(res.body.errors).toBeDefined();
+      expect(res.body.errors[0].code).toBe("BAD_REQUEST");
     });
 
     it("should return error for unauthorized access", async () => {
@@ -477,7 +529,7 @@ describe("GraphQL API Tests", () => {
         .expect(200);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].extensions.code).toBe("FORBIDDEN");
+      expect(res.body.errors[0].code).toBe("FORBIDDEN");
     });
   });
 });

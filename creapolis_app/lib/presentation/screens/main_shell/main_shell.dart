@@ -38,7 +38,12 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determinar si mostrar FAB según el tab actual
-    final shouldShowFAB = _shouldShowFAB();
+    final currentIndex = navigationShell.currentIndex;
+    final shouldShowFAB = _shouldShowFAB(currentIndex);
+
+    final bool isDashboardTab = currentIndex == 0;
+    final bool isProjectsTab = currentIndex == 1;
+    final bool isTasksTab = currentIndex == 2;
 
     return Scaffold(
       body: child,
@@ -74,20 +79,26 @@ class MainShell extends StatelessWidget {
       ),
       floatingActionButton: shouldShowFAB
           ? QuickCreateSpeedDial(
-              onCreateTask: () => _handleCreateTask(context),
-              onCreateProject: () => _handleCreateProject(context),
-              onCreateWorkspace: () => _handleCreateWorkspace(context),
-              showWorkspaceOption: true,
+              onCreateTask: (isDashboardTab || isTasksTab)
+                  ? () => _handleCreateTask(context)
+                  : null,
+              onCreateProject: (isDashboardTab || isProjectsTab)
+                  ? () => _handleCreateProject(context)
+                  : null,
+              onCreateWorkspace: isDashboardTab
+                  ? () => _handleCreateWorkspace(context)
+                  : null,
+              showWorkspaceOption: isDashboardTab,
             )
           : null,
     );
   }
 
   /// Determinar si mostrar el FAB según el tab actual
-  bool _shouldShowFAB() {
+  bool _shouldShowFAB(int index) {
     // Mostrar FAB en: Dashboard (0), Projects (1), Tasks (2)
     // No mostrar en: More (3)
-    return navigationShell.currentIndex < 3;
+    return index < 3;
   }
 
   /// Handler: Crear nueva tarea

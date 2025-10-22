@@ -141,7 +141,7 @@ class _DashboardViewState extends State<_DashboardView> {
             if (state.workspaces.isEmpty) {
               return _EmptyWorkspaceState(
                 onCreateWorkspace: () {
-                  context.go('/workspaces');
+                  context.go(RoutePaths.workspaces);
                 },
               );
             }

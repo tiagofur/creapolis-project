@@ -1,9 +1,10 @@
 import request from "supertest";
-import app from "../src/server.js";
+import app, { serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
 
 describe("Auth Endpoints", () => {
   beforeAll(async () => {
+    await serverReady;
     // Clean database before tests
     await prisma.user.deleteMany();
   });

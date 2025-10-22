@@ -115,8 +115,8 @@ class CreopolisAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : titleWidget ?? Text(title),
       actions: [
-        // Workspace Switcher
-        if (showWorkspaceSwitcher && activeWorkspace != null) ...[
+        // Workspace Switcher siempre visible para permitir selección rápida
+        if (showWorkspaceSwitcher) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: WorkspaceSwitcher(
@@ -194,8 +194,7 @@ class CreopolisAppBarWithSubtitle extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final workspaceContext = context.watch<WorkspaceContext>();
-    final activeWorkspace = workspaceContext.activeWorkspace;
+    context.watch<WorkspaceContext>();
 
     // Determinar si mostrar botón de retroceso
     Widget? effectiveLeading = leading;
@@ -232,8 +231,8 @@ class CreopolisAppBarWithSubtitle extends StatelessWidget
         ],
       ),
       actions: [
-        // Workspace Switcher
-        if (showWorkspaceSwitcher && activeWorkspace != null) ...[
+        // Workspace Switcher siempre visible para permitir selección rápida
+        if (showWorkspaceSwitcher) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: WorkspaceSwitcher(
@@ -279,8 +278,7 @@ class CompactCreopolisAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    final workspaceContext = context.watch<WorkspaceContext>();
-    final activeWorkspace = workspaceContext.activeWorkspace;
+    context.watch<WorkspaceContext>();
 
     // Determinar si mostrar botón de retroceso
     Widget? effectiveLeading = leading;
@@ -300,13 +298,11 @@ class CompactCreopolisAppBar extends StatelessWidget
       automaticallyImplyLeading: false, // Lo manejamos manualmente
       title: Text(title),
       actions: [
-        // Workspace Switcher Compacto
-        if (activeWorkspace != null) ...[
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: WorkspaceSwitcher(compact: true, showCreateButton: false),
-          ),
-        ],
+        // Workspace Switcher compacto siempre visible para facilitar el cambio
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0),
+          child: WorkspaceSwitcher(compact: true, showCreateButton: false),
+        ),
 
         // Acciones personalizadas
         if (actions != null) ...actions!,

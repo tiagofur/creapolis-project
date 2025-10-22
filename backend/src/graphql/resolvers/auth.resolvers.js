@@ -81,7 +81,8 @@ export const authResolvers = {
         pageInfo: {
           hasNextPage: skip + limit < totalCount,
           hasPreviousPage: page > 1,
-          startCursor: users.length > 0 ? Buffer.from(`${skip}`).toString("base64") : null,
+          startCursor:
+            users.length > 0 ? Buffer.from(`${skip}`).toString("base64") : null,
           endCursor:
             users.length > 0
               ? Buffer.from(`${skip + users.length - 1}`).toString("base64")
@@ -99,6 +100,19 @@ export const authResolvers = {
       // Validate input
       if (!email || !password || !name) {
         throw new GraphQLError("Email, password, and name are required", {
+          extensions: { code: "BAD_REQUEST" },
+        });
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        throw new GraphQLError("Please provide a valid email", {
+          extensions: { code: "BAD_REQUEST" },
+        });
+      }
+
+      if (password.length < 6) {
+        throw new GraphQLError("Password must be at least 6 characters long", {
           extensions: { code: "BAD_REQUEST" },
         });
       }
@@ -207,7 +221,10 @@ export const authResolvers = {
       });
 
       // Verify current password
-      const validPassword = await bcrypt.compare(currentPassword, userData.password);
+      const validPassword = await bcrypt.compare(
+        currentPassword,
+        userData.password
+      );
 
       if (!validPassword) {
         throw new GraphQLError("Current password is incorrect", {

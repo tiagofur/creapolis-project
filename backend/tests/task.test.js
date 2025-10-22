@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../src/server.js";
+import app, { serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
 
 describe("Task Endpoints", () => {
@@ -7,14 +7,19 @@ describe("Task Endpoints", () => {
   let userId;
   let projectId;
   let taskId;
+  let workspaceId;
 
   beforeAll(async () => {
+    await serverReady;
     // Clean database
     await prisma.timeLog.deleteMany();
     await prisma.dependency.deleteMany();
     await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
 
     // Create test user
@@ -27,13 +32,41 @@ describe("Task Endpoints", () => {
     authToken = userRes.body.data.token;
     userId = userRes.body.data.user.id;
 
+    // Create workspace for tasks
+    const workspaceRes = await request(app)
+      .post("/api/workspaces")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "Task Test Workspace",
+        description: "Workspace for task endpoint tests",
+        type: "TEAM",
+        settings: {
+          timezone: "UTC",
+          language: "en",
+          allowGuestInvites: true,
+          requireEmailVerification: false,
+          autoAssignNewMembers: true,
+        },
+      });
+
+    workspaceId = workspaceRes.body.data.id;
+
     // Create test project
+    const startDate = new Date().toISOString();
+    const endDate = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
     const projectRes = await request(app)
       .post("/api/projects")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         name: "Test Project for Tasks",
         description: "Test description",
+        workspaceId,
+        startDate,
+        endDate,
+        status: "ACTIVE",
       });
 
     projectId = projectRes.body.data.id;
@@ -45,6 +78,9 @@ describe("Task Endpoints", () => {
     await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
   });

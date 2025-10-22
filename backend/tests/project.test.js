@@ -1,16 +1,23 @@
 import request from "supertest";
-import app from "../src/server.js";
+import app, { serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
 
 describe("Project Endpoints", () => {
   let authToken;
   let userId;
   let projectId;
+  let workspaceId;
 
   beforeAll(async () => {
+    await serverReady;
     // Clean database
+    await prisma.timeLog.deleteMany();
+    await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
 
     // Create test user
@@ -22,23 +29,57 @@ describe("Project Endpoints", () => {
 
     authToken = res.body.data.token;
     userId = res.body.data.user.id;
+
+    // Create test workspace for projects
+    const workspaceRes = await request(app)
+      .post("/api/workspaces")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "Project Test Workspace",
+        description: "Workspace for project endpoint tests",
+        type: "TEAM",
+        settings: {
+          timezone: "UTC",
+          language: "en",
+          allowGuestInvites: true,
+          requireEmailVerification: false,
+          autoAssignNewMembers: true,
+        },
+      });
+
+    workspaceId = workspaceRes.body.data.id;
   });
 
   afterAll(async () => {
+    await prisma.timeLog.deleteMany();
+    await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
 
   describe("POST /api/projects", () => {
     it("should create a new project", async () => {
+      const startDate = new Date().toISOString();
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
       const res = await request(app)
         .post("/api/projects")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           name: "Test Project",
           description: "A test project description",
+          workspaceId,
+          status: "ACTIVE",
+          startDate,
+          endDate,
+          memberIds: [userId],
         });
 
       expect(res.statusCode).toBe(201);
@@ -49,20 +90,36 @@ describe("Project Endpoints", () => {
     });
 
     it("should require authentication", async () => {
+      const startDate = new Date().toISOString();
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
       const res = await request(app).post("/api/projects").send({
         name: "Test Project 2",
+        workspaceId,
+        startDate,
+        endDate,
       });
 
       expect(res.statusCode).toBe(401);
     });
 
     it("should validate project name", async () => {
+      const startDate = new Date().toISOString();
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
       const res = await request(app)
         .post("/api/projects")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           name: "AB", // Too short
           description: "Test",
+          workspaceId,
+          startDate,
+          endDate,
         });
 
       expect(res.statusCode).toBe(400);

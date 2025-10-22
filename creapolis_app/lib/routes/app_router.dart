@@ -109,8 +109,8 @@ class AppRouter {
               GoRoute(
                 path: RoutePaths.allProjects,
                 name: RouteNames.allProjects,
-                builder: (context, state) => BlocProvider(
-                  create: (context) => getIt<ProjectBloc>(),
+                builder: (context, state) => BlocProvider.value(
+                  value: context.read<ProjectBloc>(),
                   child: const AllProjectsScreen(),
                 ),
               ),

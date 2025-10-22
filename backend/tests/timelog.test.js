@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../src/server.js";
+import app, { serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
 
 describe("TimeLog Endpoints", () => {
@@ -7,13 +7,18 @@ describe("TimeLog Endpoints", () => {
   let userId;
   let projectId;
   let taskId;
+  let workspaceId;
 
   beforeAll(async () => {
+    await serverReady;
     // Clean database
     await prisma.timeLog.deleteMany();
     await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
 
     // Create test user
@@ -26,12 +31,37 @@ describe("TimeLog Endpoints", () => {
     authToken = userRes.body.data.token;
     userId = userRes.body.data.user.id;
 
+    // Create workspace required for project creation
+    const workspaceRes = await request(app)
+      .post("/api/workspaces")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "TimeLog Test Workspace",
+        description: "Workspace for timelog endpoint tests",
+        type: "TEAM",
+        settings: {
+          timezone: "UTC",
+          language: "en",
+          allowGuestInvites: true,
+          requireEmailVerification: false,
+          autoAssignNewMembers: true,
+        },
+      });
+
+    workspaceId = workspaceRes.body.data.id;
+
     // Create test project
     const projectRes = await request(app)
       .post("/api/projects")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         name: "Test Project for TimeLogs",
+        description: "A test project description",
+        workspaceId,
+        status: "ACTIVE",
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        memberIds: [userId],
       });
 
     projectId = projectRes.body.data.id;
@@ -53,6 +83,9 @@ describe("TimeLog Endpoints", () => {
     await prisma.task.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.workspaceMember.deleteMany();
+    await prisma.workspaceInvitation.deleteMany();
+    await prisma.workspace.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
@@ -242,7 +275,7 @@ describe("TimeLog Endpoints", () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.data.topProductiveSlots).toBeInstanceOf(Array);
       expect(res.body.data.topProductiveSlots.length).toBeLessThanOrEqual(3);
-      
+
       if (res.body.data.topProductiveSlots.length > 0) {
         const slot = res.body.data.topProductiveSlots[0];
         expect(slot.day).toBeGreaterThanOrEqual(0);

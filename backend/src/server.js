@@ -36,11 +36,19 @@ import websocketService from "./services/websocket.service.js";
 import firebaseService from "./services/firebase.service.js";
 
 // Import GraphQL setup
-import { createApolloServer, createGraphQLMiddleware } from "./graphql/index.js";
+import {
+  createApolloServer,
+  createGraphQLMiddleware,
+} from "./graphql/index.js";
 
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
+const isTestEnvironment = process.env.NODE_ENV === "test";
+let initializationPromise;
+let graphqlInitialized = false;
+let notFoundHandlerRegistered = false;
+let errorHandlerRegistered = false;
 
 // Security middleware
 app.use(helmet());
@@ -92,7 +100,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logging middleware
-if (process.env.NODE_ENV !== "test") {
+if (!isTestEnvironment) {
   app.use(morgan("dev"));
 }
 
@@ -146,60 +154,108 @@ app.get("/", (req, res) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Not Found",
-    message: `Route ${req.method} ${req.url} not found`,
-  });
-});
+const startServer = ({ listen = true } = {}) => {
+  if (!initializationPromise) {
+    initializationPromise = (async () => {
+      try {
+        if (!isTestEnvironment) {
+          firebaseService.initialize();
+          websocketService.initialize(httpServer);
+        }
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error("Error:", err);
+        if (!graphqlInitialized) {
+          const apolloServer = await createApolloServer(httpServer);
+          app.use(
+            "/graphql",
+            express.json(),
+            createGraphQLMiddleware(apolloServer)
+          );
+          graphqlInitialized = true;
+        }
 
-  const status = err.statusCode || err.status || 500;
-  const message = err.message || "Internal Server Error";
+        if (!notFoundHandlerRegistered) {
+          app.use((req, res) => {
+            res.status(404).json({
+              error: "Not Found",
+              message: `Route ${req.method} ${req.url} not found`,
+            });
+          });
+          notFoundHandlerRegistered = true;
+        }
 
-  res.status(status).json({
-    error: {
-      message,
-      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-    },
-  });
-});
+        if (!errorHandlerRegistered) {
+          app.use((err, req, res, next) => {
+            console.error("Error:", err);
 
-// Initialize WebSocket service
-websocketService.initialize(httpServer);
+            const status = err.statusCode || err.status || 500;
+            const message = err.message || "Internal Server Error";
+            const responseBody = {
+              success: false,
+              message,
+              timestamp: new Date().toISOString(),
+            };
 
-// Initialize and mount GraphQL server
-const startServer = async () => {
-  try {
-    // Initialize Firebase
-    firebaseService.initialize();
-    
-    // Create Apollo Server
-    const apolloServer = await createApolloServer(httpServer);
-    
-    // Mount GraphQL endpoint
-    app.use("/graphql", express.json(), createGraphQLMiddleware(apolloServer));
-    
-    // Start HTTP server
-    httpServer.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔌 WebSocket ready for connections`);
-      console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`);
-      console.log(`📊 GraphQL Playground: http://localhost:${PORT}/graphql (in dev mode)`);
-      console.log(`🔔 Push notifications: ${firebaseService.isInitialized() ? 'enabled' : 'disabled'}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
+            if (err.details) {
+              responseBody.details = err.details;
+            }
+
+            if (process.env.NODE_ENV === "development" && err.stack) {
+              responseBody.stack = err.stack;
+            }
+
+            res.status(status).json(responseBody);
+          });
+          errorHandlerRegistered = true;
+        }
+
+        if (listen) {
+          await new Promise((resolve) => {
+            httpServer.listen(PORT, () => {
+              console.log(`🚀 Server running on port ${PORT}`);
+              console.log(
+                `📝 Environment: ${process.env.NODE_ENV || "development"}`
+              );
+              console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+              console.log(`🔌 WebSocket ready for connections`);
+              console.log(
+                `🎯 GraphQL endpoint: http://localhost:${PORT}/graphql`
+              );
+              console.log(
+                `📊 GraphQL Playground: http://localhost:${PORT}/graphql (in dev mode)`
+              );
+              console.log(
+                `🔔 Push notifications: ${
+                  firebaseService.isInitialized() ? "enabled" : "disabled"
+                }`
+              );
+              resolve();
+            });
+          });
+        }
+
+        return { app, httpServer };
+      } catch (error) {
+        console.error("Failed to start server:", error);
+
+        if (listen) {
+          process.exit(1);
+        }
+
+        throw error;
+      }
+    })();
   }
+
+  return initializationPromise;
 };
 
-startServer();
+const serverReady = startServer({ listen: !isTestEnvironment });
 
+if (!isTestEnvironment) {
+  serverReady.catch((error) => {
+    console.error("Server startup failed:", error);
+  });
+}
+
+export { startServer, serverReady };
 export default app;
