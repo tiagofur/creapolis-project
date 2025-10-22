@@ -8,7 +8,8 @@ Este documento centraliza el plan para eliminar los TODOs del proyecto Creapolis
 
 ### Frontend
 
-- Conectar AllProjectsScreen con ProjectsBloc para datos reales
+- ~~Conectar AllProjectsScreen con ProjectsBloc para datos reales~~ ✅
+  - AllProjectsScreen ahora consume directamente el estado de `ProjectBloc` sin caché local adicional (22/10/2025)
 - Navegar a /projects desde MyProjectsWidget
 - Navegar a project detail desde ProjectsScreen
 - ~~Implementar búsqueda y filtros cuando se integre con backend~~ ✅
@@ -69,4 +70,4 @@ Este documento centraliza el plan para eliminar los TODOs del proyecto Creapolis
 
 ---
 
-> Última actualización: 2025-10-21
+> Última actualización: 2025-10-22

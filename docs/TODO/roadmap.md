@@ -7,6 +7,7 @@ Este documento complementa el plan-todo.md y muestra el avance y orden recomenda
 ## Roadmap Fase 1: TODOs fáciles y útiles
 
 1. ~~Conectar AllProjectsScreen con ProjectsBloc para datos reales~~ ✅
+   - AllProjectsScreen reutiliza `ProjectsLoaded` del bloc y mantiene filtros/búsquedas sincronizados (22/10/2025)
 2. ~~Navegar a /projects desde MyProjectsWidget~~ ✅
 3. ~~Navegar a project detail desde ProjectsScreen~~ ✅
 4. ~~Implementar búsqueda y filtros cuando se integre con backend~~ ✅
@@ -53,4 +54,4 @@ Este documento complementa el plan-todo.md y muestra el avance y orden recomenda
 
 ---
 
-> Última actualización: 2025-10-21
+> Última actualización: 2025-10-22
