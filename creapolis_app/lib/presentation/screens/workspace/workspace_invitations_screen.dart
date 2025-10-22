@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
 import '../../../domain/entities/workspace_invitation.dart';
+import '../../../routes/app_router.dart';
 import '../../bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import '../../bloc/workspace_invitation/workspace_invitation_event.dart';
 import '../../bloc/workspace_invitation/workspace_invitation_state.dart';
@@ -61,8 +64,17 @@ class _WorkspaceInvitationsScreenState
                   label: 'Ver',
                   textColor: Colors.white,
                   onPressed: () {
-                    // TODO: Navegar al workspace
-                    AppLogger.info('Navegar a workspace ${state.workspace.id}');
+                    final workspaceBloc = context.read<WorkspaceBloc>();
+
+                    // Cargar el workspace recién aceptado y seleccionarlo como activo.
+                    workspaceBloc
+                      ..add(LoadWorkspaceById(state.workspace.id))
+                      ..add(SelectWorkspace(state.workspace.id));
+
+                    GoRouter.of(context).go(
+                      RoutePaths.workspaceDetail(state.workspace.id),
+                      extra: state.workspace,
+                    );
                   },
                 ),
               ),

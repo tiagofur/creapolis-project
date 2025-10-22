@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../../domain/entities/task.dart';
+import '../../../../routes/app_router.dart';
 
 /// Widget que muestra las tareas del usuario en el Dashboard.
 ///
@@ -46,13 +49,7 @@ class MyTasksWidget extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    // TODO: Navegar a /tasks
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ver todas las tareas - Por implementar'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    GoRouter.of(context).go(RoutePaths.allTasks);
                   },
                   child: const Text('Ver todas'),
                 ),
@@ -213,6 +210,3 @@ class MyTasksWidget extends StatelessWidget {
     );
   }
 }
-
-
-

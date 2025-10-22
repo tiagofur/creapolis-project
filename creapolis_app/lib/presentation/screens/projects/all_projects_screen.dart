@@ -35,10 +35,7 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
   ProjectStatus? _filterStatus;
   int? _lastLoadedWorkspaceId;
   String _searchQuery = '';
-  List<Project> _cachedProjects = [];
-  bool _hasLoadedProjects = false;
-  ProjectStatus? _lastAppliedFilter;
-  String? _lastAppliedSearch;
+  ProjectsLoaded? _lastLoadedState;
 
   @override
   void initState() {
@@ -59,6 +56,7 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         _lastLoadedWorkspaceId = workspaceId;
         _filterStatus = null;
         _searchQuery = '';
+        _lastLoadedState = null;
       });
       _requestProjects(workspaceId);
     }
@@ -208,46 +206,47 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
         }
       },
       builder: (context, state) {
-        if (state is ProjectsLoaded) {
-          _cachedProjects = List<Project>.from(state.filteredProjects);
-          _lastAppliedFilter = state.currentFilter;
-          _lastAppliedSearch = state.searchQuery;
-          _hasLoadedProjects = true;
-        } else if (state is ProjectOperationSuccess) {
-          final project = state.project;
-          if (project != null) {
-            final existingIndex = _cachedProjects.indexWhere(
-              (p) => p.id == project.id,
-            );
-            if (existingIndex >= 0) {
-              _cachedProjects[existingIndex] = project;
-            } else {
-              _cachedProjects = [project, ..._cachedProjects];
-            }
-          }
-        } else if (state is ProjectOperationInProgress) {
-          _hasLoadedProjects = _hasLoadedProjects || _cachedProjects.isNotEmpty;
+        if (state is ProjectsLoaded &&
+            state.workspaceId == _lastLoadedWorkspaceId) {
+          _lastLoadedState = state;
         }
 
         final bool isLoading =
             state is ProjectLoading || state is ProjectOperationInProgress;
+        final ProjectsLoaded? cachedState =
+            _lastLoadedState != null &&
+                _lastLoadedState!.workspaceId == _lastLoadedWorkspaceId
+            ? _lastLoadedState
+            : null;
+        final ProjectsLoaded? resolvedLoadedState =
+            state is ProjectsLoaded &&
+                state.workspaceId == _lastLoadedWorkspaceId
+            ? state
+            : cachedState;
 
-        final List<Project> projectsToShow = state is ProjectsLoaded
-            ? state.filteredProjects
-            : List<Project>.from(_cachedProjects);
-
-        final bool hasFilter = state is ProjectsLoaded
-            ? state.currentFilter != null
-            : _lastAppliedFilter != null;
-        final bool hasSearch = state is ProjectsLoaded
-            ? (state.searchQuery?.isNotEmpty ?? false)
-            : (_lastAppliedSearch?.isNotEmpty ?? false);
-
-        if (!_hasLoadedProjects && state is ProjectError) {
-          return _buildErrorState(context, state.message);
+        List<Project> projectsToShow = const [];
+        if (state is ProjectsLoaded) {
+          projectsToShow = state.filteredProjects;
+        } else if (state is ProjectOperationInProgress &&
+            state.currentProjects != null) {
+          projectsToShow = _applyCurrentCriteria(state.currentProjects!);
+        } else if (state is ProjectError && state.currentProjects != null) {
+          projectsToShow = _applyCurrentCriteria(state.currentProjects!);
+        } else if (resolvedLoadedState != null) {
+          projectsToShow = resolvedLoadedState.filteredProjects;
         }
 
-        if (!_hasLoadedProjects && isLoading) {
+        final bool hasFilter =
+            (resolvedLoadedState?.currentFilter ?? _filterStatus) != null;
+        final bool hasSearch =
+            resolvedLoadedState?.searchQuery?.isNotEmpty ??
+            _searchQuery.isNotEmpty;
+
+        if (resolvedLoadedState == null) {
+          if (state is ProjectError) {
+            return _buildErrorState(context, state.message);
+          }
+
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -286,6 +285,25 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     );
   }
 
+  List<Project> _applyCurrentCriteria(List<Project> source) {
+    final ProjectStatus? status = _filterStatus;
+    final String query = _searchQuery.trim().toLowerCase();
+
+    final List<Project> filteredByStatus = status == null
+        ? List<Project>.from(source)
+        : source.where((project) => project.status == status).toList();
+
+    if (query.isEmpty) {
+      return filteredByStatus;
+    }
+
+    return filteredByStatus.where((project) {
+      final name = project.name.toLowerCase();
+      final description = project.description.toLowerCase();
+      return name.contains(query) || description.contains(query);
+    }).toList();
+  }
+
   Widget _buildProjectsList(BuildContext context, List<Project> projects) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -321,13 +339,17 @@ class _AllProjectsScreenState extends State<AllProjectsScreen> {
     final title = hasCriteria
         ? 'No hay proyectos que coincidan'
         : 'No hay proyectos aún';
-    final subtitle = hasCriteria
-        ? hasSearch && hasFilter
-              ? 'Modifica la búsqueda o el filtro de estado'
-              : hasSearch
-              ? 'Intenta con otros términos de búsqueda'
-              : 'Intenta con otro filtro o crea un nuevo proyecto'
-        : 'Crea tu primer proyecto usando el botón +';
+
+    late final String subtitle;
+    if (!hasCriteria) {
+      subtitle = 'Crea tu primer proyecto usando el botón +';
+    } else if (hasSearch && hasFilter) {
+      subtitle = 'Modifica la búsqueda o el filtro de estado';
+    } else if (hasSearch) {
+      subtitle = 'Intenta con otros términos de búsqueda';
+    } else {
+      subtitle = 'Intenta con otro filtro o crea un nuevo proyecto';
+    }
 
     return Center(
       child: Padding(

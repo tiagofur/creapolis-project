@@ -1,18 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:creapolis_app/routes/app_router.dart';
 
 import '../../../domain/entities/project.dart';
 import '../../../domain/entities/task.dart';
-import '../../../domain/usecases/delete_task_usecase.dart';
-import '../../../domain/usecases/get_workspace_tasks_usecase.dart';
-import '../../../domain/usecases/update_task_usecase.dart';
-import '../../../injection.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../bloc/task/task_bloc.dart';
+import '../../bloc/task/task_event.dart';
+import '../../bloc/task/task_state.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../widgets/task/create_task_bottom_sheet.dart';
+import '../../../injection.dart';
 
 /// Pantalla que muestra todas las tareas del usuario con mejoras avanzadas.
 ///
@@ -28,8 +34,6 @@ import '../../widgets/common/common_widgets.dart';
 /// - **Ordenamiento funcional**: Fecha, prioridad, nombre (asc/desc)
 /// - Validación de workspace activo
 /// - Animaciones fluidas
-///
-/// TODO: Conectar con TasksBloc para obtener datos reales
 class AllTasksScreen extends StatefulWidget {
   const AllTasksScreen({super.key});
 
@@ -42,10 +46,6 @@ enum TaskTimeGroup { today, thisWeek, upcoming, noDate }
 class _AllTasksScreenState extends State<AllTasksScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final GetWorkspaceTasksUseCase _getWorkspaceTasksUseCase =
-      getIt<GetWorkspaceTasksUseCase>();
-  final UpdateTaskUseCase _updateTaskUseCase = getIt<UpdateTaskUseCase>();
-  final DeleteTaskUseCase _deleteTaskUseCase = getIt<DeleteTaskUseCase>();
 
   String _searchQuery = '';
   TaskStatus? _filterStatus;
@@ -53,13 +53,10 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   String _sortBy = 'date'; // date, priority, name
   bool _sortAscending = true;
 
-  List<Task> _allTasks = [];
-  Map<int, Project> _projectById = {};
-  bool _isLoading = true;
-  bool _isRefreshing = false;
+  WorkspaceTasksLoaded? _workspaceData;
+  bool _isRequestingWorkspaceData = false;
   String? _errorMessage;
   int? _activeWorkspaceId;
-  bool _hasLoadedWorkspaceData = false;
 
   @override
   void initState() {
@@ -75,22 +72,22 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     final workspaceId = workspaceContext.activeWorkspace?.id;
 
     if (workspaceId != _activeWorkspaceId) {
-      _activeWorkspaceId = workspaceId;
-      _hasLoadedWorkspaceData = false;
+      setState(() {
+        _activeWorkspaceId = workspaceId;
+        _workspaceData = null;
+        _errorMessage = workspaceId == null
+            ? 'Selecciona un workspace para ver las tareas.'
+            : null;
+        _isRequestingWorkspaceData = false;
+      });
 
       if (workspaceId != null) {
-        _loadTasks();
-      } else {
-        setState(() {
-          _allTasks = [];
-          _projectById = {};
-          _errorMessage = 'Selecciona un workspace para ver las tareas.';
-          _isLoading = false;
-          _hasLoadedWorkspaceData = true;
-        });
+        _requestWorkspaceTasks(force: true);
       }
-    } else if (!_hasLoadedWorkspaceData && !_isLoading && workspaceId != null) {
-      _loadTasks();
+    } else if (workspaceId != null &&
+        _workspaceData == null &&
+        !_isRequestingWorkspaceData) {
+      _requestWorkspaceTasks(force: true);
     }
   }
 
@@ -119,6 +116,11 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _handleCreateTask(),
+            tooltip: 'Crear tarea',
+          ),
           // Botón de búsqueda
           IconButton(
             icon: const Icon(Icons.search),
@@ -250,109 +252,154 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildTabContent(context, myTasksOnly: true),
-          _buildTabContent(context, myTasksOnly: false),
-        ],
+      body: BlocConsumer<TaskBloc, TaskState>(
+        listener: _onTaskStateChange,
+        builder: (context, state) {
+          final hasWorkspace = _activeWorkspaceId != null;
+          final workspaceData = state is WorkspaceTasksLoaded
+              ? state
+              : _workspaceData;
+
+          if (!hasWorkspace) {
+            return _buildMessageState(
+              context,
+              icon: Icons.workspaces_outline,
+              title: 'Selecciona un workspace',
+              message:
+                  'Elige un workspace desde el selector superior para ver las tareas disponibles.',
+            );
+          }
+
+          final isInitialLoading =
+              state is TaskLoading && workspaceData == null;
+          if (isInitialLoading) {
+            return _buildLoadingView();
+          }
+
+          if (workspaceData == null) {
+            if (_errorMessage != null) {
+              return _buildMessageState(
+                context,
+                icon: Icons.error_outline,
+                title: 'No se pudieron cargar las tareas',
+                message: _errorMessage!,
+                actions: [
+                  FilledButton(
+                    onPressed: () => _requestWorkspaceTasks(force: true),
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              );
+            }
+            return _buildLoadingView();
+          }
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildTabContent(context, workspaceData, myTasksOnly: true),
+              _buildTabContent(context, workspaceData, myTasksOnly: false),
+            ],
+          );
+        },
       ),
       // FAB removido: Ahora está en MainShell como Speed Dial global
     );
   }
 
-  Future<void> _loadTasks({bool refresh = false}) async {
+  void _requestWorkspaceTasks({bool force = false}) {
     final workspaceId = _activeWorkspaceId;
-    if (workspaceId == null) {
-      if (mounted) {
-        setState(() {
-          _allTasks = [];
-          _projectById = {};
-          _errorMessage = 'Selecciona un workspace para ver las tareas.';
-          _isLoading = false;
-          _isRefreshing = false;
-        });
-      }
+    if (workspaceId == null || !mounted) {
       return;
     }
 
-    if (mounted) {
-      setState(() {
-        if (refresh) {
-          _isRefreshing = true;
-        } else {
-          _isLoading = true;
-        }
-        _errorMessage = null;
-      });
+    final hasCurrentData =
+        _workspaceData != null && _workspaceData!.workspaceId == workspaceId;
+    if (!force) {
+      if (_isRequestingWorkspaceData || hasCurrentData) {
+        return;
+      }
     }
 
-    final result = await _getWorkspaceTasksUseCase(workspaceId: workspaceId);
+    setState(() {
+      _isRequestingWorkspaceData = true;
+      if (!force) {
+        _errorMessage = null;
+      }
+    });
 
-    if (!mounted) return;
+    context.read<TaskBloc>().add(LoadWorkspaceTasksEvent(workspaceId));
+  }
 
-    result.fold(
-      (failure) {
+  void _onTaskStateChange(BuildContext context, TaskState state) {
+    if (!mounted) {
+      return;
+    }
+
+    if (state is WorkspaceTasksLoaded) {
+      setState(() {
+        _workspaceData = state;
+        _errorMessage = null;
+        _isRequestingWorkspaceData = false;
+      });
+    } else if (state is TaskError) {
+      if (_workspaceData == null) {
         setState(() {
-          _allTasks = [];
-          _projectById = {};
-          _errorMessage = failure.message;
-          _isLoading = false;
-          _isRefreshing = false;
-          _hasLoadedWorkspaceData = true;
+          _errorMessage = state.message;
+          _isRequestingWorkspaceData = false;
         });
-      },
-      (data) {
+      } else {
         setState(() {
-          _allTasks = data.tasks;
-          _projectById = {
-            for (final project in data.projects) project.id: project,
-          };
-          _errorMessage = null;
-          _isLoading = false;
-          _isRefreshing = false;
-          _hasLoadedWorkspaceData = true;
+          _isRequestingWorkspaceData = false;
         });
-      },
-    );
+        _showSnackBar(context, state.message, isError: true);
+      }
+    } else if (state is TaskCreated ||
+        state is TaskUpdated ||
+        state is TaskDeleted) {
+      setState(() {
+        _isRequestingWorkspaceData = false;
+      });
+    }
   }
 
   /// Contenido de un tab (Mis Tareas o Todas)
-  Widget _buildTabContent(BuildContext context, {required bool myTasksOnly}) {
-    return RefreshIndicator(
-      onRefresh: _refreshTasks,
-      child: _buildContent(context, myTasksOnly: myTasksOnly),
+  Widget _buildLoadingView() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: const [
+        SizedBox(height: 180),
+        Center(child: CircularProgressIndicator()),
+        SizedBox(height: 180),
+      ],
     );
   }
 
-  Widget _buildContent(BuildContext context, {required bool myTasksOnly}) {
+  Widget _buildTabContent(
+    BuildContext context,
+    WorkspaceTasksLoaded workspaceData, {
+    required bool myTasksOnly,
+  }) {
+    return RefreshIndicator(
+      onRefresh: _refreshTasks,
+      child: _buildContent(context, workspaceData, myTasksOnly: myTasksOnly),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    WorkspaceTasksLoaded workspaceData, {
+    required bool myTasksOnly,
+  }) {
     final authState = context.watch<AuthBloc>().state;
     final bool isAuthLoading = authState is AuthLoading;
     final currentUserId = authState is AuthAuthenticated
         ? authState.user.id
         : null;
-    final hasWorkspace = _activeWorkspaceId != null;
-
-    if (!hasWorkspace) {
-      return _buildMessageState(
-        context,
-        icon: Icons.workspaces_outline,
-        title: 'Selecciona un workspace',
-        message:
-            'Elige un workspace desde el selector superior para ver las tareas disponibles.',
-      );
-    }
 
     if (myTasksOnly) {
       if (isAuthLoading) {
-        return ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 180),
-            Center(child: CircularProgressIndicator()),
-            SizedBox(height: 180),
-          ],
-        );
+        return _buildLoadingView();
       }
 
       if (authState is AuthUnauthenticated || authState is AuthError) {
@@ -372,33 +419,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
       }
     }
 
-    if (_isLoading && !_isRefreshing) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 180),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: 180),
-        ],
-      );
-    }
-
-    if (_errorMessage != null) {
-      return _buildMessageState(
-        context,
-        icon: Icons.error_outline,
-        title: 'No se pudieron cargar las tareas',
-        message: _errorMessage!,
-        actions: [
-          FilledButton(
-            onPressed: () => _loadTasks(refresh: true),
-            child: const Text('Reintentar'),
-          ),
-        ],
-      );
-    }
-
-    var filteredTasks = List<Task>.from(_allTasks);
+    var filteredTasks = List<Task>.from(workspaceData.tasks);
 
     if (myTasksOnly && currentUserId != null) {
       filteredTasks = filteredTasks
@@ -453,6 +474,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             groupedTasks[TaskTimeGroup.today]!,
             Icons.today,
             Colors.red,
+            workspaceData.projectById,
           ),
         if (groupedTasks[TaskTimeGroup.thisWeek]?.isNotEmpty ?? false)
           _buildTaskGroup(
@@ -461,6 +483,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             groupedTasks[TaskTimeGroup.thisWeek]!,
             Icons.calendar_view_week,
             Colors.orange,
+            workspaceData.projectById,
           ),
         if (groupedTasks[TaskTimeGroup.upcoming]?.isNotEmpty ?? false)
           _buildTaskGroup(
@@ -469,6 +492,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             groupedTasks[TaskTimeGroup.upcoming]!,
             Icons.upcoming,
             Colors.blue,
+            workspaceData.projectById,
           ),
         if (groupedTasks[TaskTimeGroup.noDate]?.isNotEmpty ?? false)
           _buildTaskGroup(
@@ -477,6 +501,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             groupedTasks[TaskTimeGroup.noDate]!,
             Icons.event_busy,
             Colors.grey,
+            workspaceData.projectById,
           ),
       ],
     );
@@ -604,6 +629,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     List<Task> tasks,
     IconData icon,
     Color color,
+    Map<int, Project> projectById,
   ) {
     final theme = Theme.of(context);
 
@@ -642,15 +668,19 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             ],
           ),
         ),
-        ...tasks.map((task) => _buildTaskCard(context, task)),
+        ...tasks.map((task) => _buildTaskCard(context, task, projectById)),
       ],
     );
   }
 
   /// Card de tarea individual con Swipe Actions y Quick Complete
-  Widget _buildTaskCard(BuildContext context, Task task) {
+  Widget _buildTaskCard(
+    BuildContext context,
+    Task task,
+    Map<int, Project> projectById,
+  ) {
     final theme = Theme.of(context);
-    final projectName = _projectById[task.projectId]?.name;
+    final projectName = projectById[task.projectId]?.name;
     final assigneeName = task.assignee?.name;
     final dueDate = task.endDate;
 
@@ -780,7 +810,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                 },
               );
               if (!mounted) return;
-              await _loadTasks(refresh: true);
+              await _refreshTasks();
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -1066,75 +1096,102 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }
 
   Future<bool> _completeTask(Task task) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
+    final bloc = context.read<TaskBloc>();
 
-    final result = await _updateTaskUseCase(
-      UpdateTaskParams(
+    final nextState = bloc.stream
+        .firstWhere((state) {
+          if (state is TaskUpdated) {
+            return state.task.id == task.id &&
+                state.task.status == TaskStatus.completed;
+          }
+          if (state is TaskError) {
+            return true;
+          }
+          return false;
+        })
+        .timeout(const Duration(seconds: 10));
+
+    bloc.add(
+      UpdateTaskEvent(
         projectId: task.projectId,
         id: task.id,
         status: TaskStatus.completed,
       ),
     );
 
-    if (!mounted) return false;
+    TaskState? result;
+    try {
+      result = await nextState;
+    } on TimeoutException {
+      result = null;
+    }
 
-    return result.fold(
-      (failure) {
-        _showSnackBarWithMessenger(
-          messenger,
-          theme,
-          failure.message,
-          isError: true,
-        );
-        return false;
-      },
-      (updatedTask) {
-        setState(() {
-          _allTasks = _allTasks
-              .map(
-                (existing) =>
-                    existing.id == updatedTask.id ? updatedTask : existing,
-              )
-              .toList();
-        });
-        _showSnackBarWithMessenger(
-          messenger,
-          theme,
-          '✓ ${updatedTask.title} completada',
-        );
-        return true;
-      },
+    if (!mounted) {
+      return false;
+    }
+
+    if (result is TaskUpdated && result.task.id == task.id) {
+      _showSnackBar(context, '✓ ${result.task.title} completada');
+      return true;
+    }
+
+    if (result is TaskError) {
+      _showSnackBar(context, result.message, isError: true);
+      return false;
+    }
+
+    _showSnackBar(
+      context,
+      'No pudimos completar la tarea. Intenta de nuevo.',
+      isError: true,
     );
+    return false;
   }
 
   Future<bool> _handleDeleteTask(Task task) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
-    final result = await _deleteTaskUseCase(task.projectId, task.id);
+    final bloc = context.read<TaskBloc>();
 
-    if (!mounted) return false;
+    final nextState = bloc.stream
+        .firstWhere((state) {
+          if (state is TaskDeleted) {
+            return state.taskId == task.id;
+          }
+          if (state is TaskError) {
+            return true;
+          }
+          return false;
+        })
+        .timeout(const Duration(seconds: 10));
 
-    return result.fold(
-      (failure) {
-        _showSnackBarWithMessenger(
-          messenger,
-          theme,
-          failure.message,
-          isError: true,
-        );
-        return false;
-      },
-      (_) {
-        setState(() {
-          _allTasks = _allTasks
-              .where((existing) => existing.id != task.id)
-              .toList();
-        });
-        _showSnackBarWithMessenger(messenger, theme, 'Tarea eliminada');
-        return true;
-      },
+    bloc.add(DeleteTaskEvent(projectId: task.projectId, id: task.id));
+
+    TaskState? result;
+    try {
+      result = await nextState;
+    } on TimeoutException {
+      result = null;
+    }
+
+    if (!mounted) {
+      return false;
+    }
+
+    if (result is TaskDeleted && result.taskId == task.id) {
+      _showSnackBar(context, 'Tarea eliminada');
+      return true;
+    }
+
+    if (result is TaskError) {
+      _showSnackBar(context, result.message, isError: true);
+      return false;
+    }
+
+    _showSnackBar(
+      context,
+      'No pudimos eliminar la tarea. Intenta de nuevo.',
+      isError: true,
     );
+    return false;
   }
 
   void _showSnackBar(
@@ -1144,25 +1201,6 @@ class _AllTasksScreenState extends State<AllTasksScreen>
   }) {
     final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: isError ? TextStyle(color: theme.colorScheme.onError) : null,
-        ),
-        backgroundColor: isError ? theme.colorScheme.error : null,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _showSnackBarWithMessenger(
-    ScaffoldMessengerState messenger,
-    ThemeData theme,
-    String message, {
-    bool isError = false,
-  }) {
-    messenger.showSnackBar(
       SnackBar(
         content: Text(
           message,
@@ -1223,15 +1261,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           'No hay tareas pendientes en este workspace. Crea una nueva para comenzar.',
       actions: [
         FilledButton.icon(
-          onPressed: () {
-            // TODO: Navegar a crear tarea
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Crear tarea - Por implementar'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onPressed: () => _handleCreateTask(),
           icon: const Icon(Icons.add),
           label: const Text('Crear tarea'),
         ),
@@ -1437,16 +1467,270 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     );
   }
 
+  Future<void> _handleCreateTask() async {
+    final workspaceContext = context.read<WorkspaceContext>();
+
+    if (!workspaceContext.hasActiveWorkspace) {
+      _showNoWorkspaceDialog();
+      return;
+    }
+
+    if (workspaceContext.isGuest) {
+      _showSnackBar(
+        context,
+        'No tienes permisos para crear tareas en este workspace.',
+        isError: true,
+      );
+      return;
+    }
+
+    final workspaceId = workspaceContext.activeWorkspace!.id;
+    final data = _workspaceData;
+
+    if (data == null) {
+      _showSnackBar(
+        context,
+        'Estamos actualizando las tareas del workspace. Intenta de nuevo en unos segundos.',
+        isError: true,
+      );
+      _requestWorkspaceTasks(force: true);
+      return;
+    }
+
+    final projects = data.projects;
+
+    if (projects.isEmpty) {
+      _showNoProjectsDialog(workspaceId);
+      return;
+    }
+
+    final selectedProjectId = await _selectProject(projects);
+    if (selectedProjectId == null || !mounted) {
+      return;
+    }
+
+    await _showCreateTaskSheet(selectedProjectId);
+  }
+
+  Future<int?> _selectProject(List<Project> projects) async {
+    if (projects.length == 1) {
+      return projects.first.id;
+    }
+
+    final sortedProjects = List<Project>.from(projects)
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Selecciona un proyecto',
+                style: Theme.of(
+                  sheetContext,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: sortedProjects.length,
+                itemBuilder: (context, index) {
+                  final project = sortedProjects[index];
+                  return ListTile(
+                    leading: const Icon(Icons.folder_open),
+                    title: Text(project.name),
+                    subtitle: project.description.isNotEmpty
+                        ? Text(project.description)
+                        : null,
+                    onTap: () => Navigator.of(context).pop(project.id),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCreateTaskSheet(int projectId) async {
+    final taskBloc = context.read<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(projectId));
+
+    final completer = Completer<TaskState?>();
+    final subscription = taskBloc.stream.listen((state) {
+      if (completer.isCompleted) {
+        return;
+      }
+      if (state is TaskCreated || state is TaskError) {
+        completer.complete(state);
+      }
+    });
+
+    TaskState? result;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => MultiBlocProvider(
+          providers: [
+            BlocProvider<TaskBloc>.value(value: taskBloc),
+            BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+          ],
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+            ),
+            child: CreateTaskBottomSheet(projectId: projectId),
+          ),
+        ),
+      );
+
+      if (completer.isCompleted) {
+        result = await completer.future;
+      } else {
+        result = await completer.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => null,
+        );
+      }
+    } finally {
+      await subscription.cancel();
+      await projectMemberBloc.close();
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result is TaskCreated) {
+      _showSnackBar(context, 'Tarea "${result.task.title}" creada');
+    } else if (result is TaskError) {
+      _showSnackBar(context, result.message, isError: true);
+    }
+  }
+
+  void _showNoWorkspaceDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_outlined, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Selecciona un workspace'),
+          ],
+        ),
+        content: const Text(
+          'Debes seleccionar un workspace activo antes de crear tareas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cerrar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              if (!mounted) return;
+              context.go(RoutePaths.workspaces);
+            },
+            icon: const Icon(Icons.workspaces_outline),
+            label: const Text('Ver workspaces'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNoProjectsDialog(int workspaceId) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.folder_off_outlined, color: Colors.blueGrey),
+            SizedBox(width: 8),
+            Text('Necesitas un proyecto'),
+          ],
+        ),
+        content: const Text(
+          'Crea un proyecto primero para poder registrar tareas en este workspace.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              if (!mounted) return;
+              context.go(RoutePaths.projects(workspaceId));
+            },
+            icon: const Icon(Icons.create_new_folder),
+            label: const Text('Ir a proyectos'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Refrescar lista de tareas
   Future<void> _refreshTasks() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
+    final workspaceId = _activeWorkspaceId;
+    if (workspaceId == null || !mounted) {
+      return;
+    }
 
-    await _loadTasks(refresh: true);
+    setState(() {
+      _isRequestingWorkspaceData = true;
+    });
 
-    if (!mounted) return;
-    if (_errorMessage == null) {
-      _showSnackBarWithMessenger(messenger, theme, 'Tareas actualizadas');
+    final bloc = context.read<TaskBloc>();
+    final pendingState = bloc.stream
+        .firstWhere((state) {
+          if (state is WorkspaceTasksLoaded) {
+            return state.workspaceId == workspaceId;
+          }
+          return state is TaskError;
+        })
+        .timeout(const Duration(seconds: 10));
+
+    bloc.add(RefreshWorkspaceTasksEvent(workspaceId));
+
+    TaskState? result;
+    try {
+      result = await pendingState;
+    } on TimeoutException {
+      result = null;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result is WorkspaceTasksLoaded) {
+      _showSnackBar(context, 'Tareas actualizadas');
+    } else if (result is TaskError) {
+      _showSnackBar(context, result.message, isError: true);
+    } else {
+      setState(() {
+        _isRequestingWorkspaceData = false;
+      });
+      _showSnackBar(
+        context,
+        'No pudimos actualizar las tareas. Intenta de nuevo.',
+        isError: true,
+      );
     }
   }
 }

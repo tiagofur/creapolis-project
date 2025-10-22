@@ -6,7 +6,7 @@ import '../presentation/screens/workspace/workspace_detail_screen.dart';
 
 class WorkspaceLoader extends StatefulWidget {
   final int workspaceId;
-  const WorkspaceLoader({required this.workspaceId});
+  const WorkspaceLoader({super.key, required this.workspaceId});
 
   @override
   State<WorkspaceLoader> createState() => WorkspaceLoaderState();

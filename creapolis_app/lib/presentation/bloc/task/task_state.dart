@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/utils/pagination_helper.dart';
+import '../../../domain/entities/project.dart';
 import '../../../domain/entities/task.dart';
 
 /// Estados del BLoC de tareas
@@ -39,12 +40,12 @@ class TasksLoaded extends TaskState {
 
   @override
   List<Object?> get props => [
-        tasks,
-        statusFilter,
-        assigneeFilter,
-        paginationState,
-        isLoadingMore,
-      ];
+    tasks,
+    statusFilter,
+    assigneeFilter,
+    paginationState,
+    isLoadingMore,
+  ];
 
   /// Obtener tareas filtradas
   List<Task> get filteredTasks {
@@ -75,10 +76,44 @@ class TasksLoaded extends TaskState {
     return TasksLoaded(
       tasks ?? this.tasks,
       statusFilter: clearFilters ? null : (statusFilter ?? this.statusFilter),
-      assigneeFilter:
-          clearFilters ? null : (assigneeFilter ?? this.assigneeFilter),
+      assigneeFilter: clearFilters
+          ? null
+          : (assigneeFilter ?? this.assigneeFilter),
       paginationState: paginationState ?? this.paginationState,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+}
+
+/// Tareas agregadas por workspace
+class WorkspaceTasksLoaded extends TaskState {
+  final int workspaceId;
+  final List<Task> tasks;
+  final Map<int, Project> projectById;
+  final bool isRefreshing;
+
+  const WorkspaceTasksLoaded({
+    required this.workspaceId,
+    required this.tasks,
+    required this.projectById,
+    this.isRefreshing = false,
+  });
+
+  @override
+  List<Object?> get props => [workspaceId, tasks, projectById, isRefreshing];
+
+  List<Project> get projects => projectById.values.toList(growable: false);
+
+  WorkspaceTasksLoaded copyWith({
+    List<Task>? tasks,
+    Map<int, Project>? projectById,
+    bool? isRefreshing,
+  }) {
+    return WorkspaceTasksLoaded(
+      workspaceId: workspaceId,
+      tasks: tasks ?? this.tasks,
+      projectById: projectById ?? this.projectById,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
     );
   }
 }
@@ -164,6 +199,3 @@ class TaskRescheduled extends TaskState {
   @override
   List<Object> get props => [tasks, message];
 }
-
-
-

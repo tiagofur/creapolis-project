@@ -82,8 +82,9 @@ class TaskModel extends Task {
     String getDescription(dynamic desc) {
       if (desc == null) return '';
       if (desc is String) return desc;
-      if (desc is Map && desc.containsKey('text'))
+      if (desc is Map && desc.containsKey('text')) {
         return desc['text'] as String? ?? '';
+      }
       return desc.toString();
     }
 

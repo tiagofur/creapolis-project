@@ -138,7 +138,7 @@ class WorkspaceInvitation extends Equatable {
   });
 
   factory WorkspaceInvitation.fromJson(Map<String, dynamic> json) {
-    String _stringOr(Map<String, dynamic> map, String key, String fallback) {
+    String stringOr(Map<String, dynamic> map, String key, String fallback) {
       final value = map[key];
       if (value is String && value.isNotEmpty) {
         return value;
@@ -146,37 +146,37 @@ class WorkspaceInvitation extends Equatable {
       return fallback;
     }
 
-    final workspaceName = _stringOr(
+    final workspaceName = stringOr(
       json,
       'workspaceName',
       'Workspace sin nombre',
     );
-    final inviterName = _stringOr(json, 'inviterName', 'Miembro');
-    final inviterEmail = _stringOr(
+    final inviterName = stringOr(json, 'inviterName', 'Miembro');
+    final inviterEmail = stringOr(
       json,
       'inviterEmail',
       'sin-correo@desconocido.com',
     );
-    final inviteeEmail = _stringOr(
+    final inviteeEmail = stringOr(
       json,
       'inviteeEmail',
       'sin-correo@desconocido.com',
     );
-    final token = _stringOr(json, 'token', '');
-    final status = _stringOr(json, 'status', InvitationStatus.pending.value);
+    final token = stringOr(json, 'token', '');
+    final status = stringOr(json, 'status', InvitationStatus.pending.value);
 
-    final roleValue = _stringOr(json, 'role', WorkspaceRole.member.value);
-    final workspaceTypeValue = _stringOr(
+    final roleValue = stringOr(json, 'role', WorkspaceRole.member.value);
+    final workspaceTypeValue = stringOr(
       json,
       'workspaceType',
       WorkspaceType.team.value,
     );
-    final createdAtRaw = _stringOr(
+    final createdAtRaw = stringOr(
       json,
       'createdAt',
       DateTime.now().toIso8601String(),
     );
-    final expiresAtRaw = _stringOr(
+    final expiresAtRaw = stringOr(
       json,
       'expiresAt',
       DateTime.now().toIso8601String(),

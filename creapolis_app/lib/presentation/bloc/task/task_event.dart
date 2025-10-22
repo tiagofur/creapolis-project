@@ -20,6 +20,16 @@ class LoadTasksByProjectEvent extends TaskEvent {
   List<Object> get props => [projectId];
 }
 
+/// Cargar tareas agregadas de un workspace
+class LoadWorkspaceTasksEvent extends TaskEvent {
+  final int workspaceId;
+
+  const LoadWorkspaceTasksEvent(this.workspaceId);
+
+  @override
+  List<Object> get props => [workspaceId];
+}
+
 /// Refrescar tareas (sin loading)
 class RefreshTasksEvent extends TaskEvent {
   final int projectId;
@@ -28,6 +38,16 @@ class RefreshTasksEvent extends TaskEvent {
 
   @override
   List<Object> get props => [projectId];
+}
+
+/// Refrescar tareas agregadas de un workspace
+class RefreshWorkspaceTasksEvent extends TaskEvent {
+  final int workspaceId;
+
+  const RefreshWorkspaceTasksEvent(this.workspaceId);
+
+  @override
+  List<Object> get props => [workspaceId];
 }
 
 /// Cargar una tarea por ID

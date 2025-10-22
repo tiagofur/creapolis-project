@@ -3,11 +3,14 @@ import 'package:injectable/injectable.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/pagination_helper.dart';
+import '../../../domain/entities/project.dart';
+import '../../../domain/entities/task.dart';
 import '../../../domain/repositories/task_repository.dart';
 import '../../../domain/usecases/create_task_usecase.dart';
 import '../../../domain/usecases/delete_task_usecase.dart';
 import '../../../domain/usecases/get_task_by_id_usecase.dart';
 import '../../../domain/usecases/get_tasks_by_project_usecase.dart';
+import '../../../domain/usecases/get_workspace_tasks_usecase.dart';
 import '../../../domain/usecases/update_task_usecase.dart';
 import 'task_event.dart';
 import 'task_state.dart';
@@ -16,6 +19,7 @@ import 'task_state.dart';
 @injectable
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final GetTasksByProjectUseCase _getTasksByProjectUseCase;
+  final GetWorkspaceTasksUseCase _getWorkspaceTasksUseCase;
   final GetTaskByIdUseCase _getTaskByIdUseCase;
   final CreateTaskUseCase _createTaskUseCase;
   final UpdateTaskUseCase _updateTaskUseCase;
@@ -24,6 +28,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc(
     this._getTasksByProjectUseCase,
+    this._getWorkspaceTasksUseCase,
     this._getTaskByIdUseCase,
     this._createTaskUseCase,
     this._updateTaskUseCase,
@@ -32,6 +37,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   ) : super(const TaskInitial()) {
     on<LoadTasksByProjectEvent>(_onLoadTasksByProject);
     on<RefreshTasksEvent>(_onRefreshTasks);
+    on<LoadWorkspaceTasksEvent>(_onLoadWorkspaceTasks);
+    on<RefreshWorkspaceTasksEvent>(_onRefreshWorkspaceTasks);
     on<LoadTaskByIdEvent>(_onLoadTaskById);
     on<CreateTaskEvent>(_onCreateTask);
     on<UpdateTaskEvent>(_onUpdateTask);
@@ -89,6 +96,98 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       (tasks) {
         AppLogger.info('TaskBloc: ${tasks.length} tareas refrescadas');
         emit(TasksLoaded(tasks));
+      },
+    );
+  }
+
+  /// Cargar tareas agregadas de un workspace
+  Future<void> _onLoadWorkspaceTasks(
+    LoadWorkspaceTasksEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    AppLogger.info(
+      'TaskBloc: Cargando tareas agregadas del workspace ${event.workspaceId}',
+    );
+    emit(const TaskLoading());
+
+    final result = await _getWorkspaceTasksUseCase(
+      workspaceId: event.workspaceId,
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'TaskBloc: Error al cargar tareas de workspace - ${failure.message}',
+        );
+        emit(TaskError(failure.message));
+      },
+      (data) {
+        AppLogger.info(
+          'TaskBloc: ${data.tasks.length} tareas agregadas cargadas '
+          'para workspace ${event.workspaceId}',
+        );
+        emit(
+          WorkspaceTasksLoaded(
+            workspaceId: event.workspaceId,
+            tasks: List<Task>.from(data.tasks),
+            projectById: Map<int, Project>.unmodifiable({
+              for (final project in data.projects) project.id: project,
+            }),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Refrescar tareas agregadas de un workspace
+  Future<void> _onRefreshWorkspaceTasks(
+    RefreshWorkspaceTasksEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    AppLogger.info(
+      'TaskBloc: Refrescando tareas agregadas del workspace '
+      '${event.workspaceId}',
+    );
+
+    final currentState = state;
+    WorkspaceTasksLoaded? workspaceState;
+    if (currentState is WorkspaceTasksLoaded &&
+        currentState.workspaceId == event.workspaceId) {
+      workspaceState = currentState;
+      emit(workspaceState.copyWith(isRefreshing: true));
+    } else {
+      emit(const TaskLoading());
+    }
+
+    final result = await _getWorkspaceTasksUseCase(
+      workspaceId: event.workspaceId,
+    );
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'TaskBloc: Error al refrescar tareas de workspace - '
+          '${failure.message}',
+        );
+        emit(TaskError(failure.message));
+        if (workspaceState != null) {
+          emit(workspaceState.copyWith(isRefreshing: false));
+        }
+      },
+      (data) {
+        AppLogger.info(
+          'TaskBloc: ${data.tasks.length} tareas agregadas refrescadas '
+          'para workspace ${event.workspaceId}',
+        );
+        emit(
+          WorkspaceTasksLoaded(
+            workspaceId: event.workspaceId,
+            tasks: List<Task>.from(data.tasks),
+            projectById: Map<int, Project>.unmodifiable({
+              for (final project in data.projects) project.id: project,
+            }),
+          ),
+        );
       },
     );
   }
@@ -242,7 +341,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     AppLogger.info('TaskBloc: Creando tarea "${event.title}"');
-    emit(const TaskLoading());
+    final previousState = state;
+    final workspaceState = previousState is WorkspaceTasksLoaded
+        ? previousState
+        : null;
+
+    if (workspaceState == null) {
+      emit(const TaskLoading());
+    }
 
     final params = CreateTaskParams(
       title: event.title,
@@ -263,12 +369,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       (failure) {
         AppLogger.error('TaskBloc: Error al crear tarea - ${failure.message}');
         emit(TaskError(failure.message));
+        if (workspaceState != null) {
+          emit(workspaceState);
+        }
       },
       (task) {
         AppLogger.info(
           'TaskBloc: Tarea "${task.title}" creada con ID ${task.id}',
         );
         emit(TaskCreated(task));
+        if (workspaceState != null) {
+          final updatedTasks = List<Task>.from(workspaceState.tasks)..add(task);
+          emit(workspaceState.copyWith(tasks: updatedTasks));
+        }
       },
     );
   }
@@ -279,7 +392,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     AppLogger.info('TaskBloc: Actualizando tarea ${event.id}');
-    emit(const TaskLoading());
+    final previousState = state;
+    final workspaceState = previousState is WorkspaceTasksLoaded
+        ? previousState
+        : null;
+
+    if (workspaceState == null) {
+      emit(const TaskLoading());
+    }
 
     final params = UpdateTaskParams(
       projectId: event.projectId,
@@ -305,10 +425,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           'TaskBloc: Error al actualizar tarea - ${failure.message}',
         );
         emit(TaskError(failure.message));
+        if (workspaceState != null) {
+          emit(workspaceState);
+        }
       },
       (task) {
         AppLogger.info('TaskBloc: Tarea ${task.id} actualizada');
         emit(TaskUpdated(task));
+        if (workspaceState != null) {
+          final updatedTasks = workspaceState.tasks
+              .map((t) => t.id == task.id ? task : t)
+              .toList(growable: false);
+          emit(workspaceState.copyWith(tasks: updatedTasks));
+        }
       },
     );
   }
@@ -319,7 +448,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     AppLogger.info('TaskBloc: Eliminando tarea ${event.id}');
-    emit(const TaskLoading());
+    final previousState = state;
+    final workspaceState = previousState is WorkspaceTasksLoaded
+        ? previousState
+        : null;
+
+    if (workspaceState == null) {
+      emit(const TaskLoading());
+    }
 
     final result = await _deleteTaskUseCase(event.projectId, event.id);
 
@@ -329,10 +465,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           'TaskBloc: Error al eliminar tarea - ${failure.message}',
         );
         emit(TaskError(failure.message));
+        if (workspaceState != null) {
+          emit(workspaceState);
+        }
       },
       (_) {
         AppLogger.info('TaskBloc: Tarea ${event.id} eliminada');
         emit(TaskDeleted(event.id));
+        if (workspaceState != null) {
+          final updatedTasks = workspaceState.tasks
+              .where((t) => t.id != event.id)
+              .toList(growable: false);
+          emit(workspaceState.copyWith(tasks: updatedTasks));
+        }
       },
     );
   }
