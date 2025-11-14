@@ -9,7 +9,9 @@ import {
   addTicketMessage,
   updateTicketStatus,
   getTicketStats,
-  getAdminTicketStats
+  getAdminTicketStats,
+  assignTicket,
+  getSupportAgents
 } from '../controllers/support.controller.js';
 
 const router = express.Router();
@@ -30,6 +32,8 @@ router.post('/tickets/:id/messages', addTicketMessage);
 // Admin routes
 router.get('/tickets', getAllTickets);
 router.get('/tickets/admin/stats', getAdminTicketStats);
+router.get('/tickets/agents', getSupportAgents);
 router.patch('/tickets/:id/status', updateTicketStatus);
+router.patch('/tickets/:id/assign', assignTicket);
 
 export default router;

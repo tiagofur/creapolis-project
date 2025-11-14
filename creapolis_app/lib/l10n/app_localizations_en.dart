@@ -980,6 +980,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howItWorksStep5Desc => 'Back up your configuration or transfer it across devices.';
 
   @override
+  String get applicationLegalese => '© 2025 Creapolis. All rights reserved.';
+
+  @override
+  String get aboutContent => 'Creapolis is a project and task management tool designed to help teams collaborate effectively.';
+
+  @override
+  String get confirmLogoutMessage => 'Are you sure you want to log out?';
+
+  @override
   String get roleCustomizationTitle => 'Role Customization';
 
   @override
@@ -1070,4 +1079,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get googleCalendarDisconnected => 'Google Calendar disconnected';
+
+  @override
+  String get profileUserTitle => 'User Profile';
+
+  @override
+  String get languageTitle => 'Language';
+
+  @override
+  String get selectLanguageTitle => 'Select language';
+
+  @override
+  String get systemLanguageLabel => 'System default';
+
+  @override
+  String get spanishLabel => 'Spanish';
+
+  @override
+  String get englishLabel => 'English';
 }

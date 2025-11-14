@@ -85,6 +85,25 @@ export const supportService = {
       method: 'GET'
     });
     return response.data;
+  },
+
+  // Get support agents
+  async getSupportAgents() {
+    const response = await apiService.request({
+      url: '/support/tickets/agents',
+      method: 'GET'
+    });
+    return response.data;
+  },
+
+  // Assign ticket to agent
+  async assignTicket(id, assignedTo) {
+    const response = await apiService.request({
+      url: `/support/tickets/${id}/assign`,
+      method: 'PATCH',
+      data: { assignedTo }
+    });
+    return response.data;
   }
 };
 

@@ -313,7 +313,10 @@
   "howItWorksStep4Title": "4. Resetear",
   "howItWorksStep4Desc": "Usa el botón de resetear para volver a los defaults del rol.",
   "howItWorksStep5Title": "5. Exportar/Importar",
-  "howItWorksStep5Desc": "Respalda tu configuración o transfiérela entre dispositivos."
+  "howItWorksStep5Desc": "Respalda tu configuración o transfiérela entre dispositivos.",
+  "applicationLegalese": "© 2025 Creapolis. Todos los derechos reservados.",
+  "aboutContent": "Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.",
+  "confirmLogoutMessage": "¿Estás seguro de que deseas cerrar sesión?"
 ,
   "roleCustomizationTitle": "Personalización por Rol",
   "roleCustomizationSubtitle": "Personaliza tu experiencia según tu rol",
@@ -344,5 +347,11 @@
   "profileComingSoon": "Configuración de perfil próximamente",
   "aboutComingSoon": "Información de la app próximamente",
   "googleCalendarConnected": "Google Calendar conectado exitosamente",
-  "googleCalendarDisconnected": "Google Calendar desconectado"
+  "googleCalendarDisconnected": "Google Calendar desconectado",
+  "profileUserTitle": "Perfil de usuario",
+  "languageTitle": "Idioma",
+  "selectLanguageTitle": "Selecciona idioma",
+  "systemLanguageLabel": "Predeterminado del sistema",
+  "spanishLabel": "Español",
+  "englishLabel": "English"
 }

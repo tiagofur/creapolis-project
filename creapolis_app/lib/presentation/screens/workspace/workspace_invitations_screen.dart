@@ -52,7 +52,7 @@ class _WorkspaceInvitationsScreenState
           if (state is WorkspaceInvitationError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(AppLocalizations.of(context)?.loadDataError ?? state.message),
                 backgroundColor: Colors.red,
               ),
             );

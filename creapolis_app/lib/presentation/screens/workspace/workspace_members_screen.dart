@@ -171,7 +171,7 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
           if (state is WorkspaceMemberError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(AppLocalizations.of(context)?.loadDataError ?? state.message),
                 backgroundColor: Colors.red,
               ),
             );

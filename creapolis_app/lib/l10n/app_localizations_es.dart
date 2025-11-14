@@ -980,6 +980,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get howItWorksStep5Desc => 'Respalda tu configuración o transfiérela entre dispositivos.';
 
   @override
+  String get applicationLegalese => '© 2025 Creapolis. Todos los derechos reservados.';
+
+  @override
+  String get aboutContent => 'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.';
+
+  @override
+  String get confirmLogoutMessage => '¿Estás seguro de que deseas cerrar sesión?';
+
+  @override
   String get roleCustomizationTitle => 'Personalización por Rol';
 
   @override
@@ -1070,4 +1079,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get googleCalendarDisconnected => 'Google Calendar desconectado';
+
+  @override
+  String get profileUserTitle => 'Perfil de usuario';
+
+  @override
+  String get languageTitle => 'Idioma';
+
+  @override
+  String get selectLanguageTitle => 'Selecciona idioma';
+
+  @override
+  String get systemLanguageLabel => 'Predeterminado del sistema';
+
+  @override
+  String get spanishLabel => 'Español';
+
+  @override
+  String get englishLabel => 'English';
 }

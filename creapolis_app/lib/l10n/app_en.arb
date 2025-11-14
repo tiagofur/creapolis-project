@@ -314,7 +314,10 @@
   "howItWorksStep4Title": "4. Reset",
   "howItWorksStep4Desc": "Use the reset button to return to role defaults.",
   "howItWorksStep5Title": "5. Export/Import",
-  "howItWorksStep5Desc": "Back up your configuration or transfer it across devices."
+  "howItWorksStep5Desc": "Back up your configuration or transfer it across devices.",
+  "applicationLegalese": "© 2025 Creapolis. All rights reserved.",
+  "aboutContent": "Creapolis is a project and task management tool designed to help teams collaborate effectively.",
+  "confirmLogoutMessage": "Are you sure you want to log out?"
 ,
   "roleCustomizationTitle": "Role Customization",
   "roleCustomizationSubtitle": "Customize your experience according to your role",
@@ -345,5 +348,11 @@
   "profileComingSoon": "Profile settings coming soon",
   "aboutComingSoon": "App information coming soon",
   "googleCalendarConnected": "Google Calendar connected successfully",
-  "googleCalendarDisconnected": "Google Calendar disconnected"
+  "googleCalendarDisconnected": "Google Calendar disconnected",
+  "profileUserTitle": "User Profile",
+  "languageTitle": "Language",
+  "selectLanguageTitle": "Select language",
+  "systemLanguageLabel": "System default",
+  "spanishLabel": "Spanish",
+  "englishLabel": "English"
 }

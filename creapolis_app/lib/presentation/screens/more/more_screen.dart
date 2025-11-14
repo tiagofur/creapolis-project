@@ -8,6 +8,7 @@ import '../../../routes/route_builder.dart';
 import '../../screens/settings/notification_preferences_screen.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../providers/locale_provider.dart';
 
 /// Pantalla del menú More con opciones adicionales.
 ///
@@ -75,6 +76,13 @@ class MoreScreen extends StatelessWidget {
                 ),
               );
             },
+          ),
+          _buildMenuItem(
+            context,
+            icon: Icons.language,
+            title: l10n.languageTitle,
+            subtitle: _currentLanguageLabel(context),
+            onTap: () => _showLanguageDialog(context),
           ),
           _buildMenuItem(
             context,
@@ -248,37 +256,57 @@ class MoreScreen extends StatelessWidget {
   void _showAboutDialog(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'Creapolis',
+      applicationName: AppLocalizations.of(context)?.appName ?? 'Creapolis',
       applicationVersion: '1.0.0',
       applicationIcon: Icon(
         Icons.business,
         size: 48,
         color: Theme.of(context).colorScheme.primary,
       ),
-      applicationLegalese: '© 2025 Creapolis. Todos los derechos reservados.',
+      applicationLegalese: AppLocalizations.of(context)?.applicationLegalese ?? '© 2025 Creapolis. Todos los derechos reservados.',
       children: [
         const SizedBox(height: 16),
-        const Text(
-          'Creapolis es una herramienta de gestión de proyectos y tareas '
-          'diseñada para ayudar a equipos a colaborar de manera efectiva.',
-        ),
+        Text(AppLocalizations.of(context)?.aboutContent ?? 'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.'),
       ],
     );
   }
 
+  /// Manejar cierre de sesión
+  Future<void> _handleLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)?.logout ?? 'Cerrar Sesión'),
+        content: Text(AppLocalizations.of(context)?.confirmLogoutMessage ?? '¿Estás seguro de que deseas cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.logout ?? 'Cerrar Sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      AppLogger.info('MoreScreen: Usuario cerrando sesión');
+      await AppRouter.logout(context);
+    }
+  }
   void _showHelpDialog(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Centro de ayuda'),
-        content: const Text(
-          'Visita nuestro centro de ayuda para guías y soporte. '
-          'Próximamente integraremos enlaces directos desde la app.',
-        ),
+        title: Text(AppLocalizations.of(context)?.helpTitle ?? 'Centro de ayuda'),
+        content: Text(AppLocalizations.of(context)?.helpContent ?? 'Visita nuestro centro de ayuda para guías y soporte. Próximamente integraremos enlaces directos desde la app.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Cerrar'),
           ),
         ],
       ),
@@ -289,52 +317,100 @@ class MoreScreen extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Política de privacidad'),
-        content: const SingleChildScrollView(
-          child: Text(
-            '''Gestionamos tus datos conforme a las mejores prácticas.
-- Uso de datos limitado a funcionalidades.
-- Sin compartir con terceros sin consentimiento.
-- Puedes gestionar tus preferencias en Ajustes.
-
-Para más detalle, consulta el sitio oficial.''',
-          ),
-        ),
+        title: Text(AppLocalizations.of(context)?.privacyTitle ?? 'Política de privacidad'),
+        content: SingleChildScrollView(child: Text(AppLocalizations.of(context)?.privacyContent ?? '')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Cerrar'),
           ),
         ],
       ),
     );
   }
 
-  /// Manejar cierre de sesión
-  Future<void> _handleLogout(BuildContext context) async {
-    // Mostrar diálogo de confirmación
-    final confirmed = await showDialog<bool>(
+  String _currentLanguageLabel(BuildContext context) {
+    final locale = context.read<LocaleProvider>().locale;
+    final l10n = AppLocalizations.of(context)!;
+    if (locale == null) return l10n.systemLanguageLabel;
+    switch (locale.languageCode) {
+      case 'es':
+        return l10n.spanishLabel;
+      case 'en':
+        return l10n.englishLabel;
+      default:
+        return locale.toLanguageTag();
+    }
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.selectLanguageTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _LanguageTile(
+              label: l10n.systemLanguageLabel,
+              selected: context.read<LocaleProvider>().locale == null,
+              onTap: () {
+                context.read<LocaleProvider>().setLocale(null);
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            _LanguageTile(
+              label: l10n.spanishLabel,
+              selected: context.read<LocaleProvider>().locale?.languageCode == 'es',
+              onTap: () {
+                context.read<LocaleProvider>().setLocale(const Locale('es'));
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            _LanguageTile(
+              label: l10n.englishLabel,
+              selected: context.read<LocaleProvider>().locale?.languageCode == 'en',
+              onTap: () {
+                context.read<LocaleProvider>().setLocale(const Locale('en'));
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Cerrar Sesión'),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.close),
           ),
         ],
       ),
     );
+  }
 
-    if (confirmed == true && context.mounted) {
-      AppLogger.info('MoreScreen: Usuario cerrando sesión');
-      await AppRouter.logout(context);
-    }
+}
+
+class _LanguageTile extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LanguageTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(label),
+      onTap: onTap,
+    );
   }
 }

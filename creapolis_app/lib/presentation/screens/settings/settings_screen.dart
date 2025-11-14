@@ -433,7 +433,7 @@ class _IntegrationsSection extends StatelessWidget {
             } else if (state is CalendarError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message),
+                  content: Text(AppLocalizations.of(context)?.loadDataError ?? state.message),
                   backgroundColor: colorScheme.error,
                 ),
               );

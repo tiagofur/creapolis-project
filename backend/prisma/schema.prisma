@@ -51,6 +51,8 @@ model User {
   supportTickets          SupportTicket[]        @relation("TicketUser")
   assignedSupportTickets  SupportTicket[]        @relation("TicketAssigned")
   supportMessages         SupportMessage[]
+  notifications           Notification[]
+  notificationPreferences UserNotificationPreferences?
 
   @@index([email])
 }
@@ -978,4 +980,65 @@ enum TicketPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+// Notification System Models
+model Notification {
+  id          Int                @id @default(autoincrement())
+  userId      Int
+  type        NotificationType
+  title       String
+  message     String
+  data        String? // JSON data for additional context
+  isRead      Boolean            @default(false)
+  isSystem    Boolean            @default(false)
+  relatedId   Int? // ID of related entity (ticket, message, etc.)
+  relatedType String? // Type of related entity
+  createdAt   DateTime           @default(now())
+  readAt      DateTime?
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([type])
+  @@index([relatedId, relatedType])
+}
+
+model UserNotificationPreferences {
+  id                          Int      @id @default(autoincrement())
+  userId                      Int      @unique
+  ticketCreated               Boolean  @default(true)
+  ticketStatusChanged         Boolean  @default(true)
+  ticketAssigned              Boolean  @default(true)
+  ticketMessageAdded          Boolean  @default(true)
+  ticketResolved              Boolean  @default(true)
+  forumReply                  Boolean  @default(true)
+  forumMention                Boolean  @default(true)
+  knowledgeBaseUpdate         Boolean  @default(true)
+  systemAnnouncements         Boolean  @default(true)
+  emailEnabled                Boolean  @default(true)
+  pushEnabled                 Boolean  @default(true)
+  inAppEnabled                Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_STATUS_CHANGED
+  TICKET_ASSIGNED
+  TICKET_MESSAGE_ADDED
+  TICKET_RESOLVED
+  FORUM_REPLY
+  FORUM_MENTION
+  KNOWLEDGE_BASE_UPDATE
+  SYSTEM_ANNOUNCEMENT
+  USER_MENTION
+  PROJECT_UPDATE
+  TASK_ASSIGNED
+  TASK_UPDATED
 }

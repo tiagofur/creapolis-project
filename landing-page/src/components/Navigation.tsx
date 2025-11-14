@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Menu, X, User, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import NotificationDropdown from './NotificationDropdown'
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -46,12 +47,22 @@ export default function Navigation() {
               <>
                 {user?.role === 'ADMIN' && (
                   <Link
+                    href="/admin/support"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Admin Soporte</span>
+                  </Link>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link
                     href="/admin/blog"
                     className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
                   >
                     <span>Admin</span>
                   </Link>
                 )}
+                <NotificationDropdown />
                 <Link
                   href="/dashboard"
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -113,6 +124,15 @@ export default function Navigation() {
               <div className="border-t border-gray-200 pt-4 pb-3">
                 {isAuthenticated ? (
                   <>
+                    {user?.role === 'ADMIN' && (
+                      <Link
+                        href="/admin/support"
+                        className="block px-3 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Admin Soporte
+                      </Link>
+                    )}
                     {user?.role === 'ADMIN' && (
                       <Link
                         href="/admin/blog"

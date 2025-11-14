@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
+import TicketAssignment from '@/components/support/TicketAssignment';
 import { 
   ArrowLeft, 
   MessageCircle, 
@@ -17,7 +18,10 @@ import {
   AlertCircle, 
   XCircle,
   Tag,
-  Paperclip
+  Paperclip,
+  Edit3,
+  Save,
+  X
 } from 'lucide-react';
 
 interface Ticket {
@@ -88,6 +92,8 @@ export default function TicketPage() {
   const [loading, setLoading] = useState(true);
   const [messageContent, setMessageContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
 
   useEffect(() => {
     if (ticketId) {
@@ -100,6 +106,7 @@ export default function TicketPage() {
       setLoading(true);
       const response = await supportService.getTicket(ticketId);
       setTicket(response.data);
+      setNewStatus(response.data.status);
     } catch (error) {
       console.error('Error fetching ticket:', error);
       if (error.response?.status === 404) {
@@ -200,6 +207,24 @@ export default function TicketPage() {
 
   const isTicketClosed = ticket.status === 'CLOSED' || ticket.status === 'RESOLVED';
   const canReply = !isTicketClosed;
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPPORT';
+  const canManageTicket = isAdmin && ticket;
+
+  const handleStatusChange = async () => {
+    try {
+      const response = await supportService.updateTicketStatus(ticketId, { status: newStatus });
+      if (response.success) {
+        setTicket({ ...ticket, status: newStatus });
+        setEditingStatus(false);
+      }
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
+    }
+  };
+
+  const handleAssignmentChange = () => {
+    fetchTicket(); // Refresh ticket data after assignment
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -218,7 +243,54 @@ export default function TicketPage() {
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{ticket.title}</h1>
               <div className="flex flex-wrap gap-2 mb-4">
-                {getStatusBadge(ticket.status)}
+                {editingStatus ? (
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="OPEN">Abierto</option>
+                      <option value="IN_PROGRESS">En Progreso</option>
+                      <option value="PENDING_CUSTOMER">Pendiente Cliente</option>
+                      <option value="RESOLVED">Resuelto</option>
+                      <option value="CLOSED">Cerrado</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleStatusChange}
+                      className="p-1"
+                    >
+                      <Save className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingStatus(false);
+                        setNewStatus(ticket.status);
+                      }}
+                      className="p-1"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    {getStatusBadge(ticket.status)}
+                    {canManageTicket && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingStatus(true)}
+                        className="p-1"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
                 {getPriorityBadge(ticket.priority)}
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100">
                   <Tag className="w-3 h-3 mr-1" />
@@ -226,6 +298,15 @@ export default function TicketPage() {
                 </span>
               </div>
             </div>
+            {canManageTicket && (
+              <div className="mt-4 sm:mt-0">
+                <TicketAssignment
+                  ticketId={ticket.id}
+                  currentAssignedTo={ticket.assignedUser?.id || null}
+                  onAssignmentChange={handleAssignmentChange}
+                />
+              </div>
+            )}
           </div>
           
           {/* Ticket Info */}

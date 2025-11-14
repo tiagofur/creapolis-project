@@ -1901,6 +1901,24 @@ abstract class AppLocalizations {
   /// **'Back up your configuration or transfer it across devices.'**
   String get howItWorksStep5Desc;
 
+  /// No description provided for @applicationLegalese.
+  ///
+  /// In en, this message translates to:
+  /// **'© 2025 Creapolis. All rights reserved.'**
+  String get applicationLegalese;
+
+  /// No description provided for @aboutContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Creapolis is a project and task management tool designed to help teams collaborate effectively.'**
+  String get aboutContent;
+
+  /// No description provided for @confirmLogoutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get confirmLogoutMessage;
+
   /// No description provided for @roleCustomizationTitle.
   ///
   /// In en, this message translates to:
@@ -2080,6 +2098,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google Calendar disconnected'**
   String get googleCalendarDisconnected;
+
+  /// No description provided for @profileUserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'User Profile'**
+  String get profileUserTitle;
+
+  /// No description provided for @languageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageTitle;
+
+  /// No description provided for @selectLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select language'**
+  String get selectLanguageTitle;
+
+  /// No description provided for @systemLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get systemLanguageLabel;
+
+  /// No description provided for @spanishLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get spanishLabel;
+
+  /// No description provided for @englishLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get englishLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

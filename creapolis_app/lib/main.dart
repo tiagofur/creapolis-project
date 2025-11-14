@@ -24,6 +24,7 @@ import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart';
 import 'presentation/providers/workspace_context.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/providers/dashboard_filter_provider.dart';
+import 'presentation/providers/locale_provider.dart';
 import 'routes/app_router.dart';
 import 'package:creapolis_app/l10n/app_localizations.dart';
 
@@ -143,9 +144,11 @@ class _CreopolisAppState extends State<CreopolisApp> {
         ChangeNotifierProvider(create: (context) => getIt<WorkspaceContext>()),
         ChangeNotifierProvider(create: (context) => getIt<ThemeProvider>()),
         ChangeNotifierProvider(create: (context) => DashboardFilterProvider()),
+        ChangeNotifierProvider(create: (context) => LocaleProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
+          final localeProvider = context.watch<LocaleProvider>();
           return MaterialApp.router(
             title: AppLocalizations.supportedLocales.isNotEmpty
                 ? AppLocalizations.of(context)?.appName ?? AppStrings.appName
@@ -157,7 +160,7 @@ class _CreopolisAppState extends State<CreopolisApp> {
             routerConfig: AppRouter.router,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('es'),
+            locale: localeProvider.locale,
           );
         },
       ),

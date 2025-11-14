@@ -437,3 +437,165 @@ export const getAdminTicketStats = async (req, res) => {
     });
   }
 };
+
+// Get all tickets (admin)
+export const getAllTickets = async (req, res) => {
+  try {
+    const { status, priority, categoryId, assignedTo, page = 1, limit = 20, search } = req.query;
+
+    const where = {};
+    if (status) where.status = status;
+    if (priority) where.priority = priority;
+    if (categoryId) where.categoryId = parseInt(categoryId);
+    if (assignedTo !== undefined) {
+      if (assignedTo === 'unassigned') {
+        where.assignedTo = null;
+      } else {
+        where.assignedTo = parseInt(assignedTo);
+      }
+    }
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const take = parseInt(limit);
+
+    const [tickets, total] = await Promise.all([
+      prisma.supportTicket.findMany({
+        where,
+        include: {
+          category: true,
+          user: {
+            select: { id: true, name: true, email: true }
+          },
+          assignedUser: {
+            select: { id: true, name: true, email: true }
+          },
+          messages: {
+            take: 1,
+            orderBy: { createdAt: 'desc' }
+          }
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        skip,
+        take
+      }),
+      prisma.supportTicket.count({ where })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        tickets,
+        pagination: {
+          total,
+          pages: Math.ceil(total / limit),
+          currentPage: parseInt(page),
+          hasNext: skip + take < total,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching all tickets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener todos los tickets'
+    });
+  }
+};
+
+// Assign ticket to support agent
+export const assignTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { assignedTo } = req.body;
+
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ticket no encontrado'
+      });
+    }
+
+    // Verify assigned user exists and has support role
+    if (assignedTo) {
+      const assignedUser = await prisma.user.findUnique({
+        where: { id: parseInt(assignedTo) }
+      });
+
+      if (!assignedUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Usuario asignado no encontrado'
+        });
+      }
+    }
+
+    const updatedTicket = await prisma.supportTicket.update({
+      where: { id: parseInt(id) },
+      data: { assignedTo: assignedTo ? parseInt(assignedTo) : null },
+      include: {
+        category: true,
+        user: {
+          select: { id: true, name: true, email: true }
+        },
+        assignedUser: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Ticket asignado exitosamente',
+      data: updatedTicket
+    });
+  } catch (error) {
+    console.error('Error assigning ticket:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al asignar el ticket'
+    });
+  }
+};
+
+// Get support agents
+export const getSupportAgents = async (req, res) => {
+  try {
+    const agents = await prisma.user.findMany({
+      where: {
+        role: 'SUPPORT'
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({
+      success: true,
+      data: agents
+    });
+  } catch (error) {
+    console.error('Error fetching support agents:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener agentes de soporte'
+    });
+  }
+};
