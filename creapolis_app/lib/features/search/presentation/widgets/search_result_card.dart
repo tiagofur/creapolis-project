@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart' hide RouteBuilder;
 import 'package:creapolis_app/domain/entities/search_result.dart';
+import 'package:creapolis_app/routes/route_builder.dart';
+import 'package:creapolis_app/injection.dart';
+import 'package:creapolis_app/presentation/providers/workspace_context.dart';
 
 /// Card widget to display individual search results
 class SearchResultCard extends StatelessWidget {
@@ -336,13 +340,46 @@ class SearchResultCard extends StatelessWidget {
     }
   }
 
-  void _handleResultTap(BuildContext context) {
-    // TODO: Navigate to appropriate screen based on result type
-    // For now, just show a snackbar
+  Future<void> _handleResultTap(BuildContext context) async {
+    final type = result.type.toLowerCase();
+    int? toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
+    switch (type) {
+      case 'task':
+        final project = result.metadata['project'] as Map<String, dynamic>?;
+        final workspace = result.metadata['workspace'] as Map<String, dynamic>?;
+        final tId = toInt(result.id);
+        final pId = toInt(project?['id']);
+        int? wId = toInt(workspace?['id']);
+        wId ??= getIt<WorkspaceContext>().activeWorkspace?.id;
+        if (wId != null && pId != null && tId != null) {
+          context.go(RouteBuilder.taskDetail(wId, pId, tId));
+          return;
+        }
+        break;
+      case 'project':
+        final workspace = result.metadata['workspace'] as Map<String, dynamic>?;
+        int? wId = toInt(workspace?['id']);
+        wId ??= getIt<WorkspaceContext>().activeWorkspace?.id;
+        final pId = toInt(result.id);
+        if (wId != null && pId != null) {
+          context.go(RouteBuilder.projectDetail(wId, pId));
+          return;
+        }
+        break;
+      case 'user':
+        context.go(RouteBuilder.profile());
+        return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Navegar a ${result.type}: ${result.title}'),
-        duration: const Duration(seconds: 2),
+        content: Text('No se pudo navegar a ${result.type}: ${result.title}'),
       ),
     );
   }

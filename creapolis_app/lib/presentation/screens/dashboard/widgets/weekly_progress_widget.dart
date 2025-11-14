@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Widget de ejemplo que muestra un gráfico de progreso semanal.
 ///
@@ -44,15 +45,9 @@ class WeeklyProgressWidget extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    // TODO: Navegar a estadísticas detalladas
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Estadísticas detalladas'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    Navigator.of(context).pushNamed('/more/customization-metrics');
                   },
-                  child: const Text('Ver más'),
+                  child: Text(AppLocalizations.of(context)?.viewMore ?? 'Ver más'),
                 ),
               ],
             ),

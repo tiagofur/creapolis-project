@@ -7,21 +7,27 @@ const prisma = new PrismaClient({
       : ["error"],
 });
 
-// Handle connection errors
-prisma
-  .$connect()
-  .then(() => {
-    console.log("✅ Database connected successfully");
-  })
-  .catch((error) => {
-    console.error("❌ Database connection failed:", error);
-    process.exit(1);
-  });
+const isTest = process.env.NODE_ENV === "test";
 
-// Graceful shutdown
-process.on("beforeExit", async () => {
-  await prisma.$disconnect();
-  console.log("🔌 Database disconnected");
-});
+// Handle connection errors (skip auto-connect in tests)
+if (!isTest) {
+  prisma
+    .$connect()
+    .then(() => {
+      console.log("✅ Database connected successfully");
+    })
+    .catch((error) => {
+      console.error("❌ Database connection failed:", error);
+      process.exit(1);
+    });
+}
+
+// Graceful shutdown (skip in tests; Jest manages lifecycle)
+if (!isTest) {
+  process.on("beforeExit", async () => {
+    await prisma.$disconnect();
+    console.log("🔌 Database disconnected");
+  });
+}
 
 export default prisma;

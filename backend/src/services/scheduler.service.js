@@ -2,6 +2,9 @@
  * Scheduler Service
  * Handles automatic task scheduling and project planning
  */
+import prisma from "../config/database.js";
+import { ErrorResponses } from "../utils/errors.js";
+import googleCalendarService from "./google-calendar.service.js";
 class SchedulerService {
   /**
    * Perform topological sort on tasks to determine execution order
@@ -181,7 +184,6 @@ class SchedulerService {
    * @returns {Object} - Schedule with task dates
    */
   async calculateInitialSchedule(projectId) {
-    const prisma = (await import("../config/database.js")).default;
 
     // Get project with all tasks and dependencies
     const project = await prisma.project.findUnique({
@@ -197,7 +199,6 @@ class SchedulerService {
     });
 
     if (!project) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Project not found");
     }
 
@@ -210,6 +211,9 @@ class SchedulerService {
     }
 
     try {
+      if (this.hasCircularDependency(project.tasks)) {
+        throw new Error("Circular dependency detected in task graph");
+      }
       // Perform topological sort
       const sortedTaskIds = this.topologicalSort(project.tasks);
 
@@ -311,7 +315,6 @@ class SchedulerService {
       };
     } catch (error) {
       if (error.message.includes("Circular dependency")) {
-        const { ErrorResponses } = await import("../utils/errors.js");
         throw ErrorResponses.badRequest(
           "Cannot schedule project: circular dependency detected"
         );
@@ -367,9 +370,6 @@ class SchedulerService {
    * @returns {Object} - Updated schedule
    */
   async rescheduleProject(projectId, triggerTaskId, options = {}) {
-    const prisma = (await import("../config/database.js")).default;
-    const googleCalendarService = (await import("./google-calendar.service.js"))
-      .default;
 
     // Get project with all tasks and dependencies
     const project = await prisma.project.findUnique({
@@ -393,17 +393,18 @@ class SchedulerService {
     });
 
     if (!project) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Project not found");
     }
 
     const triggerTask = project.tasks.find((t) => t.id === triggerTaskId);
     if (!triggerTask) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Trigger task not found");
     }
 
     try {
+      if (this.hasCircularDependency(project.tasks)) {
+        throw new Error("Circular dependency detected in task graph");
+      }
       // Perform topological sort to get task order
       const sortedTaskIds = this.topologicalSort(project.tasks);
 
@@ -595,7 +596,6 @@ class SchedulerService {
       };
     } catch (error) {
       if (error.message.includes("Circular dependency")) {
-        const { ErrorResponses } = await import("../utils/errors.js");
         throw ErrorResponses.badRequest(
           "Cannot reschedule project: circular dependency detected"
         );
@@ -610,7 +610,7 @@ class SchedulerService {
    * @returns {Object} - Resource allocation analysis
    */
   async analyzeResourceAllocation(projectId) {
-    const prisma = (await import("../config/database.js")).default;
+    // use static prisma import
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -635,7 +635,6 @@ class SchedulerService {
     });
 
     if (!project) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Project not found");
     }
 

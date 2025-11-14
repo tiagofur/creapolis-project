@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
@@ -73,7 +74,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Detalle de Tarea'),
+          title: Text(AppLocalizations.of(context)?.taskDetailTitle ?? 'Detalle de Tarea'),
           actions: [
             const WorkspaceSwitcher(compact: true),
             IconButton(
@@ -88,10 +89,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
           ],
           bottom: TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
-              Tab(icon: Icon(Icons.access_time), text: 'Time Tracking'),
-              Tab(icon: Icon(Icons.link), text: 'Dependencies'),
+            tabs: [
+              Tab(icon: const Icon(Icons.info_outline), text: AppLocalizations.of(context)?.overviewTab ?? 'Overview'),
+              Tab(icon: const Icon(Icons.access_time), text: AppLocalizations.of(context)?.timeTrackingTab ?? 'Time Tracking'),
+              Tab(icon: const Icon(Icons.link), text: AppLocalizations.of(context)?.dependenciesTab ?? 'Dependencies'),
             ],
           ),
         ),
@@ -118,7 +119,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error al cargar tarea',
+                      AppLocalizations.of(context)?.loadTaskErrorTitle ?? 'Error al cargar tarea',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
@@ -135,7 +136,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                         );
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
+                      label: Text(AppLocalizations.of(context)?.retry ?? 'Reintentar'),
                     ),
                   ],
                 ),
@@ -222,7 +223,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Dependencias',
+            AppLocalizations.of(context)?.dependenciesTitle ?? 'Dependencias',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -240,7 +241,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                         const Icon(Icons.link, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          '${task.dependencyIds.length} dependencias',
+                          AppLocalizations.of(context)?.dependenciesCount(task.dependencyIds.length) ?? '${task.dependencyIds.length} dependencias',
                           style: theme.textTheme.titleMedium,
                         ),
                       ],
@@ -249,7 +250,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                     ...task.dependencyIds.map(
                       (id) => ListTile(
                         leading: const Icon(Icons.task_alt),
-                        title: Text('Tarea #$id'),
+                        title: Text(AppLocalizations.of(context)?.taskNumber(id) ?? 'Tarea #$id'),
                         dense: true,
                       ),
                     ),
@@ -269,7 +270,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No hay dependencias',
+                    AppLocalizations.of(context)?.noDependencies ?? 'No hay dependencias',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -337,7 +338,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Descripción',
+                    AppLocalizations.of(context)?.descriptionTitle ?? 'Descripción',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -358,7 +359,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Fechas y Duración',
+                    AppLocalizations.of(context)?.datesAndDurationTitle ?? 'Fechas y Duración',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -367,22 +368,22 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                   _buildInfoRow(
                     context,
                     Icons.calendar_today,
-                    'Inicio',
+                    AppLocalizations.of(context)?.startDateLabel ?? 'Inicio',
                     _formatDate(task.startDate),
                   ),
                   const Divider(height: 24),
                   _buildInfoRow(
                     context,
                     Icons.event,
-                    'Fin',
+                    AppLocalizations.of(context)?.endDateLabel ?? 'Fin',
                     _formatDate(task.endDate),
                   ),
                   const Divider(height: 24),
                   _buildInfoRow(
                     context,
                     Icons.timelapse,
-                    'Duración',
-                    '${task.durationInDays} días',
+                    AppLocalizations.of(context)?.durationLabel ?? 'Duración',
+                    AppLocalizations.of(context)?.durationInDays(task.durationInDays) ?? '${task.durationInDays} días',
                   ),
                 ],
               ),
@@ -410,7 +411,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Asignado a',
+                            AppLocalizations.of(context)?.assignedToLabel ?? 'Asignado a',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.grey.shade600,
                             ),

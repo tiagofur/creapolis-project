@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'dart:async';
 
 import '../../../core/services/dashboard_preferences_service.dart';
 import '../../../core/utils/app_logger.dart';
@@ -9,6 +10,18 @@ import '../../../features/projects/presentation/blocs/project_bloc.dart';
 import '../../../features/projects/presentation/blocs/project_event.dart';
 import '../../providers/workspace_context.dart';
 import '../../widgets/workspace/workspace_switcher.dart';
+import '../settings/notification_preferences_screen.dart';
+import '../../widgets/task/create_task_bottom_sheet.dart';
+import '../../bloc/task/task_bloc.dart';
+import '../../bloc/task/task_state.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
+import '../../../features/projects/presentation/blocs/project_state.dart';
+// import duplicated removed
+import '../../../domain/entities/project.dart';
+import '../../../injection.dart';
+import '../../../routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'widgets/add_widget_bottom_sheet.dart';
 import 'widgets/dashboard_widget_factory.dart';
 import 'widgets/dashboard_filter_bar.dart';
@@ -235,24 +248,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notificaciones - Por implementar'),
-                  duration: Duration(seconds: 2),
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NotificationPreferencesScreen(),
                 ),
               );
             },
+          ),
+          // Quick create task
+          IconButton(
+            icon: const Icon(Icons.add_task),
+            onPressed: () => _handleCreateTask(context),
+            tooltip: AppLocalizations.of(context)?.newTaskTooltip ?? 'Nueva tarea',
           ),
           // Profile
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Perfil - Por implementar'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              context.go(RoutePaths.profile);
             },
           ),
         ],
@@ -268,6 +281,209 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: const Text('Añadir Widget'),
             )
           : null,
+    );
+  }
+
+  Future<void> _handleCreateTask(BuildContext context) async {
+    final ctx = context;
+    final workspaceContext = context.read<WorkspaceContext>();
+    final activeWorkspace = workspaceContext.activeWorkspace;
+    if (activeWorkspace == null) {
+      _showNoWorkspaceDialog(
+        context,
+        'Para crear tareas, primero debes seleccionar o crear un workspace.',
+      );
+      return;
+    }
+
+    final workspaceId = activeWorkspace.id;
+    final projectBloc = context.read<ProjectBloc>();
+    final projectState = projectBloc.state;
+
+    List<Project> projects = [];
+    if (projectState is ProjectsLoaded &&
+        projectState.workspaceId == workspaceId) {
+      projects = projectState.projects;
+    } else {
+      projectBloc.add(LoadProjects(workspaceId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)?.updatingProjectsSnack ?? 'Actualizando lista de proyectos...'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (projects.isEmpty) {
+      _showNoProjectsDialog(context);
+      return;
+    }
+
+    final selectedProjectId = await _selectProject(ctx, projects);
+    if (selectedProjectId == null || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _showCreateTaskSheet(ctx, selectedProjectId);
+    });
+  }
+
+  Future<void> _showCreateTaskSheet(BuildContext context, int projectId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final taskBloc = getIt<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(projectId));
+
+    final resultFuture = taskBloc.stream
+        .firstWhere((state) => state is TaskCreated || state is TaskError)
+        .timeout(const Duration(seconds: 10));
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: projectId),
+        ),
+      ),
+    );
+
+    TaskState? result;
+    try {
+      result = await resultFuture;
+    } on TimeoutException {
+      result = null;
+    } catch (_) {
+      result = null;
+    }
+
+    await taskBloc.close();
+    await projectMemberBloc.close();
+
+    if (!mounted) return;
+    if (result is TaskCreated) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Tarea "${result.task.title}" creada')),
+      );
+    } else if (result is TaskError) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    }
+  }
+
+  Future<int?> _selectProject(
+    BuildContext context,
+    List<Project> projects,
+  ) async {
+    if (projects.length == 1) return projects.first.id;
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                AppLocalizations.of(sheetContext)?.selectProject ?? 'Selecciona un proyecto',
+                style: Theme.of(sheetContext)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ListTile(
+                    leading: const Icon(Icons.folder_open),
+                    title: Text(project.name),
+                    subtitle: project.description.isNotEmpty
+                        ? Text(project.description)
+                        : null,
+                    onTap: () => Navigator.of(context).pop(project.id),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNoWorkspaceDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Workspace requerido'),
+          ],
+        ),
+        content: Text(AppLocalizations.of(context)?.workspaceRequiredMessage ?? message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go(RoutePaths.workspaceCreate);
+            },
+            icon: const Icon(Icons.add),
+            label: Text(AppLocalizations.of(context)?.createWorkspace ?? 'Crear Workspace'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNoProjectsDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.folder_off_outlined, color: Colors.blueGrey),
+            SizedBox(width: 8),
+            Text('Necesitas un proyecto'),
+          ],
+        ),
+        content: const Text(
+          'Crea un proyecto primero para poder registrar tareas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _toggleEditMode();
+              _addWidget();
+            },
+            icon: const Icon(Icons.create_new_folder),
+            label: Text(AppLocalizations.of(context)?.addWidgetCreateProject ?? 'Añadir Widget / Crear Proyecto'),
+          ),
+        ],
+      ),
     );
   }
 

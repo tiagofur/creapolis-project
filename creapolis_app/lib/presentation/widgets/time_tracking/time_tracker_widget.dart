@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/task.dart';
@@ -19,6 +20,7 @@ class TimeTrackerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return BlocConsumer<TimeTrackingBloc, TimeTrackingState>(
       listener: (context, state) {
@@ -33,8 +35,8 @@ class TimeTrackerWidget extends StatelessWidget {
 
         if (state is TaskFinished) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Tarea finalizada exitosamente!'),
+            SnackBar(
+              content: Text(l10n?.taskFinishedSuccessSnack ?? '¡Tarea finalizada exitosamente!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -54,7 +56,7 @@ class TimeTrackerWidget extends StatelessWidget {
                     Icon(Icons.timer, color: colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'Time Tracking',
+                      l10n?.timeTrackingTitle ?? 'Time Tracking',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -84,7 +86,7 @@ class TimeTrackerWidget extends StatelessWidget {
                     state is TimeTrackingStopped) ...[
                   const Divider(height: 32),
                   Text(
-                    'Sesiones de Trabajo',
+                    l10n?.workSessionsTitle ?? 'Sesiones de Trabajo',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -160,7 +162,7 @@ class TimeTrackerWidget extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'No tienes permisos para registrar tiempo en este workspace',
+                AppLocalizations.of(context)?.noPermissionsTrackTime ?? 'No tienes permisos para registrar tiempo en este workspace',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onErrorContainer,
                 ),
@@ -191,7 +193,7 @@ class TimeTrackerWidget extends StatelessWidget {
                     }
                   },
             icon: Icon(isRunning ? Icons.stop : Icons.play_arrow),
-            label: Text(isRunning ? 'Detener' : 'Iniciar'),
+            label: Text(isRunning ? (AppLocalizations.of(context)?.stopLabel ?? 'Detener') : (AppLocalizations.of(context)?.startLabel ?? 'Iniciar')),
             style: ElevatedButton.styleFrom(
               backgroundColor: isRunning ? Colors.orange : Colors.green,
               foregroundColor: Colors.white,
@@ -207,7 +209,7 @@ class TimeTrackerWidget extends StatelessWidget {
                 ? () => _showFinishConfirmation(context)
                 : null,
             icon: const Icon(Icons.check_circle),
-            label: const Text('Finalizar'),
+            label: Text(AppLocalizations.of(context)?.finishLabel ?? 'Finalizar'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
@@ -230,7 +232,7 @@ class TimeTrackerWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Progreso de Horas', style: theme.textTheme.bodyMedium),
+            Text(AppLocalizations.of(context)?.hoursProgressLabel ?? 'Progreso de Horas', style: theme.textTheme.bodyMedium),
             Text(
               '${task.actualHours.toStringAsFixed(1)}h / ${task.estimatedHours.toStringAsFixed(1)}h',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -256,7 +258,7 @@ class TimeTrackerWidget extends StatelessWidget {
               Icon(Icons.warning, size: 16, color: Colors.red.shade700),
               const SizedBox(width: 4),
               Text(
-                'Horas excedidas',
+                AppLocalizations.of(context)?.overtimeHoursLabel ?? 'Horas excedidas',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: Colors.red.shade700,
                   fontWeight: FontWeight.w500,
@@ -274,15 +276,12 @@ class TimeTrackerWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Finalizar Tarea'),
-        content: const Text(
-          '¿Estás seguro de que deseas finalizar esta tarea? '
-          'Esto detendrá cualquier timer activo y marcará la tarea como completada.',
-        ),
+        title: Text(AppLocalizations.of(context)?.finishTaskTitle ?? 'Finalizar Tarea'),
+        content: Text(AppLocalizations.of(context)?.finishTaskMessage ?? '¿Estás seguro de que deseas finalizar esta tarea? Esto detendrá cualquier timer activo y marcará la tarea como completada.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -293,7 +292,7 @@ class TimeTrackerWidget extends StatelessWidget {
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Finalizar'),
+            child: Text(AppLocalizations.of(context)?.finishLabel ?? 'Finalizar'),
           ),
         ],
       ),

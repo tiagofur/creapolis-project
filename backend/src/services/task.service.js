@@ -459,7 +459,52 @@ class TaskService {
       throw ErrorResponses.conflict("Dependency already exists");
     }
 
-    // TODO: Check for circular dependencies (will be important for Phase 3)
+    const projectTaskIds = (
+      await prisma.task.findMany({
+        where: { projectId },
+        select: { id: true },
+      })
+    ).map((t) => t.id);
+
+    const deps = await prisma.dependency.findMany({
+      where: {
+        OR: [
+          { predecessorId: { in: projectTaskIds } },
+          { successorId: { in: projectTaskIds } },
+        ],
+      },
+      select: { predecessorId: true, successorId: true },
+    });
+
+    const adj = new Map();
+    for (const d of deps) {
+      if (!adj.has(d.predecessorId)) adj.set(d.predecessorId, new Set());
+      adj.get(d.predecessorId).add(d.successorId);
+    }
+
+    const queue = [taskId];
+    const seen = new Set([taskId]);
+    let cycle = false;
+    while (queue.length && !cycle) {
+      const cur = queue.shift();
+      const nexts = adj.get(cur);
+      if (nexts) {
+        if (nexts.has(predecessorId)) {
+          cycle = true;
+          break;
+        }
+        for (const n of nexts) {
+          if (!seen.has(n)) {
+            seen.add(n);
+            queue.push(n);
+          }
+        }
+      }
+    }
+
+    if (cycle) {
+      throw ErrorResponses.badRequest("Circular dependency detected");
+    }
 
     const dependency = await prisma.dependency.create({
       data: {

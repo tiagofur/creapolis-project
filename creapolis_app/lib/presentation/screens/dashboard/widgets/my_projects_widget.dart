@@ -8,6 +8,9 @@ import 'package:creapolis_app/features/projects/presentation/blocs/project_state
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
 import 'package:creapolis_app/routes/app_router.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/presentation/bloc/task/task_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/task/task_state.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Widget que muestra los proyectos del usuario en el Dashboard.
 ///
@@ -62,7 +65,7 @@ class _MyProjectsWidgetState extends State<MyProjectsWidget> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Mis Proyectos',
+                      AppLocalizations.of(context)?.myProjectsTitle ?? 'Mis Proyectos',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -73,7 +76,7 @@ class _MyProjectsWidgetState extends State<MyProjectsWidget> {
                   onPressed: activeWorkspace != null
                       ? () => GoRouter.of(context).go(RoutePaths.allProjects)
                       : null,
-                  child: const Text('Ver todos'),
+                  child: Text(AppLocalizations.of(context)?.viewAll ?? 'Ver todos'),
                 ),
               ],
             ),
@@ -162,9 +165,15 @@ class _MyProjectsWidgetState extends State<MyProjectsWidget> {
   ) {
     final theme = Theme.of(context);
 
-    // Calcular progreso (mock)
-    // TODO: Calcular progreso real basado en tareas completadas
-    final progress = _calculateProgress(project);
+    final taskState = context.watch<TaskBloc>().state;
+    double progress = _calculateProgress(project);
+    if (taskState is WorkspaceTasksLoaded) {
+      final tasks = taskState.tasks.where((t) => t.projectId == project.id).toList();
+      if (tasks.isNotEmpty) {
+        final completed = tasks.where((t) => t.isCompleted).length;
+        progress = completed / tasks.length;
+      }
+    }
 
     // Colores dinámicos según progreso
     Color progressColor;
@@ -228,7 +237,7 @@ class _MyProjectsWidgetState extends State<MyProjectsWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Progreso',
+                        AppLocalizations.of(context)?.progressLabel ?? 'Progreso',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -264,7 +273,6 @@ class _MyProjectsWidgetState extends State<MyProjectsWidget> {
   }
 
   /// Calcular progreso del proyecto
-  /// TODO: Implementar cálculo real basado en tareas
   double _calculateProgress(Project project) {
     // Usar progreso calculado por fechas por ahora
     return project.progress;

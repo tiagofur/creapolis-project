@@ -91,29 +91,77 @@ class WorkspaceTasksLoaded extends TaskState {
   final List<Task> tasks;
   final Map<int, Project> projectById;
   final bool isRefreshing;
+  final TaskStatus? currentStatusFilter;
+  final TaskPriority? currentPriorityFilter;
+  final String? searchQuery;
 
   const WorkspaceTasksLoaded({
     required this.workspaceId,
     required this.tasks,
     required this.projectById,
     this.isRefreshing = false,
+    this.currentStatusFilter,
+    this.currentPriorityFilter,
+    this.searchQuery,
   });
 
   @override
-  List<Object?> get props => [workspaceId, tasks, projectById, isRefreshing];
+  List<Object?> get props => [
+        workspaceId,
+        tasks,
+        projectById,
+        isRefreshing,
+        currentStatusFilter,
+        currentPriorityFilter,
+        searchQuery,
+      ];
 
   List<Project> get projects => projectById.values.toList(growable: false);
+
+  List<Task> get filteredTasks {
+    var filtered = tasks;
+    if (searchQuery != null && searchQuery!.isNotEmpty) {
+      final q = searchQuery!.toLowerCase();
+      filtered = filtered
+          .where((t) =>
+              t.title.toLowerCase().contains(q) ||
+              t.description.toLowerCase().contains(q))
+          .toList();
+    }
+    if (currentStatusFilter != null) {
+      filtered = filtered
+          .where((t) => t.status == currentStatusFilter)
+          .toList();
+    }
+    if (currentPriorityFilter != null) {
+      filtered = filtered
+          .where((t) => t.priority == currentPriorityFilter)
+          .toList();
+    }
+    return filtered;
+  }
 
   WorkspaceTasksLoaded copyWith({
     List<Task>? tasks,
     Map<int, Project>? projectById,
     bool? isRefreshing,
+    TaskStatus? currentStatusFilter,
+    TaskPriority? currentPriorityFilter,
+    String? searchQuery,
+    bool clearStatusFilter = false,
+    bool clearPriorityFilter = false,
+    bool clearSearchQuery = false,
   }) {
     return WorkspaceTasksLoaded(
       workspaceId: workspaceId,
       tasks: tasks ?? this.tasks,
       projectById: projectById ?? this.projectById,
       isRefreshing: isRefreshing ?? this.isRefreshing,
+      currentStatusFilter:
+          clearStatusFilter ? null : (currentStatusFilter ?? this.currentStatusFilter),
+      currentPriorityFilter:
+          clearPriorityFilter ? null : (currentPriorityFilter ?? this.currentPriorityFilter),
+      searchQuery: clearSearchQuery ? null : (searchQuery ?? this.searchQuery),
     );
   }
 }

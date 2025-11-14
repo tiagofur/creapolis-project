@@ -1,9 +1,9 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:logger/logger.dart';
 
 /// Service for managing WebSocket connections for real-time collaboration
 class WebSocketService {
-  IO.Socket? _socket;
+  io.Socket? _socket;
   final Logger _logger = Logger();
   final String baseUrl;
   bool _isConnected = false;
@@ -25,9 +25,9 @@ class WebSocketService {
     try {
       _logger.i('Connecting to WebSocket server: $baseUrl');
 
-      _socket = IO.io(
+      _socket = io.io(
         baseUrl,
-        IO.OptionBuilder()
+        io.OptionBuilder()
             .setTransports(['websocket'])
             .enableAutoConnect()
             .enableReconnection()

@@ -7,6 +7,7 @@ import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
 import '../../../bloc/task/task_state.dart';
 import '../../../providers/dashboard_filter_provider.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Widget que muestra el progreso de tareas completadas por día
 /// usando un gráfico de barras interactivo
@@ -44,7 +45,7 @@ class _WeeklyProgressChartWidgetState extends State<WeeklyProgressChartWidget> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Progreso Semanal',
+                      AppLocalizations.of(context)?.weeklyProgressTitle ?? 'Progreso Semanal',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -55,7 +56,7 @@ class _WeeklyProgressChartWidgetState extends State<WeeklyProgressChartWidget> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tareas completadas por día',
+              AppLocalizations.of(context)?.tasksCompletedPerDay ?? 'Tareas completadas por día',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -75,7 +76,7 @@ class _WeeklyProgressChartWidgetState extends State<WeeklyProgressChartWidget> {
                     height: 200,
                     child: Center(
                       child: Text(
-                        'Error al cargar datos',
+                        AppLocalizations.of(context)?.loadDataError ?? 'Error al cargar datos',
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ),
@@ -110,7 +111,7 @@ class _WeeklyProgressChartWidgetState extends State<WeeklyProgressChartWidget> {
                               ),
                               children: [
                                 TextSpan(
-                                  text: '${rod.toY.toInt()} tareas',
+                                  text: AppLocalizations.of(context)?.tasksCount(rod.toY.toInt()) ?? '${rod.toY.toInt()} tareas',
                                   style: TextStyle(
                                     color: theme.colorScheme.onInverseSurface,
                                     fontSize: 12,
@@ -220,15 +221,21 @@ class _WeeklyProgressChartWidgetState extends State<WeeklyProgressChartWidget> {
     var filtered = tasks;
 
     if (filterProvider.selectedProjectId != null) {
-      filtered = filtered
-          .where((task) => task.projectId == filterProvider.selectedProjectId)
-          .toList();
+      final pid = int.tryParse(filterProvider.selectedProjectId!);
+      if (pid != null) {
+        filtered = filtered.where((task) => task.projectId == pid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     if (filterProvider.selectedUserId != null) {
-      filtered = filtered
-          .where((task) => task.assignedTo == filterProvider.selectedUserId)
-          .toList();
+      final uid = int.tryParse(filterProvider.selectedUserId!);
+      if (uid != null) {
+        filtered = filtered.where((task) => task.assignedTo == uid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     return filtered;

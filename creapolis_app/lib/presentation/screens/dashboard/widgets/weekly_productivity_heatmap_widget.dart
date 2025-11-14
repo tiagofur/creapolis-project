@@ -65,7 +65,6 @@ class _WeeklyProductivityHeatmapWidgetState
                         setState(() {
                           _isTeamView = value;
                         });
-                        // TODO: Reload data with new view mode
                       },
                     ),
                   ],
@@ -297,7 +296,7 @@ class _WeeklyProductivityHeatmapWidgetState
 
   List<List<double>> _generateMockMatrixData() {
     // Mock data for demonstration - 7 days x 24 hours
-    return [
+    final base = [
       // Monday
       List.generate(24, (hour) {
         if (hour >= 9 && hour <= 18) return 0.5 + (hour % 3) * 0.5;
@@ -331,6 +330,12 @@ class _WeeklyProductivityHeatmapWidgetState
       // Sunday (minimal)
       List.generate(24, (hour) => 0.0),
     ];
+    if (_isTeamView) {
+      return base
+          .map((row) => row.map((v) => v * 1.2).toList())
+          .toList();
+    }
+    return base;
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../features/workspace/data/models/workspace_model.dart';
@@ -90,7 +91,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
           Navigator.of(context).pop(
             InviteMemberResult(
               success: true,
-              message: 'Invitación enviada a ${state.invitation.inviteeEmail}',
+              message: AppLocalizations.of(context)?.invitationSentTo(state.invitation.inviteeEmail) ?? 'Invitación enviada a ${state.invitation.inviteeEmail}',
             ),
           );
         } else if (state is WorkspaceInvitationError && _isSubmitting) {
@@ -103,7 +104,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
         }
       },
       child: AlertDialog(
-        title: const Text('Invitar miembro'),
+        title: Text(AppLocalizations.of(context)?.inviteMember ?? 'Invitar miembro'),
         content: Form(
           key: _formKey,
           child: Column(
@@ -113,18 +114,18 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
                 controller: _emailController,
                 enabled: !_isSubmitting,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Correo electrónico',
-                  hintText: 'usuario@ejemplo.com',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)?.inviteeEmailLabel ?? 'Correo electrónico',
+                  hintText: AppLocalizations.of(context)?.inviteeEmailHint ?? 'usuario@ejemplo.com',
                 ),
                 validator: (value) {
                   final email = value?.trim() ?? '';
                   if (email.isEmpty) {
-                    return 'El correo es obligatorio';
+                    return AppLocalizations.of(context)?.emailRequired ?? 'El correo es obligatorio';
                   }
                   final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
                   if (!emailRegex.hasMatch(email)) {
-                    return 'Ingresa un correo válido';
+                    return AppLocalizations.of(context)?.emailInvalid ?? 'Ingresa un correo válido';
                   }
                   return null;
                 },
@@ -132,7 +133,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
               const SizedBox(height: 16),
               DropdownButtonFormField<WorkspaceRole>(
                 initialValue: _selectedRole,
-                decoration: const InputDecoration(labelText: 'Rol'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)?.roleLabel ?? 'Rol'),
                 items: roles
                     .map(
                       (role) => DropdownMenuItem(
@@ -159,7 +160,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           ElevatedButton(
             onPressed: _isSubmitting ? null : _submit,
@@ -169,7 +170,7 @@ class _InviteMemberDialogState extends State<_InviteMemberDialog> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Enviar invitación'),
+                : Text(AppLocalizations.of(context)?.sendInvitation ?? 'Enviar invitación'),
           ),
         ],
       ),

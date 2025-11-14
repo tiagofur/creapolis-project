@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,7 +34,7 @@ class _WorkspaceInvitationsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invitaciones Pendientes'),
+        title: Text(AppLocalizations.of(context)?.pendingInvitationsTitle ?? 'Invitaciones Pendientes'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -42,7 +43,7 @@ class _WorkspaceInvitationsScreenState
                 const RefreshPendingInvitationsEvent(),
               );
             },
-            tooltip: 'Refrescar',
+            tooltip: AppLocalizations.of(context)?.refresh ?? 'Refrescar',
           ),
         ],
       ),
@@ -58,10 +59,10 @@ class _WorkspaceInvitationsScreenState
           } else if (state is InvitationAccepted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Te has unido a "${state.workspace.name}"'),
+                content: Text(AppLocalizations.of(context)?.joinedWorkspaceSnack(state.workspace.name) ?? 'Te has unido a "${state.workspace.name}"'),
                 backgroundColor: Colors.green,
                 action: SnackBarAction(
-                  label: 'Ver',
+                  label: AppLocalizations.of(context)?.open ?? 'Ver',
                   textColor: Colors.white,
                   onPressed: () {
                     final workspaceBloc = context.read<WorkspaceBloc>();
@@ -85,8 +86,8 @@ class _WorkspaceInvitationsScreenState
             );
           } else if (state is InvitationDeclined) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invitación rechazada'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)?.invitationDeclinedSnack ?? 'Invitación rechazada'),
                 backgroundColor: Colors.orange,
               ),
             );
@@ -230,9 +231,9 @@ class _WorkspaceInvitationsScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Invitado por',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        Text(
+                          AppLocalizations.of(context)?.invitedByLabel ?? 'Invitado por',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -273,7 +274,7 @@ class _WorkspaceInvitationsScreenState
                 Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
-                  'Invitado ${_formatDate(invitation.createdAt)}',
+                  AppLocalizations.of(context)?.invitedAt(_formatDate(invitation.createdAt)) ?? 'Invitado ${_formatDate(invitation.createdAt)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),
@@ -285,8 +286,8 @@ class _WorkspaceInvitationsScreenState
                 const SizedBox(width: 4),
                 Text(
                   invitation.isExpired
-                      ? 'Expirada'
-                      : 'Expira ${_formatDate(invitation.expiresAt)}',
+                      ? (AppLocalizations.of(context)?.invitationExpired ?? 'Expirada')
+                      : (AppLocalizations.of(context)?.expiresAt(_formatDate(invitation.expiresAt)) ?? 'Expira ${_formatDate(invitation.expiresAt)}'),
                   style: TextStyle(
                     fontSize: 12,
                     color: invitation.isExpired ? Colors.red : Colors.orange,
@@ -308,7 +309,7 @@ class _WorkspaceInvitationsScreenState
                     child: OutlinedButton.icon(
                       onPressed: () => _declineInvitation(invitation),
                       icon: const Icon(Icons.close),
-                      label: const Text('Rechazar'),
+                      label: Text(AppLocalizations.of(context)?.reject ?? 'Rechazar'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -321,7 +322,7 @@ class _WorkspaceInvitationsScreenState
                     child: ElevatedButton.icon(
                       onPressed: () => _acceptInvitation(invitation),
                       icon: const Icon(Icons.check),
-                      label: const Text('Aceptar'),
+                      label: Text(AppLocalizations.of(context)?.accept ?? 'Aceptar'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -345,7 +346,7 @@ class _WorkspaceInvitationsScreenState
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Esta invitación ha expirado',
+                        AppLocalizations.of(context)?.invitationExpiredMessage ?? 'Esta invitación ha expirado',
                         style: TextStyle(
                           color: Colors.red.shade700,
                           fontWeight: FontWeight.w500,
@@ -371,12 +372,12 @@ class _WorkspaceInvitationsScreenState
           Icon(Icons.mail_outline, size: 100, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No tienes invitaciones pendientes',
+            AppLocalizations.of(context)?.noPendingInvitationsTitle ?? 'No tienes invitaciones pendientes',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Cuando alguien te invite a un workspace\naparecerá aquí',
+            AppLocalizations.of(context)?.noPendingInvitationsMessage ?? 'Cuando alguien te invite a un workspace\naparecerá aquí',
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -466,14 +467,14 @@ class _WorkspaceInvitationsScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aceptar Invitación'),
+        title: Text(AppLocalizations.of(context)?.acceptInvitationTitle ?? 'Aceptar Invitación'),
         content: Text(
-          '¿Deseas unirte a "${invitation.workspaceName}" como ${invitation.role.displayName}?',
+          AppLocalizations.of(context)?.acceptInvitationMessage(invitation.workspaceName, invitation.role.displayName) ?? '¿Deseas unirte a "${invitation.workspaceName}" como ${invitation.role.displayName}?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -486,7 +487,7 @@ class _WorkspaceInvitationsScreenState
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Aceptar'),
+            child: Text(AppLocalizations.of(context)?.accept ?? 'Aceptar'),
           ),
         ],
       ),
@@ -502,7 +503,7 @@ class _WorkspaceInvitationsScreenState
           children: [
             Icon(Icons.cancel_outlined, color: Colors.orange[700], size: 28),
             const SizedBox(width: 12),
-            const Text('Rechazar Invitación'),
+            Text(AppLocalizations.of(context)?.declineInvitationTitle ?? 'Rechazar Invitación'),
           ],
         ),
         content: Column(
@@ -510,7 +511,7 @@ class _WorkspaceInvitationsScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '¿Estás seguro de que deseas rechazar la invitación de "${invitation.workspaceName}"?',
+              AppLocalizations.of(context)?.declineInvitationMessage(invitation.workspaceName) ?? '¿Estás seguro de que deseas rechazar la invitación de "${invitation.workspaceName}"?',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 16),
@@ -527,7 +528,7 @@ class _WorkspaceInvitationsScreenState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'El administrador puede enviarte una nueva invitación en el futuro.',
+                      AppLocalizations.of(context)?.declineInvitationNote ?? 'El administrador puede enviarte una nueva invitación en el futuro.',
                       style: TextStyle(color: Colors.blue[900], fontSize: 13),
                     ),
                   ),
@@ -539,7 +540,7 @@ class _WorkspaceInvitationsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -552,7 +553,7 @@ class _WorkspaceInvitationsScreenState
               backgroundColor: Colors.orange,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Sí, Rechazar'),
+            child: Text(AppLocalizations.of(context)?.confirmDeclineLabel ?? 'Sí, Rechazar'),
           ),
         ],
       ),

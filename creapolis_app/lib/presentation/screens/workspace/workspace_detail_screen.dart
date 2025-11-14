@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
@@ -419,21 +420,39 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             title: const Text('Invitaciones de invitados'),
             trailing: Switch(
               value: settings.allowGuestInvites,
-              onChanged: null, // TODO: Implementar cambio de configuración
+              onChanged: (val) {
+                final newSettings = settings.copyWith(allowGuestInvites: val);
+                context.read<WorkspaceBloc>().add(
+                      UpdateWorkspace(
+                        workspaceId: _workspace.id,
+                        settings: newSettings,
+                      ),
+                    );
+              },
             ),
           ),
           ListTile(
             title: const Text('Verificación de email'),
             trailing: Switch(
               value: settings.requireEmailVerification,
-              onChanged: null,
+              onChanged: (val) {
+                final newSettings = settings.copyWith(
+                  requireEmailVerification: val,
+                );
+                context.read<WorkspaceBloc>().add(
+                      UpdateWorkspace(
+                        workspaceId: _workspace.id,
+                        settings: newSettings,
+                      ),
+                    );
+              },
             ),
           ),
           ListTile(
             title: const Text('Zona horaria'),
             subtitle: Text(settings.timezone),
             trailing: const Icon(Icons.chevron_right),
-            onTap: null, // TODO: Implementar cambio de timezone
+            onTap: () => _showTimezoneDialog(settings),
           ),
         ],
       ),
@@ -476,6 +495,60 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
       case WorkspaceRole.guest:
         return Colors.grey;
     }
+  }
+
+  void _showTimezoneDialog(WorkspaceSettings current) {
+    final timezones = <String>[
+      'UTC',
+      'Europe/Madrid',
+      'America/Mexico_City',
+      'America/Bogota',
+      'America/Argentina/Buenos_Aires',
+      'America/Santiago',
+      'America/Lima',
+      'America/Caracas',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)?.selectTimezoneTitle ?? 'Seleccionar zona horaria'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: timezones.length,
+            itemBuilder: (context, index) {
+              final tz = timezones[index];
+              final isSelected = tz == current.timezone;
+              return ListTile(
+                title: Text(tz),
+                trailing: isSelected
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                selected: isSelected,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  final newSettings = current.copyWith(timezone: tz);
+                  context.read<WorkspaceBloc>().add(
+                        UpdateWorkspace(
+                          workspaceId: _workspace.id,
+                          settings: newSettings,
+                        ),
+                      );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Cerrar'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Obtener color del rol de miembro

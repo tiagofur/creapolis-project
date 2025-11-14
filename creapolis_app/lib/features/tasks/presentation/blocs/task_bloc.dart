@@ -64,16 +64,22 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     try {
       emit(const TaskLoading());
       logger.i('Loading all tasks');
-
-      // TODO: Implementar método getAllTasks en el repository
-      // Por ahora, emitimos lista vacía
-      logger.w('getAllTasks not implemented yet');
-      emit(
-        const TasksLoaded(
-          projectId: 0, // Sin proyecto específico
-          tasks: [],
-          filteredTasks: [],
-        ),
+      final result = await taskRepository.getAllTasks();
+      result.fold(
+        (failure) {
+          logger.e('Failed to load all tasks: ${failure.message}');
+          emit(TaskError(failure.message));
+        },
+        (tasks) {
+          logger.i('All tasks loaded successfully: ${tasks.length} tasks');
+          emit(
+            TasksLoaded(
+              projectId: 0,
+              tasks: tasks,
+              filteredTasks: tasks,
+            ),
+          );
+        },
       );
     } catch (e) {
       logger.e('Exception loading all tasks: $e');

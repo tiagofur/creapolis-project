@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/entities/task.dart';
+import '../../../bloc/task/task_bloc.dart';
+import '../../../bloc/task/task_state.dart';
+import '../../../bloc/auth/auth_bloc.dart';
+import '../../../bloc/auth/auth_state.dart';
+import '../../../providers/workspace_context.dart';
 import '../../../../routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Widget que muestra las tareas del usuario en el Dashboard.
 ///
@@ -18,9 +25,19 @@ class MyTasksWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // TODO: Obtener tareas reales desde el BLoC/estado
-    // Por ahora mostramos estado vacío
-    final List<Task> activeTasks = [];
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated ? authState.user.id : null;
+
+    final taskState = context.watch<TaskBloc>().state;
+    List<Task> activeTasks = [];
+    if (taskState is WorkspaceTasksLoaded) {
+      activeTasks = taskState.filteredTasks
+          .where((t) =>
+              (t.status == TaskStatus.inProgress || t.status == TaskStatus.planned) &&
+              (currentUserId == null || t.assignee?.id == currentUserId))
+          .take(5)
+          .toList();
+    }
 
     return Card(
       child: Padding(
@@ -40,7 +57,7 @@ class MyTasksWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Mis Tareas',
+                      AppLocalizations.of(context)?.myTasksTitle ?? 'Mis Tareas',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -51,7 +68,7 @@ class MyTasksWidget extends StatelessWidget {
                   onPressed: () {
                     GoRouter.of(context).go(RoutePaths.allTasks);
                   },
-                  child: const Text('Ver todas'),
+                  child: Text(AppLocalizations.of(context)?.viewAll ?? 'Ver todas'),
                 ),
               ],
             ),
@@ -69,7 +86,7 @@ class MyTasksWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '¡Todo al día!',
+                        AppLocalizations.of(context)?.allClear ?? '¡Todo al día!',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -136,13 +153,17 @@ class MyTasksWidget extends StatelessWidget {
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: InkWell(
         onTap: () {
-          // TODO: Navegar a detalle de tarea
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Abrir tarea: ${task.title}'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
+          final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+          if (workspaceId != null) {
+            context.pushNamed(
+              RouteNames.taskDetail,
+              pathParameters: {
+                'wId': workspaceId.toString(),
+                'pId': task.projectId.toString(),
+                'tId': task.id.toString(),
+              },
+            );
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

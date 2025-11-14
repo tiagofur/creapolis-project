@@ -6,6 +6,8 @@ import '../entities/task.dart';
 
 /// Repositorio de tareas
 abstract class TaskRepository {
+  /// Obtener todas las tareas del usuario (agregado local)
+  Future<Either<Failure, List<Task>>> getAllTasks();
   /// Obtener todas las tareas de un proyecto con paginación opcional
   Future<Either<Failure, List<Task>>> getTasksByProject(
     int projectId, {

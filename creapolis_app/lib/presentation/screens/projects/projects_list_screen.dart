@@ -38,6 +38,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   int? _lastLoadedWorkspaceId;
   late ProjectViewDensity _currentDensity;
   final _viewPrefs = ViewPreferencesService.instance;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -188,8 +189,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Implementar búsqueda en siguiente iteración
-              context.showInfo('Búsqueda próximamente');
+              _showSearchDialog(context);
             },
           ),
           IconButton(
@@ -266,7 +266,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
 
   /// Construir lista de proyectos
   Widget _buildProjectsList(BuildContext context, List<Project> projects) {
-    if (projects.isEmpty) {
+    final filtered = _filterProjects(projects);
+    if (filtered.isEmpty) {
       return _buildEmptyState(context);
     }
 
@@ -281,9 +282,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: projects.length,
+        itemCount: filtered.length,
         itemBuilder: (context, index) {
-          final project = projects[index];
+          final project = filtered[index];
           final workspaceContext = context.read<WorkspaceContext>();
           final workspaceId = workspaceContext.activeWorkspace?.id;
 
@@ -307,6 +308,58 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  List<Project> _filterProjects(List<Project> projects) {
+    var results = projects;
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      results = results.where((p) {
+        final name = p.name.toLowerCase();
+        final desc = (p.description).toLowerCase();
+        return name.contains(q) || desc.contains(q);
+      }).toList();
+    }
+    return results;
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Buscar proyectos'),
+        content: TextField(
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Nombre o descripción...',
+            prefixIcon: Icon(Icons.search),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+            child: const Text('Limpiar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {});
+            },
+            child: const Text('Buscar'),
+          ),
+        ],
       ),
     );
   }

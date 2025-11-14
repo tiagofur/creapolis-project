@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
+import '../../../data/datasources/push_notification_remote_datasource.dart';
+import '../../../data/models/notification_preferences_model.dart';
+import '../../../injection.dart';
 
 /// Pantalla de configuración de preferencias de notificación
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -31,39 +35,95 @@ class _NotificationPreferencesScreenState
 
   Future<void> _loadPreferences() async {
     setState(() => _isLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final ds = getIt<PushNotificationRemoteDataSource>();
+      final json = await ds.getPreferences();
+      final prefs = NotificationPreferencesModel.fromJson(json);
 
-    // TODO: Load preferences from repository
-    // For now, using defaults
-    await Future.delayed(const Duration(milliseconds: 500));
+      setState(() {
+        _pushEnabled = prefs.pushEnabled;
+        _emailEnabled = prefs.emailEnabled;
+        _mentionNotifications = prefs.mentionNotifications;
+        _commentReplyNotifications = prefs.commentReplyNotifications;
+        _taskAssignedNotifications = prefs.taskAssignedNotifications;
+        _taskUpdatedNotifications = prefs.taskUpdatedNotifications;
+        _projectUpdatedNotifications = prefs.projectUpdatedNotifications;
+        _systemNotifications = prefs.systemNotifications;
+      });
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.preferencesLoadError(e.toString()) ?? 'Error al cargar preferencias: $e',
+          ),
+        ),
+      );
+    }
 
     setState(() => _isLoading = false);
   }
 
   Future<void> _updatePreferences() async {
-    // TODO: Update preferences via repository
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Preferencias actualizadas'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final ds = getIt<PushNotificationRemoteDataSource>();
+      final updated = await ds.updatePreferences({
+        'pushEnabled': _pushEnabled,
+        'emailEnabled': _emailEnabled,
+        'mentionNotifications': _mentionNotifications,
+        'commentReplyNotifications': _commentReplyNotifications,
+        'taskAssignedNotifications': _taskAssignedNotifications,
+        'taskUpdatedNotifications': _taskUpdatedNotifications,
+        'projectUpdatedNotifications': _projectUpdatedNotifications,
+        'systemNotifications': _systemNotifications,
+      });
+
+      final prefs = NotificationPreferencesModel.fromJson(updated);
+      setState(() {
+        _pushEnabled = prefs.pushEnabled;
+        _emailEnabled = prefs.emailEnabled;
+        _mentionNotifications = prefs.mentionNotifications;
+        _commentReplyNotifications = prefs.commentReplyNotifications;
+        _taskAssignedNotifications = prefs.taskAssignedNotifications;
+        _taskUpdatedNotifications = prefs.taskUpdatedNotifications;
+        _projectUpdatedNotifications = prefs.projectUpdatedNotifications;
+        _systemNotifications = prefs.systemNotifications;
+      });
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n?.preferencesUpdated ?? 'Preferencias actualizadas'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.preferencesUpdateError(e.toString()) ?? 'Error al actualizar preferencias: $e',
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Preferencias de Notificación')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.notificationPreferencesTitle ?? 'Preferencias de Notificación')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
                 _buildSection(
-                  title: 'Canales de Notificación',
+                  title: AppLocalizations.of(context)?.notificationChannels ?? 'Canales de Notificación',
                   children: [
                     _buildSwitchTile(
-                      title: 'Notificaciones Push',
-                      subtitle:
-                          'Recibir notificaciones en tiempo real en este dispositivo',
+                      title: AppLocalizations.of(context)?.pushNotificationsTitle ?? 'Notificaciones Push',
+                      subtitle: AppLocalizations.of(context)?.pushNotificationsSubtitle ?? 'Recibir notificaciones en tiempo real en este dispositivo',
                       value: _pushEnabled,
                       onChanged: (value) {
                         setState(() => _pushEnabled = value);
@@ -72,8 +132,8 @@ class _NotificationPreferencesScreenState
                       icon: Icons.notifications_active,
                     ),
                     _buildSwitchTile(
-                      title: 'Notificaciones por Email',
-                      subtitle: 'Recibir notificaciones por correo electrónico',
+                      title: AppLocalizations.of(context)?.emailNotificationsTitle ?? 'Notificaciones por Email',
+                      subtitle: AppLocalizations.of(context)?.emailNotificationsSubtitle ?? 'Recibir notificaciones por correo electrónico',
                       value: _emailEnabled,
                       onChanged: (value) {
                         setState(() => _emailEnabled = value);
@@ -85,13 +145,12 @@ class _NotificationPreferencesScreenState
                 ),
                 const Divider(height: 32),
                 _buildSection(
-                  title: 'Tipos de Notificación',
-                  subtitle:
-                      'Selecciona qué eventos quieres recibir notificaciones',
+                  title: AppLocalizations.of(context)?.notificationTypes ?? 'Tipos de Notificación',
+                  subtitle: AppLocalizations.of(context)?.notificationTypesSubtitle ?? 'Selecciona qué eventos quieres recibir notificaciones',
                   children: [
                     _buildSwitchTile(
-                      title: 'Menciones',
-                      subtitle: 'Cuando alguien te menciona en un comentario',
+                      title: AppLocalizations.of(context)?.mentionNotifications ?? 'Menciones',
+                      subtitle: AppLocalizations.of(context)?.mentionNotificationsSubtitle ?? 'Cuando alguien te menciona en un comentario',
                       value: _mentionNotifications,
                       onChanged: (value) {
                         setState(() => _mentionNotifications = value);
@@ -101,8 +160,8 @@ class _NotificationPreferencesScreenState
                       enabled: _pushEnabled || _emailEnabled,
                     ),
                     _buildSwitchTile(
-                      title: 'Respuestas a Comentarios',
-                      subtitle: 'Cuando alguien responde a tu comentario',
+                      title: AppLocalizations.of(context)?.commentReplyNotifications ?? 'Respuestas a Comentarios',
+                      subtitle: AppLocalizations.of(context)?.commentReplyNotificationsSubtitle ?? 'Cuando alguien responde a tu comentario',
                       value: _commentReplyNotifications,
                       onChanged: (value) {
                         setState(() => _commentReplyNotifications = value);
@@ -112,8 +171,8 @@ class _NotificationPreferencesScreenState
                       enabled: _pushEnabled || _emailEnabled,
                     ),
                     _buildSwitchTile(
-                      title: 'Tareas Asignadas',
-                      subtitle: 'Cuando te asignan una nueva tarea',
+                      title: AppLocalizations.of(context)?.taskAssignedNotifications ?? 'Tareas Asignadas',
+                      subtitle: AppLocalizations.of(context)?.taskAssignedNotificationsSubtitle ?? 'Cuando te asignan una nueva tarea',
                       value: _taskAssignedNotifications,
                       onChanged: (value) {
                         setState(() => _taskAssignedNotifications = value);
@@ -123,8 +182,8 @@ class _NotificationPreferencesScreenState
                       enabled: _pushEnabled || _emailEnabled,
                     ),
                     _buildSwitchTile(
-                      title: 'Actualizaciones de Tareas',
-                      subtitle: 'Cuando se actualiza una tarea que sigues',
+                      title: AppLocalizations.of(context)?.taskUpdatedNotifications ?? 'Actualizaciones de Tareas',
+                      subtitle: AppLocalizations.of(context)?.taskUpdatedNotificationsSubtitle ?? 'Cuando se actualiza una tarea que sigues',
                       value: _taskUpdatedNotifications,
                       onChanged: (value) {
                         setState(() => _taskUpdatedNotifications = value);
@@ -134,8 +193,8 @@ class _NotificationPreferencesScreenState
                       enabled: _pushEnabled || _emailEnabled,
                     ),
                     _buildSwitchTile(
-                      title: 'Actualizaciones de Proyectos',
-                      subtitle: 'Cuando se actualiza un proyecto',
+                      title: AppLocalizations.of(context)?.projectUpdatedNotifications ?? 'Actualizaciones de Proyectos',
+                      subtitle: AppLocalizations.of(context)?.projectUpdatedNotificationsSubtitle ?? 'Cuando se actualiza un proyecto',
                       value: _projectUpdatedNotifications,
                       onChanged: (value) {
                         setState(() => _projectUpdatedNotifications = value);
@@ -145,8 +204,8 @@ class _NotificationPreferencesScreenState
                       enabled: _pushEnabled || _emailEnabled,
                     ),
                     _buildSwitchTile(
-                      title: 'Notificaciones del Sistema',
-                      subtitle: 'Actualizaciones y anuncios importantes',
+                      title: AppLocalizations.of(context)?.systemNotifications ?? 'Notificaciones del Sistema',
+                      subtitle: AppLocalizations.of(context)?.systemNotificationsSubtitle ?? 'Actualizaciones y anuncios importantes',
                       value: _systemNotifications,
                       onChanged: (value) {
                         setState(() => _systemNotifications = value);
@@ -170,8 +229,7 @@ class _NotificationPreferencesScreenState
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
-                              'Las notificaciones push requieren permisos del sistema. '
-                              'Si no recibes notificaciones, verifica la configuración de tu dispositivo.',
+                              AppLocalizations.of(context)?.pushPermissionsHint ?? 'Las notificaciones push requieren permisos del sistema. Si no recibes notificaciones, verifica la configuración de tu dispositivo.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.blue.shade700,

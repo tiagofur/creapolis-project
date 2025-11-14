@@ -25,6 +25,20 @@ class TaskRepositoryImpl implements TaskRepository {
   );
 
   @override
+  Future<Either<Failure, List<Task>>> getAllTasks() async {
+    try {
+      final tasks = await _cacheDataSource.getCachedTasks();
+      return Right(tasks);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Task>>> getTasksByProject(
     int projectId, {
     int? page,

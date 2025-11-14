@@ -1,0 +1,676 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int                      @id @default(autoincrement())
+  email                   String                   @unique
+  password                String
+  name                    String
+  role                    Role                     @default(TEAM_MEMBER)
+  avatarUrl               String?
+  googleAccessToken       String?
+  googleRefreshToken      String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  projects                ProjectMember[]
+  managedProjects         Project[]                @relation("ProjectManager")
+  assignedTasks           Task[]
+  timeLogs                TimeLog[]
+  ownedWorkspaces         Workspace[]              @relation("WorkspaceOwner")
+  sentInvitations         WorkspaceInvitation[]    @relation("InvitationSender")
+  workspaceMemberships    WorkspaceMember[]
+  comments                Comment[]
+  mentions                CommentMention[]
+  notifications           Notification[]
+  deviceTokens            DeviceToken[]
+  notificationPreferences NotificationPreferences?
+  notificationLogs        NotificationLog[]
+  projectRoles            ProjectRoleMember[]
+  assignedRoles           ProjectRoleMember[]      @relation("RoleAssigner")
+  auditLogs               RoleAuditLog[]
+  integrations            Integration[]
+  blogArticles            BlogArticle[]
+  blogComments            BlogComment[]
+  blogLikes               BlogArticleLike[]
+
+  @@index([email])
+}
+
+model Workspace {
+  id                       Int                   @id @default(autoincrement())
+  name                     String
+  description              String?
+  avatarUrl                String?
+  type                     WorkspaceType         @default(TEAM)
+  ownerId                  Int
+  allowGuestInvites        Boolean               @default(true)
+  requireEmailVerification Boolean               @default(true)
+  autoAssignNewMembers     Boolean               @default(false)
+  defaultProjectTemplate   String?
+  timezone                 String                @default("UTC")
+  language                 String                @default("es")
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  projects                 Project[]
+  owner                    User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  invitations              WorkspaceInvitation[]
+  members                  WorkspaceMember[]
+
+  @@index([ownerId])
+  @@index([name])
+}
+
+model WorkspaceMember {
+  id           Int           @id @default(autoincrement())
+  workspaceId  Int
+  userId       Int
+  role         WorkspaceRole @default(MEMBER)
+  joinedAt     DateTime      @default(now())
+  lastActiveAt DateTime?
+  isActive     Boolean       @default(true)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvitation {
+  id            Int              @id @default(autoincrement())
+  workspaceId   Int
+  inviterUserId Int
+  inviteeEmail  String
+  role          WorkspaceRole    @default(MEMBER)
+  token         String           @unique
+  status        InvitationStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  expiresAt     DateTime
+  inviter       User             @relation("InvitationSender", fields: [inviterUserId], references: [id], onDelete: Cascade)
+  workspace     Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([inviteeEmail])
+  @@index([token])
+}
+
+model Project {
+  id          Int             @id @default(autoincrement())
+  name        String
+  description String?
+  workspaceId Int
+  // ✅ NUEVOS CAMPOS PARA ALINEACIÓN FRONTEND-BACKEND
+  status      ProjectStatus   @default(PLANNED)
+  startDate   DateTime        @default(now())
+  endDate     DateTime        @default(now())
+  managerId   Int?
+  progress    Float           @default(0.0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  manager     User?           @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  members     ProjectMember[]
+  tasks       Task[]
+  comments    Comment[]
+  roles       ProjectRole[]
+
+  @@index([workspaceId])
+  @@index([managerId])
+  @@index([status])
+  @@index([name])
+}
+
+model ProjectMember {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  projectId Int
+  role      ProjectMemberRole @default(MEMBER)
+  joinedAt  DateTime          @default(now())
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([role])
+}
+
+model Task {
+  id                  Int                  @id @default(autoincrement())
+  title               String
+  description         String?
+  status              TaskStatus           @default(PLANNED)
+  priority            TaskPriority         @default(MEDIUM)
+  category            TaskCategory?
+  estimatedHours      Float
+  actualHours         Float                @default(0)
+  startDate           DateTime?
+  endDate             DateTime?
+  projectId           Int
+  assigneeId          Int?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  predecessors        Dependency[]         @relation("TaskPredecessors")
+  successors          Dependency[]         @relation("TaskSuccessors")
+  assignee            User?                @relation(fields: [assigneeId], references: [id])
+  project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeLogs            TimeLog[]
+  comments            Comment[]
+  categorySuggestions CategorySuggestion[]
+  categoryFeedbacks   CategoryFeedback[]
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([category])
+}
+
+model Dependency {
+  id            Int            @id @default(autoincrement())
+  predecessorId Int
+  successorId   Int
+  type          DependencyType @default(FINISH_TO_START)
+  createdAt     DateTime       @default(now())
+  predecessor   Task           @relation("TaskPredecessors", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor     Task           @relation("TaskSuccessors", fields: [successorId], references: [id], onDelete: Cascade)
+
+  @@unique([predecessorId, successorId])
+  @@index([predecessorId])
+  @@index([successorId])
+}
+
+model TimeLog {
+  id        Int       @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  startTime DateTime
+  endTime   DateTime?
+  duration  Float?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([startTime])
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  TEAM_MEMBER
+}
+
+enum TaskStatus {
+  PLANNED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum DependencyType {
+  FINISH_TO_START
+  START_TO_START
+}
+
+enum WorkspaceType {
+  PERSONAL
+  TEAM
+  ENTERPRISE
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+enum ProjectMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Comment {
+  id        Int              @id @default(autoincrement())
+  content   String
+  taskId    Int?
+  projectId Int?
+  parentId  Int?
+  authorId  Int
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  isEdited  Boolean          @default(false)
+  task      Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  project   Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?         @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]        @relation("CommentThread")
+  mentions  CommentMention[]
+
+  @@index([taskId])
+  @@index([projectId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+}
+
+model CommentMention {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  userId    Int
+  createdAt DateTime @default(now())
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  relatedId   Int?
+  relatedType String?
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  MENTION
+  COMMENT_REPLY
+  TASK_ASSIGNED
+  TASK_UPDATED
+  PROJECT_UPDATED
+  SYSTEM
+}
+
+enum TaskCategory {
+  DEVELOPMENT
+  DESIGN
+  TESTING
+  DOCUMENTATION
+  MEETING
+  BUG
+  FEATURE
+  MAINTENANCE
+  RESEARCH
+  DEPLOYMENT
+  REVIEW
+  PLANNING
+}
+
+model CategorySuggestion {
+  id                Int          @id @default(autoincrement())
+  taskId            Int
+  suggestedCategory TaskCategory
+  confidence        Float
+  reasoning         String
+  keywords          String[]
+  isApplied         Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  task              Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([suggestedCategory])
+  @@index([createdAt])
+}
+
+model CategoryFeedback {
+  id                Int           @id @default(autoincrement())
+  taskId            Int
+  suggestedCategory TaskCategory
+  correctedCategory TaskCategory?
+  wasCorrect        Boolean
+  userComment       String?
+  createdAt         DateTime      @default(now())
+  task              Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@index([wasCorrect])
+}
+
+model DeviceToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  platform  Platform
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([isActive])
+}
+
+model NotificationPreferences {
+  id                          Int      @id @default(autoincrement())
+  userId                      Int      @unique
+  pushEnabled                 Boolean  @default(true)
+  emailEnabled                Boolean  @default(true)
+  mentionNotifications        Boolean  @default(true)
+  commentReplyNotifications   Boolean  @default(true)
+  taskAssignedNotifications   Boolean  @default(true)
+  taskUpdatedNotifications    Boolean  @default(true)
+  projectUpdatedNotifications Boolean  @default(true)
+  systemNotifications         Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationLog {
+  id             Int              @id @default(autoincrement())
+  userId         Int
+  notificationId Int?
+  type           NotificationType
+  platform       Platform?
+  status         DeliveryStatus
+  errorMessage   String?
+  sentAt         DateTime         @default(now())
+  deliveredAt    DateTime?
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([notificationId])
+  @@index([status])
+  @@index([sentAt])
+}
+
+enum Platform {
+  WEB
+  IOS
+  ANDROID
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model ProjectRole {
+  id          Int                 @id @default(autoincrement())
+  projectId   Int
+  name        String
+  description String?
+  isDefault   Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  permissions ProjectPermission[]
+  members     ProjectRoleMember[]
+  auditLogs   RoleAuditLog[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+}
+
+model ProjectPermission {
+  id        Int         @id @default(autoincrement())
+  roleId    Int
+  resource  String
+  action    String
+  granted   Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action])
+  @@index([roleId])
+  @@index([resource])
+}
+
+model ProjectRoleMember {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  roleId     Int
+  assignedAt DateTime    @default(now())
+  assignedBy Int?
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assigner   User?       @relation("RoleAssigner", fields: [assignedBy], references: [id])
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model RoleAuditLog {
+  id        Int         @id @default(autoincrement())
+  roleId    Int
+  userId    Int
+  action    AuditAction
+  details   String?
+  createdAt DateTime    @default(now())
+  role      ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  ROLE_CREATED
+  ROLE_UPDATED
+  ROLE_DELETED
+  PERMISSION_GRANTED
+  PERMISSION_REVOKED
+  MEMBER_ASSIGNED
+  MEMBER_REMOVED
+}
+
+// Integration models for external service connections
+model Integration {
+  id           Int                 @id @default(autoincrement())
+  userId       Int
+  provider     IntegrationProvider
+  status       IntegrationStatus   @default(ACTIVE)
+  accessToken  String? // Encrypted
+  refreshToken String? // Encrypted
+  tokenExpiry  DateTime?
+  scopes       String? // JSON array of scopes
+  metadata     String? // JSON metadata specific to provider
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  lastSyncAt   DateTime?
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs         IntegrationLog[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+}
+
+model IntegrationLog {
+  id            Int         @id @default(autoincrement())
+  integrationId Int
+  action        String // e.g., "sync", "event_created", "webhook_received"
+  status        LogStatus
+  requestData   String? // JSON of request
+  responseData  String? // JSON of response
+  errorMessage  String?
+  duration      Int? // milliseconds
+  createdAt     DateTime    @default(now())
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId])
+  @@index([action])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+  SLACK
+  TRELLO
+  GITHUB
+  JIRA
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  EXPIRED
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+// Blog System Models
+model BlogArticle {
+  id              Int                 @id @default(autoincrement())
+  title           String
+  slug            String              @unique
+  content         String
+  excerpt         String?
+  featuredImage   String?
+  authorId        Int
+  status          ArticleStatus       @default(DRAFT)
+  category        ArticleCategory     @default(GENERAL)
+  tags            String[]           
+  views           Int                 @default(0)
+  likes           Int                 @default(0)
+  isFeatured      Boolean             @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  author          User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments        BlogComment[]
+  likesRelation   BlogArticleLike[]
+  
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([isFeatured])
+}
+
+model BlogComment {
+  id          Int             @id @default(autoincrement())
+  content     String
+  articleId   Int
+  authorId    Int
+  parentId    Int?           
+  isApproved  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  article     BlogArticle     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      BlogComment?    @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     BlogComment[]   @relation("CommentThread")
+  
+  @@index([articleId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([isApproved])
+  @@index([createdAt])
+}
+
+model BlogArticleLike {
+  id        Int           @id @default(autoincrement())
+  articleId Int
+  userId    Int
+  createdAt DateTime      @default(now())
+  article   BlogArticle   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+model BlogCategory {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  slug        String          @unique
+  description String?
+  color       String?         
+  image       String?         
+  parentId    Int?            
+  isActive    Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  parent      BlogCategory?   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    BlogCategory[]  @relation("CategoryHierarchy")
+  articles    BlogArticle[]   
+  
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum ArticleCategory {
+  PRODUCTIVITY
+  WORK_LIFE_BALANCE
+  BURNOUT_PREVENTION
+  PROJECT_MANAGEMENT
+  TECHNOLOGY
+  TUTORIALS
+  NEWS
+  GENERAL
+}

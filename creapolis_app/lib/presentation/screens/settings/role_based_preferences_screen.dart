@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -47,8 +48,9 @@ class _RoleBasedPreferencesScreenState
       _roleConfig = _roleService.getRoleBaseConfig();
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar preferencias: $e')),
+          SnackBar(content: Text(l10n?.loadRolePrefsError(e.toString()) ?? 'Error al cargar preferencias: $e')),
         );
       }
     } finally {
@@ -62,19 +64,16 @@ class _RoleBasedPreferencesScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Resetear Configuración'),
-        content: const Text(
-          '¿Deseas resetear toda tu configuración a los valores por defecto de tu rol?\n\n'
-          'Esto eliminará todas tus personalizaciones.',
-        ),
+        title: Text(AppLocalizations.of(context)?.resetConfigTitle ?? 'Resetear Configuración'),
+        content: Text(AppLocalizations.of(context)?.resetConfigMessage ?? '¿Deseas resetear toda tu configuración a los valores por defecto de tu rol?\n\nEsto eliminará todas tus personalizaciones.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Resetear'),
+            child: Text(AppLocalizations.of(context)?.reset ?? 'Resetear'),
           ),
         ],
       ),
@@ -83,13 +82,10 @@ class _RoleBasedPreferencesScreenState
     if (confirmed == true) {
       final success = await _roleService.resetToRoleDefaults();
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              success
-                  ? 'Configuración reseteada correctamente'
-                  : 'Error al resetear configuración',
-            ),
+            content: Text(success ? (l10n?.resetConfigSuccess ?? 'Configuración reseteada correctamente') : (l10n?.resetConfigError ?? 'Error al resetear configuración')),
           ),
         );
         if (success) {
@@ -100,6 +96,7 @@ class _RoleBasedPreferencesScreenState
   }
 
   Future<void> _exportPreferences() async {
+    final l10n = AppLocalizations.of(context);
     try {
       // Mostrar diálogo de carga
       if (mounted) {
@@ -134,14 +131,12 @@ class _RoleBasedPreferencesScreenState
         final action = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Exportación Exitosa'),
+            title: Text(AppLocalizations.of(context)?.exportSuccessTitle ?? 'Exportación Exitosa'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Tus preferencias han sido exportadas correctamente.',
-                ),
+                Text(AppLocalizations.of(context)?.exportSuccessMessage ?? 'Tus preferencias han sido exportadas correctamente.'),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -162,12 +157,12 @@ class _RoleBasedPreferencesScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, 'close'),
-                child: const Text('Cerrar'),
+                child: Text(AppLocalizations.of(context)?.close ?? 'Cerrar'),
               ),
               FilledButton.icon(
                 onPressed: () => Navigator.pop(context, 'share'),
                 icon: const Icon(Icons.share),
-                label: const Text('Compartir'),
+                label: Text(AppLocalizations.of(context)?.share ?? 'Compartir'),
               ),
             ],
           ),
@@ -176,8 +171,8 @@ class _RoleBasedPreferencesScreenState
         if (action == 'share') {
           await Share.shareXFiles(
             [XFile(filePath)],
-            subject: 'Mis preferencias de Creapolis',
-            text: 'Archivo de preferencias exportado desde Creapolis',
+            subject: l10n?.shareSubject ?? 'Mis preferencias de Creapolis',
+            text: l10n?.shareText ?? 'Archivo de preferencias exportado desde Creapolis',
           );
         }
       }
@@ -186,7 +181,7 @@ class _RoleBasedPreferencesScreenState
         Navigator.pop(context); // Cerrar diálogo de carga si está abierto
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al exportar preferencias: $e'),
+            content: Text(l10n?.exportPrefsError(e.toString()) ?? 'Error al exportar preferencias: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -195,24 +190,22 @@ class _RoleBasedPreferencesScreenState
   }
 
   Future<void> _importPreferences() async {
+    final l10n = AppLocalizations.of(context);
     try {
       // Mostrar advertencia antes de importar
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Importar Preferencias'),
-          content: const Text(
-            'Importar preferencias reemplazará tu configuración actual.\n\n'
-            '¿Deseas continuar?',
-          ),
+          title: Text(AppLocalizations.of(context)?.importPrefsTitle ?? 'Importar Preferencias'),
+          content: Text(AppLocalizations.of(context)?.importPrefsMessage ?? 'Importar preferencias reemplazará tu configuración actual.\n\n¿Deseas continuar?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Continuar'),
+              child: Text(AppLocalizations.of(context)?.continueLabel ?? 'Continuar'),
             ),
           ],
         ),
@@ -224,7 +217,7 @@ class _RoleBasedPreferencesScreenState
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
-        dialogTitle: 'Seleccionar archivo de preferencias',
+        dialogTitle: l10n?.selectPrefsFileTitle ?? 'Seleccionar archivo de preferencias',
       );
 
       if (result == null || result.files.isEmpty) {
@@ -234,12 +227,12 @@ class _RoleBasedPreferencesScreenState
       final filePath = result.files.first.path;
       if (filePath == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo obtener la ruta del archivo'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n?.filePathError ?? 'No se pudo obtener la ruta del archivo'),
+            backgroundColor: Colors.red,
+          ),
+        );
         }
         return;
       }
@@ -263,11 +256,7 @@ class _RoleBasedPreferencesScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              success
-                  ? 'Preferencias importadas correctamente'
-                  : 'Error al importar preferencias - Verifica el archivo',
-            ),
+            content: Text(success ? (l10n?.importPrefsSuccess ?? 'Preferencias importadas correctamente') : (l10n?.importPrefsError ?? 'Error al importar preferencias - Verifica el archivo')),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
@@ -281,7 +270,7 @@ class _RoleBasedPreferencesScreenState
         Navigator.pop(context); // Cerrar diálogo de carga si está abierto
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al importar preferencias: $e'),
+            content: Text(l10n?.importPrefsErrorDetail(e.toString()) ?? 'Error al importar preferencias: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -324,14 +313,14 @@ class _RoleBasedPreferencesScreenState
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Preferencias por Rol')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)?.rolePreferencesTitle ?? 'Preferencias por Rol')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_userPreferences == null || _roleConfig == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Preferencias por Rol')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)?.rolePreferencesTitle ?? 'Preferencias por Rol')),
         body: const Center(
           child: Text('No se pudieron cargar las preferencias'),
         ),
@@ -340,11 +329,11 @@ class _RoleBasedPreferencesScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Preferencias por Rol'),
+        title: Text(AppLocalizations.of(context)?.rolePreferencesTitle ?? 'Preferencias por Rol'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
-            tooltip: 'Más opciones',
+            tooltip: AppLocalizations.of(context)?.moreOptions ?? 'Más opciones',
             onSelected: (value) {
               switch (value) {
                 case 'reset':
@@ -359,33 +348,33 @@ class _RoleBasedPreferencesScreenState
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'reset',
                 child: Row(
                   children: [
-                    Icon(Icons.restore),
-                    SizedBox(width: 8),
-                    Text('Resetear a defaults'),
+                    const Icon(Icons.restore),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context)?.resetToDefaults ?? 'Resetear a defaults'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'export',
                 child: Row(
                   children: [
-                    Icon(Icons.upload_file),
-                    SizedBox(width: 8),
-                    Text('Exportar preferencias'),
+                    const Icon(Icons.upload_file),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context)?.exportPreferences ?? 'Exportar preferencias'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'import',
                 child: Row(
                   children: [
-                    Icon(Icons.download),
-                    SizedBox(width: 8),
-                    Text('Importar preferencias'),
+                    const Icon(Icons.download),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context)?.importPreferences ?? 'Importar preferencias'),
                   ],
                 ),
               ),
@@ -482,7 +471,7 @@ class _RoleBasedPreferencesScreenState
               children: [
                 const Icon(Icons.palette),
                 const SizedBox(width: 8),
-                Text('Tema', style: Theme.of(context).textTheme.titleMedium),
+                Text(AppLocalizations.of(context)?.themeTitle ?? 'Tema', style: Theme.of(context).textTheme.titleMedium),
                 const Spacer(),
                 if (hasOverride)
                   Chip(
@@ -502,19 +491,19 @@ class _RoleBasedPreferencesScreenState
                 color: hasOverride ? Colors.green : Colors.grey,
               ),
               title: Text(
-                'Tema actual: ${_getThemeLabel(effectiveTheme)}',
+                AppLocalizations.of(context)?.currentThemeLabel(_getThemeLabel(context, effectiveTheme)) ?? 'Tema actual: ${_getThemeLabel(context, effectiveTheme)}',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               subtitle: Text(
                 hasOverride
-                    ? 'Estás usando tu personalización (default: ${_getThemeLabel(defaultTheme)})'
-                    : 'Usando el default de tu rol',
+                    ? (AppLocalizations.of(context)?.usingCustomizationDefault(_getThemeLabel(context, defaultTheme)) ?? 'Estás usando tu personalización (default: ${_getThemeLabel(context, defaultTheme)})')
+                    : (AppLocalizations.of(context)?.usingRoleDefault ?? 'Usando el default de tu rol'),
               ),
               trailing: IconButton(
                 icon: Icon(hasOverride ? Icons.clear : Icons.edit),
                 tooltip: hasOverride
-                    ? 'Volver a default del rol'
-                    : 'Personalizar tema',
+                    ? (AppLocalizations.of(context)?.revertToRoleDefault ?? 'Volver a default del rol')
+                    : (AppLocalizations.of(context)?.customizeTheme ?? 'Personalizar tema'),
                 onPressed: _toggleThemeOverride,
               ),
             ),
@@ -538,8 +527,7 @@ class _RoleBasedPreferencesScreenState
               children: [
                 const Icon(Icons.dashboard),
                 const SizedBox(width: 8),
-                Text(
-                  'Dashboard',
+                Text(AppLocalizations.of(context)?.dashboardTitle ?? 'Dashboard',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
@@ -561,19 +549,19 @@ class _RoleBasedPreferencesScreenState
                 color: hasOverride ? Colors.green : Colors.grey,
               ),
               title: Text(
-                '${effectiveConfig.widgets.length} widgets configurados',
+                AppLocalizations.of(context)?.widgetsConfigured(effectiveConfig.widgets.length) ?? '${effectiveConfig.widgets.length} widgets configurados',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               subtitle: Text(
                 hasOverride
-                    ? 'Estás usando tu personalización'
-                    : 'Usando el dashboard por defecto de tu rol',
+                    ? (AppLocalizations.of(context)?.usingCustomization ?? 'Estás usando tu personalización')
+                    : (AppLocalizations.of(context)?.usingRoleDashboardDefault ?? 'Usando el dashboard por defecto de tu rol'),
               ),
               trailing: IconButton(
                 icon: Icon(hasOverride ? Icons.clear : Icons.edit),
                 tooltip: hasOverride
-                    ? 'Volver a default del rol'
-                    : 'Personalizar dashboard',
+                    ? (AppLocalizations.of(context)?.revertToRoleDefault ?? 'Volver a default del rol')
+                    : (AppLocalizations.of(context)?.customizeDashboard ?? 'Personalizar dashboard'),
                 onPressed: _toggleDashboardOverride,
               ),
             ),
@@ -611,16 +599,13 @@ class _RoleBasedPreferencesScreenState
               children: [
                 const Icon(Icons.import_export),
                 const SizedBox(width: 8),
-                Text(
-                  'Exportar / Importar',
+                Text(AppLocalizations.of(context)?.exportImportTitle ?? 'Exportar / Importar',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Guarda o restaura tu configuración completa. '
-              'Útil para respaldar preferencias o transferirlas entre dispositivos.',
+            Text(AppLocalizations.of(context)?.exportImportDescription ?? 'Guarda o restaura tu configuración completa. Útil para respaldar preferencias o transferirlas entre dispositivos.',
               style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -630,7 +615,7 @@ class _RoleBasedPreferencesScreenState
                   child: OutlinedButton.icon(
                     onPressed: _exportPreferences,
                     icon: const Icon(Icons.upload_file, size: 20),
-                    label: const Text('Exportar'),
+                    label: Text(AppLocalizations.of(context)?.export ?? 'Exportar'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -638,7 +623,7 @@ class _RoleBasedPreferencesScreenState
                   child: OutlinedButton.icon(
                     onPressed: _importPreferences,
                     icon: const Icon(Icons.download, size: 20),
-                    label: const Text('Importar'),
+                    label: Text(AppLocalizations.of(context)?.import ?? 'Importar'),
                   ),
                 ),
               ],
@@ -661,8 +646,7 @@ class _RoleBasedPreferencesScreenState
               children: [
                 Icon(Icons.help_outline, color: Colors.amber.shade900),
                 const SizedBox(width: 8),
-                Text(
-                  '¿Cómo funciona?',
+                Text(AppLocalizations.of(context)?.howItWorksTitle ?? '¿Cómo funciona?',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.amber.shade900,
                   ),
@@ -670,30 +654,15 @@ class _RoleBasedPreferencesScreenState
               ],
             ),
             const SizedBox(height: 12),
-            _buildHelpItem(
-              '1. Configuración Base',
-              'Cada rol tiene una configuración por defecto optimizada.',
-            ),
+            _buildHelpItem(AppLocalizations.of(context)?.howItWorksStep1Title ?? '1. Configuración Base', AppLocalizations.of(context)?.howItWorksStep1Desc ?? 'Cada rol tiene una configuración por defecto optimizada.'),
             const SizedBox(height: 8),
-            _buildHelpItem(
-              '2. Personalización',
-              'Puedes cambiar cualquier configuración según tus preferencias.',
-            ),
+            _buildHelpItem(AppLocalizations.of(context)?.howItWorksStep2Title ?? '2. Personalización', AppLocalizations.of(context)?.howItWorksStep2Desc ?? 'Puedes cambiar cualquier configuración según tus preferencias.'),
             const SizedBox(height: 8),
-            _buildHelpItem(
-              '3. Indicadores',
-              'Los elementos "Personalizado" muestran qué has modificado.',
-            ),
+            _buildHelpItem(AppLocalizations.of(context)?.howItWorksStep3Title ?? '3. Indicadores', AppLocalizations.of(context)?.howItWorksStep3Desc ?? 'Los elementos "Personalizado" muestran qué has modificado.'),
             const SizedBox(height: 8),
-            _buildHelpItem(
-              '4. Resetear',
-              'Usa el botón de resetear para volver a los defaults del rol.',
-            ),
+            _buildHelpItem(AppLocalizations.of(context)?.howItWorksStep4Title ?? '4. Resetear', AppLocalizations.of(context)?.howItWorksStep4Desc ?? 'Usa el botón de resetear para volver a los defaults del rol.'),
             const SizedBox(height: 8),
-            _buildHelpItem(
-              '5. Exportar/Importar',
-              'Respalda tu configuración o transfiérela entre dispositivos.',
-            ),
+            _buildHelpItem(AppLocalizations.of(context)?.howItWorksStep5Title ?? '5. Exportar/Importar', AppLocalizations.of(context)?.howItWorksStep5Desc ?? 'Respalda tu configuración o transfiérela entre dispositivos.'),
           ],
         ),
       ),
@@ -781,14 +750,14 @@ class _RoleBasedPreferencesScreenState
     }
   }
 
-  String _getThemeLabel(String theme) {
+  String _getThemeLabel(BuildContext context, String theme) {
     switch (theme) {
       case 'light':
-        return 'Claro';
+        return AppLocalizations.of(context)?.themeLight ?? 'Claro';
       case 'dark':
-        return 'Oscuro';
+        return AppLocalizations.of(context)?.themeDark ?? 'Oscuro';
       case 'system':
-        return 'Sistema';
+        return AppLocalizations.of(context)?.themeSystem ?? 'Sistema';
       default:
         return theme;
     }

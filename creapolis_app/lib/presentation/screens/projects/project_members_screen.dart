@@ -9,6 +9,8 @@ import '../../blocs/project_member/project_member_bloc.dart';
 import '../../blocs/project_member/project_member_event.dart';
 import '../../blocs/project_member/project_member_state.dart';
 import '../../widgets/project/project_member_tile.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 
 /// Pantalla para gestionar los miembros de un proyecto
 class ProjectMembersScreen extends StatefulWidget {
@@ -295,11 +297,22 @@ class _ProjectMembersScreenState extends State<ProjectMembersScreen> {
   }
 
   void _updateCurrentUserMember(List<ProjectMember> members) {
-    // TODO: Obtener el userId del usuario actual desde AuthBloc o similar
-    // Por ahora, asumimos que podemos identificar al usuario actual
-    // Esta lógica debe implementarse cuando tengamos acceso al userId actual
+    final authState = context.read<AuthBloc>().state;
+    int? currentUserId;
+    if (authState is AuthAuthenticated) {
+      currentUserId = authState.user.id;
+    }
+    ProjectMember? found;
+    if (currentUserId != null) {
+      for (final m in members) {
+        if (m.userId == currentUserId) {
+          found = m;
+          break;
+        }
+      }
+    }
     setState(() {
-      _currentUserMember = members.isNotEmpty ? members.first : null;
+      _currentUserMember = found;
     });
   }
 

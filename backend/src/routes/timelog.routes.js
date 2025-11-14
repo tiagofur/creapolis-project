@@ -2,6 +2,8 @@ import express from "express";
 import timeLogController from "../controllers/timelog.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
+import prisma from "../config/database.js";
+import { ErrorResponses } from "../utils/errors.js";
 import {
   taskIdValidation,
   getStatsValidation,
@@ -71,9 +73,6 @@ router.get("/:taskId", taskIdValidation, validate, async (req, res, next) => {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
-    // Import prisma to query directly
-    const { default: prisma } = await import("../config/database.js");
-
     // Find task with project membership verification
     const task = await prisma.task.findFirst({
       where: {
@@ -126,7 +125,6 @@ router.get("/:taskId", taskIdValidation, validate, async (req, res, next) => {
     });
 
     if (!task) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Task not found or you don't have access");
     }
 
@@ -151,9 +149,6 @@ router.put("/:taskId", taskIdValidation, validate, async (req, res, next) => {
     const { taskId } = req.params;
     const userId = req.user.userId;
 
-    // Import prisma to query directly
-    const { default: prisma } = await import("../config/database.js");
-
     // Verify task exists and user has access
     const existingTask = await prisma.task.findFirst({
       where: {
@@ -169,7 +164,6 @@ router.put("/:taskId", taskIdValidation, validate, async (req, res, next) => {
     });
 
     if (!existingTask) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Task not found or you don't have access");
     }
 

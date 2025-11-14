@@ -5,6 +5,10 @@ import '../../../bloc/task/task_bloc.dart';
 import '../../../bloc/task/task_state.dart';
 import '../../../../features/projects/presentation/blocs/project_bloc.dart';
 import '../../../../features/projects/presentation/blocs/project_state.dart';
+import '../../../../routes/app_router.dart';
+import '../../../providers/workspace_context.dart';
+import 'package:go_router/go_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Card que muestra el resumen del día.
 ///
@@ -30,14 +34,14 @@ class DailySummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Resumen del Día',
+                  AppLocalizations.of(context)?.dailySummaryTitle ?? 'Resumen del Día',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 TextButton(
                   onPressed: () => _viewAllTasks(context),
-                  child: const Text('Ver todo'),
+                  child: Text(AppLocalizations.of(context)?.viewAll ?? 'Ver todo'),
                 ),
               ],
             ),
@@ -54,12 +58,12 @@ class DailySummaryCard extends StatelessWidget {
                     int completedTasks = 0;
                     int activeProjects = 0;
 
-                    if (taskState is TasksLoaded) {
+                    if (taskState is WorkspaceTasksLoaded) {
                       pendingTasks = taskState.tasks
-                          .where((t) => t.status != 'completed')
+                          .where((t) => !t.isCompleted)
                           .length;
                       completedTasks = taskState.tasks
-                          .where((t) => t.status == 'completed')
+                          .where((t) => t.isCompleted)
                           .length;
                     }
 
@@ -72,7 +76,7 @@ class DailySummaryCard extends StatelessWidget {
                         Expanded(
                           child: _StatItem(
                             icon: Icons.task_alt,
-                            label: 'Tareas',
+                            label: AppLocalizations.of(context)?.tasksLabel ?? 'Tareas',
                             value: '$pendingTasks',
                             color: Colors.blue,
                           ),
@@ -80,7 +84,7 @@ class DailySummaryCard extends StatelessWidget {
                         Expanded(
                           child: _StatItem(
                             icon: Icons.folder,
-                            label: 'Proyectos',
+                            label: AppLocalizations.of(context)?.projectsLabel ?? 'Proyectos',
                             value: '$activeProjects',
                             color: Colors.orange,
                           ),
@@ -88,7 +92,7 @@ class DailySummaryCard extends StatelessWidget {
                         Expanded(
                           child: _StatItem(
                             icon: Icons.check_circle,
-                            label: 'Completadas',
+                            label: AppLocalizations.of(context)?.completedLabel ?? 'Completadas',
                             value: '$completedTasks',
                             color: Colors.green,
                           ),
@@ -108,19 +112,16 @@ class DailySummaryCard extends StatelessWidget {
                 double progress = 0.0;
                 String progressText = '0% completado';
 
-                if (state is TasksLoaded && state.tasks.isNotEmpty) {
-                  final completed = state.tasks
-                      .where((t) => t.status == 'completed')
-                      .length;
+                if (state is WorkspaceTasksLoaded && state.tasks.isNotEmpty) {
+                  final completed = state.tasks.where((t) => t.isCompleted).length;
                   progress = completed / state.tasks.length;
-                  progressText =
-                      '${(progress * 100).toStringAsFixed(0)}% completado';
+                  progressText = '${(progress * 100).toStringAsFixed(0)}% completado';
                 }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Progreso General', style: theme.textTheme.bodySmall),
+                    Text(AppLocalizations.of(context)?.overallProgress ?? 'Progreso General', style: theme.textTheme.bodySmall),
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: progress,
@@ -139,15 +140,15 @@ class DailySummaryCard extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Próximas tareas
-            Text('Próximas Tareas', style: theme.textTheme.titleMedium),
+            Text(AppLocalizations.of(context)?.upcomingTasksTitle ?? 'Próximas Tareas', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
 
             BlocBuilder<TaskBloc, TaskState>(
               builder: (context, state) {
-                if (state is TasksLoaded) {
+                if (state is WorkspaceTasksLoaded) {
                   // Filtrar tareas pendientes y tomar las primeras 3
                   final pendingTasks = state.tasks
-                      .where((t) => t.status != 'completed')
+                      .where((t) => !t.isCompleted)
                       .take(3)
                       .toList();
 
@@ -155,7 +156,7 @@ class DailySummaryCard extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        '¡No hay tareas pendientes! 🎉',
+                        AppLocalizations.of(context)?.noPendingTasks ?? '¡No hay tareas pendientes! 🎉',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -170,6 +171,8 @@ class DailySummaryCard extends StatelessWidget {
                             context,
                             task.title,
                             task.priority,
+                            projectId: task.projectId,
+                            taskId: task.id,
                           ),
                         )
                         .toList(),
@@ -194,6 +197,7 @@ class DailySummaryCard extends StatelessWidget {
     BuildContext context,
     String title,
     TaskPriority priority,
+    {required int projectId, required int taskId}
   ) {
     Color priorityColor;
 
@@ -225,7 +229,7 @@ class DailySummaryCard extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         backgroundColor: priorityColor.withValues(alpha: 0.1),
       ),
-      onTap: () => _openTask(context),
+      onTap: () => _openTask(context, projectId, taskId),
     );
   }
 
@@ -243,23 +247,21 @@ class DailySummaryCard extends StatelessWidget {
   }
 
   void _viewAllTasks(BuildContext context) {
-    // TODO: Navegar a todas las tareas cuando implementemos AllTasksScreen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Vista de todas las tareas próximamente'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    GoRouter.of(context).go(RoutePaths.allTasks);
   }
 
-  void _openTask(BuildContext context) {
-    // TODO: Navegar a detalle de tarea
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navegación a tarea próximamente'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+  void _openTask(BuildContext context, int projectId, int taskId) {
+    final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+    if (workspaceId != null) {
+      GoRouter.of(context).pushNamed(
+        RouteNames.taskDetail,
+        pathParameters: {
+          'wId': workspaceId.toString(),
+          'pId': projectId.toString(),
+          'tId': taskId.toString(),
+        },
+      );
+    }
   }
 }
 

@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
 import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 import '../../../routes/app_router.dart';
 import '../../widgets/navigation/quick_create_speed_dial.dart';
 import '../../widgets/project/create_project_bottom_sheet.dart';
+import '../../widgets/task/create_task_bottom_sheet.dart';
+import '../../bloc/task/task_bloc.dart';
+import '../../bloc/task/task_state.dart';
+import '../../blocs/project_member/project_member_bloc.dart';
+import '../../blocs/project_member/project_member_event.dart';
+import '../../../features/projects/presentation/blocs/project_bloc.dart';
+import '../../../features/projects/presentation/blocs/project_event.dart';
+import '../../../features/projects/presentation/blocs/project_state.dart';
+import '../../../domain/entities/project.dart';
+import '../../../injection.dart';
 
 /// Shell principal de la aplicación con Bottom Navigation Bar y FAB contextual.
 ///
@@ -103,9 +114,7 @@ class MainShell extends StatelessWidget {
 
   /// Handler: Crear nueva tarea
   void _handleCreateTask(BuildContext context) {
-    // Validar workspace activo
     final workspaceState = context.read<WorkspaceBloc>().state;
-
     if (workspaceState is! WorkspaceLoaded ||
         workspaceState.activeWorkspace == null) {
       _showNoWorkspaceDialog(
@@ -116,19 +125,33 @@ class MainShell extends StatelessWidget {
     }
 
     final workspaceId = workspaceState.activeWorkspace!.id;
+    final projectBloc = context.read<ProjectBloc>();
+    final projectState = projectBloc.state;
 
-    // Navegar a la lista de proyectos para seleccionar uno
-    // TODO: Cuando tengamos una pantalla de crear tarea independiente, usar:
-    // context.go(RoutePaths.taskCreate(workspaceId));
-    context.go(RoutePaths.projects(workspaceId));
+    List<Project> projects = [];
+    if (projectState is ProjectsLoaded &&
+        projectState.workspaceId == workspaceId) {
+      projects = projectState.projects;
+    } else {
+      projectBloc.add(LoadProjects(workspaceId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Actualizando lista de proyectos...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    // Mostrar mensaje temporal
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Selecciona un proyecto para crear una tarea'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    if (projects.isEmpty) {
+      _showNoProjectsDialog(context);
+      return;
+    }
+
+    _selectProject(context, projects).then((selectedProjectId) async {
+      if (selectedProjectId == null || !context.mounted) return;
+      await _showCreateTaskSheet(context, selectedProjectId);
+    });
   }
 
   /// Handler: Crear nuevo proyecto
@@ -155,6 +178,133 @@ class MainShell extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (context) => const CreateProjectBottomSheet(),
+    );
+  }
+
+  Future<void> _showCreateTaskSheet(BuildContext context, int projectId) async {
+    final taskBloc = getIt<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(projectId));
+
+    final resultFuture = taskBloc.stream
+        .firstWhere((state) => state is TaskCreated || state is TaskError)
+        .timeout(const Duration(seconds: 10));
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: projectId),
+        ),
+      ),
+    );
+
+    TaskState? result;
+    try {
+      result = await resultFuture;
+    } on TimeoutException {
+      result = null;
+    } catch (_) {
+      result = null;
+    }
+
+    await taskBloc.close();
+    await projectMemberBloc.close();
+
+    if (!context.mounted) return;
+    if (result is TaskCreated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tarea "${result.task.title}" creada')),
+      );
+    } else if (result is TaskError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    }
+  }
+
+  Future<int?> _selectProject(
+    BuildContext context,
+    List<Project> projects,
+  ) async {
+    if (projects.length == 1) return projects.first.id;
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Selecciona un proyecto',
+                style: Theme.of(sheetContext)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ListTile(
+                    leading: const Icon(Icons.folder_open),
+                    title: Text(project.name),
+                    subtitle: project.description.isNotEmpty
+                        ? Text(project.description)
+                        : null,
+                    onTap: () => Navigator.of(context).pop(project.id),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNoProjectsDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.folder_off_outlined, color: Colors.blueGrey),
+            SizedBox(width: 8),
+            Text('Necesitas un proyecto'),
+          ],
+        ),
+        content: const Text(
+          'Crea un proyecto primero para poder registrar tareas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _showCreateProjectSheet(context);
+            },
+            icon: const Icon(Icons.create_new_folder),
+            label: const Text('Crear Proyecto'),
+          ),
+        ],
+      ),
     );
   }
 

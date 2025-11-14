@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +24,7 @@ class SettingsScreen extends StatelessWidget {
       create: (context) =>
           getIt<CalendarBloc>()..add(const LoadConnectionStatusEvent()),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Configuración')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)?.settingsTitle ?? 'Configuración')),
         body: ListView(
           children: [
             // Sección de Apariencia
@@ -33,8 +34,8 @@ class SettingsScreen extends StatelessWidget {
             // Sección de Personalización
             _buildSection(
               context,
-              title: 'Personalización por Rol',
-              subtitle: 'Personaliza tu experiencia según tu rol',
+              title: AppLocalizations.of(context)?.roleCustomizationTitle ?? 'Personalización por Rol',
+              subtitle: AppLocalizations.of(context)?.roleCustomizationSubtitle ?? 'Personaliza tu experiencia según tu rol',
               icon: Icons.tune,
               onTap: () {
                 context.go(RoutePaths.rolePreferences);
@@ -42,8 +43,8 @@ class SettingsScreen extends StatelessWidget {
             ),
             _buildSection(
               context,
-              title: 'Métricas de Personalización',
-              subtitle: 'Estadísticas de uso de personalización',
+              title: AppLocalizations.of(context)?.customizationMetricsTitle ?? 'Métricas de Personalización',
+              subtitle: AppLocalizations.of(context)?.customizationMetricsSubtitle ?? 'Estadísticas de uso de personalización',
               icon: Icons.analytics,
               onTap: () {
                 context.go(RoutePaths.customizationMetrics);
@@ -58,39 +59,31 @@ class SettingsScreen extends StatelessWidget {
             // Otras secciones de configuración pueden ir aquí
             _buildSection(
               context,
-              title: 'Notificaciones',
+              title: AppLocalizations.of(context)?.notificationsTitle ?? 'Notificaciones',
               icon: Icons.notifications,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Configuración de notificaciones próximamente',
-                    ),
-                  ),
+                  SnackBar(content: Text(AppLocalizations.of(context)?.notificationsComingSoon ?? 'Configuración de notificaciones próximamente')),
                 );
               },
             ),
             _buildSection(
               context,
-              title: 'Perfil',
+              title: AppLocalizations.of(context)?.profileTitle ?? 'Perfil',
               icon: Icons.person,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Configuración de perfil próximamente'),
-                  ),
+                  SnackBar(content: Text(AppLocalizations.of(context)?.profileComingSoon ?? 'Configuración de perfil próximamente')),
                 );
               },
             ),
             _buildSection(
               context,
-              title: 'Acerca de',
+              title: AppLocalizations.of(context)?.aboutTitle ?? 'Acerca de',
               icon: Icons.info,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Información de la app próximamente'),
-                  ),
+                  SnackBar(content: Text(AppLocalizations.of(context)?.aboutComingSoon ?? 'Información de la app próximamente')),
                 );
               },
             ),
@@ -137,7 +130,7 @@ class _AppearanceSection extends StatelessWidget {
                   Icon(Icons.palette, color: colorScheme.primary),
                   const SizedBox(width: 12),
                   Text(
-                    'Apariencia',
+                    AppLocalizations.of(context)?.appearanceTitle ?? 'Apariencia',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -162,7 +155,7 @@ class _AppearanceSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Tema',
+                          AppLocalizations.of(context)?.themeTitle ?? 'Tema',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -173,21 +166,21 @@ class _AppearanceSection extends StatelessWidget {
 
                     // Opciones de tema
                     _ThemeOption(
-                      title: 'Claro',
+                      title: AppLocalizations.of(context)?.themeLight ?? 'Claro',
                       icon: Icons.light_mode,
                       isSelected: themeProvider.themeMode == AppThemeMode.light,
                       onTap: () => themeProvider.setThemeMode(AppThemeMode.light),
                     ),
                     const SizedBox(height: 8),
                     _ThemeOption(
-                      title: 'Oscuro',
+                      title: AppLocalizations.of(context)?.themeDark ?? 'Oscuro',
                       icon: Icons.dark_mode,
                       isSelected: themeProvider.themeMode == AppThemeMode.dark,
                       onTap: () => themeProvider.setThemeMode(AppThemeMode.dark),
                     ),
                     const SizedBox(height: 8),
                     _ThemeOption(
-                      title: 'Seguir sistema',
+                      title: AppLocalizations.of(context)?.themeSystem ?? 'Seguir sistema',
                       icon: Icons.brightness_auto,
                       isSelected: themeProvider.themeMode == AppThemeMode.system,
                       onTap: () => themeProvider.setThemeMode(AppThemeMode.system),
@@ -213,7 +206,7 @@ class _AppearanceSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Tipo de navegación',
+                          AppLocalizations.of(context)?.navigationTypeTitle ?? 'Tipo de navegación',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -222,7 +215,7 @@ class _AppearanceSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Selecciona cómo prefieres navegar por la aplicación',
+                      AppLocalizations.of(context)?.navigationTypeDescription ?? 'Selecciona cómo prefieres navegar por la aplicación',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -231,16 +224,16 @@ class _AppearanceSection extends StatelessWidget {
 
                     // Opciones de layout
                     _LayoutOption(
-                      title: 'Barra lateral',
-                      subtitle: 'Menú de navegación en el lateral',
+                      title: AppLocalizations.of(context)?.sidebarTitle ?? 'Barra lateral',
+                      subtitle: AppLocalizations.of(context)?.sidebarSubtitle ?? 'Menú de navegación en el lateral',
                       icon: Icons.menu,
                       isSelected: themeProvider.layoutType == LayoutType.sidebar,
                       onTap: () => themeProvider.setLayoutType(LayoutType.sidebar),
                     ),
                     const SizedBox(height: 8),
                     _LayoutOption(
-                      title: 'Navegación inferior',
-                      subtitle: 'Menú de navegación en la parte inferior',
+                      title: AppLocalizations.of(context)?.bottomNavigationTitle ?? 'Navegación inferior',
+                      subtitle: AppLocalizations.of(context)?.bottomNavigationSubtitle ?? 'Menú de navegación en la parte inferior',
                       icon: Icons.navigation,
                       isSelected: themeProvider.layoutType == LayoutType.bottomNavigation,
                       onTap: () => themeProvider.setLayoutType(LayoutType.bottomNavigation),
@@ -411,7 +404,7 @@ class _IntegrationsSection extends StatelessWidget {
               Icon(Icons.integration_instructions, color: colorScheme.primary),
               const SizedBox(width: 12),
               Text(
-                'Integraciones',
+                AppLocalizations.of(context)?.integrationsTitle ?? 'Integraciones',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -426,20 +419,13 @@ class _IntegrationsSection extends StatelessWidget {
             if (state is CalendarConnecting) {
               _launchAuthUrl(context, state.authUrl);
             } else if (state is CalendarConnected) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Google Calendar conectado exitosamente'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)?.googleCalendarConnected ?? 'Google Calendar conectado exitosamente'), backgroundColor: Colors.green));
               // Recargar estado
               context.read<CalendarBloc>().add(
                 const LoadConnectionStatusEvent(),
               );
             } else if (state is CalendarDisconnected) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Google Calendar desconectado')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)?.googleCalendarDisconnected ?? 'Google Calendar desconectado')));
               // Recargar estado
               context.read<CalendarBloc>().add(
                 const LoadConnectionStatusEvent(),
@@ -455,10 +441,7 @@ class _IntegrationsSection extends StatelessWidget {
           },
           builder: (context, state) {
             if (state is CalendarLoading) {
-              return const ListTile(
-                leading: CircularProgressIndicator(),
-                title: Text('Cargando...'),
-              );
+              return const ListTile(leading: CircularProgressIndicator(), title: Text('Cargando...'));
             }
 
             domain.CalendarConnection? connection;
@@ -503,7 +486,7 @@ class _IntegrationsSection extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Google Calendar',
+                                AppLocalizations.of(context)?.googleCalendarTitle ?? 'Google Calendar',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -516,7 +499,7 @@ class _IntegrationsSection extends StatelessWidget {
                                 )
                               else
                                 Text(
-                                  'Sincroniza tus eventos y disponibilidad',
+                                  AppLocalizations.of(context)?.googleCalendarSubtitle ?? 'Sincroniza tus eventos y disponibilidad',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -547,7 +530,7 @@ class _IntegrationsSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                isConnected ? 'Conectado' : 'Desconectado',
+                                isConnected ? (AppLocalizations.of(context)?.connected ?? 'Conectado') : (AppLocalizations.of(context)?.disconnected ?? 'Desconectado'),
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: isConnected
                                       ? Colors.green
@@ -570,7 +553,7 @@ class _IntegrationsSection extends StatelessWidget {
                           ? OutlinedButton.icon(
                               onPressed: () => _confirmDisconnect(context),
                               icon: const Icon(Icons.link_off),
-                              label: const Text('Desconectar'),
+                              label: Text(AppLocalizations.of(context)?.disconnect ?? 'Desconectar'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: colorScheme.error,
                               ),
@@ -582,7 +565,7 @@ class _IntegrationsSection extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.link),
-                              label: const Text('Conectar Google Calendar'),
+                              label: Text(AppLocalizations.of(context)?.connectGoogleCalendar ?? 'Conectar Google Calendar'),
                             ),
                     ),
 
@@ -590,7 +573,7 @@ class _IntegrationsSection extends StatelessWidget {
                     if (isConnected && connection?.connectedAt != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Conectado el ${_formatDate(connection!.connectedAt!)}',
+                        AppLocalizations.of(context)?.connectedOn(_formatDate(connection!.connectedAt!)) ?? 'Conectado el ${_formatDate(connection!.connectedAt!)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -620,12 +603,7 @@ class _IntegrationsSection extends StatelessWidget {
       }
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudo abrir el navegador'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)?.cannotOpenBrowser ?? 'No se pudo abrir el navegador'), backgroundColor: Colors.red));
       }
     }
   }
@@ -638,22 +616,16 @@ class _IntegrationsSection extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Autorización de Google Calendar'),
+        title: Text(AppLocalizations.of(context)?.googleCalendarAuthTitle ?? 'Autorización de Google Calendar'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Se ha abierto tu navegador. Por favor autoriza la aplicación y copia el código de autorización aquí:',
-            ),
+            Text(AppLocalizations.of(context)?.googleCalendarAuthInstructions ?? 'Se ha abierto tu navegador. Por favor autoriza la aplicación y copia el código de autorización aquí:'),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Código de autorización',
-                border: OutlineInputBorder(),
-                hintText: 'Pega el código aquí',
-              ),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)?.authorizationCodeLabel ?? 'Código de autorización', border: const OutlineInputBorder(), hintText: AppLocalizations.of(context)?.authorizationCodeHint ?? 'Pega el código aquí'),
               maxLines: 3,
             ),
           ],
@@ -666,7 +638,7 @@ class _IntegrationsSection extends StatelessWidget {
                 const LoadConnectionStatusEvent(),
               );
             },
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           FilledButton(
             onPressed: () {
@@ -676,7 +648,7 @@ class _IntegrationsSection extends StatelessWidget {
                 context.read<CalendarBloc>().add(CompleteOAuthEvent(code));
               }
             },
-            child: const Text('Conectar'),
+            child: Text(AppLocalizations.of(context)?.connect ?? 'Conectar'),
           ),
         ],
       ),
@@ -688,22 +660,21 @@ class _IntegrationsSection extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Desconectar Google Calendar'),
+        title: Text(AppLocalizations.of(context)?.disconnectGoogleCalendarTitle ?? 'Desconectar Google Calendar'),
         content: const Text(
-          '¿Estás seguro de que deseas desconectar Google Calendar?\n\n'
-          'Perderás el acceso a los eventos sincronizados.',
+          '¿Estás seguro de que deseas desconectar Google Calendar?\n\nPerderás el acceso a los eventos sincronizados.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Desconectar'),
+            child: Text(AppLocalizations.of(context)?.disconnect ?? 'Desconectar'),
           ),
         ],
       ),

@@ -292,9 +292,61 @@ export const taskResolvers = {
         });
       }
 
-      // Check for circular dependency (simple check)
+      // Reject self-dependency
       if (predecessorId === successorId) {
         throw new GraphQLError("Cannot create circular dependency", {
+          extensions: { code: "BAD_REQUEST" },
+        });
+      }
+
+      // Ensure both tasks belong to the same project
+      if (predecessor.projectId !== successor.projectId) {
+        throw new GraphQLError("Tasks must belong to the same project", {
+          extensions: { code: "BAD_REQUEST" },
+        });
+      }
+
+      // Check for circular dependency by testing reachability: successor -> predecessor
+      const projectId = successor.projectId;
+      const deps = await prisma.dependency.findMany({
+        where: {
+          OR: [
+            { predecessorId: { in: (await prisma.task.findMany({ where: { projectId }, select: { id: true } })).map(t => t.id) } },
+            { successorId: { in: (await prisma.task.findMany({ where: { projectId }, select: { id: true } })).map(t => t.id) } },
+          ],
+        },
+        select: { predecessorId: true, successorId: true },
+      });
+
+      const adj = new Map();
+      for (const d of deps) {
+        if (!adj.has(d.predecessorId)) adj.set(d.predecessorId, new Set());
+        adj.get(d.predecessorId).add(d.successorId);
+      }
+
+      // BFS from successor to see if predecessor is reachable
+      const queue = [successorId];
+      const seen = new Set([successorId]);
+      let cycle = false;
+      while (queue.length && !cycle) {
+        const cur = queue.shift();
+        const nexts = adj.get(cur);
+        if (nexts) {
+          if (nexts.has(predecessorId)) {
+            cycle = true;
+            break;
+          }
+          for (const n of nexts) {
+            if (!seen.has(n)) {
+              seen.add(n);
+              queue.push(n);
+            }
+          }
+        }
+      }
+
+      if (cycle) {
+        throw new GraphQLError("Circular dependency detected", {
           extensions: { code: "BAD_REQUEST" },
         });
       }
@@ -314,6 +366,34 @@ export const taskResolvers = {
       if (!user) {
         throw new GraphQLError("Not authenticated", {
           extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
+
+      const dep = await prisma.dependency.findUnique({
+        where: { id: parseInt(id) },
+        include: { successor: true },
+      });
+
+      if (!dep) {
+        throw new GraphQLError("Dependency not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+
+      // Authorization: user must be member of the project
+      const successorTask = dep.successor;
+      const member = await prisma.projectMember.findUnique({
+        where: {
+          userId_projectId: {
+            userId: user.userId,
+            projectId: successorTask.projectId,
+          },
+        },
+      });
+
+      if (!member && user.role !== "ADMIN") {
+        throw new GraphQLError("Not authorized to modify dependencies in this project", {
+          extensions: { code: "FORBIDDEN" },
         });
       }
 
@@ -408,3 +488,4 @@ export const taskResolvers = {
     },
   },
 };
+

@@ -28,6 +28,11 @@ import aiRoutes from "./routes/aiRoutes.js";
 import nlpRoutes from "./routes/nlp.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import roleRoutes from "./routes/role.routes.js";
+import blogRoutes from "./routes/blog.routes.js";
+import forumRoutes from "./routes/forum.routes.js";
+import voteRoutes from "./routes/vote.routes.js";
+import knowledgeRoutes from "./routes/knowledge.routes.js";
+import supportRoutes from "./routes/support.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -141,6 +146,11 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/nlp", nlpRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/roles", roleRoutes);
+app.use("/api/blog", blogRoutes);
+app.use("/api/forum", forumRoutes);
+app.use("/api/votes", voteRoutes);
+app.use("/api/knowledge", knowledgeRoutes);
+app.use("/api/support", supportRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -257,5 +267,5 @@ if (!isTestEnvironment) {
   });
 }
 
-export { startServer, serverReady };
+export { app, startServer, serverReady };
 export default app;

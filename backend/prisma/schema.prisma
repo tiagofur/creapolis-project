@@ -14,6 +14,8 @@ model User {
   name                    String
   role                    Role                     @default(TEAM_MEMBER)
   avatarUrl               String?
+  reputation              Int                      @default(0)
+  reputationLastUpdated   DateTime                 @default(now())
   googleAccessToken       String?
   googleRefreshToken      String?
   createdAt               DateTime                 @default(now())
@@ -35,6 +37,20 @@ model User {
   assignedRoles           ProjectRoleMember[]      @relation("RoleAssigner")
   auditLogs               RoleAuditLog[]
   integrations            Integration[]
+  blogArticles            BlogArticle[]
+  blogComments            BlogComment[]
+  blogLikes               BlogArticleLike[]
+  forumThreads            ForumThread[]
+  forumPosts              ForumPost[]
+  forumPostLikes          ForumPostLike[]
+  forumPostVotes          ForumPostVote[]
+  reputationLogs          UserReputationLog[]
+  badges                  UserBadge[]
+  knowledgeArticles       KnowledgeArticle[]
+  knowledgeArticleLikes   KnowledgeArticleLike[]
+  supportTickets          SupportTicket[]        @relation("TicketUser")
+  assignedSupportTickets  SupportTicket[]        @relation("TicketAssigned")
+  supportMessages         SupportMessage[]
 
   @@index([email])
 }
@@ -566,4 +582,400 @@ enum LogStatus {
   SUCCESS
   FAILED
   PENDING
+}
+
+// Blog System Models
+model BlogArticle {
+  id              Int                 @id @default(autoincrement())
+  title           String
+  slug            String              @unique
+  content         String
+  excerpt         String?
+  featuredImage   String?
+  authorId        Int
+  status          ArticleStatus       @default(DRAFT)
+  category        ArticleCategory     @default(GENERAL)
+  categoryId      Int?
+  tags            String[]           
+  views           Int                 @default(0)
+  likes           Int                 @default(0)
+  isFeatured      Boolean             @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  author          User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  blogCategory    BlogCategory?       @relation(fields: [categoryId], references: [id])
+  comments        BlogComment[]
+  likesRelation   BlogArticleLike[]
+  
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([isFeatured])
+  @@index([categoryId])
+}
+
+model BlogComment {
+  id          Int             @id @default(autoincrement())
+  content     String
+  articleId   Int
+  authorId    Int
+  parentId    Int?           
+  isApproved  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  article     BlogArticle     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      BlogComment?    @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     BlogComment[]   @relation("CommentThread")
+  
+  @@index([articleId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([isApproved])
+  @@index([createdAt])
+}
+
+model BlogArticleLike {
+  id        Int           @id @default(autoincrement())
+  articleId Int
+  userId    Int
+  createdAt DateTime      @default(now())
+  article   BlogArticle   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+model BlogCategory {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  slug        String          @unique
+  description String?
+  color       String?         
+  image       String?         
+  parentId    Int?            
+  isActive    Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  parent      BlogCategory?   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    BlogCategory[]  @relation("CategoryHierarchy")
+  articles    BlogArticle[]   
+  
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum ArticleCategory {
+  PRODUCTIVITY
+  WORK_LIFE_BALANCE
+  BURNOUT_PREVENTION
+  PROJECT_MANAGEMENT
+  TECHNOLOGY
+  TUTORIALS
+  NEWS
+  GENERAL
+}
+
+// Forum System Models
+model ForumCategory {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  slug        String          @unique
+  description String?
+  color       String?         
+  icon        String?         
+  sortOrder   Int             @default(0)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  threads     ForumThread[]
+  
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model ForumThread {
+  id          Int             @id @default(autoincrement())
+  title       String
+  slug        String          @unique
+  content     String
+  authorId    Int
+  categoryId  Int
+  isPinned    Boolean         @default(false)
+  isLocked    Boolean         @default(false)
+  views       Int             @default(0)
+  replies     Int             @default(0)
+  reputationEarned Int       @default(0)
+  lastReplyAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category    ForumCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  posts       ForumPost[]
+  
+  @@index([slug])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([isPinned])
+  @@index([lastReplyAt])
+  @@index([createdAt])
+}
+
+model ForumPost {
+  id          Int             @id @default(autoincrement())
+  content     String
+  threadId    Int
+  authorId    Int
+  parentId    Int?           
+  isEdited    Boolean         @default(false)
+  editedAt    DateTime?       
+  upvotes     Int             @default(0)
+  downvotes   Int             @default(0)
+  score       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  thread      ForumThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      ForumPost?      @relation("PostThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     ForumPost[]     @relation("PostThread")
+  likes       ForumPostLike[]
+  votes       ForumPostVote[]
+  
+  @@index([threadId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+}
+
+model ForumPostLike {
+  id        Int         @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime    @default(now())
+  post      ForumPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model ForumPostVote {
+  id        Int         @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  voteType  VoteType
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  post      ForumPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@index([voteType])
+}
+
+model UserReputationLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  points     Int
+  reason     String
+  sourceType String
+  sourceId   Int?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserBadge {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  badgeType        String
+  badgeName        String
+  badgeDescription String
+  badgeIcon        String?
+  earnedAt         DateTime @default(now())
+  pointsValue      Int      @default(0)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+// Knowledge Base System Models
+model KnowledgeArticle {
+  id              Int                     @id @default(autoincrement())
+  title           String
+  slug            String                  @unique
+  content         String
+  excerpt         String?
+  featuredImage   String?
+  authorId        Int
+  status          ArticleStatus           @default(DRAFT)
+  categoryId      Int?
+  tags            String[]               
+  views           Int                     @default(0)
+  likes           Int                     @default(0)
+  isFeatured      Boolean                 @default(false)
+  difficulty      KnowledgeDifficulty     @default(BEGINNER)
+  readingTime     Int                     @default(5)
+  publishedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  author          User                    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category        KnowledgeCategory?      @relation(fields: [categoryId], references: [id])
+  likesRelation   KnowledgeArticleLike[]
+  
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([isFeatured])
+  @@index([difficulty])
+}
+
+model KnowledgeCategory {
+  id          Int                 @id @default(autoincrement())
+  name        String              @unique
+  slug        String              @unique
+  description String?
+  color       String?             
+  icon        String?             
+  parentId    Int?                
+  isActive    Boolean             @default(true)
+  sortOrder   Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  parent      KnowledgeCategory?  @relation("KnowledgeCategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    KnowledgeCategory[] @relation("KnowledgeCategoryHierarchy")
+  articles    KnowledgeArticle[]  
+  
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model KnowledgeArticleLike {
+  id        Int                 @id @default(autoincrement())
+  articleId Int
+  userId    Int
+  createdAt DateTime            @default(now())
+  article   KnowledgeArticle    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+enum KnowledgeDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+// Support Ticket System Models
+model SupportTicket {
+  id              Int                 @id @default(autoincrement())
+  title           String
+  description     String
+  userId          Int
+  categoryId      Int
+  priority        TicketPriority      @default(MEDIUM)
+  status          TicketStatus        @default(OPEN)
+  assignedTo      Int?
+  resolution      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  user            User                @relation("TicketUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedUser    User?               @relation("TicketAssigned", fields: [assignedTo], references: [id], onDelete: SetNull)
+  category        SupportCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  messages        SupportMessage[]
+  
+  @@index([userId])
+  @@index([assignedTo])
+  @@index([categoryId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([resolvedAt])
+}
+
+model SupportMessage {
+  id           Int              @id @default(autoincrement())
+  content      String
+  ticketId     Int
+  authorId     Int
+  isInternal   Boolean          @default(false)
+  isSolution   Boolean          @default(false)
+  attachments  String[]         // JSON array of file URLs
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  ticket       SupportTicket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author       User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([isInternal])
+}
+
+model SupportCategory {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  slug        String            @unique
+  description String?
+  color       String?
+  icon        String?
+  sortOrder   Int               @default(0)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  tickets     SupportTicket[]
+  
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

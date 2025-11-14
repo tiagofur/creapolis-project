@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../bloc/task/task_bloc.dart';
+import '../../../bloc/task/task_state.dart';
+import '../../../../routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Widget que muestra la actividad reciente del usuario en el Dashboard.
 ///
@@ -15,8 +21,26 @@ class RecentActivityList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // TODO: Obtener actividad real desde el BLoC/estado
-    final activities = _getMockActivities();
+    final taskState = context.watch<TaskBloc>().state;
+    List<ActivityItem> activities = [];
+    if (taskState is WorkspaceTasksLoaded) {
+      final tasks = List.from(taskState.tasks);
+      tasks.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      activities = tasks.take(7).map((t) {
+        final isCompleted = t.isCompleted;
+        return ActivityItem(
+          icon: isCompleted ? Icons.check_circle : Icons.play_circle_outline,
+          iconColor: isCompleted ? Colors.green : Colors.blue,
+          title: isCompleted
+              ? (AppLocalizations.of(context)?.activityCompleted ?? 'Tarea completada')
+              : (AppLocalizations.of(context)?.activityUpdated ?? 'Tarea actualizada'),
+          description: t.title,
+          timestamp: t.updatedAt,
+        );
+      }).toList();
+    } else {
+      activities = _getMockActivities();
+    }
 
     return Card(
       child: Padding(
@@ -28,22 +52,16 @@ class RecentActivityList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Actividad Reciente',
+                  AppLocalizations.of(context)?.recentActivityTitle ?? 'Actividad Reciente',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 TextButton(
                   onPressed: () {
-                    // TODO: Navegar a vista completa de actividad
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ver todo - Por implementar'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    context.go(RoutePaths.allTasks);
                   },
-                  child: const Text('Ver todo'),
+                  child: Text(AppLocalizations.of(context)?.viewAll ?? 'Ver todo'),
                 ),
               ],
             ),
@@ -61,7 +79,7 @@ class RecentActivityList extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'No hay actividad reciente',
+                        AppLocalizations.of(context)?.noRecentActivity ?? 'No hay actividad reciente',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -145,7 +163,7 @@ class _ActivityItem extends StatelessWidget {
           Text(activity.description, style: theme.textTheme.bodySmall),
           const SizedBox(height: 4),
           Text(
-            _formatTimestamp(activity.timestamp),
+            _formatTimestamp(context, activity.timestamp),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -155,16 +173,16 @@ class _ActivityItem extends StatelessWidget {
     );
   }
 
-  String _formatTimestamp(DateTime timestamp) {
+  String _formatTimestamp(BuildContext context, DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
 
     if (difference.inMinutes < 60) {
-      return 'Hace ${difference.inMinutes} minutos';
+      return AppLocalizations.of(context)?.minutesAgo(difference.inMinutes) ?? 'Hace ${difference.inMinutes} minutos';
     } else if (difference.inHours < 24) {
-      return 'Hace ${difference.inHours} horas';
+      return AppLocalizations.of(context)?.hoursAgo(difference.inHours) ?? 'Hace ${difference.inHours} horas';
     } else if (difference.inDays < 7) {
-      return 'Hace ${difference.inDays} días';
+      return AppLocalizations.of(context)?.daysAgo(difference.inDays) ?? 'Hace ${difference.inDays} días';
     } else {
       return DateFormat('dd/MM/yyyy HH:mm').format(timestamp);
     }
@@ -187,6 +205,3 @@ class ActivityItem {
     required this.timestamp,
   });
 }
-
-
-

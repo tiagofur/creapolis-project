@@ -9,6 +9,9 @@ import 'core/config/environment_config.dart';
 import 'core/network/api_client.dart';
 import 'core/network/interceptors/auth_interceptor.dart';
 import 'core/services/last_route_service.dart';
+import 'domain/repositories/workspace_repository.dart';
+import 'domain/usecases/workspace/update_member_role.dart';
+import 'domain/usecases/workspace/remove_member.dart';
 
 // Este archivo será generado por build_runner
 import 'injection.config.dart';
@@ -80,4 +83,16 @@ Future<void> initializeDependencies() async {
   // - Todos los BLoCs
   // Y todos los demás servicios marcados con @injectable
   _configureInjectable();
+
+  // 8. Registrar manualmente casos de uso añadidos recientemente
+  if (!getIt.isRegistered<UpdateMemberRoleUseCase>()) {
+    getIt.registerFactory<UpdateMemberRoleUseCase>(
+      () => UpdateMemberRoleUseCase(getIt<WorkspaceRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<RemoveMemberUseCase>()) {
+    getIt.registerFactory<RemoveMemberUseCase>(
+      () => RemoveMemberUseCase(getIt<WorkspaceRepository>()),
+    );
+  }
 }

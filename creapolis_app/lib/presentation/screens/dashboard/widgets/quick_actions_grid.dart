@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../../domain/entities/project.dart';
 import '../../../../features/projects/presentation/blocs/project_bloc.dart';
@@ -41,7 +41,7 @@ class QuickActionsGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Acciones Rápidas',
+              AppLocalizations.of(context)?.quickActionsTitle ?? 'Acciones Rápidas',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -57,25 +57,25 @@ class QuickActionsGrid extends StatelessWidget {
               children: [
                 _QuickActionButton(
                   icon: Icons.add_task,
-                  label: 'Nueva Tarea',
+                  label: AppLocalizations.of(context)?.newTaskTooltip ?? 'Nueva Tarea',
                   color: Colors.blue,
                   onTap: () => _handleNewTask(context),
                 ),
                 _QuickActionButton(
                   icon: Icons.create_new_folder,
-                  label: 'Nuevo Proyecto',
+                  label: AppLocalizations.of(context)?.createProject ?? 'Nuevo Proyecto',
                   color: Colors.green,
                   onTap: () => _handleNewProject(context),
                 ),
                 _QuickActionButton(
                   icon: Icons.search,
-                  label: 'Buscar',
+                  label: AppLocalizations.of(context)?.search ?? 'Buscar',
                   color: Colors.orange,
                   onTap: () => _openSearch(context),
                 ),
                 _QuickActionButton(
                   icon: Icons.notifications,
-                  label: 'Notificaciones',
+                  label: AppLocalizations.of(context)?.notificationsTitle ?? 'Notificaciones',
                   color: Colors.purple,
                   onTap: () => _openNotifications(context),
                 ),

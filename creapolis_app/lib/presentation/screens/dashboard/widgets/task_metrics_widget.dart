@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../../domain/entities/task.dart';
 import '../../../bloc/task/task_bloc.dart';
@@ -21,6 +22,7 @@ class TaskMetricsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final filterProvider = context.watch<DashboardFilterProvider>();
+    final l10n = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -40,7 +42,7 @@ class TaskMetricsWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Métricas de Tareas',
+                      l10n?.taskMetricsTitle ?? 'Métricas de Tareas',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -50,9 +52,9 @@ class TaskMetricsWidget extends StatelessWidget {
                 if (filterProvider.hasActiveFilters)
                   Chip(
                     avatar: const Icon(Icons.filter_list, size: 16),
-                    label: const Text(
-                      'Filtrado',
-                      style: TextStyle(fontSize: 11),
+                    label: Text(
+                      l10n?.filteredLabel ?? 'Filtrado',
+                      style: const TextStyle(fontSize: 11),
                     ),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: theme.colorScheme.primaryContainer,
@@ -76,7 +78,7 @@ class TaskMetricsWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        'Error al cargar métricas',
+                        l10n?.loadMetricsError ?? 'Error al cargar métricas',
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ),
@@ -144,7 +146,7 @@ class TaskMetricsWidget extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Progreso General',
+                              l10n?.overallProgress ?? 'Progreso General',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -171,14 +173,14 @@ class TaskMetricsWidget extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${metrics.completed} de ${metrics.total} tareas',
+                              l10n?.completedOfTotalTasks(metrics.completed, metrics.total) ?? '${metrics.completed} de ${metrics.total} tareas',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
                             if (metrics.delayed > 0)
                               Text(
-                                '${metrics.delayed} retrasadas',
+                                AppLocalizations.of(context)?.tasksDelayedCount(metrics.delayed) ?? '${metrics.delayed} retrasadas',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.red,
                                   fontWeight: FontWeight.w600,
@@ -206,16 +208,22 @@ class TaskMetricsWidget extends StatelessWidget {
 
     // Filtrar por proyecto
     if (filterProvider.selectedProjectId != null) {
-      filtered = filtered
-          .where((task) => task.projectId == filterProvider.selectedProjectId)
-          .toList();
+      final pid = int.tryParse(filterProvider.selectedProjectId!);
+      if (pid != null) {
+        filtered = filtered.where((task) => task.projectId == pid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     // Filtrar por usuario
     if (filterProvider.selectedUserId != null) {
-      filtered = filtered
-          .where((task) => task.assignedTo == filterProvider.selectedUserId)
-          .toList();
+      final uid = int.tryParse(filterProvider.selectedUserId!);
+      if (uid != null) {
+        filtered = filtered.where((task) => task.assignedTo == uid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     // Filtrar por rango de fechas

@@ -49,6 +49,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<RescheduleProjectEvent>(_onRescheduleProject);
     on<LoadMoreTasksEvent>(_onLoadMoreTasks);
     on<ResetTasksPaginationEvent>(_onResetPagination);
+    on<SearchWorkspaceTasksEvent>(_onSearchWorkspaceTasks);
+    on<FilterWorkspaceTasksByStatusEvent>(_onFilterWorkspaceTasksByStatus);
+    on<FilterWorkspaceTasksByPriorityEvent>(_onFilterWorkspaceTasksByPriority);
   }
 
   /// Cargar tareas de un proyecto
@@ -73,6 +76,54 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         emit(TasksLoaded(tasks));
       },
     );
+  }
+
+  Future<void> _onSearchWorkspaceTasks(
+    SearchWorkspaceTasksEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is WorkspaceTasksLoaded &&
+        currentState.workspaceId == event.workspaceId) {
+      emit(
+        currentState.copyWith(
+          searchQuery: event.query,
+          clearSearchQuery: event.query.isEmpty,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onFilterWorkspaceTasksByStatus(
+    FilterWorkspaceTasksByStatusEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is WorkspaceTasksLoaded &&
+        currentState.workspaceId == event.workspaceId) {
+      emit(
+        currentState.copyWith(
+          currentStatusFilter: event.status,
+          clearStatusFilter: event.status == null,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onFilterWorkspaceTasksByPriority(
+    FilterWorkspaceTasksByPriorityEvent event,
+    Emitter<TaskState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is WorkspaceTasksLoaded &&
+        currentState.workspaceId == event.workspaceId) {
+      emit(
+        currentState.copyWith(
+          currentPriorityFilter: event.priority,
+          clearPriorityFilter: event.priority == null,
+        ),
+      );
+    }
   }
 
   /// Refrescar tareas (sin loading)

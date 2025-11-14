@@ -1,5 +1,7 @@
 import schedulerService from "../services/scheduler.service.js";
 import { successResponse, asyncHandler } from "../utils/response.js";
+import prisma from "../config/database.js";
+import { ErrorResponses } from "../utils/errors.js";
 
 /**
  * Scheduler Controller
@@ -29,7 +31,6 @@ class SchedulerController {
    */
   validateSchedule = asyncHandler(async (req, res) => {
     const projectId = parseInt(req.params.projectId);
-    const prisma = (await import("../config/database.js")).default;
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -43,7 +44,6 @@ class SchedulerController {
     });
 
     if (!project) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.notFound("Project not found");
     }
 
@@ -72,7 +72,6 @@ class SchedulerController {
     const { triggerTaskId, newStartDate, considerCalendar = true } = req.body;
 
     if (!triggerTaskId) {
-      const { ErrorResponses } = await import("../utils/errors.js");
       throw ErrorResponses.badRequest("triggerTaskId is required");
     }
 

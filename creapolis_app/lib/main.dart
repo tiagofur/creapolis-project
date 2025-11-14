@@ -25,6 +25,7 @@ import 'presentation/providers/workspace_context.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/providers/dashboard_filter_provider.dart';
 import 'routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 void main() async {
   // Asegurar inicialización de Flutter
@@ -146,12 +147,17 @@ class _CreopolisAppState extends State<CreopolisApp> {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp.router(
-            title: AppStrings.appName,
+            title: AppLocalizations.supportedLocales.isNotEmpty
+                ? AppLocalizations.of(context)?.appName ?? AppStrings.appName
+                : AppStrings.appName,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.effectiveThemeMode,
             routerConfig: AppRouter.router,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('es'),
           );
         },
       ),

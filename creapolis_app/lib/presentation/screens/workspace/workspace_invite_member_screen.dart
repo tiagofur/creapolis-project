@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../features/workspace/data/models/workspace_model.dart';
+import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
+import '../../../features/workspace/presentation/bloc/workspace_event.dart';
 
 /// Pantalla para invitar a un nuevo miembro al workspace
 /// TODO: Implementar cuando el backend tenga el endpoint de invitaciones
@@ -29,13 +33,18 @@ class _WorkspaceInviteMemberScreenState
 
   void _handleInvite() {
     if (!_formKey.currentState!.validate()) return;
+    final email = _emailController.text.trim();
+    context.read<WorkspaceBloc>().add(
+          InviteMember(
+            workspaceId: widget.workspace.id,
+            email: email,
+            role: _selectedRole,
+          ),
+        );
 
-    // TODO: Implementar cuando tengamos el usecase de invitaciones
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Funcionalidad de invitaciones próximamente (requiere backend)',
-        ),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)?.invitationSentTo(email) ?? 'Invitación enviada a $email'),
       ),
     );
   }
@@ -43,7 +52,7 @@ class _WorkspaceInviteMemberScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Invitar Miembro'), elevation: 0),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.inviteMember ?? 'Invitar Miembro'), elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -111,7 +120,7 @@ class _WorkspaceInviteMemberScreenState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${widget.workspace.memberCount} miembros',
+                    AppLocalizations.of(context)?.membersCount(widget.workspace.memberCount) ?? '${widget.workspace.memberCount} miembros',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
@@ -130,7 +139,7 @@ class _WorkspaceInviteMemberScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Email del invitado',
+          AppLocalizations.of(context)?.inviteeEmailLabel ?? 'Email del invitado',
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -139,14 +148,14 @@ class _WorkspaceInviteMemberScreenState
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            hintText: 'ejemplo@correo.com',
-            prefixIcon: Icon(Icons.email_outlined),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)?.inviteeEmailHint ?? 'ejemplo@correo.com',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: const OutlineInputBorder(),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Por favor ingresa un email';
+              return AppLocalizations.of(context)?.enterEmailMessage ?? 'Por favor ingresa un email';
             }
 
             final emailRegex = RegExp(
@@ -154,7 +163,7 @@ class _WorkspaceInviteMemberScreenState
             );
 
             if (!emailRegex.hasMatch(value)) {
-              return 'Por favor ingresa un email válido';
+              return AppLocalizations.of(context)?.enterValidEmailMessage ?? 'Por favor ingresa un email válido';
             }
 
             return null;
@@ -169,7 +178,7 @@ class _WorkspaceInviteMemberScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Rol en el workspace',
+          AppLocalizations.of(context)?.workspaceRoleLabel ?? 'Rol en el workspace',
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -214,7 +223,7 @@ class _WorkspaceInviteMemberScreenState
                 Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Permisos por rol',
+                  AppLocalizations.of(context)?.rolePermissionsTitle ?? 'Permisos por rol',
                   style: TextStyle(
                     color: Colors.blue[900],
                     fontWeight: FontWeight.bold,
@@ -224,14 +233,14 @@ class _WorkspaceInviteMemberScreenState
             ),
             const SizedBox(height: 12),
             _buildPermissionItem(
-              'Administrador',
-              'Gestión completa excepto eliminar workspace',
+              AppLocalizations.of(context)?.adminsRoleLabel ?? 'Administrador',
+              AppLocalizations.of(context)?.adminRoleDesc ?? 'Gestión completa excepto eliminar workspace',
             ),
             _buildPermissionItem(
-              'Miembro',
-              'Crear y gestionar proyectos y tareas',
+              AppLocalizations.of(context)?.membersRoleLabel ?? 'Miembro',
+              AppLocalizations.of(context)?.memberRoleDesc ?? 'Crear y gestionar proyectos y tareas',
             ),
-            _buildPermissionItem('Invitado', 'Solo visualización de contenido'),
+            _buildPermissionItem(AppLocalizations.of(context)?.guestsRoleLabel ?? 'Invitado', AppLocalizations.of(context)?.guestRoleDesc ?? 'Solo visualización de contenido'),
           ],
         ),
       ),
@@ -269,7 +278,7 @@ class _WorkspaceInviteMemberScreenState
     return ElevatedButton.icon(
       onPressed: _handleInvite,
       icon: const Icon(Icons.send),
-      label: const Text('Enviar Invitación'),
+      label: Text(AppLocalizations.of(context)?.sendInvitation ?? 'Enviar Invitación'),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
       ),
@@ -279,13 +288,13 @@ class _WorkspaceInviteMemberScreenState
   String _getRoleDescription(WorkspaceRole role) {
     switch (role) {
       case WorkspaceRole.admin:
-        return 'Puede gestionar miembros y configuración';
+        return AppLocalizations.of(context)?.adminRoleCapability ?? 'Puede gestionar miembros y configuración';
       case WorkspaceRole.member:
-        return 'Puede crear y gestionar proyectos';
+        return AppLocalizations.of(context)?.memberRoleCapability ?? 'Puede crear y gestionar proyectos';
       case WorkspaceRole.guest:
-        return 'Solo puede visualizar contenido';
+        return AppLocalizations.of(context)?.guestRoleCapability ?? 'Solo puede visualizar contenido';
       case WorkspaceRole.owner:
-        return 'Control total del workspace';
+        return AppLocalizations.of(context)?.ownerRoleCapability ?? 'Control total del workspace';
     }
   }
 }

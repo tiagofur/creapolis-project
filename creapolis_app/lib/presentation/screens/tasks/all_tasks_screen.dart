@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:creapolis_app/routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../domain/entities/project.dart';
 import '../../../domain/entities/task.dart';
@@ -106,20 +107,20 @@ class _AllTasksScreenState extends State<AllTasksScreen>
 
     return Scaffold(
       appBar: CreopolisAppBar(
-        title: 'Tareas',
+        title: AppLocalizations.of(context)?.tasksTitle ?? 'Tareas',
         showWorkspaceSwitcher: true,
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Mis Tareas', icon: Icon(Icons.person)),
-            Tab(text: 'Todas', icon: Icon(Icons.group)),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)?.myTasksTab ?? 'Mis Tareas', icon: const Icon(Icons.person)),
+            Tab(text: AppLocalizations.of(context)?.allTasksTab ?? 'Todas', icon: const Icon(Icons.group)),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _handleCreateTask(),
-            tooltip: 'Crear tarea',
+            tooltip: AppLocalizations.of(context)?.createTaskTooltip ?? 'Crear tarea',
           ),
           // Botón de búsqueda
           IconButton(
@@ -127,17 +128,17 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             onPressed: () {
               _showSearchDialog(context);
             },
-            tooltip: 'Buscar tareas',
+            tooltip: AppLocalizations.of(context)?.searchTasksTooltip ?? 'Buscar tareas',
           ),
           // Botón de filtros con badge
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                onPressed: () {
-                  _showFiltersSheet(context);
-                },
-                tooltip: 'Filtros',
+              onPressed: () {
+                _showFiltersSheet(context);
+              },
+                tooltip: AppLocalizations.of(context)?.filtersTooltip ?? 'Filtros',
               ),
               if (activeFilters > 0)
                 Positioned(
@@ -171,7 +172,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
             icon: Icon(
               _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
             ),
-            tooltip: 'Ordenar',
+            tooltip: AppLocalizations.of(context)?.sortTooltip ?? 'Ordenar',
             onSelected: (value) {
               setState(() {
                 if (_sortBy == value) {
@@ -196,7 +197,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Por fecha',
+                      AppLocalizations.of(context)?.sortByDate ?? 'Por fecha',
                       style: TextStyle(
                         fontWeight: _sortBy == 'date' ? FontWeight.bold : null,
                       ),
@@ -217,7 +218,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Por prioridad',
+                      AppLocalizations.of(context)?.sortByPriority ?? 'Por prioridad',
                       style: TextStyle(
                         fontWeight: _sortBy == 'priority'
                             ? FontWeight.bold
@@ -240,7 +241,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Por nombre',
+                      AppLocalizations.of(context)?.sortByName ?? 'Por nombre',
                       style: TextStyle(
                         fontWeight: _sortBy == 'name' ? FontWeight.bold : null,
                       ),
@@ -261,13 +262,12 @@ class _AllTasksScreenState extends State<AllTasksScreen>
               : _workspaceData;
 
           if (!hasWorkspace) {
-            return _buildMessageState(
-              context,
-              icon: Icons.workspaces_outline,
-              title: 'Selecciona un workspace',
-              message:
-                  'Elige un workspace desde el selector superior para ver las tareas disponibles.',
-            );
+              return _buildMessageState(
+                context,
+                icon: Icons.workspaces_outline,
+                title: AppLocalizations.of(context)?.selectWorkspaceTitle ?? 'Selecciona un workspace',
+                message: AppLocalizations.of(context)?.selectWorkspaceMessage ?? 'Elige un workspace desde el selector superior para ver las tareas disponibles.',
+              );
           }
 
           final isInitialLoading =
@@ -281,12 +281,12 @@ class _AllTasksScreenState extends State<AllTasksScreen>
               return _buildMessageState(
                 context,
                 icon: Icons.error_outline,
-                title: 'No se pudieron cargar las tareas',
+                title: AppLocalizations.of(context)?.loadTasksErrorTitle ?? 'No se pudieron cargar las tareas',
                 message: _errorMessage!,
                 actions: [
                   FilledButton(
                     onPressed: () => _requestWorkspaceTasks(force: true),
-                    child: const Text('Reintentar'),
+                    child: Text(AppLocalizations.of(context)?.retry ?? 'Reintentar'),
                   ),
                 ],
               );
@@ -406,20 +406,19 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         return _buildMessageState(
           context,
           icon: Icons.person_off_outlined,
-          title: 'Inicia sesión para ver tus tareas',
-          message:
-              'Necesitas iniciar sesión para ver las tareas asignadas a ti.',
+          title: AppLocalizations.of(context)?.loginRequiredTitle ?? 'Inicia sesión para ver tus tareas',
+          message: AppLocalizations.of(context)?.loginRequiredMessage ?? 'Necesitas iniciar sesión para ver las tareas asignadas a ti.',
           actions: [
             FilledButton(
               onPressed: () => context.go(RoutePaths.login),
-              child: const Text('Ir al login'),
+              child: Text(AppLocalizations.of(context)?.goToLogin ?? 'Ir al login'),
             ),
           ],
         );
       }
     }
 
-    var filteredTasks = List<Task>.from(workspaceData.tasks);
+    var filteredTasks = List<Task>.from(workspaceData.filteredTasks);
 
     if (myTasksOnly && currentUserId != null) {
       filteredTasks = filteredTasks
@@ -427,33 +426,15 @@ class _AllTasksScreenState extends State<AllTasksScreen>
           .toList();
     }
 
-    if (_searchQuery.isNotEmpty) {
-      filteredTasks = filteredTasks.where((task) {
-        final search = _searchQuery.toLowerCase();
-        return task.title.toLowerCase().contains(search) ||
-            task.description.toLowerCase().contains(search);
-      }).toList();
-    }
-
-    if (_filterStatus != null) {
-      filteredTasks = filteredTasks
-          .where((task) => task.status == _filterStatus)
-          .toList();
-    }
-
-    if (_filterPriority != null) {
-      filteredTasks = filteredTasks
-          .where((task) => task.priority == _filterPriority)
-          .toList();
-    }
+    
 
     filteredTasks = _sortTasks(filteredTasks);
 
     if (filteredTasks.isEmpty) {
       final hasFiltersApplied =
-          _searchQuery.isNotEmpty ||
-          _filterStatus != null ||
-          _filterPriority != null;
+          (workspaceData.searchQuery?.isNotEmpty ?? false) ||
+          workspaceData.currentStatusFilter != null ||
+          workspaceData.currentPriorityFilter != null;
       return _buildEmptyState(
         context,
         myTasksOnly: myTasksOnly,
@@ -470,7 +451,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         if (groupedTasks[TaskTimeGroup.today]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
-            'Hoy',
+            AppLocalizations.of(context)?.today ?? 'Hoy',
             groupedTasks[TaskTimeGroup.today]!,
             Icons.today,
             Colors.red,
@@ -479,7 +460,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         if (groupedTasks[TaskTimeGroup.thisWeek]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
-            'Esta Semana',
+            AppLocalizations.of(context)?.thisWeek ?? 'Esta Semana',
             groupedTasks[TaskTimeGroup.thisWeek]!,
             Icons.calendar_view_week,
             Colors.orange,
@@ -488,7 +469,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         if (groupedTasks[TaskTimeGroup.upcoming]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
-            'Próximas',
+            AppLocalizations.of(context)?.upcoming ?? 'Próximas',
             groupedTasks[TaskTimeGroup.upcoming]!,
             Icons.upcoming,
             Colors.blue,
@@ -497,7 +478,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         if (groupedTasks[TaskTimeGroup.noDate]?.isNotEmpty ?? false)
           _buildTaskGroup(
             context,
-            'Vencidas o sin fecha',
+            AppLocalizations.of(context)?.noDateGroup ?? 'Vencidas o sin fecha',
             groupedTasks[TaskTimeGroup.noDate]!,
             Icons.event_busy,
             Colors.grey,
@@ -1274,12 +1255,12 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Buscar tareas'),
+        title: Text(AppLocalizations.of(context)?.searchTasksTooltip ?? 'Buscar tareas'),
         content: TextField(
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Nombre de la tarea...',
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)?.searchTasksTooltip ?? 'Nombre de la tarea...',
+            prefixIcon: const Icon(Icons.search),
           ),
           onChanged: (value) {
             setState(() {
@@ -1290,14 +1271,19 @@ class _AllTasksScreenState extends State<AllTasksScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Aplicar búsqueda
+              final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+              if (workspaceId != null) {
+                context.read<TaskBloc>().add(
+                      SearchWorkspaceTasksEvent(workspaceId, _searchQuery),
+                    );
+              }
             },
-            child: const Text('Buscar'),
+            child: Text(AppLocalizations.of(context)?.search ?? 'Buscar'),
           ),
         ],
       ),
@@ -1322,115 +1308,190 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
-              Text('Estado', style: Theme.of(context).textTheme.titleSmall),
+              Text(AppLocalizations.of(context)?.tasksLabel ?? 'Estado', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 children: [
                   FilterChip(
-                    label: const Text('Todas'),
+                    label: Text(AppLocalizations.of(context)?.all ?? 'Todas'),
                     selected: _filterStatus == null,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterStatus = null;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByStatusEvent(workspaceId, null),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('En progreso'),
+                    label: Text(AppLocalizations.of(context)?.inProgress ?? 'En progreso'),
                     selected: _filterStatus == TaskStatus.inProgress,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterStatus = TaskStatus.inProgress;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByStatusEvent(
+                                  workspaceId,
+                                  TaskStatus.inProgress,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Planificadas'),
+                    label: Text(AppLocalizations.of(context)?.planned ?? 'Planificadas'),
                     selected: _filterStatus == TaskStatus.planned,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterStatus = TaskStatus.planned;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByStatusEvent(
+                                  workspaceId,
+                                  TaskStatus.planned,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Completadas'),
+                    label: Text(AppLocalizations.of(context)?.completed ?? 'Completadas'),
                     selected: _filterStatus == TaskStatus.completed,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterStatus = TaskStatus.completed;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByStatusEvent(
+                                  workspaceId,
+                                  TaskStatus.completed,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              Text('Prioridad', style: Theme.of(context).textTheme.titleSmall),
+              Text(AppLocalizations.of(context)?.priorityLabel ?? 'Prioridad', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 children: [
                   FilterChip(
-                    label: const Text('Todas'),
+                    label: Text(AppLocalizations.of(context)?.all ?? 'Todas'),
                     selected: _filterPriority == null,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterPriority = null;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByPriorityEvent(workspaceId, null),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Crítica'),
+                    label: Text(AppLocalizations.of(context)?.priorityCritical ?? 'Crítica'),
                     selected: _filterPriority == TaskPriority.critical,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterPriority = TaskPriority.critical;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByPriorityEvent(
+                                  workspaceId,
+                                  TaskPriority.critical,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Alta'),
+                    label: Text(AppLocalizations.of(context)?.priorityHigh ?? 'Alta'),
                     selected: _filterPriority == TaskPriority.high,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterPriority = TaskPriority.high;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByPriorityEvent(
+                                  workspaceId,
+                                  TaskPriority.high,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Media'),
+                    label: Text(AppLocalizations.of(context)?.priorityMedium ?? 'Media'),
                     selected: _filterPriority == TaskPriority.medium,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterPriority = TaskPriority.medium;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByPriorityEvent(
+                                  workspaceId,
+                                  TaskPriority.medium,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
                   FilterChip(
-                    label: const Text('Baja'),
+                    label: Text(AppLocalizations.of(context)?.priorityLow ?? 'Baja'),
                     selected: _filterPriority == TaskPriority.low,
                     onSelected: (selected) {
                       setModalState(() {
                         setState(() {
                           _filterPriority = TaskPriority.low;
                         });
+                        final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.read<TaskBloc>().add(
+                                FilterWorkspaceTasksByPriorityEvent(
+                                  workspaceId,
+                                  TaskPriority.low,
+                                ),
+                              );
+                        }
                       });
                     },
                   ),
@@ -1447,16 +1508,25 @@ class _AllTasksScreenState extends State<AllTasksScreen>
                         _filterPriority = null;
                       });
                       Navigator.pop(context);
+                      final workspaceId = context.read<WorkspaceContext>().activeWorkspace?.id;
+                      if (workspaceId != null) {
+                        context.read<TaskBloc>().add(
+                              FilterWorkspaceTasksByStatusEvent(workspaceId, null),
+                            );
+                        context.read<TaskBloc>().add(
+                              FilterWorkspaceTasksByPriorityEvent(workspaceId, null),
+                            );
+                      }
                     },
-                    child: const Text('Limpiar'),
+                    child: Text(AppLocalizations.of(context)?.clear ?? 'Limpiar'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      // TODO: Aplicar filtros
+                      setState(() {});
                     },
-                    child: const Text('Aplicar'),
+                    child: Text(AppLocalizations.of(context)?.apply ?? 'Aplicar'),
                   ),
                 ],
               ),
@@ -1478,7 +1548,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     if (workspaceContext.isGuest) {
       _showSnackBar(
         context,
-        'No tienes permisos para crear tareas en este workspace.',
+        AppLocalizations.of(context)?.noPermissionsCreateTasks ?? 'No tienes permisos para crear tareas en este workspace.',
         isError: true,
       );
       return;
@@ -1490,7 +1560,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     if (data == null) {
       _showSnackBar(
         context,
-        'Estamos actualizando las tareas del workspace. Intenta de nuevo en unos segundos.',
+        AppLocalizations.of(context)?.updatingWorkspaceTasks ?? 'Estamos actualizando las tareas del workspace. Intenta de nuevo en unos segundos.',
         isError: true,
       );
       _requestWorkspaceTasks(force: true);
@@ -1612,7 +1682,10 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     }
 
     if (result is TaskCreated) {
-      _showSnackBar(context, 'Tarea "${result.task.title}" creada');
+      _showSnackBar(
+        context,
+        AppLocalizations.of(context)?.taskCreatedSnack(result.task.title) ?? 'Tarea "${result.task.title}" creada',
+      );
     } else if (result is TaskError) {
       _showSnackBar(context, result.message, isError: true);
     }
@@ -1622,20 +1695,18 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.warning_amber_outlined, color: Colors.orange),
             SizedBox(width: 8),
-            Text('Selecciona un workspace'),
+            Text(AppLocalizations.of(context)?.selectWorkspaceTitle ?? 'Selecciona un workspace'),
           ],
         ),
-        content: const Text(
-          'Debes seleccionar un workspace activo antes de crear tareas.',
-        ),
+        content: Text(AppLocalizations.of(context)?.mustSelectWorkspaceMessage ?? 'Debes seleccionar un workspace activo antes de crear tareas.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cerrar'),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Cerrar'),
           ),
           FilledButton.icon(
             onPressed: () {
@@ -1644,7 +1715,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
               context.go(RoutePaths.workspaces);
             },
             icon: const Icon(Icons.workspaces_outline),
-            label: const Text('Ver workspaces'),
+            label: Text(AppLocalizations.of(context)?.viewWorkspaces ?? 'Ver workspaces'),
           ),
         ],
       ),
@@ -1655,20 +1726,18 @@ class _AllTasksScreenState extends State<AllTasksScreen>
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.folder_off_outlined, color: Colors.blueGrey),
             SizedBox(width: 8),
-            Text('Necesitas un proyecto'),
+            Text(AppLocalizations.of(context)?.needProjectTitle ?? 'Necesitas un proyecto'),
           ],
         ),
-        content: const Text(
-          'Crea un proyecto primero para poder registrar tareas en este workspace.',
-        ),
+        content: Text(AppLocalizations.of(context)?.needProjectMessage ?? 'Crea un proyecto primero para poder registrar tareas en este workspace.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancelar'),
           ),
           FilledButton.icon(
             onPressed: () {
@@ -1677,7 +1746,7 @@ class _AllTasksScreenState extends State<AllTasksScreen>
               context.go(RoutePaths.projects(workspaceId));
             },
             icon: const Icon(Icons.create_new_folder),
-            label: const Text('Ir a proyectos'),
+            label: Text(AppLocalizations.of(context)?.goToProjects ?? 'Ir a proyectos'),
           ),
         ],
       ),

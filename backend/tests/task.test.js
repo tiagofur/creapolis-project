@@ -1,8 +1,11 @@
 import request from "supertest";
-import app, { serverReady } from "../src/server.js";
+import { app, serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
+const HAS_DB = !!process.env.DATABASE_URL;
 
-describe("Task Endpoints", () => {
+const suite = HAS_DB ? describe : describe.skip;
+
+suite("Task Endpoints", () => {
   let authToken;
   let userId;
   let projectId;
@@ -194,6 +197,16 @@ describe("Task Endpoints", () => {
         });
 
       expect(res.statusCode).toBe(400);
+    });
+
+    it("should prevent circular dependencies", async () => {
+      const res = await request(app)
+        .post(`/api/projects/${projectId}/tasks/${taskId}/dependencies`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ predecessorId: task2Id });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
     });
   });
 });

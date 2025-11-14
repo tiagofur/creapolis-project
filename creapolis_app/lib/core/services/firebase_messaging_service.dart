@@ -1,11 +1,16 @@
 import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../core/utils/app_logger.dart';
 import '../../data/datasources/push_notification_remote_datasource.dart';
+import '../../injection.dart';
+import '../../presentation/providers/workspace_context.dart';
+import '../../routes/route_builder.dart';
+import '../../routes/app_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 /// Handler para notificaciones en background
 @pragma('vm:entry-point')
@@ -144,8 +149,35 @@ class FirebaseMessagingService {
     RemoteNotification notification,
     Map<String, dynamic> data,
   ) {
-    // TODO: Implementar UI para mostrar notificación en foreground
-    // Por ejemplo, un SnackBar o un banner en la parte superior
+    final ctx = AppRouter.router.routerDelegate.navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.notifications_active),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${notification.title ?? ''} ${notification.body ?? ''}'.trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: AppLocalizations.of(ctx)?.open ?? 'Abrir',
+            onPressed: () => _handleMessageClick(
+              RemoteMessage(
+                data: data,
+                notification: notification,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     AppLogger.info('Showing in-app notification: ${notification.title}');
   }
 
@@ -157,24 +189,37 @@ class FirebaseMessagingService {
     // Navegación basada en el tipo de notificación
     final notificationType = data['type'];
     final relatedId = data['relatedId'];
+    final projectId = data['projectId'];
+    final workspaceId = data['workspaceId'] ?? getIt<WorkspaceContext>().activeWorkspace?.id;
 
     switch (notificationType) {
       case 'MENTION':
       case 'COMMENT_REPLY':
-        // Navegar a comentarios
-        AppLogger.info('Navigate to comment: $relatedId');
-        // TODO: Implementar navegación
+        AppLogger.info('Navigate to comments');
+        if (workspaceId != null && projectId != null) {
+          AppRouter.router.go(RouteBuilder.projectDetail(
+            int.parse(workspaceId.toString()),
+            int.parse(projectId.toString()),
+          ));
+        }
         break;
       case 'TASK_ASSIGNED':
       case 'TASK_UPDATED':
-        // Navegar a tarea
-        AppLogger.info('Navigate to task: $relatedId');
-        // TODO: Implementar navegación
+        if (workspaceId != null && projectId != null && relatedId != null) {
+          AppRouter.router.go(RouteBuilder.taskDetail(
+            int.parse(workspaceId.toString()),
+            int.parse(projectId.toString()),
+            int.parse(relatedId.toString()),
+          ));
+        }
         break;
       case 'PROJECT_UPDATED':
-        // Navegar a proyecto
-        AppLogger.info('Navigate to project: $relatedId');
-        // TODO: Implementar navegación
+        if (workspaceId != null && relatedId != null) {
+          AppRouter.router.go(RouteBuilder.projectDetail(
+            int.parse(workspaceId.toString()),
+            int.parse(relatedId.toString()),
+          ));
+        }
         break;
       default:
         AppLogger.info('Unknown notification type: $notificationType');
@@ -223,7 +268,7 @@ class FirebaseMessagingService {
     try {
       if (!kIsWeb && Platform.isIOS) {
         await _firebaseMessaging.setAutoInitEnabled(true);
-        // TODO: Usar plugin adicional para manejar badges en iOS
+        // Integración con badges se puede añadir mediante plugin específico
         AppLogger.info('Badge count set to: $count');
       }
     } catch (e) {

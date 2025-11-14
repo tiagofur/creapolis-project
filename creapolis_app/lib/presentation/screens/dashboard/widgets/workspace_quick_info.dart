@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../features/workspace/data/models/workspace_model.dart';
+import '../../../providers/workspace_context.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 import '../../../../routes/route_builder.dart';
 
 /// Widget que muestra información rápida del workspace activo.
@@ -55,11 +58,22 @@ class WorkspaceQuickInfo extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // TODO: Obtener rol del usuario en este workspace desde WorkspaceContext
-                  Chip(
-                    label: const Text('Workspace Activo'),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
+                  Builder(
+                    builder: (context) {
+                      final contextProvider = context.watch<WorkspaceContext>();
+                      final role = contextProvider
+                          .getWorkspaceById(workspace.id)
+                          ?.userRole;
+                      final l10n = AppLocalizations.of(context);
+                      final label = role != null
+                          ? role.name
+                          : (l10n?.workspaceActive ?? 'Workspace Activo');
+                      return Chip(
+                        label: Text(label),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                      );
+                    },
                   ),
                 ],
               ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../../domain/entities/task.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import '../../../bloc/task/task_bloc.dart';
 import '../../../bloc/task/task_state.dart';
 import '../../../providers/dashboard_filter_provider.dart';
@@ -43,7 +44,7 @@ class _TaskPriorityChartWidgetState extends State<TaskPriorityChartWidget> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Distribución por Prioridad',
+                      AppLocalizations.of(context)?.priorityDistributionTitle ?? 'Distribución por Prioridad',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -67,7 +68,7 @@ class _TaskPriorityChartWidgetState extends State<TaskPriorityChartWidget> {
                     height: 200,
                     child: Center(
                       child: Text(
-                        'Error al cargar datos',
+                        AppLocalizations.of(context)?.loadDataError ?? 'Error al cargar datos',
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ),
@@ -88,7 +89,7 @@ class _TaskPriorityChartWidgetState extends State<TaskPriorityChartWidget> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'No hay tareas para mostrar',
+                            AppLocalizations.of(context)?.noTasksToShow ?? 'No hay tareas para mostrar',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -108,7 +109,7 @@ class _TaskPriorityChartWidgetState extends State<TaskPriorityChartWidget> {
                     height: 200,
                     child: Center(
                       child: Text(
-                        'No hay datos con los filtros aplicados',
+                        AppLocalizations.of(context)?.noDataWithFilters ?? 'No hay datos con los filtros aplicados',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -173,15 +174,21 @@ class _TaskPriorityChartWidgetState extends State<TaskPriorityChartWidget> {
     var filtered = tasks;
 
     if (filterProvider.selectedProjectId != null) {
-      filtered = filtered
-          .where((task) => task.projectId == filterProvider.selectedProjectId)
-          .toList();
+      final pid = int.tryParse(filterProvider.selectedProjectId!);
+      if (pid != null) {
+        filtered = filtered.where((task) => task.projectId == pid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     if (filterProvider.selectedUserId != null) {
-      filtered = filtered
-          .where((task) => task.assignedTo == filterProvider.selectedUserId)
-          .toList();
+      final uid = int.tryParse(filterProvider.selectedUserId!);
+      if (uid != null) {
+        filtered = filtered.where((task) => task.assignedTo == uid).toList();
+      } else {
+        filtered = [];
+      }
     }
 
     if (filterProvider.startDate != null || filterProvider.endDate != null) {

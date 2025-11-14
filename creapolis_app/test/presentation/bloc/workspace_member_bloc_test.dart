@@ -12,6 +12,9 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'workspace_member_bloc_test.mocks.dart';
+import 'package:creapolis_app/injection.dart';
+import 'package:creapolis_app/domain/usecases/workspace/update_member_role.dart';
+import 'package:creapolis_app/domain/usecases/workspace/remove_member.dart';
 
 @GenerateMocks([GetWorkspaceMembersUseCase])
 void main() {
@@ -177,8 +180,14 @@ void main() {
     });
 
     group('UpdateMemberRoleEvent', () {
+      setUp(() {
+        if (!getIt.isRegistered<UpdateMemberRoleUseCase>()) {
+          getIt.registerFactory<UpdateMemberRoleUseCase>(() => _FailUpdateMemberRoleUseCase());
+        }
+      });
+
       blocTest<WorkspaceMemberBloc, WorkspaceMemberState>(
-        'should emit [WorkspaceMemberLoading, WorkspaceMemberError] for not implemented feature',
+        'should emit [WorkspaceMemberLoading, WorkspaceMemberError] when update role fails',
         build: () => bloc,
         act: (bloc) => bloc.add(
           const UpdateMemberRoleEvent(
@@ -189,25 +198,47 @@ void main() {
         ),
         expect: () => [
           const WorkspaceMemberLoading(),
-          const WorkspaceMemberError('Funcionalidad no implementada'),
+          const WorkspaceMemberError('Server error'),
         ],
       );
     });
 
     group('RemoveMemberEvent', () {
+      setUp(() {
+        if (!getIt.isRegistered<RemoveMemberUseCase>()) {
+          getIt.registerFactory<RemoveMemberUseCase>(() => _FailRemoveMemberUseCase());
+        }
+      });
+
       blocTest<WorkspaceMemberBloc, WorkspaceMemberState>(
-        'should emit [WorkspaceMemberLoading, WorkspaceMemberError] for not implemented feature',
+        'should emit [WorkspaceMemberLoading, WorkspaceMemberError] when remove member fails',
         build: () => bloc,
         act: (bloc) => bloc.add(
           const RemoveMemberEvent(workspaceId: tWorkspaceId, userId: 1),
         ),
         expect: () => [
           const WorkspaceMemberLoading(),
-          const WorkspaceMemberError('Funcionalidad no implementada'),
+          const WorkspaceMemberError('Server error'),
         ],
       );
     });
   });
+}
+
+class _FailUpdateMemberRoleUseCase extends UpdateMemberRoleUseCase {
+  _FailUpdateMemberRoleUseCase() : super(getIt());
+  @override
+  Future<Either<Failure, WorkspaceMember>> call(UpdateMemberRoleParams params) async {
+    return const Left(ServerFailure('Server error'));
+  }
+}
+
+class _FailRemoveMemberUseCase extends RemoveMemberUseCase {
+  _FailRemoveMemberUseCase() : super(getIt());
+  @override
+  Future<Either<Failure, void>> call(RemoveMemberParams params) async {
+    return const Left(ServerFailure('Server error'));
+  }
 }
 
 

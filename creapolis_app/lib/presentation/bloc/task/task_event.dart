@@ -225,3 +225,33 @@ class ResetTasksPaginationEvent extends TaskEvent {
   @override
   List<Object> get props => [projectId];
 }
+
+class SearchWorkspaceTasksEvent extends TaskEvent {
+  final int workspaceId;
+  final String query;
+
+  const SearchWorkspaceTasksEvent(this.workspaceId, this.query);
+
+  @override
+  List<Object> get props => [workspaceId, query];
+}
+
+class FilterWorkspaceTasksByStatusEvent extends TaskEvent {
+  final int workspaceId;
+  final TaskStatus? status;
+
+  const FilterWorkspaceTasksByStatusEvent(this.workspaceId, this.status);
+
+  @override
+  List<Object?> get props => [workspaceId, status];
+}
+
+class FilterWorkspaceTasksByPriorityEvent extends TaskEvent {
+  final int workspaceId;
+  final TaskPriority? priority;
+
+  const FilterWorkspaceTasksByPriorityEvent(this.workspaceId, this.priority);
+
+  @override
+  List<Object?> get props => [workspaceId, priority];
+}

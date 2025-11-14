@@ -1,0 +1,109 @@
+enum LogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+// Blog System Models
+model BlogArticle {
+  id          Int                @id @default(autoincrement())
+  title       String
+  slug        String             @unique
+  content     String
+  excerpt     String?
+  featuredImage String?
+  authorId    Int
+  status      ArticleStatus      @default(DRAFT)
+  category    ArticleCategory    @default(GENERAL)
+  tags        String[]           
+  views       Int                @default(0)
+  likes       Int                @default(0)
+  isFeatured  Boolean            @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  author      User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    BlogComment[]
+  likesRelation BlogArticleLike[]
+  
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([isFeatured])
+}
+
+model BlogComment {
+  id        Int            @id @default(autoincrement())
+  content   String
+  articleId Int
+  authorId  Int
+  parentId  Int?           
+  isApproved Boolean       @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  article   BlogArticle    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    BlogComment?   @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   BlogComment[]  @relation("CommentThread")
+  
+  @@index([articleId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([isApproved])
+  @@index([createdAt])
+}
+
+model BlogArticleLike {
+  id        Int         @id @default(autoincrement())
+  articleId Int
+  userId    Int
+  createdAt DateTime    @default(now())
+  article   BlogArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([articleId, userId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+model BlogCategory {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  slug        String          @unique
+  description String?
+  color       String?         
+  image       String?         
+  parentId    Int?            
+  isActive    Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  parent      BlogCategory?   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    BlogCategory[]  @relation("CategoryHierarchy")
+  articles    BlogArticle[]   
+  
+  @@index([slug])
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum ArticleCategory {
+  PRODUCTIVITY
+  WORK_LIFE_BALANCE
+  BURNOUT_PREVENTION
+  PROJECT_MANAGEMENT
+  TECHNOLOGY
+  TUTORIALS
+  NEWS
+  GENERAL
+}

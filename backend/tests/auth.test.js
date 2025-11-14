@@ -1,8 +1,11 @@
 import request from "supertest";
-import app, { serverReady } from "../src/server.js";
+import { app, serverReady } from "../src/server.js";
 import prisma from "../src/config/database.js";
+const HAS_DB = !!process.env.DATABASE_URL;
 
-describe("Auth Endpoints", () => {
+const suite = HAS_DB ? describe : describe.skip;
+
+suite("Auth Endpoints", () => {
   beforeAll(async () => {
     await serverReady;
     // Clean database before tests

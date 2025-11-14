@@ -43,6 +43,7 @@ import '../presentation/screens/roles/role_detail_screen.dart';
 import '../presentation/screens/reports/report_builder_screen.dart';
 import '../presentation/screens/reports/report_templates_screen.dart';
 import './_workspace_loader.dart';
+import '../presentation/providers/workspace_context.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -480,10 +481,20 @@ class AppRouter {
 
       if (lastRoute != null && _lastRouteService.isValidRoute(lastRoute)) {
         AppLogger.info('AppRouter: Restaurando última ruta: $lastRoute');
-
-        // TODO: Aquí se podría validar permisos de workspace antes de restaurar
-        // Por ahora, simplemente restauramos la ruta
-
+        final workspaceContext = getIt<WorkspaceContext>();
+        if (_lastRouteService.requiresWorkspace(lastRoute)) {
+          final wId = _lastRouteService.extractWorkspaceId(lastRoute);
+          final hasAccess = wId != null && workspaceContext.getWorkspaceById(wId) != null;
+          if (!hasAccess) {
+            return RoutePaths.workspaces;
+          }
+          if (lastRoute.contains('/settings') && !workspaceContext.canManageSettings) {
+            return RoutePaths.dashboard;
+          }
+          if (lastRoute.contains('/members') && !workspaceContext.canManageMembers) {
+            return RoutePaths.dashboard;
+          }
+        }
         return lastRoute;
       }
 
@@ -504,9 +515,11 @@ class AppRouter {
       if (workspaceId != null) {
         await _lastRouteService.saveLastWorkspace(workspaceId);
       }
-
-      // TODO: Aquí se podría validar si el usuario tiene acceso al workspace
-      // Por ahora, permitimos el acceso y dejamos que el screen maneje el error
+      final workspaceContext = getIt<WorkspaceContext>();
+      final hasAccess = workspaceId != null && workspaceContext.getWorkspaceById(workspaceId) != null;
+      if (!hasAccess) {
+        return RoutePaths.workspaces;
+      }
     }
 
     // **Caso 4: Guardar ruta válida para futuras referencias**

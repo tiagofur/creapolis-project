@@ -65,7 +65,6 @@ class _HourlyProductivityHeatmapWidgetState
                         setState(() {
                           _isTeamView = value;
                         });
-                        // TODO: Reload data with new view mode
                       },
                     ),
                   ],
@@ -249,12 +248,16 @@ class _HourlyProductivityHeatmapWidgetState
 
   List<double> _generateMockHourlyData() {
     // Mock data for demonstration
-    return [
+    final base = [
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // 0-6h
       0.5, 1.2, 2.8, 4.5, 3.2, 1.5, 0.8, // 7-13h
       2.1, 3.8, 4.2, 3.5, 2.0, 0.9, 0.3, // 14-20h
       0.0, 0.0, 0.0, // 21-23h
     ];
+    if (_isTeamView) {
+      return base.map((v) => v * 1.15).toList();
+    }
+    return base;
   }
 }
 

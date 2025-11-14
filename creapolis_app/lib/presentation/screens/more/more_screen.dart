@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../routes/app_router.dart';
 import '../../../routes/route_builder.dart';
+import '../../screens/settings/notification_preferences_screen.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 
 /// Pantalla del menú More con opciones adicionales.
 ///
@@ -21,8 +26,9 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Más opciones')),
+      appBar: AppBar(title: Text(l10n.moreTitle)),
       body: ListView(
         children: [
           // Header con avatar y nombre de usuario
@@ -30,46 +36,42 @@ class MoreScreen extends StatelessWidget {
           const Divider(),
 
           // Sección de Gestión
-          _buildSectionHeader(context, 'Gestión'),
+          _buildSectionHeader(context, l10n.managementSection),
           _buildMenuItem(
             context,
             icon: Icons.business,
-            title: 'Workspaces',
-            subtitle: 'Gestionar workspaces',
+            title: l10n.workspacesTitle,
+            subtitle: l10n.workspacesSubtitle,
             onTap: () => context.goToWorkspaces(),
           ),
           _buildMenuItem(
             context,
             icon: Icons.mail_outline,
-            title: 'Invitaciones',
-            subtitle: 'Ver invitaciones pendientes',
+            title: l10n.invitationsTitle,
+            subtitle: l10n.invitationsSubtitle,
             onTap: () => context.goToInvitations(),
           ),
 
           const Divider(),
 
           // Sección de Configuración
-          _buildSectionHeader(context, 'Configuración'),
+          _buildSectionHeader(context, l10n.settingsTitle),
           _buildMenuItem(
             context,
             icon: Icons.settings,
-            title: 'Ajustes',
-            subtitle: 'Configuración de la aplicación',
+            title: l10n.settingsTitle,
+            subtitle: l10n.settingsSubtitle,
             onTap: () => context.goToSettings(),
           ),
           _buildMenuItem(
             context,
             icon: Icons.notifications_outlined,
-            title: 'Notificaciones',
-            subtitle: 'Gestionar notificaciones',
+            title: l10n.notificationsTitle,
+            subtitle: l10n.notificationsSubtitle,
             onTap: () {
-              // TODO: Navegar a configuración de notificaciones
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Configuración de notificaciones - Por implementar',
-                  ),
-                  duration: Duration(seconds: 2),
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NotificationPreferencesScreen(),
                 ),
               );
             },
@@ -77,65 +79,47 @@ class MoreScreen extends StatelessWidget {
           _buildMenuItem(
             context,
             icon: Icons.palette_outlined,
-            title: 'Tema',
-            subtitle: 'Modo claro/oscuro',
+            title: l10n.themeTitle,
+            subtitle: l10n.themeSubtitle,
             onTap: () {
-              // TODO: Navegar a configuración de tema
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Configuración de tema - Por implementar'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              context.goToSettings();
             },
           ),
 
           const Divider(),
 
           // Sección de Información
-          _buildSectionHeader(context, 'Información'),
+          _buildSectionHeader(context, l10n.infoSection),
           _buildMenuItem(
             context,
             icon: Icons.analytics_outlined,
-            title: 'Métricas de Personalización',
-            subtitle: 'Estadísticas de uso de UI',
+            title: l10n.customizationMetricsTitle,
+            subtitle: l10n.customizationMetricsSubtitle,
             onTap: () => context.go(RoutePaths.customizationMetrics),
           ),
           _buildMenuItem(
             context,
             icon: Icons.info_outline,
-            title: 'Acerca de',
-            subtitle: 'Información de la aplicación',
+            title: l10n.aboutTitle,
+            subtitle: l10n.aboutSubtitle,
             onTap: () => _showAboutDialog(context),
           ),
           _buildMenuItem(
             context,
             icon: Icons.help_outline,
-            title: 'Ayuda',
-            subtitle: 'Centro de ayuda y soporte',
+            title: l10n.helpTitle,
+            subtitle: l10n.helpSubtitle,
             onTap: () {
-              // TODO: Navegar a ayuda
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Centro de ayuda - Por implementar'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              _showHelpDialog(context);
             },
           ),
           _buildMenuItem(
             context,
             icon: Icons.privacy_tip_outlined,
-            title: 'Privacidad',
-            subtitle: 'Política de privacidad',
+            title: l10n.privacyTitle,
+            subtitle: l10n.privacySubtitle,
             onTap: () {
-              // TODO: Mostrar política de privacidad
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Política de privacidad - Por implementar'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              _showPrivacyDialog(context);
             },
           ),
 
@@ -147,9 +131,9 @@ class MoreScreen extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _handleLogout(context),
               icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(color: Colors.red),
+              label: Text(
+                l10n.logout,
+                style: const TextStyle(color: Colors.red),
               ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
@@ -177,6 +161,12 @@ class MoreScreen extends StatelessWidget {
   /// Header con información del usuario
   Widget _buildUserHeader(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final authState = context.watch<AuthBloc>().state;
+    final String userName =
+        authState is AuthAuthenticated ? authState.user.name : 'Usuario';
+    final String userEmail =
+        authState is AuthAuthenticated ? authState.user.email : 'usuario@example.com';
 
     return Container(
       padding: const EdgeInsets.all(24.0),
@@ -197,14 +187,14 @@ class MoreScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Usuario', // TODO: Obtener nombre real del usuario
+                  userName,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'usuario@example.com', // TODO: Obtener email real
+                  userEmail,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -215,7 +205,7 @@ class MoreScreen extends StatelessWidget {
           IconButton(
             onPressed: () => context.go(RoutePaths.profile),
             icon: const Icon(Icons.edit),
-            tooltip: 'Editar perfil',
+            tooltip: l10n.editProfile,
           ),
         ],
       ),
@@ -273,6 +263,50 @@ class MoreScreen extends StatelessWidget {
           'diseñada para ayudar a equipos a colaborar de manera efectiva.',
         ),
       ],
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Centro de ayuda'),
+        content: const Text(
+          'Visita nuestro centro de ayuda para guías y soporte. '
+          'Próximamente integraremos enlaces directos desde la app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Política de privacidad'),
+        content: const SingleChildScrollView(
+          child: Text(
+            '''Gestionamos tus datos conforme a las mejores prácticas.
+- Uso de datos limitado a funcionalidades.
+- Sin compartir con terceros sin consentimiento.
+- Puedes gestionar tus preferencias en Ajustes.
+
+Para más detalle, consulta el sitio oficial.''',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
     );
   }
 

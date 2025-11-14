@@ -1,37 +1,72 @@
 import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
-import app, { serverReady } from "../src/server.js";
-import prisma from "../src/config/database.js";
+import { app, serverReady } from "../src/server.js";
+const HAS_DB = !!process.env.DATABASE_URL;
 
-describe("GraphQL API Tests", () => {
+const suite = HAS_DB ? describe : describe.skip;
+
+suite("GraphQL API Tests", () => {
   let authToken;
-  let userId;
   let workspaceId;
+  let projectId;
+  let taskAId;
+  let taskBId;
 
   beforeAll(async () => {
     await serverReady;
-    // Clean database before tests
-    await prisma.timeLog.deleteMany({});
-    await prisma.task.deleteMany({});
-    await prisma.projectMember.deleteMany({});
-    await prisma.project.deleteMany({});
-    await prisma.workspaceMember.deleteMany({});
-    await prisma.workspaceInvitation.deleteMany({});
-    await prisma.workspace.deleteMany({});
-    await prisma.user.deleteMany({});
+    // Create user via REST
+    const userRes = await request(app).post("/api/auth/register").send({
+      email: "graphql-deps@example.com",
+      password: "password123",
+      name: "GraphQL Tester",
+    });
+    authToken = userRes.body.data.token;
+
+    // Workspace
+    const wsRes = await request(app)
+      .post("/api/workspaces")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({ name: "GraphQL Workspace", description: "Deps tests" });
+    workspaceId = wsRes.body.data.id;
+
+    // Project
+    const startDate = new Date().toISOString();
+    const endDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    const projectRes = await request(app)
+      .post("/api/projects")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "GraphQL Project",
+        description: "Deps",
+        workspaceId,
+        startDate,
+        endDate,
+        status: "ACTIVE",
+      });
+    projectId = projectRes.body.data.id;
+
+    // Create two tasks via GraphQL
+    const mutationCreate = `mutation($input: CreateTaskInput!) { createTask(input: $input) { id title projectId } }`;
+    const resTaskA = await request(app)
+      .post("/graphql")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        query: mutationCreate,
+        variables: { input: { title: "Task A", estimatedHours: 2, projectId } },
+      });
+    const resTaskB = await request(app)
+      .post("/graphql")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        query: mutationCreate,
+        variables: { input: { title: "Task B", estimatedHours: 2, projectId } },
+      });
+    taskAId = parseInt(resTaskA.body.data.createTask.id);
+    taskBId = parseInt(resTaskB.body.data.createTask.id);
   });
 
   afterAll(async () => {
-    // Clean up and disconnect
-    await prisma.timeLog.deleteMany({});
-    await prisma.task.deleteMany({});
-    await prisma.projectMember.deleteMany({});
-    await prisma.project.deleteMany({});
-    await prisma.workspaceMember.deleteMany({});
-    await prisma.workspaceInvitation.deleteMany({});
-    await prisma.workspace.deleteMany({});
-    await prisma.user.deleteMany({});
-    await prisma.$disconnect();
+    // No explicit teardown; globalTeardown handles server and prisma
   });
 
   describe("Authentication", () => {
@@ -481,6 +516,119 @@ describe("GraphQL API Tests", () => {
 
       expect(res.body.data).toBeDefined();
       expect(res.body.data.myTasks).toBeDefined();
+    });
+  });
+
+  describe("Dependencies", () => {
+    let authToken2;
+    it("should add dependency A -> B and reject circular B -> A", async () => {
+      const addDepMutation = `mutation($input: AddTaskDependencyInput!) { addTaskDependency(input: $input) { predecessorId successorId } }`;
+
+      // First dependency: A -> B
+      const res1 = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskAId, successorId: taskBId, type: "FINISH_TO_START" } },
+        });
+      expect(res1.body.errors).toBeUndefined();
+      expect(res1.body.data.addTaskDependency.predecessorId).toBe(taskAId);
+
+      // Attempt cycle: B -> A
+      const res2 = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskBId, successorId: taskAId, type: "FINISH_TO_START" } },
+        });
+      expect(res2.body.errors?.[0].message).toContain("Circular dependency");
+    });
+
+    it("should reject cross-project dependency", async () => {
+      // Create another project and task C
+      const startDate = new Date().toISOString();
+      const endDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+      const projectRes = await request(app)
+        .post("/api/projects")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ name: "GraphQL Project 2", workspaceId, startDate, endDate, status: "ACTIVE" });
+      const project2Id = projectRes.body.data.id;
+
+      const mutationCreate = `mutation($input: CreateTaskInput!) { createTask(input: $input) { id } }`;
+      const resTaskC = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: mutationCreate,
+          variables: { input: { title: "Task C", estimatedHours: 1, projectId: project2Id } },
+        });
+      const taskCId = parseInt(resTaskC.body.data.createTask.id);
+
+      const addDepMutation = `mutation($input: AddTaskDependencyInput!) { addTaskDependency(input: $input) { predecessorId successorId } }`;
+      const res = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskAId, successorId: taskCId, type: "FINISH_TO_START" } },
+        });
+      expect(res.body.errors?.[0].message).toContain("Tasks must belong to the same project");
+    });
+
+    it("removeTaskDependency should enforce authorization", async () => {
+      // Ensure a dependency exists A -> B
+      const addDepMutation = `mutation($input: AddTaskDependencyInput!) { addTaskDependency(input: $input) { id } }`;
+      const resAdd = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskAId, successorId: taskBId, type: "FINISH_TO_START" } },
+        });
+      const depId = resAdd.body.data.addTaskDependency.id;
+
+      // Register a second user and try to remove dependency
+      const user2Res = await request(app).post("/api/auth/register").send({
+        email: "graphql-deps-2@example.com",
+        password: "password123",
+        name: "GraphQL Tester 2",
+      });
+      authToken2 = user2Res.body.data.token;
+
+      const removeDepMutation = `mutation($id: ID!) { removeTaskDependency(id: $id) }`;
+      const resRemove = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken2}`)
+        .send({ query: removeDepMutation, variables: { id: depId } });
+      expect(resRemove.body.errors?.[0].code).toBe("FORBIDDEN");
+    });
+
+    it("should reject self-dependency", async () => {
+      const addDepMutation = `mutation($input: AddTaskDependencyInput!) { addTaskDependency(input: $input) { predecessorId successorId } }`;
+      const res = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskAId, successorId: taskAId, type: "FINISH_TO_START" } },
+        });
+      expect(res.body.errors?.[0].message).toContain("Cannot create circular dependency");
+      expect(res.body.errors?.[0].extensions.code).toBe("BAD_REQUEST");
+    });
+
+    it("addTaskDependency should enforce authorization", async () => {
+      // Second user (not member of project) attempts to add dependency
+      const addDepMutation = `mutation($input: AddTaskDependencyInput!) { addTaskDependency(input: $input) { predecessorId successorId } }`;
+      const res = await request(app)
+        .post("/graphql")
+        .set("Authorization", `Bearer ${authToken2}`)
+        .send({
+          query: addDepMutation,
+          variables: { input: { predecessorId: taskAId, successorId: taskBId, type: "FINISH_TO_START" } },
+        });
+      expect(res.body.errors?.[0].extensions.code).toBe("FORBIDDEN");
     });
   });
 

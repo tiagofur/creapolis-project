@@ -1,9 +1,16 @@
 import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_user_workspaces.dart';
+import 'package:creapolis_app/domain/usecases/workspace/set_active_workspace.dart';
+import 'package:creapolis_app/domain/usecases/workspace/get_active_workspace.dart';
 import 'package:mockito/annotations.dart';
 
 
-@GenerateMocks([GetUserWorkspacesUseCase, CreateWorkspaceUseCase])
+@GenerateMocks([
+  GetUserWorkspacesUseCase,
+  CreateWorkspaceUseCase,
+  SetActiveWorkspaceUseCase,
+  GetActiveWorkspaceUseCase,
+])
 void main() {
   // WorkspaceBloc tests disabled - requires additional mock dependencies
   // TODO: Add SetActiveWorkspaceUseCase and GetActiveWorkspaceUseCase mocks
