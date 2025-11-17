@@ -12,6 +12,16 @@ import 'package:creapolis_app/presentation/bloc/auth/auth_state.dart';
 import 'package:creapolis_app/presentation/widgets/common/common_widgets.dart';
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
 import 'package:creapolis_app/presentation/widgets/project/create_project_bottom_sheet.dart';
+import 'package:creapolis_app/presentation/widgets/task/create_task_bottom_sheet.dart';
+import 'package:creapolis_app/presentation/bloc/task/task_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/task/task_event.dart';
+import 'package:creapolis_app/presentation/bloc/task/task_state.dart';
+import 'package:creapolis_app/features/projects/presentation/blocs/project_bloc.dart';
+import 'package:creapolis_app/features/projects/presentation/blocs/project_event.dart';
+import 'package:creapolis_app/features/projects/presentation/blocs/project_state.dart';
+import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/presentation/blocs/project_member/project_member_bloc.dart';
+import 'package:creapolis_app/presentation/blocs/project_member/project_member_event.dart';
 import 'package:creapolis_app/injection.dart';
 import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/routes/app_router.dart';
@@ -55,6 +65,7 @@ class _DashboardViewState extends State<_DashboardView> {
       _lastWorkspaceId = currentWorkspaceId;
       // Recargar datos del dashboard cuando cambia el workspace
       context.read<DashboardBloc>().add(const RefreshDashboardData());
+      context.read<TaskBloc>().add(LoadWorkspaceTasksEvent(currentWorkspaceId));
     }
   }
 
@@ -151,12 +162,7 @@ class _DashboardViewState extends State<_DashboardView> {
               return _EmptyProjectsTasksState(
                 workspacesCount: state.workspaces.length,
                 onCreateProject: () => _showCreateProjectSheet(context),
-                onCreateTask: () {
-                  // TODO: Implementar cuando tengamos CreateTaskSheet
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Crear tarea próximamente')),
-                  );
-                },
+                onCreateTask: () => _handleCreateTask(context),
               );
             }
 
@@ -191,14 +197,7 @@ class _DashboardViewState extends State<_DashboardView> {
                     const SizedBox(height: 12),
                     QuickActionsGrid(
                       onNewProject: () => _showCreateProjectSheet(context),
-                      onNewTask: () {
-                        // TODO: Implementar cuando tengamos CreateTaskSheet
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Crear tarea próximamente'),
-                          ),
-                        );
-                      },
+                      onNewTask: () => _handleCreateTask(context),
                       onViewProjects: () {
                         final workspaceContext = context
                             .read<WorkspaceContext>();
@@ -256,6 +255,126 @@ class _DashboardViewState extends State<_DashboardView> {
       context: context,
       isScrollControlled: true,
       builder: (context) => const CreateProjectBottomSheet(),
+    );
+  }
+
+  void _handleCreateTask(BuildContext context) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+    if (workspaceId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona o crea un workspace primero')),
+      );
+      return;
+    }
+
+    final projectBloc = context.read<ProjectBloc>();
+    final projectState = projectBloc.state;
+    List<Project> projects = [];
+    if (projectState is ProjectsLoaded && projectState.workspaceId == workspaceId) {
+      projects = projectState.projects;
+    } else {
+      projectBloc.add(LoadProjects(workspaceId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Actualizando lista de proyectos...')),
+      );
+      return;
+    }
+
+    if (projects.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Crea un proyecto para poder registrar tareas')),
+      );
+      return;
+    }
+
+    _selectProject(context, projects).then((selectedProjectId) async {
+      if (selectedProjectId == null || !context.mounted) return;
+      await _showCreateTaskSheet(context, selectedProjectId);
+    });
+  }
+
+  Future<void> _showCreateTaskSheet(BuildContext context, int projectId) async {
+    final taskBloc = getIt<TaskBloc>();
+    final projectMemberBloc = getIt<ProjectMemberBloc>()..add(LoadProjectMembers(projectId));
+
+    final resultFuture = taskBloc.stream
+        .firstWhere((state) => state is TaskCreated || state is TaskError)
+        .timeout(const Duration(seconds: 10));
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>.value(value: taskBloc),
+          BlocProvider<ProjectMemberBloc>.value(value: projectMemberBloc),
+        ],
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: CreateTaskBottomSheet(projectId: projectId),
+        ),
+      ),
+    );
+
+    TaskState? result;
+    try {
+      result = await resultFuture;
+    } catch (_) {
+      result = null;
+    }
+
+    await taskBloc.close();
+    await projectMemberBloc.close();
+
+    if (!context.mounted) return;
+    if (result is TaskCreated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tarea "${result.task.title}" creada')),
+      );
+    } else if (result is TaskError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    }
+  }
+
+  Future<int?> _selectProject(BuildContext context, List<Project> projects) async {
+    if (projects.length == 1) return projects.first.id;
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Selecciona un proyecto',
+                style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ListTile(
+                    leading: const Icon(Icons.folder_open),
+                    title: Text(project.name),
+                    subtitle: project.description.isNotEmpty ? Text(project.description) : null,
+                    onTap: () => Navigator.of(context).pop(project.id),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

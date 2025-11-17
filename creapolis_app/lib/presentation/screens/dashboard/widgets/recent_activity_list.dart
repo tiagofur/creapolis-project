@@ -39,7 +39,7 @@ class RecentActivityList extends StatelessWidget {
         );
       }).toList();
     } else {
-      activities = _getMockActivities();
+      activities = [];
     }
 
     return Card(
@@ -105,33 +105,7 @@ class RecentActivityList extends StatelessWidget {
     );
   }
 
-  /// Mock de actividades para desarrollo
-  /// TODO: Reemplazar con datos reales
-  List<ActivityItem> _getMockActivities() {
-    return [
-      ActivityItem(
-        icon: Icons.check_circle,
-        iconColor: Colors.green,
-        title: 'Tarea completada',
-        description: 'Implementar dashboard inicial',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      ActivityItem(
-        icon: Icons.create_new_folder,
-        iconColor: Colors.blue,
-        title: 'Proyecto creado',
-        description: 'Mejoras UX/UI',
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      ActivityItem(
-        icon: Icons.comment,
-        iconColor: Colors.orange,
-        title: 'Comentario añadido',
-        description: 'Revisión de diseño necesaria',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ];
-  }
+  
 }
 
 /// Item individual de actividad

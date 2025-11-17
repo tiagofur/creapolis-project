@@ -98,7 +98,7 @@ class SyncOperationExecutor {
         description: data['description'] as String?,
         avatarUrl: data['avatarUrl'] as String?,
         type: _parseWorkspaceType(data['type'] as String?),
-        settings: null, // TODO: Parse settings if needed
+        settings: _parseWorkspaceSettings(data['settings']),
       );
 
       return result.fold(
@@ -131,7 +131,7 @@ class SyncOperationExecutor {
         description: data['description'] as String?,
         avatarUrl: data['avatarUrl'] as String?,
         type: _parseWorkspaceType(data['type'] as String?),
-        settings: null, // TODO: Parse settings if needed
+        settings: _parseWorkspaceSettings(data['settings']),
       );
 
       return result.fold(
@@ -397,6 +397,25 @@ class SyncOperationExecutor {
         return WorkspaceType.team;
       default:
         return WorkspaceType.enterprise;
+    }
+  }
+
+  WorkspaceSettings? _parseWorkspaceSettings(dynamic settings) {
+    try {
+      if (settings == null) return null;
+      if (settings is Map<String, dynamic>) {
+        return WorkspaceSettings.fromJson(settings);
+      }
+      if (settings is String && settings.isNotEmpty) {
+        final decoded = jsonDecode(settings);
+        if (decoded is Map<String, dynamic>) {
+          return WorkspaceSettings.fromJson(decoded);
+        }
+      }
+      return null;
+    } catch (e) {
+      AppLogger.error('SyncOperationExecutor: Error parseando settings', e);
+      return null;
     }
   }
 

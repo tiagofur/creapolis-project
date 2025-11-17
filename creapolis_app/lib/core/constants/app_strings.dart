@@ -1,5 +1,4 @@
 /// Strings de la aplicación
-/// TODO: Implementar internacionalización (i18n) en el futuro
 class AppStrings {
   AppStrings._();
 

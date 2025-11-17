@@ -5,7 +5,6 @@
  * para categorizar tareas automáticamente.
  * 
  * Versión básica: análisis basado en reglas
- * TODO: Integrar con TensorFlow.js o API de ML externa para mejores resultados
  */
 
 // Definición de categorías
@@ -23,6 +22,11 @@ const CATEGORIES = {
   REVIEW: 'REVIEW',
   PLANNING: 'PLANNING',
 };
+
+let mlAdapter = null;
+export function setMLAdapter(adapter) {
+  mlAdapter = adapter;
+}
 
 // Palabras clave para cada categoría
 const CATEGORY_KEYWORDS = {
@@ -159,6 +163,15 @@ function getCategoryDisplayName(category) {
  */
 export function categorizeTask(title, description = '') {
   const combinedText = `${title} ${description}`;
+
+  if (mlAdapter && typeof mlAdapter.suggestCategory === 'function') {
+    try {
+      const suggestion = mlAdapter.suggestCategory(combinedText);
+      if (suggestion && suggestion.suggestedCategory) {
+        return suggestion;
+      }
+    } catch (e) {}
+  }
   const categoryMatches = analyzeText(combinedText);
 
   // Si no hay coincidencias, devolver categoría por defecto
@@ -199,8 +212,6 @@ export function categorizeTask(title, description = '') {
 /**
  * Entrena el modelo con feedback del usuario
  * En esta versión básica, el "entrenamiento" es teórico
- * 
- * TODO: Implementar aprendizaje real con TensorFlow.js
  */
 export function trainWithFeedback(taskData, suggestedCategory, correctCategory) {
   // Por ahora, solo loguear el feedback
@@ -211,8 +222,11 @@ export function trainWithFeedback(taskData, suggestedCategory, correctCategory) 
     wasCorrect: suggestedCategory === correctCategory,
   });
   
-  // En una implementación real, aquí se ajustaría el modelo
-  // o se agregarían las palabras clave a las categorías correspondientes
+  if (mlAdapter && typeof mlAdapter.train === 'function') {
+    try {
+      mlAdapter.train({ taskData, suggestedCategory, correctCategory });
+    } catch (e) {}
+  }
   
   return {
     message: 'Feedback registrado para mejorar el modelo',

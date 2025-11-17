@@ -5,9 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../features/workspace/presentation/bloc/workspace_bloc.dart';
 import '../../../features/workspace/presentation/bloc/workspace_event.dart';
+import '../../../features/workspace/presentation/bloc/workspace_state.dart';
 
 /// Pantalla para invitar a un nuevo miembro al workspace
-/// TODO: Implementar cuando el backend tenga el endpoint de invitaciones
 class WorkspaceInviteMemberScreen extends StatefulWidget {
   final Workspace workspace;
 
@@ -35,50 +35,48 @@ class _WorkspaceInviteMemberScreenState
     if (!_formKey.currentState!.validate()) return;
     final email = _emailController.text.trim();
     context.read<WorkspaceBloc>().add(
-          InviteMember(
-            workspaceId: widget.workspace.id,
-            email: email,
-            role: _selectedRole,
-          ),
-        );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context)?.invitationSentTo(email) ?? 'Invitación enviada a $email'),
+      InviteMember(
+        workspaceId: widget.workspace.id,
+        email: email,
+        role: _selectedRole,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)?.inviteMember ?? 'Invitar Miembro'), elevation: 0),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Info del workspace
-              _buildWorkspaceInfo(),
-              const SizedBox(height: 32),
-
-              // Email input
-              _buildEmailField(),
-              const SizedBox(height: 24),
-
-              // Role selector
-              _buildRoleSelector(),
-              const SizedBox(height: 32),
-
-              // Info sobre roles
-              _buildRoleInfo(),
-              const SizedBox(height: 32),
-
-              // Botón de invitar
-              _buildInviteButton(),
-            ],
+    return BlocListener<WorkspaceBloc, WorkspaceState>(
+      listenWhen: (prev, curr) => curr is WorkspaceOperationSuccess || curr is WorkspaceError,
+      listener: (context, state) {
+        if (state is WorkspaceOperationSuccess) {
+          final msg = AppLocalizations.of(context)?.invitationSentTo(_emailController.text.trim()) ?? 'Invitación enviada';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          _emailController.clear();
+        } else if (state is WorkspaceError) {
+          final msg = state.message;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(AppLocalizations.of(context)?.inviteMember ?? 'Invitar Miembro'), elevation: 0),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildWorkspaceInfo(),
+                const SizedBox(height: 32),
+                _buildEmailField(),
+                const SizedBox(height: 24),
+                _buildRoleSelector(),
+                const SizedBox(height: 32),
+                _buildRoleInfo(),
+                const SizedBox(height: 32),
+                _buildInviteButton(),
+              ],
+            ),
           ),
         ),
       ),
