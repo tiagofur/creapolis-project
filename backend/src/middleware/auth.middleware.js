@@ -70,4 +70,5 @@ export const authorize = (...roles) => {
 
 // Alias for backward compatibility
 export const protect = authenticate;
+export const authenticateToken = authenticate;
 

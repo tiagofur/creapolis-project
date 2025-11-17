@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.middleware.js';
 import notificationService from '../services/notification.service.js';
-
-const prisma = new PrismaClient();
 
 // Get user notifications
 export const getUserNotifications = async (req, res) => {
@@ -176,3 +174,15 @@ export const getUnreadNotificationCount = async (req, res) => {
     });
   }
 };
+
+const controller = {
+  getUserNotifications,
+  getUnreadCount: getUnreadNotificationCount,
+  markAllAsRead: markAllNotificationsAsRead,
+  markAsRead: markNotificationAsRead,
+  deleteNotification,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+};
+
+export default controller;

@@ -1,6 +1,6 @@
 import request from "supertest";
 import { app, serverReady } from "../src/server.js";
-import prisma from "../src/config/database.js";
+let prisma;
 const HAS_DB = !!process.env.DATABASE_URL;
 
 const suite = HAS_DB ? describe : describe.skip;
@@ -15,15 +15,18 @@ suite("Task Endpoints", () => {
   beforeAll(async () => {
     await serverReady;
     // Clean database
-    await prisma.timeLog.deleteMany();
-    await prisma.dependency.deleteMany();
-    await prisma.task.deleteMany();
-    await prisma.projectMember.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.workspaceMember.deleteMany();
-    await prisma.workspaceInvitation.deleteMany();
-    await prisma.workspace.deleteMany();
-    await prisma.user.deleteMany();
+    if (HAS_DB) {
+      prisma = (await import("../src/config/database.js")).default;
+      await prisma.timeLog.deleteMany();
+      await prisma.dependency.deleteMany();
+      await prisma.task.deleteMany();
+      await prisma.projectMember.deleteMany();
+      await prisma.project.deleteMany();
+      await prisma.workspaceMember.deleteMany();
+      await prisma.workspaceInvitation.deleteMany();
+      await prisma.workspace.deleteMany();
+      await prisma.user.deleteMany();
+    }
 
     // Create test user
     const userRes = await request(app).post("/api/auth/register").send({
@@ -76,16 +79,18 @@ suite("Task Endpoints", () => {
   });
 
   afterAll(async () => {
-    await prisma.timeLog.deleteMany();
-    await prisma.dependency.deleteMany();
-    await prisma.task.deleteMany();
-    await prisma.projectMember.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.workspaceMember.deleteMany();
-    await prisma.workspaceInvitation.deleteMany();
-    await prisma.workspace.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.$disconnect();
+    if (HAS_DB) {
+      await prisma.timeLog.deleteMany();
+      await prisma.dependency.deleteMany();
+      await prisma.task.deleteMany();
+      await prisma.projectMember.deleteMany();
+      await prisma.project.deleteMany();
+      await prisma.workspaceMember.deleteMany();
+      await prisma.workspaceInvitation.deleteMany();
+      await prisma.workspace.deleteMany();
+      await prisma.user.deleteMany();
+      await prisma.$disconnect();
+    }
   });
 
   describe("POST /api/projects/:projectId/tasks", () => {

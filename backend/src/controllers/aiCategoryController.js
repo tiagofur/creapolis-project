@@ -2,14 +2,13 @@
  * Controlador para Auto-categorización de Tareas con IA
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/database.js';
 import {
   categorizeTask,
   trainWithFeedback,
   calculateMetrics,
 } from '../services/ai/categorizationService.js';
 
-const prisma = new PrismaClient();
 
 /**
  * POST /api/ai/categorize

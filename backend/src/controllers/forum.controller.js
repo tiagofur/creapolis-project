@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/database.js';
 import { updateUserReputation, getReputationByAction } from '../utils/reputation.js';
-const prisma = new PrismaClient();
 
 // Forum Categories
 const getForumCategories = async (req, res) => {

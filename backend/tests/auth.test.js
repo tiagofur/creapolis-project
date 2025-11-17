@@ -1,6 +1,6 @@
 import request from "supertest";
 import { app, serverReady } from "../src/server.js";
-import prisma from "../src/config/database.js";
+let prisma;
 const HAS_DB = !!process.env.DATABASE_URL;
 
 const suite = HAS_DB ? describe : describe.skip;
@@ -9,13 +9,18 @@ suite("Auth Endpoints", () => {
   beforeAll(async () => {
     await serverReady;
     // Clean database before tests
-    await prisma.user.deleteMany();
+    if (HAS_DB) {
+      prisma = (await import("../src/config/database.js")).default;
+      await prisma.user.deleteMany();
+    }
   });
 
   afterAll(async () => {
     // Clean up and disconnect
-    await prisma.user.deleteMany();
-    await prisma.$disconnect();
+    if (HAS_DB) {
+      await prisma.user.deleteMany();
+      await prisma.$disconnect();
+    }
   });
 
   describe("POST /api/auth/register", () => {

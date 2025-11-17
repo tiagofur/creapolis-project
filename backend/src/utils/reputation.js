@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../config/database.js';
 
 const reputationRules = {
   UPVOTE_RECEIVED: 10,

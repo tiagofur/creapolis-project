@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../config/database.js';
 
 // Get all support categories
 export const getSupportCategories = async (req, res) => {
@@ -77,63 +76,7 @@ export const getUserTickets = async (req, res) => {
   }
 };
 
-// Get all tickets (admin)
-export const getAllTickets = async (req, res) => {
-  try {
-    const { status, priority, assignedTo, page = 1, limit = 10 } = req.query;
-
-    const where = {};
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
-    if (assignedTo) where.assignedTo = parseInt(assignedTo);
-
-    const skip = (page - 1) * limit;
-    const take = parseInt(limit);
-
-    const [tickets, total] = await Promise.all([
-      prisma.supportTicket.findMany({
-        where,
-        include: {
-          category: true,
-          user: {
-            select: { id: true, name: true, email: true }
-          },
-          assignedUser: {
-            select: { id: true, name: true, email: true }
-          },
-          messages: {
-            take: 1,
-            orderBy: { createdAt: 'desc' }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take
-      }),
-      prisma.supportTicket.count({ where })
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        tickets,
-        pagination: {
-          total,
-          pages: Math.ceil(total / take),
-          currentPage: parseInt(page),
-          hasNext: skip + take < total,
-          hasPrev: page > 1
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching all tickets:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener todos los tickets'
-    });
-  }
-};
+ 
 
 // Get single ticket
 export const getTicket = async (req, res) => {

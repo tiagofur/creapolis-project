@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../config/database.js";
 import firebaseService from "./firebase.service.js";
-
-const prisma = new PrismaClient();
 
 /**
  * Push Notification Service
