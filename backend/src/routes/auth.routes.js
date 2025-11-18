@@ -5,6 +5,7 @@ import { validate } from "../middleware/validation.middleware.js";
 import {
   registerValidation,
   loginValidation,
+  updateProfileValidation,
 } from "../validators/auth.validator.js";
 
 const router = express.Router();
@@ -29,5 +30,35 @@ router.post("/login", loginValidation, validate, authController.login);
  * @access  Private
  */
 router.get("/me", authenticate, authController.getProfile);
+
+/**
+ * @route   PUT /api/auth/me
+ * @desc    Update current user profile
+ * @access  Private
+ */
+router.put(
+  "/me",
+  authenticate,
+  updateProfileValidation,
+  validate,
+  authController.updateProfile
+);
+
+router.post(
+  "/avatar",
+  authenticate,
+  authController.uploadAvatar
+);
+router.post(
+  "/avatar/s3-finalize",
+  authenticate,
+  authController.finalizeAvatarS3
+);
+
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+
+router.post("/verify/send", authenticate, authController.sendVerification);
+router.post("/verify", authController.verifyEmail);
 
 export default router;

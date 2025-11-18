@@ -14,5 +14,6 @@ export default {
   testTimeout: 30000,
   forceExit: true,
   detectOpenHandles: true,
+  setupFiles: ["<rootDir>/tests/setupEnv.js"],
   // global setup/teardown disabled to avoid require() vs ESM TLA conflicts
 };

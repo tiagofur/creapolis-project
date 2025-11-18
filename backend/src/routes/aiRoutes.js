@@ -3,6 +3,7 @@
  */
 
 import express from 'express';
+import { authenticate } from "../middleware/auth.middleware.js";
 import {
   getCategorySuggestion,
   applyCategory,
@@ -13,6 +14,9 @@ import {
 } from '../controllers/aiCategoryController.js';
 
 const router = express.Router();
+
+// Todas las rutas requieren autenticación
+router.use(authenticate);
 
 // Obtener sugerencia de categoría
 router.post('/categorize', getCategorySuggestion);

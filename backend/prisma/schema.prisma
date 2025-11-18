@@ -10,6 +10,7 @@ datasource db {
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
+  emailVerified           Boolean                  @default(false)
   password                String
   name                    String
   role                    Role                     @default(TEAM_MEMBER)
@@ -51,8 +52,7 @@ model User {
   supportTickets          SupportTicket[]        @relation("TicketUser")
   assignedSupportTickets  SupportTicket[]        @relation("TicketAssigned")
   supportMessages         SupportMessage[]
-  notifications           Notification[]
-  notificationPreferences UserNotificationPreferences?
+  
 
   @@index([email])
 }
@@ -315,32 +315,7 @@ model CommentMention {
   @@index([userId])
 }
 
-model Notification {
-  id          Int              @id @default(autoincrement())
-  userId      Int
-  type        NotificationType
-  title       String
-  message     String
-  isRead      Boolean          @default(false)
-  relatedId   Int?
-  relatedType String?
-  createdAt   DateTime         @default(now())
-  readAt      DateTime?
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isRead])
-  @@index([createdAt])
-}
-
-enum NotificationType {
-  MENTION
-  COMMENT_REPLY
-  TASK_ASSIGNED
-  TASK_UPDATED
-  PROJECT_UPDATED
-  SYSTEM
-}
+// removed duplicate Notification/NotificationType; see extended definitions below
 
 enum TaskCategory {
   DEVELOPMENT
@@ -406,14 +381,27 @@ model DeviceToken {
 model NotificationPreferences {
   id                          Int      @id @default(autoincrement())
   userId                      Int      @unique
-  pushEnabled                 Boolean  @default(true)
+  // delivery channels
   emailEnabled                Boolean  @default(true)
+  pushEnabled                 Boolean  @default(true)
+  inAppEnabled                Boolean  @default(true)
+  // general/project/task
   mentionNotifications        Boolean  @default(true)
   commentReplyNotifications   Boolean  @default(true)
   taskAssignedNotifications   Boolean  @default(true)
   taskUpdatedNotifications    Boolean  @default(true)
   projectUpdatedNotifications Boolean  @default(true)
   systemNotifications         Boolean  @default(true)
+  // support/forum/knowledge
+  ticketCreated               Boolean  @default(true)
+  ticketStatusChanged         Boolean  @default(true)
+  ticketAssigned              Boolean  @default(true)
+  ticketMessageAdded          Boolean  @default(true)
+  ticketResolved              Boolean  @default(true)
+  forumReply                  Boolean  @default(true)
+  forumMention                Boolean  @default(true)
+  knowledgeBaseUpdate         Boolean  @default(true)
+  systemAnnouncements         Boolean  @default(true)
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1005,29 +993,18 @@ model Notification {
   @@index([relatedId, relatedType])
 }
 
-model UserNotificationPreferences {
-  id                          Int      @id @default(autoincrement())
-  userId                      Int      @unique
-  ticketCreated               Boolean  @default(true)
-  ticketStatusChanged         Boolean  @default(true)
-  ticketAssigned              Boolean  @default(true)
-  ticketMessageAdded          Boolean  @default(true)
-  ticketResolved              Boolean  @default(true)
-  forumReply                  Boolean  @default(true)
-  forumMention                Boolean  @default(true)
-  knowledgeBaseUpdate         Boolean  @default(true)
-  systemAnnouncements         Boolean  @default(true)
-  emailEnabled                Boolean  @default(true)
-  pushEnabled                 Boolean  @default(true)
-  inAppEnabled                Boolean  @default(true)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  user                        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
-}
+// removed duplicate UserNotificationPreferences in favor of NotificationPreferences
 
 enum NotificationType {
+  // legacy/general types
+  MENTION
+  COMMENT_REPLY
+  PROJECT_UPDATED
+  TASK_ASSIGNED
+  TASK_UPDATED
+  SYSTEM
+  
+  // support/forum/knowledge types
   TICKET_CREATED
   TICKET_STATUS_CHANGED
   TICKET_ASSIGNED
@@ -1039,6 +1016,4 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
   USER_MENTION
   PROJECT_UPDATE
-  TASK_ASSIGNED
-  TASK_UPDATED
 }

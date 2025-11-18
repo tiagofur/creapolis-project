@@ -36,3 +36,16 @@ export const loginValidation = [
 
   body("password").notEmpty().withMessage("Password is required"),
 ];
+
+export const updateProfileValidation = [
+  body("name")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name must be between 2 and 100 characters"),
+
+  body("avatarUrl")
+    .optional()
+    .isURL()
+    .withMessage("avatarUrl must be a valid URL"),
+];

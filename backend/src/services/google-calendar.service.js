@@ -15,9 +15,11 @@ class GoogleCalendarService {
    */
   initializeOAuth() {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.warn(
-        "⚠️  Google Calendar not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env"
-      );
+      if (process.env.NODE_ENV !== "test") {
+        console.warn(
+          "⚠️  Google Calendar not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env"
+        );
+      }
       return;
     }
 
@@ -25,7 +27,7 @@ class GoogleCalendarService {
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI ||
-        "http://localhost:3000/api/integrations/google/callback"
+        "http://localhost:3001/api/integrations/google/callback"
     );
   }
 

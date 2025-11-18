@@ -114,8 +114,10 @@ class AuthService {
       select: {
         id: true,
         email: true,
+        emailVerified: true,
         name: true,
         role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -126,6 +128,49 @@ class AuthService {
     }
 
     return user;
+  }
+
+  async findByEmail(email) {
+    return prisma.user.findUnique({ where: { email } });
+  }
+
+  async updatePassword(userId, newPassword) {
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+  }
+
+  generateActionToken(payload, expiresIn) {
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiresIn || "15m" });
+  }
+
+  verifyActionToken(token) {
+    try {
+      return jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Update user fields
+   */
+  async updateUser(userId, data) {
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return updated;
   }
 }
 

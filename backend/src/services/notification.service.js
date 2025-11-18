@@ -14,7 +14,7 @@ export const notificationService = {
   }) {
     try {
       // Check user preferences first
-      const preferences = await prisma.userNotificationPreferences.findUnique({
+      const preferences = await prisma.notificationPreferences.findUnique({
         where: { userId }
       });
 
@@ -162,12 +162,12 @@ export const notificationService = {
   // Get or create user notification preferences
   async getUserPreferences(userId) {
     try {
-      let preferences = await prisma.userNotificationPreferences.findUnique({
+      let preferences = await prisma.notificationPreferences.findUnique({
         where: { userId }
       });
 
       if (!preferences) {
-        preferences = await prisma.userNotificationPreferences.create({
+        preferences = await prisma.notificationPreferences.create({
           data: { userId }
         });
       }
@@ -182,7 +182,7 @@ export const notificationService = {
   // Update user notification preferences
   async updateUserPreferences(userId, preferences) {
     try {
-      const updatedPreferences = await prisma.userNotificationPreferences.upsert({
+      const updatedPreferences = await prisma.notificationPreferences.upsert({
         where: { userId },
         update: preferences,
         create: { userId, ...preferences }

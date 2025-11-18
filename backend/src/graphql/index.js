@@ -13,10 +13,11 @@ export const createApolloServer = async (httpServer) => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    plugins: [
-      // Proper shutdown for the HTTP server
-      ApolloServerPluginDrainHttpServer({ httpServer }),
-    ],
+    plugins: (
+      process.env.NODE_ENV === "test"
+        ? []
+        : [ApolloServerPluginDrainHttpServer({ httpServer })]
+    ),
     formatError: (formattedError, error) => {
       // Log errors for debugging
       if (process.env.NODE_ENV === "development") {

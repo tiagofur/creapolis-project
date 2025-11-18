@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import { createServer } from "http";
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
 
 // Import routes
 import authRoutes from "./routes/auth.routes.js";
@@ -28,6 +28,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import nlpRoutes from "./routes/nlp.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import roleRoutes from "./routes/role.routes.js";
+import mediaRoutes from "./routes/media.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import forumRoutes from "./routes/forum.routes.js";
 import voteRoutes from "./routes/vote.routes.js";
@@ -39,6 +40,7 @@ import websocketService from "./services/websocket.service.js";
 
 // Import Firebase service
 import firebaseService from "./services/firebase.service.js";
+import "./services/ai/bootstrap.js";
 
 // Import GraphQL setup
 import {
@@ -50,6 +52,7 @@ const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
 const isTestEnvironment = process.env.NODE_ENV === "test";
+const hasDb = !!process.env.DATABASE_URL;
 let initializationPromise;
 let graphqlInitialized = false;
 let notFoundHandlerRegistered = false;
@@ -99,10 +102,13 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
 });
 app.use("/api/", limiter);
+// Apply rate limit to GraphQL as well
+app.use("/graphql", limiter);
 
 // Body parsing middleware
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static("uploads"));
 
 // Logging middleware
 if (!isTestEnvironment) {
@@ -146,6 +152,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/nlp", nlpRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/roles", roleRoutes);
+app.use("/api/media", mediaRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/votes", voteRoutes);
@@ -173,7 +180,7 @@ const startServer = ({ listen = true } = {}) => {
           websocketService.initialize(httpServer);
         }
 
-        if (!graphqlInitialized) {
+        if (!graphqlInitialized && (hasDb || process.env.NODE_ENV !== "test")) {
           const apolloServer = await createApolloServer(httpServer);
           app.use(
             "/graphql",

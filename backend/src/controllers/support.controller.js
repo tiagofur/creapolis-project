@@ -517,15 +517,17 @@ export const assignTicket = async (req, res) => {
 // Get support agents
 export const getSupportAgents = async (req, res) => {
   try {
+    // Como no existe el rol SUPPORT en el esquema, consideramos agentes de soporte
+    // a los usuarios con rol ADMIN o PROJECT_MANAGER
     const agents = await prisma.user.findMany({
       where: {
-        role: 'SUPPORT'
+        role: { in: ['ADMIN', 'PROJECT_MANAGER'] }
       },
       select: {
         id: true,
         name: true,
         email: true,
-        avatar: true
+        avatarUrl: true
       },
       orderBy: { name: 'asc' }
     });

@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
 const isTest = process.env.NODE_ENV === "test";
 const hasDb = !!process.env.DATABASE_URL;
 
