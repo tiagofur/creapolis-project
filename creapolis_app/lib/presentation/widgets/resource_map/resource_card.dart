@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../domain/entities/resource_allocation.dart';
 import 'draggable_task_item.dart';
@@ -143,7 +144,8 @@ class _ResourceCardState extends State<ResourceCard> {
             Icon(Icons.warning, size: 12, color: colorScheme.onErrorContainer),
             const SizedBox(width: 4),
             Text(
-              'Sobrecargado',
+              AppLocalizations.of(context)?.resourceOverloaded ??
+                  'Sobrecargado',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: colorScheme.onErrorContainer,
                 fontWeight: FontWeight.bold,
@@ -165,7 +167,7 @@ class _ResourceCardState extends State<ResourceCard> {
             Icon(Icons.check_circle, size: 12, color: Colors.green.shade800),
             const SizedBox(width: 4),
             Text(
-              'Disponible',
+              AppLocalizations.of(context)?.resourceAvailable ?? 'Disponible',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: Colors.green.shade800,
                 fontWeight: FontWeight.bold,
@@ -182,7 +184,7 @@ class _ResourceCardState extends State<ResourceCard> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
-          'Carga Normal',
+          AppLocalizations.of(context)?.resourceNormalLoad ?? 'Carga Normal',
           style: theme.textTheme.labelSmall?.copyWith(
             color: Colors.blue.shade800,
             fontWeight: FontWeight.bold,
@@ -201,7 +203,7 @@ class _ResourceCardState extends State<ResourceCard> {
         Expanded(
           child: _StatItem(
             icon: Icons.access_time,
-            label: 'Total',
+            label: AppLocalizations.of(context)?.totalLabel ?? 'Total',
             value: '${widget.allocation.totalHours.toStringAsFixed(1)}h',
             theme: theme,
           ),
@@ -209,7 +211,9 @@ class _ResourceCardState extends State<ResourceCard> {
         Expanded(
           child: _StatItem(
             icon: Icons.today,
-            label: 'Promedio/día',
+            label:
+                AppLocalizations.of(context)?.averagePerDayLabel ??
+                'Promedio/día',
             value:
                 '${widget.allocation.averageHoursPerDay.toStringAsFixed(1)}h',
             theme: theme,
@@ -218,7 +222,7 @@ class _ResourceCardState extends State<ResourceCard> {
         Expanded(
           child: _StatItem(
             icon: Icons.assignment,
-            label: 'Tareas',
+            label: AppLocalizations.of(context)?.tasksLabel ?? 'Tareas',
             value: widget.allocation.taskAllocations.length.toString(),
             theme: theme,
           ),
@@ -234,7 +238,8 @@ class _ResourceCardState extends State<ResourceCard> {
         padding: const EdgeInsets.all(16),
         child: Center(
           child: Text(
-            'Sin tareas asignadas',
+            AppLocalizations.of(context)?.noAssignedTasks ??
+                'Sin tareas asignadas',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -243,20 +248,44 @@ class _ResourceCardState extends State<ResourceCard> {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
-      itemCount: widget.allocation.taskAllocations.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final task = widget.allocation.taskAllocations[index];
-        return DraggableTaskItem(
-          task: task,
-          onDragStart: widget.onTaskDragStart,
-          onDragEnd: widget.onTaskDragEnd,
-        );
-      },
+    // En modo compacto, limitar el número de tareas
+    final tasksToShow = widget.isCompact
+        ? widget.allocation.taskAllocations.take(2).toList()
+        : widget.allocation.taskAllocations;
+
+    final remainingTasks =
+        widget.allocation.taskAllocations.length - tasksToShow.length;
+
+    return Column(
+      children: [
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(12),
+          itemCount: tasksToShow.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final task = tasksToShow[index];
+            return DraggableTaskItem(
+              task: task,
+              onDragStart: widget.onTaskDragStart,
+              onDragEnd: widget.onTaskDragEnd,
+            );
+          },
+        ),
+        if (remainingTasks > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              AppLocalizations.of(context)?.moreTasksCount(remainingTasks) ??
+                  '+ $remainingTasks tareas más',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -298,6 +327,3 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
-
-
-

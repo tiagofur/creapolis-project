@@ -2,6 +2,7 @@ import googleCalendarService from "../services/google-calendar.service.js";
 import prisma from "../config/database.js";
 import { successResponse, asyncHandler } from "../utils/response.js";
 import { ErrorResponses } from "../utils/errors.js";
+import jwt from "jsonwebtoken";
 
 /**
  * Google Calendar Integration Controller
@@ -14,7 +15,12 @@ class GoogleCalendarController {
    */
   connect = asyncHandler(async (req, res) => {
     try {
-      const authUrl = googleCalendarService.getAuthUrl();
+      // Generate state with userId to identify user in callback
+      const state = jwt.sign({ userId: req.user.id }, process.env.JWT_SECRET, {
+        expiresIn: "10m",
+      });
+
+      const authUrl = googleCalendarService.getAuthUrl(state);
 
       return successResponse(
         res,
@@ -39,34 +45,68 @@ class GoogleCalendarController {
       throw ErrorResponses.badRequest("Authorization code not provided");
     }
 
+    if (!state) {
+      throw ErrorResponses.badRequest("State parameter missing");
+    }
+
+    let userId;
+    try {
+      const decoded = jwt.verify(state, process.env.JWT_SECRET);
+      userId = decoded.userId;
+    } catch (error) {
+      throw ErrorResponses.badRequest("Invalid or expired state parameter");
+    }
+
     try {
       // Exchange code for tokens
       const tokens = await googleCalendarService.getTokensFromCode(code);
 
-      // In a real implementation, you would:
-      // 1. Verify the state parameter for security
-      // 2. Get user from state or session
-      // 3. Encrypt tokens before storing
+      // Save tokens to user
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          googleAccessToken: tokens.access_token,
+          googleRefreshToken: tokens.refresh_token, // Only returned on first consent or if prompt=consent
+        },
+      });
 
-      // For now, we'll return the tokens (in production, store them encrypted)
       return res.send(`
         <html>
-          <head><title>Google Calendar Connected</title></head>
+          <head>
+            <title>Google Calendar Connected</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: sans-serif; text-align: center; padding: 20px; }
+              .success { color: #4CAF50; font-size: 64px; }
+              h1 { color: #333; }
+              p { color: #666; }
+            </style>
+          </head>
           <body>
-            <h1>✅ Google Calendar Connected Successfully!</h1>
-            <p>You can now close this window and return to the application.</p>
+            <div class="success">✅</div>
+            <h1>Google Calendar Connected!</h1>
+            <p>Your calendar has been successfully linked to Creapolis.</p>
+            <p>You can now close this window and return to the app.</p>
             <script>
-              // In a real app, you'd send tokens to the app via postMessage or redirect
-              window.close();
+              // Try to close window if opened via popup
+              setTimeout(() => {
+                window.close();
+              }, 2000);
             </script>
           </body>
         </html>
       `);
     } catch (error) {
       console.error("OAuth callback error:", error);
-      throw ErrorResponses.internal(
-        "Failed to complete Google Calendar authorization"
-      );
+      return res.status(500).send(`
+        <html>
+          <body>
+            <h1>❌ Connection Failed</h1>
+            <p>Failed to connect Google Calendar. Please try again.</p>
+            <p>Error: ${error.message}</p>
+          </body>
+        </html>
+      `);
     }
   });
 

@@ -63,6 +63,35 @@ class AuthController {
     return successResponse(res, user, "Profile updated successfully");
   });
 
+  /**
+   * Change password
+   * POST /api/auth/change-password
+   */
+  changePassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    const isMatch = await authService.verifyPassword(
+      req.user.id,
+      currentPassword
+    );
+    if (!isMatch) {
+      return successResponse(
+        res,
+        { error: true },
+        "Incorrect current password",
+        401
+      );
+    }
+
+    await authService.updatePassword(req.user.id, newPassword);
+
+    return successResponse(
+      res,
+      { success: true },
+      "Password changed successfully"
+    );
+  });
+
   uploadAvatar = asyncHandler(async (req, res) => {
     const { avatarBase64, contentType } = req.body;
     const allowed = ["image/png", "image/jpeg", "image/webp"];
@@ -78,13 +107,15 @@ class AuthController {
     }
 
     const mime = allowed.includes(contentType) ? contentType : "image/png";
-    const ext = mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
+    const ext =
+      mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
     const dir = "uploads/avatars";
     await fs.promises.mkdir(dir, { recursive: true });
     const filePath = `${dir}/${req.user.id}.${ext}`;
     await fs.promises.writeFile(filePath, buffer);
 
-    const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const baseUrl =
+      process.env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
     const url = `${baseUrl}/uploads/avatars/${req.user.id}.${ext}`;
 
     const user = await authService.updateUser(req.user.id, { avatarUrl: url });
@@ -109,12 +140,21 @@ class AuthController {
     const { email } = req.body;
     const user = await authService.findByEmail(email);
     const token = user
-      ? authService.generateActionToken({ userId: user.id, email, action: "reset" }, "15m")
+      ? authService.generateActionToken(
+          { userId: user.id, email, action: "reset" },
+          "15m"
+        )
       : authService.generateActionToken({ email, action: "reset" }, "15m");
     if (user) {
-      try { await emailService.sendResetEmail(email, token); } catch {}
+      try {
+        await emailService.sendResetEmail(email, token);
+      } catch {}
     }
-    return successResponse(res, { token }, "If the email exists, a reset token was generated");
+    return successResponse(
+      res,
+      { token },
+      "If the email exists, a reset token was generated"
+    );
   });
 
   resetPassword = asyncHandler(async (req, res) => {
@@ -124,12 +164,21 @@ class AuthController {
       return successResponse(res, { error: true }, "Invalid token", 400);
     }
     await authService.updatePassword(payload.userId, newPassword);
-    return successResponse(res, { success: true }, "Password reset successfully");
+    return successResponse(
+      res,
+      { success: true },
+      "Password reset successfully"
+    );
   });
 
   sendVerification = asyncHandler(async (req, res) => {
-    const token = authService.generateActionToken({ userId: req.user.id, action: "verify" }, "1h");
-    try { await emailService.sendVerificationEmail(req.user.email, token); } catch {}
+    const token = authService.generateActionToken(
+      { userId: req.user.id, action: "verify" },
+      "1h"
+    );
+    try {
+      await emailService.sendVerificationEmail(req.user.email, token);
+    } catch {}
     return successResponse(res, { token }, "Verification token generated");
   });
 
@@ -139,7 +188,9 @@ class AuthController {
     if (!payload || payload.action !== "verify" || !payload.userId) {
       return successResponse(res, { error: true }, "Invalid token", 400);
     }
-    const user = await authService.updateUser(payload.userId, { emailVerified: true });
+    const user = await authService.updateUser(payload.userId, {
+      emailVerified: true,
+    });
     return successResponse(res, user, "Email verified");
   });
 }

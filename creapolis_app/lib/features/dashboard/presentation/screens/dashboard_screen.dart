@@ -25,6 +25,7 @@ import 'package:creapolis_app/presentation/blocs/project_member/project_member_e
 import 'package:creapolis_app/injection.dart';
 import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/routes/app_router.dart';
+import 'package:creapolis_app/features/notifications/presentation/widgets/notification_badge.dart';
 
 /// Pantalla principal del Dashboard
 class DashboardScreen extends StatelessWidget {
@@ -87,6 +88,9 @@ class _DashboardViewState extends State<_DashboardView> {
         showWorkspaceSwitcher: true,
         compactWorkspaceSwitcher: false,
         actions: [
+          // Notificaciones
+          const NotificationBadge(),
+
           // Avatar del usuario
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -222,7 +226,19 @@ class _DashboardViewState extends State<_DashboardView> {
                       recentTasks: state.recentTasks,
                       recentProjects: state.activeProjects.take(5).toList(),
                       onTaskTap: (task) {
-                        context.go('/tasks/${task.id}');
+                        final workspaceContext = context
+                            .read<WorkspaceContext>();
+                        final workspaceId =
+                            workspaceContext.activeWorkspace?.id;
+                        if (workspaceId != null) {
+                          context.go(
+                            RoutePaths.taskDetail(
+                              workspaceId,
+                              task.projectId,
+                              task.id,
+                            ),
+                          );
+                        }
                       },
                       onProjectTap: (project) {
                         final workspaceContext = context
@@ -271,7 +287,8 @@ class _DashboardViewState extends State<_DashboardView> {
     final projectBloc = context.read<ProjectBloc>();
     final projectState = projectBloc.state;
     List<Project> projects = [];
-    if (projectState is ProjectsLoaded && projectState.workspaceId == workspaceId) {
+    if (projectState is ProjectsLoaded &&
+        projectState.workspaceId == workspaceId) {
       projects = projectState.projects;
     } else {
       projectBloc.add(LoadProjects(workspaceId));
@@ -283,7 +300,9 @@ class _DashboardViewState extends State<_DashboardView> {
 
     if (projects.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Crea un proyecto para poder registrar tareas')),
+        const SnackBar(
+          content: Text('Crea un proyecto para poder registrar tareas'),
+        ),
       );
       return;
     }
@@ -296,7 +315,8 @@ class _DashboardViewState extends State<_DashboardView> {
 
   Future<void> _showCreateTaskSheet(BuildContext context, int projectId) async {
     final taskBloc = getIt<TaskBloc>();
-    final projectMemberBloc = getIt<ProjectMemberBloc>()..add(LoadProjectMembers(projectId));
+    final projectMemberBloc = getIt<ProjectMemberBloc>()
+      ..add(LoadProjectMembers(projectId));
 
     final resultFuture = taskBloc.stream
         .firstWhere((state) => state is TaskCreated || state is TaskError)
@@ -335,13 +355,16 @@ class _DashboardViewState extends State<_DashboardView> {
         SnackBar(content: Text('Tarea "${result.task.title}" creada')),
       );
     } else if (result is TaskError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     }
   }
 
-  Future<int?> _selectProject(BuildContext context, List<Project> projects) async {
+  Future<int?> _selectProject(
+    BuildContext context,
+    List<Project> projects,
+  ) async {
     if (projects.length == 1) return projects.first.id;
     return showModalBottomSheet<int>(
       context: context,
@@ -353,7 +376,9 @@ class _DashboardViewState extends State<_DashboardView> {
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 'Selecciona un proyecto',
-                style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  sheetContext,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             const Divider(height: 1),
@@ -366,7 +391,9 @@ class _DashboardViewState extends State<_DashboardView> {
                   return ListTile(
                     leading: const Icon(Icons.folder_open),
                     title: Text(project.name),
-                    subtitle: project.description.isNotEmpty ? Text(project.description) : null,
+                    subtitle: project.description.isNotEmpty
+                        ? Text(project.description)
+                        : null,
                     onTap: () => Navigator.of(context).pop(project.id),
                   );
                 },

@@ -60,11 +60,20 @@ class RouteBuilder {
   static String resourceMap(int workspaceId, int projectId) =>
       '/more/workspaces/$workspaceId/projects/$projectId/resource-map';
 
+  // Report routes (anidados bajo More/Workspaces/Projects)
+  static String reports(int workspaceId, int projectId) =>
+      '/more/workspaces/$workspaceId/projects/$projectId/reports';
+
+  static String reportBuilder(int workspaceId, int projectId) =>
+      '/more/workspaces/$workspaceId/projects/$projectId/reports/builder';
+
   // Settings and More sub-routes
   static String settings() => '/more/settings';
   static String profile() => '/more/profile';
   static String rolePreferences() => '/more/role-preferences';
   static String customizationMetrics() => '/more/customization-metrics';
+  static String notificationSettings() => '/more/settings/notifications';
+  static String leaderboard() => '/more/leaderboard';
 }
 
 /// Extension methods para facilitar navegación desde cualquier BuildContext
@@ -114,13 +123,21 @@ extension RouteNavigationExtension on BuildContext {
 
   // Settings and More navigation
   void goToSettings() => go(RouteBuilder.settings());
+  void goToNotificationSettings() => go(RouteBuilder.notificationSettings());
   void goToProfile() => go(RouteBuilder.profile());
   void goToRolePreferences() => go(RouteBuilder.rolePreferences());
   void goToCustomizationMetrics() => go(RouteBuilder.customizationMetrics());
+  void goToLeaderboard() => push(RouteBuilder.leaderboard());
 
   // Push variants (para mantener en el stack)
   void pushToProject(int workspaceId, int projectId) =>
       push(RouteBuilder.projectDetail(workspaceId, projectId));
   void pushToTask(int workspaceId, int projectId, int taskId) =>
       push(RouteBuilder.taskDetail(workspaceId, projectId, taskId));
+
+  void goToReports(int workspaceId, int projectId, {Object? extra}) =>
+      go(RouteBuilder.reports(workspaceId, projectId), extra: extra);
+
+  void goToReportBuilder(int workspaceId, int projectId, {Object? extra}) =>
+      go(RouteBuilder.reportBuilder(workspaceId, projectId), extra: extra);
 }

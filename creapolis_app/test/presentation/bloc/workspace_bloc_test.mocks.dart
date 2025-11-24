@@ -8,8 +8,12 @@ import 'dart:async' as _i4;
 import 'package:creapolis_app/core/errors/failures.dart' as _i5;
 import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart'
     as _i7;
+import 'package:creapolis_app/domain/usecases/workspace/get_active_workspace.dart'
+    as _i9;
 import 'package:creapolis_app/domain/usecases/workspace/get_user_workspaces.dart'
     as _i3;
+import 'package:creapolis_app/domain/usecases/workspace/set_active_workspace.dart'
+    as _i8;
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart'
     as _i6;
 import 'package:dartz/dartz.dart' as _i2;
@@ -92,4 +96,57 @@ class MockCreateWorkspaceUseCase extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Workspace>>);
+}
+
+/// A class which mocks [SetActiveWorkspaceUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSetActiveWorkspaceUseCase extends _i1.Mock
+    implements _i8.SetActiveWorkspaceUseCase {
+  MockSetActiveWorkspaceUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> call(int? workspaceId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [workspaceId],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+            _FakeEither_0<_i5.Failure, void>(
+          this,
+          Invocation.method(
+            #call,
+            [workspaceId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
+}
+
+/// A class which mocks [GetActiveWorkspaceUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetActiveWorkspaceUseCase extends _i1.Mock
+    implements _i9.GetActiveWorkspaceUseCase {
+  MockGetActiveWorkspaceUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, int?>> call() => (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, int?>>.value(
+            _FakeEither_0<_i5.Failure, int?>(
+          this,
+          Invocation.method(
+            #call,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, int?>>);
 }

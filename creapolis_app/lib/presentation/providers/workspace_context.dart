@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
@@ -12,6 +13,7 @@ import '../../features/workspace/presentation/bloc/workspace_state.dart';
 @singleton
 class WorkspaceContext extends ChangeNotifier {
   final WorkspaceBloc _workspaceBloc;
+  StreamSubscription? _subscription;
 
   Workspace? _activeWorkspace;
   List<Workspace> _userWorkspaces = [];
@@ -21,7 +23,7 @@ class WorkspaceContext extends ChangeNotifier {
     AppLogger.info('[WorkspaceContext] Inicializando...');
 
     // Escuchar cambios del BLoC
-    _workspaceBloc.stream.listen(_onWorkspaceStateChanged);
+    _subscription = _workspaceBloc.stream.listen(_onWorkspaceStateChanged);
 
     // Procesar estado inicial si existe
     final currentState = _workspaceBloc.state;
@@ -167,6 +169,7 @@ class WorkspaceContext extends ChangeNotifier {
 
   @override
   void dispose() {
+    _subscription?.cancel();
     // No cerrar el BLoC aquí, es singleton
     super.dispose();
   }

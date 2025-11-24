@@ -2,30 +2,43 @@ import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_user_workspaces.dart';
 import 'package:creapolis_app/domain/usecases/workspace/set_active_workspace.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_active_workspace.dart';
+import 'package:creapolis_app/features/workspace/data/datasources/workspace_remote_datasource.dart';
 import 'package:mockito/annotations.dart';
-
 
 @GenerateMocks([
   GetUserWorkspacesUseCase,
   CreateWorkspaceUseCase,
   SetActiveWorkspaceUseCase,
   GetActiveWorkspaceUseCase,
+  WorkspaceRemoteDataSource,
 ])
 void main() {
-  // WorkspaceBloc tests disabled - requires additional mock dependencies
-  // TODO: Add SetActiveWorkspaceUseCase and GetActiveWorkspaceUseCase mocks
-  /*
   late WorkspaceBloc bloc;
   late MockGetUserWorkspacesUseCase mockGetUserWorkspacesUseCase;
   late MockCreateWorkspaceUseCase mockCreateWorkspaceUseCase;
+  late MockSetActiveWorkspaceUseCase mockSetActiveWorkspaceUseCase;
+  late MockGetActiveWorkspaceUseCase mockGetActiveWorkspaceUseCase;
+  late MockWorkspaceRemoteDataSource mockWorkspaceRemoteDataSource;
 
   setUp(() {
     mockGetUserWorkspacesUseCase = MockGetUserWorkspacesUseCase();
     mockCreateWorkspaceUseCase = MockCreateWorkspaceUseCase();
-    // bloc = WorkspaceBloc(
-    //   mockGetUserWorkspacesUseCase,
-    //   mockCreateWorkspaceUseCase,
-    // ); // TODO: Add missing SetActiveWorkspaceUseCase and GetActiveWorkspaceUseCase mocks
+    mockSetActiveWorkspaceUseCase = MockSetActiveWorkspaceUseCase();
+    mockGetActiveWorkspaceUseCase = MockGetActiveWorkspaceUseCase();
+    mockWorkspaceRemoteDataSource = MockWorkspaceRemoteDataSource();
+
+    // Default stubs
+    when(
+      mockGetActiveWorkspaceUseCase.call(),
+    ).thenAnswer((_) async => const Right(null));
+
+    bloc = WorkspaceBloc(
+      dataSource: mockWorkspaceRemoteDataSource,
+      getUserWorkspaces: mockGetUserWorkspacesUseCase,
+      createWorkspace: mockCreateWorkspaceUseCase,
+      setActiveWorkspace: mockSetActiveWorkspaceUseCase,
+      getActiveWorkspace: mockGetActiveWorkspaceUseCase,
+    );
   });
 
   tearDown(() {
@@ -297,8 +310,4 @@ void main() {
       );
     });
   });
-  */
 }
-
-
-

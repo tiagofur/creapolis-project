@@ -52,6 +52,8 @@ model User {
   supportTickets          SupportTicket[]        @relation("TicketUser")
   assignedSupportTickets  SupportTicket[]        @relation("TicketAssigned")
   supportMessages         SupportMessage[]
+  chatMemberships         ChatMember[]
+  sentMessages            ChatMessage[]
   
 
   @@index([email])
@@ -76,6 +78,7 @@ model Workspace {
   owner                    User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations              WorkspaceInvitation[]
   members                  WorkspaceMember[]
+  chatChannels              ChatChannel[]
 
   @@index([ownerId])
   @@index([name])
@@ -134,6 +137,7 @@ model Project {
   tasks       Task[]
   comments    Comment[]
   roles       ProjectRole[]
+  chatChannels            ChatChannel[]
 
   @@index([workspaceId])
   @@index([managerId])
@@ -692,7 +696,7 @@ model ForumCategory {
   sortOrder   Int             @default(0)
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  updatedAt   DateTime        @default(now())
   threads     ForumThread[]
   
   @@index([slug])
@@ -947,7 +951,7 @@ model SupportCategory {
   sortOrder   Int               @default(0)
   isActive    Boolean           @default(true)
   createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  updatedAt   DateTime          @default(now())
   tickets     SupportTicket[]
   
   @@index([slug])
@@ -1016,4 +1020,70 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
   USER_MENTION
   PROJECT_UPDATE
+}
+
+// Chat System Models
+model ChatChannel {
+  id          Int           @id @default(autoincrement())
+  name        String?       // Optional for DM
+  type        ChannelType   @default(PROJECT)
+  workspaceId Int?
+  projectId   Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  workspace   Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages    ChatMessage[]
+  members     ChatMember[]
+
+  @@index([workspaceId])
+  @@index([projectId])
+}
+
+model ChatMember {
+  id        Int         @id @default(autoincrement())
+  channelId Int
+  userId    Int
+  joinedAt  DateTime    @default(now())
+  lastReadAt DateTime?
+  
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        Int         @id @default(autoincrement())
+  channelId Int
+  senderId  Int
+  content   String
+  type      MessageType @default(TEXT)
+  metadata  String?     // JSON for attachments etc
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  isEdited  Boolean     @default(false)
+  
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+enum ChannelType {
+  PROJECT
+  WORKSPACE
+  DIRECT
+  GROUP
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
 }

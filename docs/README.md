@@ -215,6 +215,8 @@ Creapolis is licensed under the MIT License. See [LICENSE](../LICENSE) for detai
 
 This documentation is continuously updated. Last major reorganization: October 2025
 
+**Latest Status Report**: [November 24, 2025](./STATUS_REPORT_2025_11_24.md) - UI Implementation for Time Tracking, Calendar, and Notifications.
+
 Canonical location: All documentation now lives under this `docs/` folder (the former `documentation/` folder has been consolidated).
 
 See migration details in [MIGRATION_LOG.md](./MIGRATION_LOG.md).

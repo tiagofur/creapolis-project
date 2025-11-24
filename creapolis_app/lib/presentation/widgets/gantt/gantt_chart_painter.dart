@@ -14,6 +14,7 @@ class GanttChartPainter extends CustomPainter {
   final Map<int, List<int>> dependencies;
   final int? selectedTaskId;
   final int? draggingTaskId;
+  final double dragOffset;
 
   GanttChartPainter({
     required this.tasks,
@@ -25,6 +26,7 @@ class GanttChartPainter extends CustomPainter {
     required this.dependencies,
     this.selectedTaskId,
     this.draggingTaskId,
+    this.dragOffset = 0.0,
   });
 
   @override
@@ -46,13 +48,17 @@ class GanttChartPainter extends CustomPainter {
       final taskStartDays = task.startDate.difference(startDate).inDays;
       final taskDurationDays = task.endDate.difference(task.startDate).inDays;
 
-      final x = taskStartDays * dayWidth;
+      double x = taskStartDays * dayWidth;
       final width = math.max(taskDurationDays * dayWidth, dayWidth * 0.5);
 
       // Color basado en el estado
       final color = _getColorForStatus(task.status);
       final isSelected = task.id == selectedTaskId;
       final isDragging = task.id == draggingTaskId;
+
+      if (isDragging) {
+        x += dragOffset;
+      }
 
       // Dibujar sombra si está seleccionada o arrastrando
       if (isSelected || isDragging) {
@@ -234,9 +240,7 @@ class GanttChartPainter extends CustomPainter {
     return oldDelegate.tasks != tasks ||
         oldDelegate.dayWidth != dayWidth ||
         oldDelegate.selectedTaskId != selectedTaskId ||
-        oldDelegate.draggingTaskId != draggingTaskId;
+        oldDelegate.draggingTaskId != draggingTaskId ||
+        oldDelegate.dragOffset != dragOffset;
   }
 }
-
-
-

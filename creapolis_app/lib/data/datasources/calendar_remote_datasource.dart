@@ -18,11 +18,14 @@ class CalendarRemoteDataSource {
         'CalendarRemoteDataSource: Obteniendo URL de autorización',
       );
 
-      final response = await _dioClient.get('/integrations/google/auth-url');
+      final response = await _dioClient.get('/integrations/google/connect');
 
       AppLogger.info('CalendarRemoteDataSource: URL de autorización obtenida');
 
-      return response.data['authUrl'] as String;
+      // La respuesta del backend es { success: true, data: { authUrl: "..." } }
+      final data = response.data as Map<String, dynamic>;
+      final innerData = data['data'] as Map<String, dynamic>;
+      return innerData['authUrl'] as String;
     } catch (e) {
       AppLogger.error(
         'CalendarRemoteDataSource: Error al obtener URL de autorización',
@@ -159,6 +162,3 @@ class CalendarRemoteDataSource {
     }
   }
 }
-
-
-

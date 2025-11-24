@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/storage_keys.dart';
 import '../core/services/last_route_service.dart';
 import '../core/utils/app_logger.dart';
-// ...existing code...
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -24,6 +24,7 @@ import '../features/tasks/presentation/blocs/task_bloc.dart';
 import '../features/tasks/presentation/blocs/task_event.dart';
 import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/settings/role_based_preferences_screen.dart';
+import '../presentation/screens/settings/notification_settings_screen.dart';
 import '../presentation/screens/customization_metrics_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/tasks/all_tasks_screen.dart';
@@ -42,13 +43,18 @@ import '../presentation/screens/roles/create_role_screen.dart';
 import '../presentation/screens/roles/role_detail_screen.dart';
 import '../presentation/screens/reports/report_builder_screen.dart';
 import '../presentation/screens/reports/report_templates_screen.dart';
+import '../presentation/services/report_service.dart';
 import './_workspace_loader.dart';
 import '../presentation/providers/workspace_context.dart';
+import '../features/calendar/presentation/screens/calendar_screen.dart';
+import '../presentation/screens/gamification/leaderboard_screen.dart';
+import '../features/chat/presentation/pages/chat_list_screen.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
   static final _secureStorage = getIt<FlutterSecureStorage>();
   static final _lastRouteService = getIt<LastRouteService>();
+  static final _sharedPreferences = getIt<SharedPreferences>();
 
   /// Instancia de GoRouter
   static final GoRouter router = GoRouter(
@@ -142,6 +148,14 @@ class AppRouter {
                     path: 'settings',
                     name: RouteNames.settings,
                     builder: (context, state) => const SettingsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'notifications',
+                        name: RouteNames.notificationSettings,
+                        builder: (context, state) =>
+                            const NotificationSettingsScreen(),
+                      ),
+                    ],
                   ),
 
                   // Profile (anidado bajo More)
@@ -165,6 +179,27 @@ class AppRouter {
                     name: RouteNames.customizationMetrics,
                     builder: (context, state) =>
                         const CustomizationMetricsScreen(),
+                  ),
+
+                  // Calendar (anidado bajo More)
+                  GoRoute(
+                    path: 'calendar',
+                    name: RouteNames.calendar,
+                    builder: (context, state) => const CalendarScreen(),
+                  ),
+
+                  // Leaderboard (anidado bajo More)
+                  GoRoute(
+                    path: 'leaderboard',
+                    name: RouteNames.leaderboard,
+                    builder: (context, state) => const LeaderboardScreen(),
+                  ),
+
+                  // Chat (anidado bajo More)
+                  GoRoute(
+                    path: 'chat',
+                    name: RouteNames.chat,
+                    builder: (context, state) => const ChatListScreen(),
                   ),
 
                   // ===== WORKSPACES (anidado bajo More) =====
@@ -371,11 +406,9 @@ class AppRouter {
                                     builder: (context, state) {
                                       final extra =
                                           state.extra as Map<String, dynamic>?;
-                                      final reportService =
-                                          extra?['reportService'];
                                       final project = extra?['project'];
                                       return ReportTemplatesScreen(
-                                        reportService: reportService,
+                                        reportService: getIt<ReportService>(),
                                         project: project,
                                       );
                                     },
@@ -388,11 +421,10 @@ class AppRouter {
                                           final extra =
                                               state.extra
                                                   as Map<String, dynamic>?;
-                                          final reportService =
-                                              extra?['reportService'];
                                           final project = extra?['project'];
                                           return ReportBuilderScreen(
-                                            reportService: reportService,
+                                            reportService:
+                                                getIt<ReportService>(),
                                             project: project,
                                           );
                                         },
@@ -446,6 +478,17 @@ class AppRouter {
       return null;
     }
 
+    // Verificar onboarding
+    final hasSeenOnboarding =
+        _sharedPreferences.getBool(StorageKeys.hasSeenOnboarding) ?? false;
+
+    if (!hasSeenOnboarding) {
+      if (currentPath != RoutePaths.onboarding) {
+        return RoutePaths.onboarding;
+      }
+      return null;
+    }
+
     // Verificar si tiene token de autenticación
     final hasToken = await _hasValidToken();
     final isAuthRoute = currentPath.startsWith('/auth');
@@ -484,14 +527,17 @@ class AppRouter {
         final workspaceContext = getIt<WorkspaceContext>();
         if (_lastRouteService.requiresWorkspace(lastRoute)) {
           final wId = _lastRouteService.extractWorkspaceId(lastRoute);
-          final hasAccess = wId != null && workspaceContext.getWorkspaceById(wId) != null;
+          final hasAccess =
+              wId != null && workspaceContext.getWorkspaceById(wId) != null;
           if (!hasAccess) {
             return RoutePaths.workspaces;
           }
-          if (lastRoute.contains('/settings') && !workspaceContext.canManageSettings) {
+          if (lastRoute.contains('/settings') &&
+              !workspaceContext.canManageSettings) {
             return RoutePaths.dashboard;
           }
-          if (lastRoute.contains('/members') && !workspaceContext.canManageMembers) {
+          if (lastRoute.contains('/members') &&
+              !workspaceContext.canManageMembers) {
             return RoutePaths.dashboard;
           }
         }
@@ -516,7 +562,9 @@ class AppRouter {
         await _lastRouteService.saveLastWorkspace(workspaceId);
       }
       final workspaceContext = getIt<WorkspaceContext>();
-      final hasAccess = workspaceId != null && workspaceContext.getWorkspaceById(workspaceId) != null;
+      final hasAccess =
+          workspaceId != null &&
+          workspaceContext.getWorkspaceById(workspaceId) != null;
       if (!hasAccess) {
         return RoutePaths.workspaces;
       }
@@ -591,8 +639,12 @@ class RoutePaths {
   // Rutas anidadas bajo More (con bottom navigation)
   static const String settings = '/more/settings';
   static const String profile = '/more/profile';
+  static const String calendar = '/more/calendar';
+  static const String leaderboard = '/more/leaderboard';
+  static const String chat = '/more/chat';
   static const String rolePreferences = '/more/role-preferences';
   static const String customizationMetrics = '/more/customization-metrics';
+  static const String notificationSettings = '/more/settings/notifications';
 
   // Workspace routes (anidadas bajo More, con bottom navigation)
   static const String workspaces = '/more/workspaces';
@@ -656,8 +708,12 @@ class RouteNames {
   static const String resourceMap = 'resource-map';
   static const String settings = 'settings';
   static const String profile = 'profile';
+  static const String calendar = 'calendar';
+  static const String leaderboard = 'leaderboard';
+  static const String chat = 'chat';
   static const String rolePreferences = 'role-preferences';
   static const String customizationMetrics = 'customization-metrics';
+  static const String notificationSettings = 'notification-settings';
 
   // Workspace route names
   static const String workspaces = 'workspaces';

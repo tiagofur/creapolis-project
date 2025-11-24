@@ -4,6 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/network/exceptions/api_exceptions.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../../domain/usecases/workspace/create_workspace.dart';
+import '../../../../domain/usecases/workspace/get_active_workspace.dart';
+import '../../../../domain/usecases/workspace/get_user_workspaces.dart';
+import '../../../../domain/usecases/workspace/set_active_workspace.dart';
 import '../../data/datasources/workspace_remote_datasource.dart';
 import '../../data/models/workspace_member_model.dart';
 import '../../data/models/workspace_model.dart';
@@ -20,6 +24,10 @@ import 'workspace_state.dart';
 @lazySingleton
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   final WorkspaceRemoteDataSource _dataSource;
+  final GetUserWorkspacesUseCase _getUserWorkspaces;
+  final CreateWorkspaceUseCase _createWorkspace;
+  final SetActiveWorkspaceUseCase _setActiveWorkspace;
+  final GetActiveWorkspaceUseCase _getActiveWorkspace;
 
   // Workspace activo (en memoria)
   Workspace? _activeWorkspace;
@@ -27,7 +35,18 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   // Cache de workspaces
   List<Workspace> _workspaces = [];
 
-  WorkspaceBloc(this._dataSource) : super(const WorkspaceInitial()) {
+  WorkspaceBloc({
+    required WorkspaceRemoteDataSource dataSource,
+    required GetUserWorkspacesUseCase getUserWorkspaces,
+    required CreateWorkspaceUseCase createWorkspace,
+    required SetActiveWorkspaceUseCase setActiveWorkspace,
+    required GetActiveWorkspaceUseCase getActiveWorkspace,
+  }) : _dataSource = dataSource,
+       _getUserWorkspaces = getUserWorkspaces,
+       _createWorkspace = createWorkspace,
+       _setActiveWorkspace = setActiveWorkspace,
+       _getActiveWorkspace = getActiveWorkspace,
+       super(const WorkspaceInitial()) {
     on<LoadWorkspaces>(_onLoadWorkspaces);
     on<LoadWorkspaceById>(_onLoadWorkspaceById);
     on<CreateWorkspace>(_onCreateWorkspace);
@@ -51,71 +70,72 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     LoadWorkspaces event,
     Emitter<WorkspaceState> emit,
   ) async {
-    try {
-      emit(const WorkspaceLoading());
+    emit(const WorkspaceLoading());
 
-      // Cargar workspaces e invitaciones en paralelo
-      final workspaces = await _dataSource.getWorkspaces();
-      List<WorkspaceInvitation> invitations = [];
+    final result = await _getUserWorkspaces();
 
-      try {
-        invitations = await _dataSource.getPendingInvitations();
-      } catch (e) {
-        AppLogger.warning('No se pudieron cargar invitaciones: $e');
-        // Continuar sin invitaciones si falla
-      }
+    await result.fold(
+      (failure) async {
+        emit(
+          WorkspaceError(
+            message: failure.message,
+            workspaces: _workspaces,
+            activeWorkspace: _activeWorkspace,
+          ),
+        );
+      },
+      (workspaces) async {
+        List<WorkspaceInvitation> invitations = [];
 
-      _workspaces = workspaces;
+        try {
+          invitations = await _dataSource.getPendingInvitations();
+        } catch (e) {
+          AppLogger.warning('No se pudieron cargar invitaciones: $e');
+          // Continuar sin invitaciones si falla
+        }
 
-      // Cargar workspace activo de SharedPreferences
-      final activeWorkspace = await _loadActiveWorkspace();
+        _workspaces = workspaces;
 
-      emit(
-        WorkspaceLoaded(
-          workspaces: workspaces,
-          activeWorkspace: activeWorkspace,
-          pendingInvitations: invitations,
-          isFromCache: false, // Datos frescos del servidor
-          lastSync: DateTime.now(), // Timestamp de esta sincronización
-        ),
-      );
+        // Cargar workspace activo
+        final activeWorkspaceResult = await _getActiveWorkspace();
+        final activeWorkspaceId = activeWorkspaceResult.fold(
+          (l) => null,
+          (id) => id,
+        );
 
-      AppLogger.info(
-        'WorkspaceBloc: ${workspaces.length} workspaces y ${invitations.length} invitaciones cargados',
-      );
-    } on UnauthorizedException catch (e) {
-      emit(
-        WorkspaceError(
-          message: 'No autorizado: ${e.message}',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    } on NetworkException catch (e) {
-      emit(
-        WorkspaceError(
-          message: 'Sin conexión: ${e.message}',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    } on ApiException catch (e) {
-      emit(
-        WorkspaceError(
-          message: e.message,
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    } catch (e) {
-      emit(
-        WorkspaceError(
-          message: 'Error inesperado: $e',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    }
+        Workspace? activeWorkspace;
+        if (activeWorkspaceId != null) {
+          try {
+            activeWorkspace = _workspaces.firstWhere(
+              (w) => w.id == activeWorkspaceId,
+            );
+          } catch (_) {
+            if (_workspaces.isNotEmpty) {
+              activeWorkspace = _workspaces.first;
+            }
+          }
+        } else if (_workspaces.isNotEmpty) {
+          activeWorkspace = _workspaces.first;
+          await _setActiveWorkspace(activeWorkspace.id);
+        }
+
+        _activeWorkspace = activeWorkspace;
+
+        emit(
+          WorkspaceLoaded(
+            workspaces: workspaces,
+            activeWorkspace: activeWorkspace,
+            pendingInvitations: invitations,
+            isFromCache: false, // Datos frescos del servidor
+            lastSync: DateTime.now(), // Timestamp de esta sincronización
+          ),
+        );
+
+        AppLogger.info(
+          'WorkspaceBloc: ${workspaces.length} workspaces y ${invitations.length} invitaciones cargados',
+        );
+      },
+    );
   }
 
   Future<void> _onLoadWorkspaceById(
@@ -174,68 +194,57 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     CreateWorkspace event,
     Emitter<WorkspaceState> emit,
   ) async {
-    try {
-      emit(
-        WorkspaceOperationInProgress(
-          operation: 'creating',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
+    emit(
+      WorkspaceOperationInProgress(
+        operation: 'creating',
+        workspaces: _workspaces,
+        activeWorkspace: _activeWorkspace,
+      ),
+    );
 
-      final workspace = await _dataSource.createWorkspace(
+    final result = await _createWorkspace(
+      CreateWorkspaceParams(
         name: event.name,
         description: event.description,
         avatarUrl: event.avatarUrl,
         type: event.type,
         settings: event.settings,
-      );
+      ),
+    );
 
-      // Añadir al cache (inserta al inicio para visibilidad inmediata)
-      _workspaces = List.from(_workspaces)..insert(0, workspace);
+    await result.fold(
+      (failure) async {
+        emit(
+          WorkspaceError(
+            message: failure.message,
+            workspaces: _workspaces,
+            activeWorkspace: _activeWorkspace,
+            // fieldErrors: failure is ValidationFailure ? failure.errors : null, // Assuming ValidationFailure has errors
+          ),
+        );
+      },
+      (workspace) async {
+        // Añadir al cache (inserta al inicio para visibilidad inmediata)
+        _workspaces = List.from(_workspaces)..insert(0, workspace);
 
-      // Si no había workspace activo, seleccionar el recién creado
-      if (_activeWorkspace == null) {
-        _activeWorkspace = workspace;
-        await _saveActiveWorkspace(workspace.id);
-      }
+        // Si no había workspace activo, seleccionar el recién creado
+        if (_activeWorkspace == null) {
+          _activeWorkspace = workspace;
+          await _setActiveWorkspace(workspace.id);
+        }
 
-      emit(
-        WorkspaceOperationSuccess(
-          message: 'Workspace "${workspace.name}" creado exitosamente',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-          updatedWorkspace: workspace,
-        ),
-      );
+        emit(
+          WorkspaceOperationSuccess(
+            message: 'Workspace "${workspace.name}" creado exitosamente',
+            workspaces: _workspaces,
+            activeWorkspace: _activeWorkspace,
+            updatedWorkspace: workspace,
+          ),
+        );
 
-      AppLogger.info('WorkspaceBloc: Workspace ${workspace.name} creado');
-    } on ValidationException catch (e) {
-      emit(
-        WorkspaceError(
-          message: e.message,
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-          fieldErrors: e.errors,
-        ),
-      );
-    } on ApiException catch (e) {
-      emit(
-        WorkspaceError(
-          message: e.message,
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    } catch (e) {
-      emit(
-        WorkspaceError(
-          message: 'Error inesperado: $e',
-          workspaces: _workspaces,
-          activeWorkspace: _activeWorkspace,
-        ),
-      );
-    }
+        AppLogger.info('WorkspaceBloc: Workspace ${workspace.name} creado');
+      },
+    );
   }
 
   Future<void> _onUpdateWorkspace(
@@ -383,7 +392,7 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
       );
 
       _activeWorkspace = workspace;
-      await _saveActiveWorkspace(workspace.id);
+      await _setActiveWorkspace(workspace.id);
 
       emit(
         WorkspaceLoaded(
@@ -710,48 +719,6 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   // ============================================
   // ACTIVE WORKSPACE PERSISTENCE
   // ============================================
-
-  Future<Workspace?> _loadActiveWorkspace() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final workspaceId = prefs.getInt('active_workspace_id');
-
-      if (workspaceId != null) {
-        final workspace = _workspaces.firstWhere(
-          (w) => w.id == workspaceId,
-          orElse: () => _workspaces.first,
-        );
-
-        _activeWorkspace = workspace;
-        AppLogger.info(
-          'WorkspaceBloc: Workspace activo cargado: ${workspace.name}',
-        );
-        return workspace;
-      }
-
-      // Si no hay workspace activo guardado, usar el primero
-      if (_workspaces.isNotEmpty) {
-        _activeWorkspace = _workspaces.first;
-        await _saveActiveWorkspace(_workspaces.first.id);
-        return _workspaces.first;
-      }
-
-      return null;
-    } catch (e) {
-      AppLogger.error('WorkspaceBloc._loadActiveWorkspace error: $e');
-      return null;
-    }
-  }
-
-  Future<void> _saveActiveWorkspace(int workspaceId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('active_workspace_id', workspaceId);
-      AppLogger.info('WorkspaceBloc: Workspace activo guardado: $workspaceId');
-    } catch (e) {
-      AppLogger.error('WorkspaceBloc._saveActiveWorkspace error: $e');
-    }
-  }
 
   Future<void> _clearActiveWorkspace() async {
     try {

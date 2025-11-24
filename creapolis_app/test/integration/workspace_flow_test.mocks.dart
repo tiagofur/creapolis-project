@@ -3,15 +3,23 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i6;
 
-import 'package:creapolis_app/core/errors/failures.dart' as _i5;
+import 'package:creapolis_app/core/errors/failures.dart' as _i7;
 import 'package:creapolis_app/domain/usecases/workspace/create_workspace.dart'
-    as _i7;
+    as _i8;
+import 'package:creapolis_app/domain/usecases/workspace/get_active_workspace.dart'
+    as _i10;
 import 'package:creapolis_app/domain/usecases/workspace/get_user_workspaces.dart'
-    as _i3;
+    as _i5;
+import 'package:creapolis_app/domain/usecases/workspace/set_active_workspace.dart'
+    as _i9;
+import 'package:creapolis_app/features/workspace/data/datasources/workspace_remote_datasource.dart'
+    as _i11;
+import 'package:creapolis_app/features/workspace/data/models/workspace_member_model.dart'
+    as _i4;
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart'
-    as _i6;
+    as _i3;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -38,58 +46,385 @@ class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
         );
 }
 
+class _FakeWorkspace_1 extends _i1.SmartFake implements _i3.Workspace {
+  _FakeWorkspace_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeWorkspaceMember_2 extends _i1.SmartFake
+    implements _i4.WorkspaceMember {
+  _FakeWorkspaceMember_2(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeWorkspaceInvitation_3 extends _i1.SmartFake
+    implements _i4.WorkspaceInvitation {
+  _FakeWorkspaceInvitation_3(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [GetUserWorkspacesUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGetUserWorkspacesUseCase extends _i1.Mock
-    implements _i3.GetUserWorkspacesUseCase {
+    implements _i5.GetUserWorkspacesUseCase {
   MockGetUserWorkspacesUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, List<_i6.Workspace>>> call() =>
+  _i6.Future<_i2.Either<_i7.Failure, List<_i3.Workspace>>> call() =>
       (super.noSuchMethod(
         Invocation.method(
           #call,
           [],
         ),
         returnValue:
-            _i4.Future<_i2.Either<_i5.Failure, List<_i6.Workspace>>>.value(
-                _FakeEither_0<_i5.Failure, List<_i6.Workspace>>(
+            _i6.Future<_i2.Either<_i7.Failure, List<_i3.Workspace>>>.value(
+                _FakeEither_0<_i7.Failure, List<_i3.Workspace>>(
           this,
           Invocation.method(
             #call,
             [],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, List<_i6.Workspace>>>);
+      ) as _i6.Future<_i2.Either<_i7.Failure, List<_i3.Workspace>>>);
 }
 
 /// A class which mocks [CreateWorkspaceUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockCreateWorkspaceUseCase extends _i1.Mock
-    implements _i7.CreateWorkspaceUseCase {
+    implements _i8.CreateWorkspaceUseCase {
   MockCreateWorkspaceUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Workspace>> call(
-          _i7.CreateWorkspaceParams? params) =>
+  _i6.Future<_i2.Either<_i7.Failure, _i3.Workspace>> call(
+          _i8.CreateWorkspaceParams? params) =>
       (super.noSuchMethod(
         Invocation.method(
           #call,
           [params],
         ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Workspace>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Workspace>(
+        returnValue: _i6.Future<_i2.Either<_i7.Failure, _i3.Workspace>>.value(
+            _FakeEither_0<_i7.Failure, _i3.Workspace>(
           this,
           Invocation.method(
             #call,
             [params],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Workspace>>);
+      ) as _i6.Future<_i2.Either<_i7.Failure, _i3.Workspace>>);
+}
+
+/// A class which mocks [SetActiveWorkspaceUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSetActiveWorkspaceUseCase extends _i1.Mock
+    implements _i9.SetActiveWorkspaceUseCase {
+  MockSetActiveWorkspaceUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<_i2.Either<_i7.Failure, void>> call(int? workspaceId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [workspaceId],
+        ),
+        returnValue: _i6.Future<_i2.Either<_i7.Failure, void>>.value(
+            _FakeEither_0<_i7.Failure, void>(
+          this,
+          Invocation.method(
+            #call,
+            [workspaceId],
+          ),
+        )),
+      ) as _i6.Future<_i2.Either<_i7.Failure, void>>);
+}
+
+/// A class which mocks [GetActiveWorkspaceUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetActiveWorkspaceUseCase extends _i1.Mock
+    implements _i10.GetActiveWorkspaceUseCase {
+  MockGetActiveWorkspaceUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<_i2.Either<_i7.Failure, int?>> call() => (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [],
+        ),
+        returnValue: _i6.Future<_i2.Either<_i7.Failure, int?>>.value(
+            _FakeEither_0<_i7.Failure, int?>(
+          this,
+          Invocation.method(
+            #call,
+            [],
+          ),
+        )),
+      ) as _i6.Future<_i2.Either<_i7.Failure, int?>>);
+}
+
+/// A class which mocks [WorkspaceRemoteDataSource].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockWorkspaceRemoteDataSource extends _i1.Mock
+    implements _i11.WorkspaceRemoteDataSource {
+  MockWorkspaceRemoteDataSource() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<List<_i3.Workspace>> getWorkspaces() => (super.noSuchMethod(
+        Invocation.method(
+          #getWorkspaces,
+          [],
+        ),
+        returnValue: _i6.Future<List<_i3.Workspace>>.value(<_i3.Workspace>[]),
+      ) as _i6.Future<List<_i3.Workspace>>);
+
+  @override
+  _i6.Future<_i3.Workspace> getWorkspaceById(int? id) => (super.noSuchMethod(
+        Invocation.method(
+          #getWorkspaceById,
+          [id],
+        ),
+        returnValue: _i6.Future<_i3.Workspace>.value(_FakeWorkspace_1(
+          this,
+          Invocation.method(
+            #getWorkspaceById,
+            [id],
+          ),
+        )),
+      ) as _i6.Future<_i3.Workspace>);
+
+  @override
+  _i6.Future<_i3.Workspace> createWorkspace({
+    required String? name,
+    String? description,
+    String? avatarUrl,
+    _i3.WorkspaceType? type = _i3.WorkspaceType.team,
+    _i3.WorkspaceSettings? settings,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createWorkspace,
+          [],
+          {
+            #name: name,
+            #description: description,
+            #avatarUrl: avatarUrl,
+            #type: type,
+            #settings: settings,
+          },
+        ),
+        returnValue: _i6.Future<_i3.Workspace>.value(_FakeWorkspace_1(
+          this,
+          Invocation.method(
+            #createWorkspace,
+            [],
+            {
+              #name: name,
+              #description: description,
+              #avatarUrl: avatarUrl,
+              #type: type,
+              #settings: settings,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i3.Workspace>);
+
+  @override
+  _i6.Future<_i3.Workspace> updateWorkspace({
+    required int? id,
+    String? name,
+    String? description,
+    String? avatarUrl,
+    _i3.WorkspaceType? type,
+    _i3.WorkspaceSettings? settings,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateWorkspace,
+          [],
+          {
+            #id: id,
+            #name: name,
+            #description: description,
+            #avatarUrl: avatarUrl,
+            #type: type,
+            #settings: settings,
+          },
+        ),
+        returnValue: _i6.Future<_i3.Workspace>.value(_FakeWorkspace_1(
+          this,
+          Invocation.method(
+            #updateWorkspace,
+            [],
+            {
+              #id: id,
+              #name: name,
+              #description: description,
+              #avatarUrl: avatarUrl,
+              #type: type,
+              #settings: settings,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i3.Workspace>);
+
+  @override
+  _i6.Future<void> deleteWorkspace(int? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteWorkspace,
+          [id],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<List<_i4.WorkspaceMember>> getWorkspaceMembers(int? workspaceId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getWorkspaceMembers,
+          [workspaceId],
+        ),
+        returnValue: _i6.Future<List<_i4.WorkspaceMember>>.value(
+            <_i4.WorkspaceMember>[]),
+      ) as _i6.Future<List<_i4.WorkspaceMember>>);
+
+  @override
+  _i6.Future<_i4.WorkspaceMember> updateMemberRole({
+    required int? workspaceId,
+    required int? userId,
+    required _i3.WorkspaceRole? role,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateMemberRole,
+          [],
+          {
+            #workspaceId: workspaceId,
+            #userId: userId,
+            #role: role,
+          },
+        ),
+        returnValue:
+            _i6.Future<_i4.WorkspaceMember>.value(_FakeWorkspaceMember_2(
+          this,
+          Invocation.method(
+            #updateMemberRole,
+            [],
+            {
+              #workspaceId: workspaceId,
+              #userId: userId,
+              #role: role,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i4.WorkspaceMember>);
+
+  @override
+  _i6.Future<void> removeMember({
+    required int? workspaceId,
+    required int? userId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeMember,
+          [],
+          {
+            #workspaceId: workspaceId,
+            #userId: userId,
+          },
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<_i4.WorkspaceInvitation> createInvitation({
+    required int? workspaceId,
+    required String? email,
+    required _i3.WorkspaceRole? role,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createInvitation,
+          [],
+          {
+            #workspaceId: workspaceId,
+            #email: email,
+            #role: role,
+          },
+        ),
+        returnValue: _i6.Future<_i4.WorkspaceInvitation>.value(
+            _FakeWorkspaceInvitation_3(
+          this,
+          Invocation.method(
+            #createInvitation,
+            [],
+            {
+              #workspaceId: workspaceId,
+              #email: email,
+              #role: role,
+            },
+          ),
+        )),
+      ) as _i6.Future<_i4.WorkspaceInvitation>);
+
+  @override
+  _i6.Future<List<_i4.WorkspaceInvitation>> getPendingInvitations() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPendingInvitations,
+          [],
+        ),
+        returnValue: _i6.Future<List<_i4.WorkspaceInvitation>>.value(
+            <_i4.WorkspaceInvitation>[]),
+      ) as _i6.Future<List<_i4.WorkspaceInvitation>>);
+
+  @override
+  _i6.Future<Map<String, dynamic>> acceptInvitation(String? token) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #acceptInvitation,
+          [token],
+        ),
+        returnValue:
+            _i6.Future<Map<String, dynamic>>.value(<String, dynamic>{}),
+      ) as _i6.Future<Map<String, dynamic>>);
+
+  @override
+  _i6.Future<void> declineInvitation(String? token) => (super.noSuchMethod(
+        Invocation.method(
+          #declineInvitation,
+          [token],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 }

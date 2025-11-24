@@ -62,7 +62,8 @@ import 'app_localizations_es.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,17 +84,18 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('es')
+    Locale('es'),
   ];
 
   /// No description provided for @appName.
@@ -1108,6 +1111,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dependencies'**
   String get dependenciesTab;
+
+  /// No description provided for @commentsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get commentsTab;
 
   /// No description provided for @loadTaskErrorTitle.
   ///
@@ -2134,9 +2143,100 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get englishLabel;
+
+  /// No description provided for @addDependencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add dependency'**
+  String get addDependencyLabel;
+
+  /// No description provided for @manageDependenciesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Dependencies'**
+  String get manageDependenciesTitle;
+
+  /// No description provided for @noAvailableTasksMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No other tasks available in this project.'**
+  String get noAvailableTasksMessage;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @resourceOverloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Overloaded'**
+  String get resourceOverloaded;
+
+  /// No description provided for @resourceAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get resourceAvailable;
+
+  /// No description provided for @resourceNormalLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal Load'**
+  String get resourceNormalLoad;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalLabel;
+
+  /// No description provided for @averagePerDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg/day'**
+  String get averagePerDayLabel;
+
+  /// No description provided for @noAssignedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No assigned tasks'**
+  String get noAssignedTasks;
+
+  /// No description provided for @moreTasksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} more tasks'**
+  String moreTasksCount(Object count);
+
+  /// No description provided for @zoomOutTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get zoomOutTooltip;
+
+  /// No description provided for @zoomInTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get zoomInTooltip;
+
+  /// No description provided for @zoomLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom: {percent}%'**
+  String zoomLevel(Object percent);
+
+  /// No description provided for @statusBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get statusBlocked;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -2145,25 +2245,26 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'es'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'es'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'es': return AppLocalizationsEs();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }

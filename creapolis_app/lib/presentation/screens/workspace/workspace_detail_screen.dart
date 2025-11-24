@@ -42,9 +42,22 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   Widget build(BuildContext context) {
     return BlocListener<WorkspaceBloc, WorkspaceState>(
       listener: (context, state) {
-        if (state is WorkspaceOperationSuccess &&
-            state.updatedWorkspace?.id == _workspace.id) {
-          setState(() => _workspace = state.updatedWorkspace!);
+        if (state is WorkspaceOperationSuccess) {
+          if (state.message.toLowerCase().contains('eliminado')) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RoutePaths.workspaces);
+            }
+            return;
+          }
+
+          if (state.updatedWorkspace?.id == _workspace.id) {
+            setState(() => _workspace = state.updatedWorkspace!);
+          }
         } else if (state is WorkspaceLoaded) {
           try {
             final workspace = state.workspaces.firstWhere(
@@ -423,11 +436,11 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
               onChanged: (val) {
                 final newSettings = settings.copyWith(allowGuestInvites: val);
                 context.read<WorkspaceBloc>().add(
-                      UpdateWorkspace(
-                        workspaceId: _workspace.id,
-                        settings: newSettings,
-                      ),
-                    );
+                  UpdateWorkspace(
+                    workspaceId: _workspace.id,
+                    settings: newSettings,
+                  ),
+                );
               },
             ),
           ),
@@ -440,11 +453,11 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
                   requireEmailVerification: val,
                 );
                 context.read<WorkspaceBloc>().add(
-                      UpdateWorkspace(
-                        workspaceId: _workspace.id,
-                        settings: newSettings,
-                      ),
-                    );
+                  UpdateWorkspace(
+                    workspaceId: _workspace.id,
+                    settings: newSettings,
+                  ),
+                );
               },
             ),
           ),
@@ -512,7 +525,10 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.selectTimezoneTitle ?? 'Seleccionar zona horaria'),
+        title: Text(
+          AppLocalizations.of(context)?.selectTimezoneTitle ??
+              'Seleccionar zona horaria',
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -531,11 +547,11 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
                   Navigator.of(context).pop();
                   final newSettings = current.copyWith(timezone: tz);
                   context.read<WorkspaceBloc>().add(
-                        UpdateWorkspace(
-                          workspaceId: _workspace.id,
-                          settings: newSettings,
-                        ),
-                      );
+                    UpdateWorkspace(
+                      workspaceId: _workspace.id,
+                      settings: newSettings,
+                    ),
+                  );
                 },
               );
             },
@@ -683,10 +699,5 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
   /// Manejar eliminación
   void _handleDelete() {
     context.read<WorkspaceBloc>().add(DeleteWorkspace(_workspace.id));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Funcionalidad de eliminación próximamente'),
-      ),
-    );
   }
 }

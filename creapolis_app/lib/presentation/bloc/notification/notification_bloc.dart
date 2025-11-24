@@ -1,6 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../core/services/socket_service.dart';
+import '../../../data/models/notification_model.dart';
+import '../../../injection.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../domain/repositories/notification_repository.dart';
 import 'notification_event.dart';
 import 'notification_state.dart';
@@ -11,7 +15,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final NotificationRepository _notificationRepository;
 
   NotificationBloc(this._notificationRepository)
-      : super(const NotificationInitial()) {
+    : super(const NotificationInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<LoadUnreadCount>(_onLoadUnreadCount);
     on<MarkNotificationAsRead>(_onMarkNotificationAsRead);
@@ -19,6 +23,28 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<DeleteNotificationEvent>(_onDeleteNotification);
     on<AddRealtimeNotification>(_onAddRealtimeNotification);
     on<UpdateRealtimeNotification>(_onUpdateRealtimeNotification);
+
+    _initSocket();
+  }
+
+  /// Inicializar conexión de socket
+  void _initSocket() async {
+    try {
+      final socketService = getIt<SocketService>();
+      await socketService.init();
+
+      socketService.on('notification', (data) {
+        try {
+          AppLogger.info('Realtime notification received: $data');
+          final model = NotificationModel.fromJson(data);
+          add(AddRealtimeNotification(model.toEntity()));
+        } catch (e) {
+          AppLogger.error('Error parsing realtime notification: $e');
+        }
+      });
+    } catch (e) {
+      AppLogger.error('Error initializing socket in NotificationBloc: $e');
+    }
   }
 
   /// Maneja la carga de notificaciones
@@ -40,10 +66,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         final countResult = await _notificationRepository.getUnreadCount();
         final unreadCount = countResult.fold((_) => 0, (count) => count);
 
-        emit(NotificationsLoaded(
-          notifications: notifications,
-          unreadCount: unreadCount,
-        ));
+        emit(
+          NotificationsLoaded(
+            notifications: notifications,
+            unreadCount: unreadCount,
+          ),
+        );
       },
     );
   }
@@ -55,17 +83,14 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   ) async {
     final result = await _notificationRepository.getUnreadCount();
 
-    result.fold(
-      (failure) => emit(NotificationError(failure.message)),
-      (count) {
-        emit(UnreadCountUpdated(count));
-        // If we have a current loaded state, update it
-        if (state is NotificationsLoaded) {
-          final currentState = state as NotificationsLoaded;
-          emit(currentState.copyWith(unreadCount: count));
-        }
-      },
-    );
+    result.fold((failure) => emit(NotificationError(failure.message)), (count) {
+      emit(UnreadCountUpdated(count));
+      // If we have a current loaded state, update it
+      if (state is NotificationsLoaded) {
+        final currentState = state as NotificationsLoaded;
+        emit(currentState.copyWith(unreadCount: count));
+      }
+    });
   }
 
   /// Maneja marcar una notificación como leída
@@ -77,7 +102,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     emit(const NotificationOperationInProgress('marking_read'));
 
-    final result = await _notificationRepository.markAsRead(event.notificationId);
+    final result = await _notificationRepository.markAsRead(
+      event.notificationId,
+    );
 
     await result.fold(
       (failure) async => emit(NotificationError(failure.message)),
@@ -97,10 +124,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
             (count) => count,
           );
 
-          emit(currentState.copyWith(
-            notifications: updatedNotifications,
-            unreadCount: unreadCount,
-          ));
+          emit(
+            currentState.copyWith(
+              notifications: updatedNotifications,
+              unreadCount: unreadCount,
+            ),
+          );
         }
       },
     );
@@ -117,24 +146,23 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     final result = await _notificationRepository.markAllAsRead();
 
-    result.fold(
-      (failure) => emit(NotificationError(failure.message)),
-      (_) {
-        emit(const AllNotificationsMarkedAsRead());
+    result.fold((failure) => emit(NotificationError(failure.message)), (_) {
+      emit(const AllNotificationsMarkedAsRead());
 
-        // Update the list if we have a loaded state
-        if (currentState is NotificationsLoaded) {
-          final updatedNotifications = currentState.notifications.map((n) {
-            return n.copyWith(isRead: true, readAt: DateTime.now());
-          }).toList();
+      // Update the list if we have a loaded state
+      if (currentState is NotificationsLoaded) {
+        final updatedNotifications = currentState.notifications.map((n) {
+          return n.copyWith(isRead: true, readAt: DateTime.now());
+        }).toList();
 
-          emit(currentState.copyWith(
+        emit(
+          currentState.copyWith(
             notifications: updatedNotifications,
             unreadCount: 0,
-          ));
-        }
-      },
-    );
+          ),
+        );
+      }
+    });
   }
 
   /// Maneja la eliminación de una notificación
@@ -168,10 +196,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
             (count) => count,
           );
 
-          emit(currentState.copyWith(
-            notifications: updatedNotifications,
-            unreadCount: unreadCount,
-          ));
+          emit(
+            currentState.copyWith(
+              notifications: updatedNotifications,
+              unreadCount: unreadCount,
+            ),
+          );
         }
       },
     );
@@ -189,10 +219,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         ...currentState.notifications,
       ];
 
-      emit(currentState.copyWith(
-        notifications: updatedNotifications,
-        unreadCount: currentState.unreadCount + 1,
-      ));
+      emit(
+        currentState.copyWith(
+          notifications: updatedNotifications,
+          unreadCount: currentState.unreadCount + 1,
+        ),
+      );
     }
   }
 
@@ -217,13 +249,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           ? (currentState.unreadCount - 1).clamp(0, 999999)
           : currentState.unreadCount + 1;
 
-      emit(currentState.copyWith(
-        notifications: updatedNotifications,
-        unreadCount: newUnreadCount,
-      ));
+      emit(
+        currentState.copyWith(
+          notifications: updatedNotifications,
+          unreadCount: newUnreadCount,
+        ),
+      );
     }
   }
 }
-
-
-

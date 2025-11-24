@@ -11,6 +11,7 @@ class UserModel extends User {
     required super.role,
     super.googleAccessToken,
     super.googleRefreshToken,
+    super.reputation,
   });
 
   /// Crear UserModel desde JSON
@@ -34,6 +35,7 @@ class UserModel extends User {
       role: _parseRole(json['role']),
       googleAccessToken: json['googleAccessToken'] as String?,
       googleRefreshToken: json['googleRefreshToken'] as String?,
+      reputation: json['reputation'] ?? 0,
     );
   }
 
@@ -48,6 +50,7 @@ class UserModel extends User {
       'role': _roleToString(role),
       if (googleAccessToken != null) 'googleAccessToken': googleAccessToken,
       if (googleRefreshToken != null) 'googleRefreshToken': googleRefreshToken,
+      'reputation': reputation,
     };
   }
 
@@ -60,6 +63,7 @@ class UserModel extends User {
       role: user.role,
       googleAccessToken: user.googleAccessToken,
       googleRefreshToken: user.googleRefreshToken,
+      reputation: user.reputation,
     );
   }
 
@@ -121,6 +125,7 @@ class UserModel extends User {
     UserRole? role,
     String? googleAccessToken,
     String? googleRefreshToken,
+    int? reputation,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -129,6 +134,7 @@ class UserModel extends User {
       role: role ?? this.role,
       googleAccessToken: googleAccessToken ?? this.googleAccessToken,
       googleRefreshToken: googleRefreshToken ?? this.googleRefreshToken,
+      reputation: reputation ?? this.reputation,
     );
   }
 }

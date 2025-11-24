@@ -398,9 +398,10 @@ class _ProjectsPage extends StatelessWidget {
           const SizedBox(height: 16),
           _buildFeature(
             context,
-            icon: Icons.insert_chart_rounded,
-            title: 'Gráficos Gantt',
-            description: 'Visualiza cronogramas y dependencias',
+            icon: Icons.calendar_month_rounded,
+            title: 'Fechas y Plazos',
+            description:
+                'Establece fechas de inicio y fin para mantener el rumbo',
           ),
         ],
       ),
@@ -570,6 +571,3 @@ class _CollaborationPage extends StatelessWidget {
     );
   }
 }
-
-
-

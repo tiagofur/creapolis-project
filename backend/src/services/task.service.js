@@ -1,5 +1,6 @@
 import prisma from "../config/database.js";
 import { ErrorResponses } from "../utils/errors.js";
+import { notificationService } from "./notification.service.js";
 
 /**
  * Task Service
@@ -315,6 +316,33 @@ class TaskService {
       },
     });
 
+    // Notify assignee if it's not the creator
+    if (assigneeId && assigneeId !== userId) {
+      // Run asynchronously to not block response
+      notificationService
+        .createNotification({
+          userId: assigneeId,
+          type: "TASK_ASSIGNED",
+          title: "New Task Assigned",
+          message: `You have been assigned to task: ${title}`,
+          relatedId: task.id,
+          relatedType: "TASK",
+          data: {
+            projectId: projectId,
+            taskId: task.id,
+            workspaceId: (
+              await prisma.project.findUnique({
+                where: { id: projectId },
+                select: { workspaceId: true },
+              })
+            )?.workspaceId,
+          },
+        })
+        .catch((err) =>
+          console.error("Failed to send task assignment notification:", err)
+        );
+    }
+
     return task;
   }
 
@@ -323,7 +351,7 @@ class TaskService {
    */
   async updateTask(projectId, taskId, userId, updateData) {
     // Verify access and get task
-    await this.getTaskById(projectId, taskId, userId);
+    const oldTask = await this.getTaskById(projectId, taskId, userId);
 
     const {
       title,
@@ -388,6 +416,38 @@ class TaskService {
         },
       },
     });
+
+    // Notify new assignee if changed
+    if (
+      assigneeId !== undefined &&
+      assigneeId !== null &&
+      assigneeId !== oldTask.assigneeId &&
+      assigneeId !== userId
+    ) {
+      // Run asynchronously to not block response
+      notificationService
+        .createNotification({
+          userId: assigneeId,
+          type: "TASK_ASSIGNED",
+          title: "Task Assigned",
+          message: `You have been assigned to task: ${task.title}`,
+          relatedId: task.id,
+          relatedType: "TASK",
+          data: {
+            projectId: projectId,
+            taskId: task.id,
+            workspaceId: (
+              await prisma.project.findUnique({
+                where: { id: projectId },
+                select: { workspaceId: true },
+              })
+            )?.workspaceId,
+          },
+        })
+        .catch((err) =>
+          console.error("Failed to send task assignment notification:", err)
+        );
+    }
 
     return task;
   }

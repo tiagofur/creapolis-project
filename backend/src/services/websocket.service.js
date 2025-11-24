@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 
 class WebSocketService {
   constructor() {
@@ -32,8 +33,36 @@ class WebSocketService {
    * Setup connection handlers
    */
   setupConnectionHandlers() {
+    // Middleware for authentication
+    this.io.use((socket, next) => {
+      const token =
+        socket.handshake.auth.token ||
+        socket.handshake.headers.authorization?.split(" ")[1];
+      if (!token) {
+        // Allow unauthenticated connections for now if needed, or reject
+        // For now, let's just log and proceed, but ideally we should reject or handle guest users
+        // But for notifications, we need userId.
+        // If no token, maybe it's a guest or public page?
+        // Let's try to verify if token exists.
+        return next();
+      }
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.userId = decoded.id;
+        next();
+      } catch (err) {
+        console.error("Socket auth error:", err.message);
+        next(new Error("Authentication error"));
+      }
+    });
+
     this.io.on("connection", (socket) => {
-      console.log(`🔌 Client connected: ${socket.id}`);
+      console.log(`🔌 Client connected: ${socket.id}, User: ${socket.userId}`);
+
+      // Join user specific room
+      if (socket.userId) {
+        socket.join(`user_${socket.userId}`);
+      }
 
       // Join a collaboration room (task, project, etc.)
       socket.on("join_room", ({ roomId, userId, userName }) => {
@@ -68,16 +97,19 @@ class WebSocketService {
       });
 
       // Content update (description, comment, etc.)
-      socket.on("content_update", ({ roomId, contentType, contentId, content, userId, userName }) => {
-        socket.to(roomId).emit("content_changed", {
-          contentType,
-          contentId,
-          content,
-          userId,
-          userName,
-          timestamp: new Date().toISOString(),
-        });
-      });
+      socket.on(
+        "content_update",
+        ({ roomId, contentType, contentId, content, userId, userName }) => {
+          socket.to(roomId).emit("content_changed", {
+            contentType,
+            contentId,
+            content,
+            userId,
+            userName,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      );
 
       // Comment added
       socket.on("comment_added", ({ roomId, comment, userId, userName }) => {
@@ -162,6 +194,15 @@ class WebSocketService {
   broadcastToRoom(roomId, event, data) {
     if (this.io) {
       this.io.to(roomId).emit(event, data);
+    }
+  }
+
+  /**
+   * Emit event to a specific user
+   */
+  emitToUser(userId, event, data) {
+    if (this.io) {
+      this.io.to(`user_${userId}`).emit(event, data);
     }
   }
 

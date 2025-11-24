@@ -147,6 +147,45 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, User>> updateProfile({
+    String? name,
+    String? avatarUrl,
+  }) async {
+    try {
+      final user = await _remoteDataSource.updateProfile(
+        name: name,
+        avatarUrl: avatarUrl,
+      );
+      await _saveUserData(user);
+      return Right(user);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure('Error al actualizar perfil: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _remoteDataSource.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      return const Right(null);
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure('Error al cambiar contraseña: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> logout() async {
     try {
       // Intentar hacer logout en el servidor
@@ -244,6 +283,3 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-
-
-

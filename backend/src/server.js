@@ -32,8 +32,10 @@ import mediaRoutes from "./routes/media.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import forumRoutes from "./routes/forum.routes.js";
 import voteRoutes from "./routes/vote.routes.js";
+import gamificationRoutes from "./routes/gamification.routes.js";
 import knowledgeRoutes from "./routes/knowledge.routes.js";
 import supportRoutes from "./routes/support.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -156,8 +158,10 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/votes", voteRoutes);
+app.use("/api/gamification", gamificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {

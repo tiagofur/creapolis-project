@@ -36,7 +36,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacySubtitle => 'Privacy policy';
 
   @override
-  String get privacyContent => 'We manage your data with best practices.\n- Data use limited to functionality.\n- No third-party sharing without consent.\n- You can manage preferences in Settings.\n\nFor details, see the official site.';
+  String get privacyContent =>
+      'We manage your data with best practices.\n- Data use limited to functionality.\n- No third-party sharing without consent.\n- You can manage preferences in Settings.\n\nFor details, see the official site.';
 
   @override
   String get close => 'Close';
@@ -51,7 +52,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceRequiredTitle => 'Workspace required';
 
   @override
-  String get workspaceRequiredMessage => 'To create tasks, select or create a workspace first.';
+  String get workspaceRequiredMessage =>
+      'To create tasks, select or create a workspace first.';
 
   @override
   String get createWorkspace => 'Create Workspace';
@@ -130,7 +132,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfile => 'Edit profile';
 
   @override
-  String get helpContent => 'Visit our help center for guides and support. Direct links from the app will be integrated soon.';
+  String get helpContent =>
+      'Visit our help center for guides and support. Direct links from the app will be integrated soon.';
 
   @override
   String get recentActivityTitle => 'Recent Activity';
@@ -229,7 +232,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectWorkspaceTitle => 'Select a workspace';
 
   @override
-  String get selectWorkspaceMessage => 'Choose a workspace from the top switcher to view available tasks.';
+  String get selectWorkspaceMessage =>
+      'Choose a workspace from the top switcher to view available tasks.';
 
   @override
   String get retry => 'Retry';
@@ -241,7 +245,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginRequiredTitle => 'Log in to view your tasks';
 
   @override
-  String get loginRequiredMessage => 'You need to log in to see tasks assigned to you.';
+  String get loginRequiredMessage =>
+      'You need to log in to see tasks assigned to you.';
 
   @override
   String get goToLogin => 'Go to login';
@@ -298,7 +303,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noResultsTitle => 'No results';
 
   @override
-  String get noResultsMessage => 'We couldn\'t find tasks with the current filters.';
+  String get noResultsMessage =>
+      'We couldn\'t find tasks with the current filters.';
 
   @override
   String get clearFilters => 'Clear filters';
@@ -307,7 +313,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAssignedTasksTitle => 'No assigned tasks';
 
   @override
-  String get noAssignedTasksMessage => 'You have no tasks assigned in this workspace.';
+  String get noAssignedTasksMessage =>
+      'You have no tasks assigned in this workspace.';
 
   @override
   String get createTask => 'Create task';
@@ -338,19 +345,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tasksUpdatedSnack => 'Tasks updated';
 
   @override
-  String get tasksUpdateFailedSnack => 'We couldn\'t update tasks. Please try again.';
+  String get tasksUpdateFailedSnack =>
+      'We couldn\'t update tasks. Please try again.';
 
   @override
   String get taskAlreadyCompleted => 'Task is already completed';
 
   @override
-  String get noPermissionsCreateTasks => 'You don\'t have permissions to create tasks in this workspace.';
+  String get noPermissionsCreateTasks =>
+      'You don\'t have permissions to create tasks in this workspace.';
 
   @override
-  String get updatingWorkspaceTasks => 'We are updating workspace tasks. Please try again in a few seconds.';
+  String get updatingWorkspaceTasks =>
+      'We are updating workspace tasks. Please try again in a few seconds.';
 
   @override
-  String get mustSelectWorkspaceMessage => 'You must select an active workspace before creating tasks.';
+  String get mustSelectWorkspaceMessage =>
+      'You must select an active workspace before creating tasks.';
 
   @override
   String get viewWorkspaces => 'View workspaces';
@@ -359,7 +370,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get needProjectTitle => 'A project is required';
 
   @override
-  String get needProjectMessage => 'Create a project first to register tasks in this workspace.';
+  String get needProjectMessage =>
+      'Create a project first to register tasks in this workspace.';
 
   @override
   String get goToProjects => 'Go to projects';
@@ -425,43 +437,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushNotificationsTitle => 'Push Notifications';
 
   @override
-  String get pushNotificationsSubtitle => 'Receive real-time notifications on this device';
+  String get pushNotificationsSubtitle =>
+      'Receive real-time notifications on this device';
 
   @override
   String get emailNotificationsTitle => 'Email Notifications';
 
   @override
-  String get emailNotificationsSubtitle => 'Receive summaries and alerts by email';
+  String get emailNotificationsSubtitle =>
+      'Receive summaries and alerts by email';
 
   @override
   String get notificationTypes => 'Notification Types';
 
   @override
-  String get notificationTypesSubtitle => 'Select which events you want to be notified about';
+  String get notificationTypesSubtitle =>
+      'Select which events you want to be notified about';
 
   @override
   String get mentionNotifications => 'Mentions';
 
   @override
-  String get mentionNotificationsSubtitle => 'When someone mentions you in a comment';
+  String get mentionNotificationsSubtitle =>
+      'When someone mentions you in a comment';
 
   @override
   String get commentReplyNotifications => 'Comment replies';
 
   @override
-  String get commentReplyNotificationsSubtitle => 'When someone replies to your comment';
+  String get commentReplyNotificationsSubtitle =>
+      'When someone replies to your comment';
 
   @override
   String get taskAssignedNotifications => 'Task assigned';
 
   @override
-  String get taskAssignedNotificationsSubtitle => 'When a new task is assigned to you';
+  String get taskAssignedNotificationsSubtitle =>
+      'When a new task is assigned to you';
 
   @override
   String get taskUpdatedNotifications => 'Task updated';
 
   @override
-  String get taskUpdatedNotificationsSubtitle => 'When a task you follow is updated';
+  String get taskUpdatedNotificationsSubtitle =>
+      'When a task you follow is updated';
 
   @override
   String get projectUpdatedNotifications => 'Project updated';
@@ -473,7 +492,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get systemNotifications => 'System';
 
   @override
-  String get systemNotificationsSubtitle => 'Important updates and announcements';
+  String get systemNotificationsSubtitle =>
+      'Important updates and announcements';
 
   @override
   String get preferencesUpdated => 'Preferences updated';
@@ -489,7 +509,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pushPermissionsHint => 'Push notifications require system permissions. If you don\'t receive notifications, check your device settings.';
+  String get pushPermissionsHint =>
+      'Push notifications require system permissions. If you don\'t receive notifications, check your device settings.';
 
   @override
   String get selectTimezoneTitle => 'Select time zone';
@@ -501,7 +522,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workSessionsTitle => 'Work Sessions';
 
   @override
-  String get noPermissionsTrackTime => 'You don\'t have permissions to track time in this workspace';
+  String get noPermissionsTrackTime =>
+      'You don\'t have permissions to track time in this workspace';
 
   @override
   String get startLabel => 'Start';
@@ -522,7 +544,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get finishTaskTitle => 'Finish Task';
 
   @override
-  String get finishTaskMessage => 'Are you sure you want to finish this task? This will stop any active timer and mark the task as completed.';
+  String get finishTaskMessage =>
+      'Are you sure you want to finish this task? This will stop any active timer and mark the task as completed.';
 
   @override
   String get taskFinishedSuccessSnack => 'Task finished successfully!';
@@ -538,6 +561,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dependenciesTab => 'Dependencies';
+
+  @override
+  String get commentsTab => 'Comments';
 
   @override
   String get loadTaskErrorTitle => 'Error loading task';
@@ -599,7 +625,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPendingInvitationsTitle => 'No pending invitations';
 
   @override
-  String get noPendingInvitationsMessage => 'When someone invites you to a workspace\nit will appear here';
+  String get noPendingInvitationsMessage =>
+      'When someone invites you to a workspace\nit will appear here';
 
   @override
   String get invitedByLabel => 'Invited by';
@@ -643,7 +670,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get declineInvitationNote => 'The administrator can send you a new invitation in the future.';
+  String get declineInvitationNote =>
+      'The administrator can send you a new invitation in the future.';
 
   @override
   String get confirmDeclineLabel => 'Yes, Decline';
@@ -736,10 +764,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get removeMemberNote => 'The user will lose access to all projects and tasks in this workspace.';
+  String get removeMemberNote =>
+      'The user will lose access to all projects and tasks in this workspace.';
 
   @override
-  String get removeMemberInviteAgainNote => 'You can invite them again in the future.';
+  String get removeMemberInviteAgainNote =>
+      'You can invite them again in the future.';
 
   @override
   String get confirmRemoveLabel => 'Yes, Remove';
@@ -817,7 +847,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetConfigTitle => 'Reset Configuration';
 
   @override
-  String get resetConfigMessage => 'Do you want to reset all your configuration to your role defaults?\n\nThis will remove all your customizations.';
+  String get resetConfigMessage =>
+      'Do you want to reset all your configuration to your role defaults?\n\nThis will remove all your customizations.';
 
   @override
   String get reset => 'Reset';
@@ -832,7 +863,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportSuccessTitle => 'Export Successful';
 
   @override
-  String get exportSuccessMessage => 'Your preferences have been exported successfully.';
+  String get exportSuccessMessage =>
+      'Your preferences have been exported successfully.';
 
   @override
   String get share => 'Share';
@@ -852,7 +884,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importPrefsTitle => 'Import Preferences';
 
   @override
-  String get importPrefsMessage => 'Importing preferences will replace your current configuration.\n\nDo you want to continue?';
+  String get importPrefsMessage =>
+      'Importing preferences will replace your current configuration.\n\nDo you want to continue?';
 
   @override
   String get continueLabel => 'Continue';
@@ -938,7 +971,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportImportTitle => 'Export / Import';
 
   @override
-  String get exportImportDescription => 'Save or restore your full configuration. Useful to back up preferences or transfer them across devices.';
+  String get exportImportDescription =>
+      'Save or restore your full configuration. Useful to back up preferences or transfer them across devices.';
 
   @override
   String get export => 'Export';
@@ -953,37 +987,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howItWorksStep1Title => '1. Base Configuration';
 
   @override
-  String get howItWorksStep1Desc => 'Each role has an optimized default configuration.';
+  String get howItWorksStep1Desc =>
+      'Each role has an optimized default configuration.';
 
   @override
   String get howItWorksStep2Title => '2. Customization';
 
   @override
-  String get howItWorksStep2Desc => 'You can change any configuration according to your preferences.';
+  String get howItWorksStep2Desc =>
+      'You can change any configuration according to your preferences.';
 
   @override
   String get howItWorksStep3Title => '3. Indicators';
 
   @override
-  String get howItWorksStep3Desc => 'Elements marked as \"Customized\" show what you have modified.';
+  String get howItWorksStep3Desc =>
+      'Elements marked as \"Customized\" show what you have modified.';
 
   @override
   String get howItWorksStep4Title => '4. Reset';
 
   @override
-  String get howItWorksStep4Desc => 'Use the reset button to return to role defaults.';
+  String get howItWorksStep4Desc =>
+      'Use the reset button to return to role defaults.';
 
   @override
   String get howItWorksStep5Title => '5. Export/Import';
 
   @override
-  String get howItWorksStep5Desc => 'Back up your configuration or transfer it across devices.';
+  String get howItWorksStep5Desc =>
+      'Back up your configuration or transfer it across devices.';
 
   @override
   String get applicationLegalese => '© 2025 Creapolis. All rights reserved.';
 
   @override
-  String get aboutContent => 'Creapolis is a project and task management tool designed to help teams collaborate effectively.';
+  String get aboutContent =>
+      'Creapolis is a project and task management tool designed to help teams collaborate effectively.';
 
   @override
   String get confirmLogoutMessage => 'Are you sure you want to log out?';
@@ -992,7 +1032,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleCustomizationTitle => 'Role Customization';
 
   @override
-  String get roleCustomizationSubtitle => 'Customize your experience according to your role';
+  String get roleCustomizationSubtitle =>
+      'Customize your experience according to your role';
 
   @override
   String get appearanceTitle => 'Appearance';
@@ -1001,7 +1042,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationTypeTitle => 'Navigation type';
 
   @override
-  String get navigationTypeDescription => 'Select how you prefer to navigate the app';
+  String get navigationTypeDescription =>
+      'Select how you prefer to navigate the app';
 
   @override
   String get sidebarTitle => 'Sidebar';
@@ -1048,7 +1090,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleCalendarAuthTitle => 'Google Calendar Authorization';
 
   @override
-  String get googleCalendarAuthInstructions => 'The browser has been opened. Please authorize the application and copy the authorization code here:';
+  String get googleCalendarAuthInstructions =>
+      'The browser has been opened. Please authorize the application and copy the authorization code here:';
 
   @override
   String get authorizationCodeLabel => 'Authorization code';
@@ -1075,7 +1118,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutComingSoon => 'App information coming soon';
 
   @override
-  String get googleCalendarConnected => 'Google Calendar connected successfully';
+  String get googleCalendarConnected =>
+      'Google Calendar connected successfully';
 
   @override
   String get googleCalendarDisconnected => 'Google Calendar disconnected';
@@ -1097,4 +1141,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get englishLabel => 'English';
+
+  @override
+  String get addDependencyLabel => 'Add dependency';
+
+  @override
+  String get manageDependenciesTitle => 'Manage Dependencies';
+
+  @override
+  String get noAvailableTasksMessage =>
+      'No other tasks available in this project.';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get resourceOverloaded => 'Overloaded';
+
+  @override
+  String get resourceAvailable => 'Available';
+
+  @override
+  String get resourceNormalLoad => 'Normal Load';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String get averagePerDayLabel => 'Avg/day';
+
+  @override
+  String get noAssignedTasks => 'No assigned tasks';
+
+  @override
+  String moreTasksCount(Object count) {
+    return '+ $count more tasks';
+  }
+
+  @override
+  String get zoomOutTooltip => 'Zoom out';
+
+  @override
+  String get zoomInTooltip => 'Zoom in';
+
+  @override
+  String zoomLevel(Object percent) {
+    return 'Zoom: $percent%';
+  }
+
+  @override
+  String get statusBlocked => 'Blocked';
 }

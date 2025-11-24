@@ -75,6 +75,7 @@ class Notification extends Equatable {
   final bool isRead;
   final int? relatedId;
   final String? relatedType;
+  final Map<String, dynamic>? data;
   final DateTime createdAt;
   final DateTime? readAt;
 
@@ -87,6 +88,7 @@ class Notification extends Equatable {
     this.isRead = false,
     this.relatedId,
     this.relatedType,
+    this.data,
     required this.createdAt,
     this.readAt,
   });
@@ -101,6 +103,7 @@ class Notification extends Equatable {
     bool? isRead,
     int? relatedId,
     String? relatedType,
+    Map<String, dynamic>? data,
     DateTime? createdAt,
     DateTime? readAt,
   }) {
@@ -113,6 +116,7 @@ class Notification extends Equatable {
       isRead: isRead ?? this.isRead,
       relatedId: relatedId ?? this.relatedId,
       relatedType: relatedType ?? this.relatedType,
+      data: data ?? this.data,
       createdAt: createdAt ?? this.createdAt,
       readAt: readAt ?? this.readAt,
     );
@@ -120,18 +124,16 @@ class Notification extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        type,
-        title,
-        message,
-        isRead,
-        relatedId,
-        relatedType,
-        createdAt,
-        readAt,
-      ];
+    id,
+    userId,
+    type,
+    title,
+    message,
+    isRead,
+    relatedId,
+    relatedType,
+    data,
+    createdAt,
+    readAt,
+  ];
 }
-
-
-

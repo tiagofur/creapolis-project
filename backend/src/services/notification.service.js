@@ -1,4 +1,6 @@
-import prisma from '../config/database.js';
+import prisma from "../config/database.js";
+import pushNotificationService from "./push-notification.service.js";
+import websocketService from "./websocket.service.js";
 
 export const notificationService = {
   // Create a new notification
@@ -10,44 +12,60 @@ export const notificationService = {
     data = null,
     relatedId = null,
     relatedType = null,
-    isSystem = false
+    isSystem = false,
   }) {
     try {
       // Check user preferences first
       const preferences = await prisma.notificationPreferences.findUnique({
-        where: { userId }
+        where: { userId },
       });
 
       // Determine if notification should be sent based on preferences
       let shouldNotify = true;
+
       if (preferences) {
         switch (type) {
-          case 'TICKET_CREATED':
+          case "TICKET_CREATED":
             shouldNotify = preferences.ticketCreated;
             break;
-          case 'TICKET_STATUS_CHANGED':
+          case "TICKET_STATUS_CHANGED":
             shouldNotify = preferences.ticketStatusChanged;
             break;
-          case 'TICKET_ASSIGNED':
+          case "TICKET_ASSIGNED":
             shouldNotify = preferences.ticketAssigned;
             break;
-          case 'TICKET_MESSAGE_ADDED':
+          case "TICKET_MESSAGE_ADDED":
             shouldNotify = preferences.ticketMessageAdded;
             break;
-          case 'TICKET_RESOLVED':
+          case "TICKET_RESOLVED":
             shouldNotify = preferences.ticketResolved;
             break;
-          case 'FORUM_REPLY':
+          case "FORUM_REPLY":
             shouldNotify = preferences.forumReply;
             break;
-          case 'FORUM_MENTION':
+          case "FORUM_MENTION":
             shouldNotify = preferences.forumMention;
             break;
-          case 'KNOWLEDGE_BASE_UPDATE':
+          case "KNOWLEDGE_BASE_UPDATE":
             shouldNotify = preferences.knowledgeBaseUpdate;
             break;
-          case 'SYSTEM_ANNOUNCEMENT':
+          case "SYSTEM_ANNOUNCEMENT":
             shouldNotify = preferences.systemAnnouncements;
+            break;
+          case "TASK_ASSIGNED":
+            shouldNotify = preferences.taskAssignedNotifications;
+            break;
+          case "TASK_UPDATED":
+            shouldNotify = preferences.taskUpdatedNotifications;
+            break;
+          case "PROJECT_UPDATED":
+            shouldNotify = preferences.projectUpdatedNotifications;
+            break;
+          case "MENTION":
+            shouldNotify = preferences.mentionNotifications;
+            break;
+          case "COMMENT_REPLY":
+            shouldNotify = preferences.commentReplyNotifications;
             break;
           default:
             shouldNotify = true;
@@ -58,28 +76,64 @@ export const notificationService = {
         return null;
       }
 
+      // Create database notification
       const notification = await prisma.notification.create({
         data: {
           userId,
           type,
           title,
           message,
-          data,
+          data: data ? JSON.stringify(data) : null,
           relatedId,
           relatedType,
-          isSystem
-        }
+          isSystem,
+        },
       });
+
+      // Emit WebSocket event
+      websocketService.emitToUser(userId, "notification", notification);
+
+      // Send Push Notification using the dedicated service
+      // This handles token retrieval, preference checks, logging, and invalid token cleanup
+      pushNotificationService
+        .sendPushNotification(userId, {
+          id: notification.id,
+          type,
+          title,
+          message,
+          relatedId,
+          relatedType,
+        })
+        .catch((err) =>
+          console.error("Failed to send push notification:", err)
+        );
+
+      // Send WebSocket notification
+      websocketService
+        .sendNotification(userId, {
+          id: notification.id,
+          type,
+          title,
+          message,
+          relatedId,
+          relatedType,
+        })
+        .catch((err) =>
+          console.error("Failed to send WebSocket notification:", err)
+        );
 
       return notification;
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error("Error creating notification:", error);
       throw error;
     }
   },
 
   // Get notifications for a user
-  async getUserNotifications(userId, { limit = 20, offset = 0, unreadOnly = false } = {}) {
+  async getUserNotifications(
+    userId,
+    { limit = 20, offset = 0, unreadOnly = false } = {}
+  ) {
     try {
       const where = { userId };
       if (unreadOnly) {
@@ -89,22 +143,22 @@ export const notificationService = {
       const [notifications, total] = await Promise.all([
         prisma.notification.findMany({
           where,
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: limit,
-          skip: offset
+          skip: offset,
         }),
-        prisma.notification.count({ where })
+        prisma.notification.count({ where }),
       ]);
 
       return {
         notifications,
         total,
         unreadCount: await prisma.notification.count({
-          where: { userId, isRead: false }
-        })
+          where: { userId, isRead: false },
+        }),
       };
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
       throw error;
     }
   },
@@ -114,15 +168,15 @@ export const notificationService = {
     try {
       const notification = await prisma.notification.updateMany({
         where: { id: notificationId, userId },
-        data: { 
+        data: {
           isRead: true,
-          readAt: new Date()
-        }
+          readAt: new Date(),
+        },
       });
 
       return notification;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
       throw error;
     }
   },
@@ -132,15 +186,15 @@ export const notificationService = {
     try {
       const result = await prisma.notification.updateMany({
         where: { userId, isRead: false },
-        data: { 
+        data: {
           isRead: true,
-          readAt: new Date()
-        }
+          readAt: new Date(),
+        },
       });
 
       return result;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking all notifications as read:", error);
       throw error;
     }
   },
@@ -149,12 +203,12 @@ export const notificationService = {
   async deleteNotification(notificationId, userId) {
     try {
       const result = await prisma.notification.deleteMany({
-        where: { id: notificationId, userId }
+        where: { id: notificationId, userId },
       });
 
       return result;
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error("Error deleting notification:", error);
       throw error;
     }
   },
@@ -163,18 +217,18 @@ export const notificationService = {
   async getUserPreferences(userId) {
     try {
       let preferences = await prisma.notificationPreferences.findUnique({
-        where: { userId }
+        where: { userId },
       });
 
       if (!preferences) {
         preferences = await prisma.notificationPreferences.create({
-          data: { userId }
+          data: { userId },
         });
       }
 
       return preferences;
     } catch (error) {
-      console.error('Error fetching notification preferences:', error);
+      console.error("Error fetching notification preferences:", error);
       throw error;
     }
   },
@@ -185,12 +239,12 @@ export const notificationService = {
       const updatedPreferences = await prisma.notificationPreferences.upsert({
         where: { userId },
         update: preferences,
-        create: { userId, ...preferences }
+        create: { userId, ...preferences },
       });
 
       return updatedPreferences;
     } catch (error) {
-      console.error('Error updating notification preferences:', error);
+      console.error("Error updating notification preferences:", error);
       throw error;
     }
   },
@@ -199,12 +253,14 @@ export const notificationService = {
   async sendBulkNotifications(notifications) {
     try {
       const results = await Promise.allSettled(
-        notifications.map(notification => this.createNotification(notification))
+        notifications.map((notification) =>
+          this.createNotification(notification)
+        )
       );
 
       return results;
     } catch (error) {
-      console.error('Error sending bulk notifications:', error);
+      console.error("Error sending bulk notifications:", error);
       throw error;
     }
   },
@@ -219,16 +275,16 @@ export const notificationService = {
         where: {
           createdAt: { lt: thirtyDaysAgo },
           isRead: true,
-          isSystem: false
-        }
+          isSystem: false,
+        },
       });
 
       return result;
     } catch (error) {
-      console.error('Error cleaning up old notifications:', error);
+      console.error("Error cleaning up old notifications:", error);
       throw error;
     }
-  }
+  },
 };
 
 export default notificationService;

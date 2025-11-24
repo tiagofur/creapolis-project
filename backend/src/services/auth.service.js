@@ -130,17 +130,28 @@ class AuthService {
     return user;
   }
 
+  async verifyPassword(userId, password) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return false;
+    return bcrypt.compare(password, user.password);
+  }
+
   async findByEmail(email) {
     return prisma.user.findUnique({ where: { email } });
   }
 
   async updatePassword(userId, newPassword) {
     const hashed = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed },
+    });
   }
 
   generateActionToken(payload, expiresIn) {
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiresIn || "15m" });
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: expiresIn || "15m",
+    });
   }
 
   verifyActionToken(token) {

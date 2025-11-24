@@ -52,7 +52,21 @@ class MoreScreen extends StatelessWidget {
             subtitle: l10n.invitationsSubtitle,
             onTap: () => context.goToInvitations(),
           ),
+          _buildMenuItem(
+            context,
+            icon: Icons.chat_bubble_outline,
+            title: 'Chat',
+            subtitle: 'Messages and channels',
+            onTap: () => context.go(RoutePaths.chat),
+          ),
 
+          // _buildMenuItem(
+          //   context,
+          //   icon: Icons.calendar_month,
+          //   title: l10n.googleCalendarTitle,
+          //   subtitle: 'Ver eventos y tareas',
+          //   onTap: () => context.go(RoutePaths.calendar),
+          // ),
           const Divider(),
 
           // Sección de Configuración
@@ -98,13 +112,13 @@ class MoreScreen extends StatelessWidget {
 
           // Sección de Información
           _buildSectionHeader(context, l10n.infoSection),
-          _buildMenuItem(
-            context,
-            icon: Icons.analytics_outlined,
-            title: l10n.customizationMetricsTitle,
-            subtitle: l10n.customizationMetricsSubtitle,
-            onTap: () => context.go(RoutePaths.customizationMetrics),
-          ),
+          // _buildMenuItem(
+          //   context,
+          //   icon: Icons.analytics_outlined,
+          //   title: l10n.customizationMetricsTitle,
+          //   subtitle: l10n.customizationMetricsSubtitle,
+          //   onTap: () => context.go(RoutePaths.customizationMetrics),
+          // ),
           _buildMenuItem(
             context,
             icon: Icons.info_outline,
@@ -171,10 +185,12 @@ class MoreScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final authState = context.watch<AuthBloc>().state;
-    final String userName =
-        authState is AuthAuthenticated ? authState.user.name : 'Usuario';
-    final String userEmail =
-        authState is AuthAuthenticated ? authState.user.email : 'usuario@example.com';
+    final String userName = authState is AuthAuthenticated
+        ? authState.user.name
+        : 'Usuario';
+    final String userEmail = authState is AuthAuthenticated
+        ? authState.user.email
+        : 'usuario@example.com';
 
     return Container(
       padding: const EdgeInsets.all(24.0),
@@ -263,10 +279,15 @@ class MoreScreen extends StatelessWidget {
         size: 48,
         color: Theme.of(context).colorScheme.primary,
       ),
-      applicationLegalese: AppLocalizations.of(context)?.applicationLegalese ?? '© 2025 Creapolis. Todos los derechos reservados.',
+      applicationLegalese:
+          AppLocalizations.of(context)?.applicationLegalese ??
+          '© 2025 Creapolis. Todos los derechos reservados.',
       children: [
         const SizedBox(height: 16),
-        Text(AppLocalizations.of(context)?.aboutContent ?? 'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.'),
+        Text(
+          AppLocalizations.of(context)?.aboutContent ??
+              'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.',
+        ),
       ],
     );
   }
@@ -277,7 +298,10 @@ class MoreScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)?.logout ?? 'Cerrar Sesión'),
-        content: Text(AppLocalizations.of(context)?.confirmLogoutMessage ?? '¿Estás seguro de que deseas cerrar sesión?'),
+        content: Text(
+          AppLocalizations.of(context)?.confirmLogoutMessage ??
+              '¿Estás seguro de que deseas cerrar sesión?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -286,7 +310,9 @@ class MoreScreen extends StatelessWidget {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(AppLocalizations.of(context)?.logout ?? 'Cerrar Sesión'),
+            child: Text(
+              AppLocalizations.of(context)?.logout ?? 'Cerrar Sesión',
+            ),
           ),
         ],
       ),
@@ -297,12 +323,18 @@ class MoreScreen extends StatelessWidget {
       await AppRouter.logout(context);
     }
   }
+
   void _showHelpDialog(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.helpTitle ?? 'Centro de ayuda'),
-        content: Text(AppLocalizations.of(context)?.helpContent ?? 'Visita nuestro centro de ayuda para guías y soporte. Próximamente integraremos enlaces directos desde la app.'),
+        title: Text(
+          AppLocalizations.of(context)?.helpTitle ?? 'Centro de ayuda',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.helpContent ??
+              'Visita nuestro centro de ayuda para guías y soporte. Próximamente integraremos enlaces directos desde la app.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -317,8 +349,13 @@ class MoreScreen extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.privacyTitle ?? 'Política de privacidad'),
-        content: SingleChildScrollView(child: Text(AppLocalizations.of(context)?.privacyContent ?? '')),
+        title: Text(
+          AppLocalizations.of(context)?.privacyTitle ??
+              'Política de privacidad',
+        ),
+        content: SingleChildScrollView(
+          child: Text(AppLocalizations.of(context)?.privacyContent ?? ''),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -362,7 +399,8 @@ class MoreScreen extends StatelessWidget {
             ),
             _LanguageTile(
               label: l10n.spanishLabel,
-              selected: context.read<LocaleProvider>().locale?.languageCode == 'es',
+              selected:
+                  context.read<LocaleProvider>().locale?.languageCode == 'es',
               onTap: () {
                 context.read<LocaleProvider>().setLocale(const Locale('es'));
                 Navigator.of(dialogContext).pop();
@@ -370,7 +408,8 @@ class MoreScreen extends StatelessWidget {
             ),
             _LanguageTile(
               label: l10n.englishLabel,
-              selected: context.read<LocaleProvider>().locale?.languageCode == 'en',
+              selected:
+                  context.read<LocaleProvider>().locale?.languageCode == 'en',
               onTap: () {
                 context.read<LocaleProvider>().setLocale(const Locale('en'));
                 Navigator.of(dialogContext).pop();
@@ -387,7 +426,6 @@ class MoreScreen extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _LanguageTile extends StatelessWidget {
@@ -407,7 +445,9 @@ class _LanguageTile extends StatelessWidget {
     return ListTile(
       leading: Icon(
         selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+        color: selected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurfaceVariant,
       ),
       title: Text(label),
       onTap: onTap,

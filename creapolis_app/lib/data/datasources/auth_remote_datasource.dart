@@ -36,6 +36,15 @@ abstract class AuthRemoteDataSource {
   /// Lanza [ServerException] si hay error en el servidor
   Future<UserModel> getProfile();
 
+  /// Actualizar perfil del usuario
+  Future<UserModel> updateProfile({String? name, String? avatarUrl});
+
+  /// Cambiar contraseña
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   /// Logout de usuario
   ///
   /// Lanza [ServerException] si hay error en el servidor
@@ -48,6 +57,47 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final DioClient _dioClient;
 
   AuthRemoteDataSourceImpl(this._dioClient);
+
+  @override
+  Future<UserModel> updateProfile({String? name, String? avatarUrl}) async {
+    try {
+      final response = await _dioClient.put(
+        '/auth/me',
+        data: {'name': name, 'avatarUrl': avatarUrl},
+      );
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>?;
+
+      if (data == null) {
+        throw ServerException('Datos de usuario no encontrados en respuesta');
+      }
+
+      return UserModel.fromJson(data);
+    } catch (e) {
+      throw ServerException('Error al actualizar perfil: $e');
+    }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _dioClient.post(
+        '/auth/change-password',
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw AuthException('Contraseña actual incorrecta');
+      }
+      throw ServerException('Error al cambiar contraseña: ${e.message}');
+    } catch (e) {
+      throw ServerException('Error al cambiar contraseña: $e');
+    }
+  }
 
   @override
   Future<Map<String, dynamic>> login({
@@ -258,6 +308,3 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 }
-
-
-

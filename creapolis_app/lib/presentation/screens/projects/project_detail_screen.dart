@@ -89,6 +89,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
   }
 
+  /// Navegar a la pantalla de reportes
+  void _navigateToReports(BuildContext context, Project project) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId != null) {
+      context.goToReports(workspaceId, project.id, extra: {'project': project});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -171,6 +181,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.analytics_outlined),
+                onPressed: () => _navigateToReports(context, project),
+                tooltip: 'Reportes',
+              ),
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => _showEditSheet(context, project),
@@ -555,6 +570,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 project.status.label,
                 _getStatusColor(project.status),
               ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _navigateToReports(context, project),
+                  icon: const Icon(Icons.analytics),
+                  label: const Text('Ver Reportes Completos'),
+                ),
+              ),
             ],
           ),
         ),
@@ -562,46 +586,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     );
   }
 
-  /// Tab de Tareas (más espacio que antes)
+  /// Tab de Tareas
   Widget _buildTasksTab(BuildContext context, Project project) {
-    final workspaceContext = context.read<WorkspaceContext>();
-    final workspaceId = workspaceContext.activeWorkspace?.id;
-
     return Column(
       children: [
-        // Toolbar de acciones
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton.icon(
-                onPressed: workspaceId != null
-                    ? () => context.goToGantt(workspaceId, project.id)
-                    : null,
-                icon: const Icon(Icons.view_timeline, size: 18),
-                label: const Text('Ver Gantt'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: workspaceId != null
-                    ? () => context.goToWorkload(workspaceId, project.id)
-                    : null,
-                icon: const Icon(Icons.people, size: 18),
-                label: const Text('Workload'),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: workspaceId != null
-                    ? () => context.goToResourceMap(workspaceId, project.id)
-                    : null,
-                icon: const Icon(Icons.grid_view, size: 18),
-                label: const Text('Mapa de Recursos'),
-              ),
-            ],
-          ),
-        ),
-
         // Lista de tareas (toma todo el espacio disponible)
         Expanded(child: TasksListScreen(projectId: project.id)),
       ],

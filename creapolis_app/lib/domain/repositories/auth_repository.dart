@@ -34,6 +34,18 @@ abstract class AuthRepository {
   /// Retorna [Left(Failure)] si hay error o no está autenticado
   Future<Either<Failure, User>> getProfile();
 
+  /// Actualizar perfil
+  Future<Either<Failure, User>> updateProfile({
+    String? name,
+    String? avatarUrl,
+  });
+
+  /// Cambiar contraseña
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   /// Cerrar sesión
   ///
   /// Elimina el JWT y limpia datos de sesión
@@ -46,6 +58,3 @@ abstract class AuthRepository {
   /// Verifica si existe un JWT válido almacenado
   Future<bool> isAuthenticated();
 }
-
-
-

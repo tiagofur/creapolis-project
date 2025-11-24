@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/l10n/app_localizations.dart';
 
 import '../../../domain/entities/task.dart';
 import 'gantt_chart_painter.dart';
@@ -33,6 +34,7 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
   int? _selectedTaskId;
   int? _draggingTaskId;
   Offset? _dragStartPosition;
+  Offset? _currentDragPosition;
   DateTime? _dragOriginalStartDate;
 
   static const double _taskHeight = 40.0;
@@ -73,7 +75,8 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
             Icon(Icons.calendar_today, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'No hay tareas para mostrar',
+              AppLocalizations.of(context)?.noTasksToShow ??
+                  'No hay tareas para mostrar',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
@@ -115,7 +118,7 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: Center(
                     child: Text(
-                      'Tareas',
+                      AppLocalizations.of(context)?.tasksLabel ?? 'Tareas',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -207,6 +210,12 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
                             dependencies: dependencies,
                             selectedTaskId: _selectedTaskId,
                             draggingTaskId: _draggingTaskId,
+                            dragOffset:
+                                (_currentDragPosition != null &&
+                                    _dragStartPosition != null)
+                                ? _currentDragPosition!.dx -
+                                      _dragStartPosition!.dx
+                                : 0.0,
                           ),
                         ),
                       ),
@@ -236,7 +245,7 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
                 _dayWidth = (_dayWidth - 5).clamp(20.0, 100.0);
               });
             },
-            tooltip: 'Alejar',
+            tooltip: AppLocalizations.of(context)?.zoomOutTooltip ?? 'Alejar',
           ),
           IconButton(
             icon: const Icon(Icons.zoom_in),
@@ -245,11 +254,14 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
                 _dayWidth = (_dayWidth + 5).clamp(20.0, 100.0);
               });
             },
-            tooltip: 'Acercar',
+            tooltip: AppLocalizations.of(context)?.zoomInTooltip ?? 'Acercar',
           ),
           const SizedBox(width: 16),
           Text(
-            'Zoom: ${(_dayWidth / 40 * 100).toInt()}%',
+            AppLocalizations.of(
+                  context,
+                )?.zoomLevel((_dayWidth / 40 * 100).toInt()) ??
+                'Zoom: ${(_dayWidth / 40 * 100).toInt()}%',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const Spacer(),
@@ -265,10 +277,26 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
     return Wrap(
       spacing: 16,
       children: [
-        _buildLegendItem(context, 'Planificada', Colors.grey.shade600),
-        _buildLegendItem(context, 'En Progreso', Colors.blue.shade600),
-        _buildLegendItem(context, 'Completada', Colors.green.shade600),
-        _buildLegendItem(context, 'Bloqueada', Colors.red.shade600),
+        _buildLegendItem(
+          context,
+          AppLocalizations.of(context)?.planned ?? 'Planificada',
+          Colors.grey.shade600,
+        ),
+        _buildLegendItem(
+          context,
+          AppLocalizations.of(context)?.inProgress ?? 'En Progreso',
+          Colors.blue.shade600,
+        ),
+        _buildLegendItem(
+          context,
+          AppLocalizations.of(context)?.completed ?? 'Completada',
+          Colors.green.shade600,
+        ),
+        _buildLegendItem(
+          context,
+          AppLocalizations.of(context)?.statusBlocked ?? 'Bloqueada',
+          Colors.red.shade600,
+        ),
       ],
     );
   }
@@ -412,6 +440,7 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
         setState(() {
           _draggingTaskId = task.id;
           _dragStartPosition = position;
+          _currentDragPosition = position;
           _dragOriginalStartDate = task.startDate;
         });
       }
@@ -423,14 +452,9 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
     if (_draggingTaskId != null &&
         _dragStartPosition != null &&
         _dragOriginalStartDate != null) {
-      final deltaX = position.dx - _dragStartPosition!.dx;
-      final deltaDays = (deltaX / _dayWidth).round();
-
-      if (deltaDays != 0) {
-        setState(() {
-          // El visual feedback se maneja en el painter
-        });
-      }
+      setState(() {
+        _currentDragPosition = position;
+      });
     }
   }
 
@@ -438,20 +462,36 @@ class _GanttChartWidgetState extends State<GanttChartWidget> {
   void _handleDragEnd() {
     if (_draggingTaskId != null &&
         _dragStartPosition != null &&
+        _currentDragPosition != null &&
         _dragOriginalStartDate != null) {
-      // Calcular nuevo start date basado en la posición final
-      // Esto se debe hacer en el onPanUpdate para obtener la posición final
-      // Por ahora, notificamos el cambio con las fechas originales
-      // En una implementación real, necesitaríamos almacenar la posición final
+      final deltaX = _currentDragPosition!.dx - _dragStartPosition!.dx;
+      final deltaDays = (deltaX / _dayWidth).round();
+
+      if (deltaDays != 0) {
+        final task = widget.tasks.firstWhere((t) => t.id == _draggingTaskId);
+        final duration = task.endDate.difference(task.startDate);
+        final newStartDate = _dragOriginalStartDate!.add(
+          Duration(days: deltaDays),
+        );
+        final newEndDate = newStartDate.add(duration);
+
+        widget.onTaskDateChanged?.call(task, newStartDate, newEndDate);
+      }
 
       setState(() {
         _draggingTaskId = null;
         _dragStartPosition = null;
+        _currentDragPosition = null;
+        _dragOriginalStartDate = null;
+      });
+    } else {
+      // Reset if drag didn't happen properly
+      setState(() {
+        _draggingTaskId = null;
+        _dragStartPosition = null;
+        _currentDragPosition = null;
         _dragOriginalStartDate = null;
       });
     }
   }
 }
-
-
-

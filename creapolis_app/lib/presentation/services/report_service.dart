@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -7,6 +8,7 @@ import '../../domain/entities/report.dart';
 import '../../domain/entities/report_template.dart';
 
 /// Service for generating and exporting reports
+@lazySingleton
 class ReportService {
   final Dio _dio;
 
@@ -285,6 +287,3 @@ class ReportService {
     }
   }
 }
-
-
-

@@ -44,11 +44,14 @@ router.put(
   authController.updateProfile
 );
 
-router.post(
-  "/avatar",
-  authenticate,
-  authController.uploadAvatar
-);
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change current user password
+ * @access  Private
+ */
+router.post("/change-password", authenticate, authController.changePassword);
+
+router.post("/avatar", authenticate, authController.uploadAvatar);
 router.post(
   "/avatar/s3-finalize",
   authenticate,

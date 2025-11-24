@@ -52,5 +52,27 @@ class CheckAuthStatusEvent extends AuthEvent {
   const CheckAuthStatusEvent();
 }
 
+/// Evento para actualizar perfil
+class UpdateProfileEvent extends AuthEvent {
+  final String? name;
+  final String? avatarUrl;
 
+  const UpdateProfileEvent({this.name, this.avatarUrl});
 
+  @override
+  List<Object?> get props => [name, avatarUrl];
+}
+
+/// Evento para cambiar contraseña
+class ChangePasswordEvent extends AuthEvent {
+  final String currentPassword;
+  final String newPassword;
+
+  const ChangePasswordEvent({
+    required this.currentPassword,
+    required this.newPassword,
+  });
+
+  @override
+  List<Object?> get props => [currentPassword, newPassword];
+}

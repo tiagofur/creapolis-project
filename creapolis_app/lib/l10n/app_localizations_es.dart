@@ -36,7 +36,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get privacySubtitle => 'Política de privacidad';
 
   @override
-  String get privacyContent => 'Gestionamos tus datos conforme a las mejores prácticas.\n- Uso de datos limitado a funcionalidades.\n- Sin compartir con terceros sin consentimiento.\n- Puedes gestionar tus preferencias en Ajustes.\n\nPara más detalle, consulta el sitio oficial.';
+  String get privacyContent =>
+      'Gestionamos tus datos conforme a las mejores prácticas.\n- Uso de datos limitado a funcionalidades.\n- Sin compartir con terceros sin consentimiento.\n- Puedes gestionar tus preferencias en Ajustes.\n\nPara más detalle, consulta el sitio oficial.';
 
   @override
   String get close => 'Cerrar';
@@ -51,7 +52,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workspaceRequiredTitle => 'Workspace requerido';
 
   @override
-  String get workspaceRequiredMessage => 'Para crear tareas, primero debes seleccionar o crear un workspace.';
+  String get workspaceRequiredMessage =>
+      'Para crear tareas, primero debes seleccionar o crear un workspace.';
 
   @override
   String get createWorkspace => 'Crear Workspace';
@@ -130,7 +132,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get editProfile => 'Editar perfil';
 
   @override
-  String get helpContent => 'Visita nuestro centro de ayuda para guías y soporte. Próximamente integraremos enlaces directos desde la app.';
+  String get helpContent =>
+      'Visita nuestro centro de ayuda para guías y soporte. Próximamente integraremos enlaces directos desde la app.';
 
   @override
   String get recentActivityTitle => 'Actividad Reciente';
@@ -229,7 +232,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectWorkspaceTitle => 'Selecciona un workspace';
 
   @override
-  String get selectWorkspaceMessage => 'Elige un workspace desde el selector superior para ver las tareas disponibles.';
+  String get selectWorkspaceMessage =>
+      'Elige un workspace desde el selector superior para ver las tareas disponibles.';
 
   @override
   String get retry => 'Reintentar';
@@ -241,7 +245,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loginRequiredTitle => 'Inicia sesión para ver tus tareas';
 
   @override
-  String get loginRequiredMessage => 'Necesitas iniciar sesión para ver las tareas asignadas a ti.';
+  String get loginRequiredMessage =>
+      'Necesitas iniciar sesión para ver las tareas asignadas a ti.';
 
   @override
   String get goToLogin => 'Ir al login';
@@ -298,7 +303,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noResultsTitle => 'Sin resultados';
 
   @override
-  String get noResultsMessage => 'No encontramos tareas con los filtros actuales.';
+  String get noResultsMessage =>
+      'No encontramos tareas con los filtros actuales.';
 
   @override
   String get clearFilters => 'Limpiar filtros';
@@ -307,7 +313,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noAssignedTasksTitle => 'Sin tareas asignadas';
 
   @override
-  String get noAssignedTasksMessage => 'No tienes tareas asignadas en este workspace.';
+  String get noAssignedTasksMessage =>
+      'No tienes tareas asignadas en este workspace.';
 
   @override
   String get createTask => 'Crear tarea';
@@ -338,19 +345,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tasksUpdatedSnack => 'Tareas actualizadas';
 
   @override
-  String get tasksUpdateFailedSnack => 'No pudimos actualizar las tareas. Intenta de nuevo.';
+  String get tasksUpdateFailedSnack =>
+      'No pudimos actualizar las tareas. Intenta de nuevo.';
 
   @override
   String get taskAlreadyCompleted => 'La tarea ya está completada';
 
   @override
-  String get noPermissionsCreateTasks => 'No tienes permisos para crear tareas en este workspace.';
+  String get noPermissionsCreateTasks =>
+      'No tienes permisos para crear tareas en este workspace.';
 
   @override
-  String get updatingWorkspaceTasks => 'Estamos actualizando las tareas del workspace. Intenta de nuevo en unos segundos.';
+  String get updatingWorkspaceTasks =>
+      'Estamos actualizando las tareas del workspace. Intenta de nuevo en unos segundos.';
 
   @override
-  String get mustSelectWorkspaceMessage => 'Debes seleccionar un workspace activo antes de crear tareas.';
+  String get mustSelectWorkspaceMessage =>
+      'Debes seleccionar un workspace activo antes de crear tareas.';
 
   @override
   String get viewWorkspaces => 'Ver workspaces';
@@ -359,7 +370,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get needProjectTitle => 'Necesitas un proyecto';
 
   @override
-  String get needProjectMessage => 'Crea un proyecto primero para poder registrar tareas en este workspace.';
+  String get needProjectMessage =>
+      'Crea un proyecto primero para poder registrar tareas en este workspace.';
 
   @override
   String get goToProjects => 'Ir a proyectos';
@@ -425,55 +437,64 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pushNotificationsTitle => 'Notificaciones Push';
 
   @override
-  String get pushNotificationsSubtitle => 'Recibir notificaciones en tiempo real en este dispositivo';
+  String get pushNotificationsSubtitle =>
+      'Recibir notificaciones en tiempo real en este dispositivo';
 
   @override
   String get emailNotificationsTitle => 'Notificaciones por Email';
 
   @override
-  String get emailNotificationsSubtitle => 'Recibir resúmenes y alertas por correo electrónico';
+  String get emailNotificationsSubtitle =>
+      'Recibir resúmenes y alertas por correo electrónico';
 
   @override
   String get notificationTypes => 'Tipos de Notificación';
 
   @override
-  String get notificationTypesSubtitle => 'Selecciona qué eventos quieres recibir notificaciones';
+  String get notificationTypesSubtitle =>
+      'Selecciona qué eventos quieres recibir notificaciones';
 
   @override
   String get mentionNotifications => 'Menciones';
 
   @override
-  String get mentionNotificationsSubtitle => 'Cuando alguien te menciona en un comentario';
+  String get mentionNotificationsSubtitle =>
+      'Cuando alguien te menciona en un comentario';
 
   @override
   String get commentReplyNotifications => 'Respuestas a Comentarios';
 
   @override
-  String get commentReplyNotificationsSubtitle => 'Cuando alguien responde a tu comentario';
+  String get commentReplyNotificationsSubtitle =>
+      'Cuando alguien responde a tu comentario';
 
   @override
   String get taskAssignedNotifications => 'Tareas Asignadas';
 
   @override
-  String get taskAssignedNotificationsSubtitle => 'Cuando te asignan una nueva tarea';
+  String get taskAssignedNotificationsSubtitle =>
+      'Cuando te asignan una nueva tarea';
 
   @override
   String get taskUpdatedNotifications => 'Actualizaciones de Tareas';
 
   @override
-  String get taskUpdatedNotificationsSubtitle => 'Cuando se actualiza una tarea que sigues';
+  String get taskUpdatedNotificationsSubtitle =>
+      'Cuando se actualiza una tarea que sigues';
 
   @override
   String get projectUpdatedNotifications => 'Actualizaciones de Proyectos';
 
   @override
-  String get projectUpdatedNotificationsSubtitle => 'Cuando se actualiza un proyecto';
+  String get projectUpdatedNotificationsSubtitle =>
+      'Cuando se actualiza un proyecto';
 
   @override
   String get systemNotifications => 'Notificaciones del Sistema';
 
   @override
-  String get systemNotificationsSubtitle => 'Actualizaciones y anuncios importantes';
+  String get systemNotificationsSubtitle =>
+      'Actualizaciones y anuncios importantes';
 
   @override
   String get preferencesUpdated => 'Preferencias actualizadas';
@@ -489,7 +510,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get pushPermissionsHint => 'Las notificaciones push requieren permisos del sistema. Si no recibes notificaciones, verifica la configuración de tu dispositivo.';
+  String get pushPermissionsHint =>
+      'Las notificaciones push requieren permisos del sistema. Si no recibes notificaciones, verifica la configuración de tu dispositivo.';
 
   @override
   String get selectTimezoneTitle => 'Selecciona zona horaria';
@@ -501,7 +523,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workSessionsTitle => 'Sesiones de Trabajo';
 
   @override
-  String get noPermissionsTrackTime => 'No tienes permisos para registrar tiempo en este workspace';
+  String get noPermissionsTrackTime =>
+      'No tienes permisos para registrar tiempo en este workspace';
 
   @override
   String get startLabel => 'Iniciar';
@@ -522,7 +545,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get finishTaskTitle => 'Finalizar Tarea';
 
   @override
-  String get finishTaskMessage => '¿Estás seguro de que deseas finalizar esta tarea? Esto detendrá cualquier timer activo y marcará la tarea como completada.';
+  String get finishTaskMessage =>
+      '¿Estás seguro de que deseas finalizar esta tarea? Esto detendrá cualquier timer activo y marcará la tarea como completada.';
 
   @override
   String get taskFinishedSuccessSnack => '¡Tarea finalizada exitosamente!';
@@ -538,6 +562,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dependenciesTab => 'Dependencies';
+
+  @override
+  String get commentsTab => 'Comentarios';
 
   @override
   String get loadTaskErrorTitle => 'Error al cargar tarea';
@@ -599,7 +626,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noPendingInvitationsTitle => 'No tienes invitaciones pendientes';
 
   @override
-  String get noPendingInvitationsMessage => 'Cuando alguien te invite a un workspace\naparecerá aquí';
+  String get noPendingInvitationsMessage =>
+      'Cuando alguien te invite a un workspace\naparecerá aquí';
 
   @override
   String get invitedByLabel => 'Invitado por';
@@ -643,7 +671,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get declineInvitationNote => 'El administrador puede enviarte una nueva invitación en el futuro.';
+  String get declineInvitationNote =>
+      'El administrador puede enviarte una nueva invitación en el futuro.';
 
   @override
   String get confirmDeclineLabel => 'Sí, Rechazar';
@@ -736,10 +765,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get removeMemberNote => 'El usuario perderá acceso a todos los proyectos y tareas de este workspace.';
+  String get removeMemberNote =>
+      'El usuario perderá acceso a todos los proyectos y tareas de este workspace.';
 
   @override
-  String get removeMemberInviteAgainNote => 'Podrás invitarlo nuevamente en el futuro.';
+  String get removeMemberInviteAgainNote =>
+      'Podrás invitarlo nuevamente en el futuro.';
 
   @override
   String get confirmRemoveLabel => 'Sí, Remover';
@@ -817,7 +848,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get resetConfigTitle => 'Resetear Configuración';
 
   @override
-  String get resetConfigMessage => '¿Deseas resetear toda tu configuración a los valores por defecto de tu rol?\n\nEsto eliminará todas tus personalizaciones.';
+  String get resetConfigMessage =>
+      '¿Deseas resetear toda tu configuración a los valores por defecto de tu rol?\n\nEsto eliminará todas tus personalizaciones.';
 
   @override
   String get reset => 'Resetear';
@@ -832,7 +864,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exportSuccessTitle => 'Exportación Exitosa';
 
   @override
-  String get exportSuccessMessage => 'Tus preferencias han sido exportadas correctamente.';
+  String get exportSuccessMessage =>
+      'Tus preferencias han sido exportadas correctamente.';
 
   @override
   String get share => 'Compartir';
@@ -852,7 +885,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importPrefsTitle => 'Importar Preferencias';
 
   @override
-  String get importPrefsMessage => 'Importar preferencias reemplazará tu configuración actual.\n\n¿Deseas continuar?';
+  String get importPrefsMessage =>
+      'Importar preferencias reemplazará tu configuración actual.\n\n¿Deseas continuar?';
 
   @override
   String get continueLabel => 'Continuar';
@@ -867,7 +901,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importPrefsSuccess => 'Preferencias importadas correctamente';
 
   @override
-  String get importPrefsError => 'Error al importar preferencias - Verifica el archivo';
+  String get importPrefsError =>
+      'Error al importar preferencias - Verifica el archivo';
 
   @override
   String importPrefsErrorDetail(Object error) {
@@ -929,7 +964,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get usingCustomization => 'Estás usando tu personalización';
 
   @override
-  String get usingRoleDashboardDefault => 'Usando el dashboard por defecto de tu rol';
+  String get usingRoleDashboardDefault =>
+      'Usando el dashboard por defecto de tu rol';
 
   @override
   String get customizeDashboard => 'Personalizar dashboard';
@@ -938,7 +974,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exportImportTitle => 'Exportar / Importar';
 
   @override
-  String get exportImportDescription => 'Guarda o restaura tu configuración completa. Útil para respaldar preferencias o transferirlas entre dispositivos.';
+  String get exportImportDescription =>
+      'Guarda o restaura tu configuración completa. Útil para respaldar preferencias o transferirlas entre dispositivos.';
 
   @override
   String get export => 'Exportar';
@@ -953,46 +990,55 @@ class AppLocalizationsEs extends AppLocalizations {
   String get howItWorksStep1Title => '1. Configuración Base';
 
   @override
-  String get howItWorksStep1Desc => 'Cada rol tiene una configuración por defecto optimizada.';
+  String get howItWorksStep1Desc =>
+      'Cada rol tiene una configuración por defecto optimizada.';
 
   @override
   String get howItWorksStep2Title => '2. Personalización';
 
   @override
-  String get howItWorksStep2Desc => 'Puedes cambiar cualquier configuración según tus preferencias.';
+  String get howItWorksStep2Desc =>
+      'Puedes cambiar cualquier configuración según tus preferencias.';
 
   @override
   String get howItWorksStep3Title => '3. Indicadores';
 
   @override
-  String get howItWorksStep3Desc => 'Los elementos \"Personalizado\" muestran qué has modificado.';
+  String get howItWorksStep3Desc =>
+      'Los elementos \"Personalizado\" muestran qué has modificado.';
 
   @override
   String get howItWorksStep4Title => '4. Resetear';
 
   @override
-  String get howItWorksStep4Desc => 'Usa el botón de resetear para volver a los defaults del rol.';
+  String get howItWorksStep4Desc =>
+      'Usa el botón de resetear para volver a los defaults del rol.';
 
   @override
   String get howItWorksStep5Title => '5. Exportar/Importar';
 
   @override
-  String get howItWorksStep5Desc => 'Respalda tu configuración o transfiérela entre dispositivos.';
+  String get howItWorksStep5Desc =>
+      'Respalda tu configuración o transfiérela entre dispositivos.';
 
   @override
-  String get applicationLegalese => '© 2025 Creapolis. Todos los derechos reservados.';
+  String get applicationLegalese =>
+      '© 2025 Creapolis. Todos los derechos reservados.';
 
   @override
-  String get aboutContent => 'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.';
+  String get aboutContent =>
+      'Creapolis es una herramienta de gestión de proyectos y tareas diseñada para ayudar a equipos a colaborar de manera efectiva.';
 
   @override
-  String get confirmLogoutMessage => '¿Estás seguro de que deseas cerrar sesión?';
+  String get confirmLogoutMessage =>
+      '¿Estás seguro de que deseas cerrar sesión?';
 
   @override
   String get roleCustomizationTitle => 'Personalización por Rol';
 
   @override
-  String get roleCustomizationSubtitle => 'Personaliza tu experiencia según tu rol';
+  String get roleCustomizationSubtitle =>
+      'Personaliza tu experiencia según tu rol';
 
   @override
   String get appearanceTitle => 'Apariencia';
@@ -1001,7 +1047,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navigationTypeTitle => 'Tipo de navegación';
 
   @override
-  String get navigationTypeDescription => 'Selecciona cómo prefieres navegar por la aplicación';
+  String get navigationTypeDescription =>
+      'Selecciona cómo prefieres navegar por la aplicación';
 
   @override
   String get sidebarTitle => 'Barra lateral';
@@ -1013,7 +1060,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bottomNavigationTitle => 'Navegación inferior';
 
   @override
-  String get bottomNavigationSubtitle => 'Menú de navegación en la parte inferior';
+  String get bottomNavigationSubtitle =>
+      'Menú de navegación en la parte inferior';
 
   @override
   String get integrationsTitle => 'Integraciones';
@@ -1022,7 +1070,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get googleCalendarTitle => 'Google Calendar';
 
   @override
-  String get googleCalendarSubtitle => 'Sincroniza tus eventos y disponibilidad';
+  String get googleCalendarSubtitle =>
+      'Sincroniza tus eventos y disponibilidad';
 
   @override
   String get connected => 'Conectado';
@@ -1048,7 +1097,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get googleCalendarAuthTitle => 'Autorización de Google Calendar';
 
   @override
-  String get googleCalendarAuthInstructions => 'Se ha abierto tu navegador. Por favor autoriza la aplicación y copia el código de autorización aquí:';
+  String get googleCalendarAuthInstructions =>
+      'Se ha abierto tu navegador. Por favor autoriza la aplicación y copia el código de autorización aquí:';
 
   @override
   String get authorizationCodeLabel => 'Código de autorización';
@@ -1063,7 +1113,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get disconnectGoogleCalendarTitle => 'Desconectar Google Calendar';
 
   @override
-  String get notificationsComingSoon => 'Configuración de notificaciones próximamente';
+  String get notificationsComingSoon =>
+      'Configuración de notificaciones próximamente';
 
   @override
   String get profileTitle => 'Perfil';
@@ -1075,7 +1126,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutComingSoon => 'Información de la app próximamente';
 
   @override
-  String get googleCalendarConnected => 'Google Calendar conectado exitosamente';
+  String get googleCalendarConnected =>
+      'Google Calendar conectado exitosamente';
 
   @override
   String get googleCalendarDisconnected => 'Google Calendar desconectado';
@@ -1097,4 +1149,54 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get englishLabel => 'English';
+
+  @override
+  String get addDependencyLabel => 'Agregar dependencia';
+
+  @override
+  String get manageDependenciesTitle => 'Gestionar Dependencias';
+
+  @override
+  String get noAvailableTasksMessage =>
+      'No hay otras tareas disponibles en este proyecto.';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get resourceOverloaded => 'Sobrecargado';
+
+  @override
+  String get resourceAvailable => 'Disponible';
+
+  @override
+  String get resourceNormalLoad => 'Carga Normal';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String get averagePerDayLabel => 'Promedio/día';
+
+  @override
+  String get noAssignedTasks => 'Sin tareas asignadas';
+
+  @override
+  String moreTasksCount(Object count) {
+    return '+ $count tareas más';
+  }
+
+  @override
+  String get zoomOutTooltip => 'Alejar';
+
+  @override
+  String get zoomInTooltip => 'Acercar';
+
+  @override
+  String zoomLevel(Object percent) {
+    return 'Zoom: $percent%';
+  }
+
+  @override
+  String get statusBlocked => 'Bloqueada';
 }

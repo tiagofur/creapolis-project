@@ -6,7 +6,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../presentation/widgets/connectivity_indicator.dart';
 import '../../../../presentation/widgets/pending_operations_button.dart';
 import '../../../../presentation/widgets/sync_status_indicator.dart';
-import '../../data/datasources/workspace_remote_datasource.dart';
 import '../../data/models/workspace_model.dart';
 import '../bloc/workspace_bloc.dart';
 import '../bloc/workspace_event.dart';
@@ -20,8 +19,7 @@ class WorkspaceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          WorkspaceBloc(GetIt.instance<WorkspaceRemoteDataSource>())
-            ..add(const LoadWorkspaces()),
+          GetIt.instance<WorkspaceBloc>()..add(const LoadWorkspaces()),
       child: const _WorkspaceScreenContent(),
     );
   }

@@ -33,9 +33,10 @@ class GoogleCalendarService {
 
   /**
    * Generate OAuth authorization URL
+   * @param {string} state - State parameter for security and user identification
    * @returns {string} - Authorization URL
    */
-  getAuthUrl() {
+  getAuthUrl(state) {
     if (!this.oauth2Client) {
       throw new Error("Google Calendar integration not configured");
     }
@@ -49,6 +50,7 @@ class GoogleCalendarService {
       access_type: "offline",
       scope: scopes,
       prompt: "consent", // Force to get refresh token
+      state: state,
     });
   }
 

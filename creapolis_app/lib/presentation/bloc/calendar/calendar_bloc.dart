@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/calendar_event.dart' as domain;
@@ -54,9 +55,17 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         AppLogger.error('CalendarBloc: Error al conectar', failure);
         emit(CalendarError(failure.message));
       },
-      (authUrl) {
-        AppLogger.info('CalendarBloc: URL de autorización obtenida');
-        emit(CalendarConnecting(authUrl));
+      (authUrl) async {
+        AppLogger.info('CalendarBloc: URL de autorización obtenida: $authUrl');
+
+        final uri = Uri.parse(authUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          // Emitimos estado conectando para que la UI muestre instrucciones o botón de "Ya conecté"
+          emit(CalendarConnecting(authUrl));
+        } else {
+          emit(const CalendarError('No se pudo abrir el navegador'));
+        }
       },
     );
   }
@@ -197,6 +206,3 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     );
   }
 }
-
-
-
