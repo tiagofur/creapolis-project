@@ -1,6 +1,7 @@
 import prisma from "../config/database.js";
 import { ErrorResponses } from "../utils/errors.js";
 import { notificationService } from "./notification.service.js";
+import auditService from "./audit.service.js";
 
 /**
  * Task Service
@@ -316,6 +317,15 @@ class TaskService {
       },
     });
 
+    await auditService.log({
+      userId,
+      action: "CREATE",
+      entityType: "TASK",
+      entityId: task.id,
+      details: `Task "${task.title}" created`,
+      metadata: { projectId, assigneeId, status },
+    });
+
     // Notify assignee if it's not the creator
     if (assigneeId && assigneeId !== userId) {
       // Run asynchronously to not block response
@@ -417,6 +427,15 @@ class TaskService {
       },
     });
 
+    await auditService.log({
+      userId,
+      action: "UPDATE",
+      entityType: "TASK",
+      entityId: task.id,
+      details: `Task "${task.title}" updated`,
+      metadata: updateData,
+    });
+
     // Notify new assignee if changed
     if (
       assigneeId !== undefined &&
@@ -472,6 +491,14 @@ class TaskService {
 
     await prisma.task.delete({
       where: { id: taskId },
+    });
+
+    await auditService.log({
+      userId,
+      action: "DELETE",
+      entityType: "TASK",
+      entityId: taskId,
+      details: `Task ${taskId} deleted`,
     });
 
     return { message: "Task deleted successfully" };

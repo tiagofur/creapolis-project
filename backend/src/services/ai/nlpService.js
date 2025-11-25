@@ -15,6 +15,7 @@
  */
 
 import { categorizeTask } from "./categorizationService.js";
+import llmService from "./llm.service.js";
 
 // Palabras clave para prioridades en español e inglés
 const PRIORITY_KEYWORDS = {
@@ -373,7 +374,7 @@ function extractTitleAndDescription(text) {
   // Remover indicadores de asignación con nombres
   ASSIGNMENT_KEYWORDS.forEach((keyword) => {
     const regex = new RegExp(
-      `${keyword}\\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑüñ]+(?:\\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑüñ]+)?`,
+      `${keyword}\\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑüñ]+(?:\\s+[A-ZÁÉÍÓÚÑ][A-ZaelzÁÉÍÓÚÑüñ]+)?`,
       "gi"
     );
     cleanText = cleanText.replace(regex, "");
@@ -417,12 +418,9 @@ function extractTitleAndDescription(text) {
 }
 
 /**
- * Parsea una instrucción en lenguaje natural y extrae información estructurada de la tarea
- *
- * @param {string} instruction - Instrucción en lenguaje natural
- * @returns {Object} Información estructurada de la tarea
+ * Parsea una instrucción en lenguaje natural usando Regex (Fallback)
  */
-export function parseTaskInstruction(instruction) {
+export function parseTaskInstructionRegex(instruction) {
   if (!instruction || typeof instruction !== "string") {
     throw new Error("La instrucción debe ser un texto válido");
   }
@@ -499,6 +497,99 @@ export function parseTaskInstruction(instruction) {
     // Texto original
     originalInstruction: instruction,
   };
+}
+
+/**
+ * Parsea una instrucción en lenguaje natural usando LLM (Principal)
+ */
+export async function parseTaskInstruction(instruction) {
+  // Si LLM no está disponible, usar regex
+  if (!llmService.isAvailable()) {
+    console.log("LLM no disponible, usando regex fallback");
+    return parseTaskInstructionRegex(instruction);
+  }
+
+  try {
+    const systemPrompt = `You are an expert project management assistant. Your goal is to extract structured task information from natural language text.
+Extract: title, description, priority (LOW, MEDIUM, HIGH, CRITICAL), dueDate (ISO 8601), assignee (name), estimatedHours (number), and category (DEVELOPMENT, DESIGN, TESTING, DOCUMENTATION, MEETING, BUG, FEATURE, MAINTENANCE, RESEARCH, DEPLOYMENT, REVIEW, PLANNING).
+Also provide a confidence score (0-1) and reasoning.
+If the text implies multiple tasks, return the main one.
+Current date is: ${new Date().toISOString()}`;
+
+    const result = await llmService.generateJSON(systemPrompt, instruction);
+
+    // Normalizar respuesta para que coincida con la estructura esperada por el frontend
+    return {
+      title: result.title,
+      description: result.description || "",
+      priority: result.priority || "MEDIUM",
+      dueDate: result.dueDate ? new Date(result.dueDate) : null,
+      assignee: result.assignee,
+      category: result.category,
+      estimatedHours: result.estimatedHours,
+      analysis: {
+        overallConfidence: result.confidence || 0.8,
+        reasoning: result.reasoning,
+      },
+      originalInstruction: instruction,
+    };
+  } catch (error) {
+    console.error("Error en LLM parsing:", error);
+    // Fallback a regex en caso de error
+    return parseTaskInstructionRegex(instruction);
+  }
+}
+
+/**
+ * Analiza riesgos del proyecto usando LLM
+ */
+export async function analyzeProjectRisk(projectData) {
+  if (!llmService.isAvailable()) {
+    throw new Error("LLM Service required for risk analysis");
+  }
+
+  const systemPrompt = `You are a senior project manager AI. Analyze the provided project data and identify potential risks, bottlenecks, and suggest mitigation strategies.
+  Return JSON with: riskLevel (LOW, MEDIUM, HIGH), summary, risks (array of {title, description, severity}), and recommendations (array of strings).`;
+
+  const userPrompt = JSON.stringify(projectData);
+
+  return await llmService.generateJSON(systemPrompt, userPrompt);
+}
+
+/**
+ * Genera un resumen diario (Standup) basado en actividades
+ */
+export async function generateDailySummary(activities, userName) {
+  if (!llmService.isAvailable()) {
+    throw new Error("LLM Service required for summaries");
+  }
+
+  if (!activities || activities.length === 0) {
+    return {
+      summary: `No activity recorded for ${userName} in the specified period.`,
+      highlights: [],
+      nextSteps: ["Check pending tasks", "Update status on active projects"],
+    };
+  }
+
+  const systemPrompt = `You are an AI assistant generating a daily standup summary for a user named ${userName}.
+  Based on the provided activity logs, generate a concise summary of what was accomplished.
+  Return JSON with: 
+  - summary (paragraph text written in first person as if the user is speaking, e.g., "Yesterday I completed...")
+  - highlights (array of key achievements)
+  - nextSteps (suggested next actions based on the context)`;
+
+  // Simplificar logs para reducir tokens
+  const simplifiedLogs = activities.map((log) => ({
+    action: log.action,
+    entity: log.entityType,
+    details: log.details,
+    time: log.createdAt,
+  }));
+
+  const userPrompt = JSON.stringify(simplifiedLogs);
+
+  return await llmService.generateJSON(systemPrompt, userPrompt);
 }
 
 /**
@@ -619,6 +710,8 @@ export function getUsageExamples() {
 
 export default {
   parseTaskInstruction,
+  analyzeProjectRisk,
+  generateDailySummary,
   calculateNLPMetrics,
   getUsageExamples,
 };

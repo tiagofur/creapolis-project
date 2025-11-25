@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/sync/sync_manager.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/utils/pagination_helper.dart';
 import '../../domain/entities/task.dart';
@@ -17,11 +18,13 @@ class TaskRepositoryImpl implements TaskRepository {
   final TaskRemoteDataSource _remoteDataSource;
   final TaskCacheDataSource _cacheDataSource;
   final ConnectivityService _connectivityService;
+  final SyncManager _syncManager;
 
   TaskRepositoryImpl(
     this._remoteDataSource,
     this._cacheDataSource,
     this._connectivityService,
+    this._syncManager,
   );
 
   @override
@@ -234,6 +237,72 @@ class TaskRepositoryImpl implements TaskRepository {
     List<int>? dependencyIds,
   }) async {
     try {
+      final isOnline = await _connectivityService.isConnected;
+
+      if (!isOnline) {
+        // Offline Mode: Optimistic Update
+        final tempId = -DateTime.now().millisecondsSinceEpoch;
+        final optimisticTask = Task(
+          id: tempId,
+          projectId: projectId,
+          title: title,
+          description: description,
+          status: status,
+          priority: priority,
+          estimatedHours: estimatedHours,
+          startDate: startDate,
+          endDate: endDate,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          // Note: We don't have the full User object for assignee here,
+          // so assignee will be null in the optimistic task unless we fetch it from cache.
+          // For now, we leave it null or could try to fetch user from cache if needed.
+          assignee: null,
+          dependencyIds: dependencyIds ?? [],
+        );
+
+        // Map enums to strings expected by SyncOperationExecutor
+        String statusStr;
+        switch (status) {
+          case TaskStatus.planned:
+            statusStr = 'pending';
+            break;
+          case TaskStatus.inProgress:
+            statusStr = 'in_progress';
+            break;
+          case TaskStatus.completed:
+            statusStr = 'completed';
+            break;
+          case TaskStatus.blocked:
+            statusStr = 'blocked';
+            break;
+          case TaskStatus.cancelled:
+            statusStr = 'cancelled';
+            break;
+        }
+
+        await _syncManager.queueOperation(
+          type: 'create_task',
+          data: {
+            'title': title,
+            'description': description,
+            'status': statusStr,
+            'priority': priority
+                .name, // SyncOperationExecutor handles 'low', 'medium', etc.
+            'startDate': startDate.toIso8601String(),
+            'endDate': endDate.toIso8601String(),
+            'estimatedHours': estimatedHours,
+            'projectId': projectId,
+            'assignedUserId': assignedUserId,
+            'dependencyIds': dependencyIds,
+            'tempId': tempId,
+          },
+        );
+
+        await _cacheDataSource.cacheTask(optimisticTask);
+        return Right(optimisticTask);
+      }
+
       final task = await _remoteDataSource.createTask(
         title: title,
         description: description,
@@ -263,6 +332,8 @@ class TaskRepositoryImpl implements TaskRepository {
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on NetworkException catch (e) {
+      // If network fails during request (e.g. timeout), we could also queue it here.
+      // For now, let's return failure to keep it simple, or we could implement retry logic.
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
@@ -288,6 +359,73 @@ class TaskRepositoryImpl implements TaskRepository {
     bool updateAssignee = false,
   }) async {
     try {
+      final isOnline = await _connectivityService.isConnected;
+
+      if (!isOnline) {
+        // Offline Mode: Optimistic Update
+        final currentTask = await _cacheDataSource.getCachedTaskById(taskId);
+        if (currentTask == null) {
+          return const Left(
+            NetworkFailure(
+              'No se puede actualizar offline: tarea no encontrada en caché',
+            ),
+          );
+        }
+
+        final optimisticTask = currentTask.copyWith(
+          title: title,
+          description: description,
+          status: status,
+          priority: priority,
+          estimatedHours: estimatedHours,
+          actualHours: actualHours,
+          startDate: startDate,
+          endDate: endDate,
+          updatedAt: DateTime.now(),
+        );
+
+        String? statusStr;
+        if (status != null) {
+          switch (status) {
+            case TaskStatus.planned:
+              statusStr = 'pending';
+              break;
+            case TaskStatus.inProgress:
+              statusStr = 'in_progress';
+              break;
+            case TaskStatus.completed:
+              statusStr = 'completed';
+              break;
+            case TaskStatus.blocked:
+              statusStr = 'blocked';
+              break;
+            case TaskStatus.cancelled:
+              statusStr = 'cancelled';
+              break;
+          }
+        }
+
+        await _syncManager.queueOperation(
+          type: 'update_task',
+          data: {
+            'id': taskId,
+            'projectId': projectId,
+            if (title != null) 'title': title,
+            if (description != null) 'description': description,
+            if (statusStr != null) 'status': statusStr,
+            if (priority != null) 'priority': priority.name,
+            if (startDate != null) 'startDate': startDate.toIso8601String(),
+            if (endDate != null) 'endDate': endDate.toIso8601String(),
+            if (estimatedHours != null) 'estimatedHours': estimatedHours,
+            if (assignedUserId != null) 'assignedUserId': assignedUserId,
+            if (dependencyIds != null) 'dependencyIds': dependencyIds,
+          },
+        );
+
+        await _cacheDataSource.cacheTask(optimisticTask);
+        return Right(optimisticTask);
+      }
+
       final task = await _remoteDataSource.updateTask(
         projectId: projectId,
         taskId: taskId,
@@ -334,6 +472,19 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Either<Failure, void>> deleteTask(int projectId, int taskId) async {
     try {
+      final isOnline = await _connectivityService.isConnected;
+
+      if (!isOnline) {
+        // Offline Mode: Optimistic Delete
+        await _syncManager.queueOperation(
+          type: 'delete_task',
+          data: {'id': taskId, 'projectId': projectId},
+        );
+
+        await _cacheDataSource.deleteCachedTask(taskId);
+        return const Right(null);
+      }
+
       await _remoteDataSource.deleteTask(projectId, taskId);
 
       try {

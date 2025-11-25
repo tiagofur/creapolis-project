@@ -1,5 +1,6 @@
 import express from "express";
 import authController from "../controllers/auth.controller.js";
+import passport from "../config/passport.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import {
@@ -68,5 +69,32 @@ router.post("/verify", authController.verifyEmail);
 router.post("/2fa/generate", authenticate, authController.generate2FA);
 router.post("/2fa/enable", authenticate, authController.enable2FA);
 router.post("/2fa/disable", authenticate, authController.disable2FA);
+
+// SSO Routes
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  authController.handleSocialCallback
+);
+
+router.get(
+  "/microsoft",
+  passport.authenticate("microsoft", { prompt: "select_account" })
+);
+router.get(
+  "/microsoft/callback",
+  passport.authenticate("microsoft", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  authController.handleSocialCallback
+);
 
 export default router;

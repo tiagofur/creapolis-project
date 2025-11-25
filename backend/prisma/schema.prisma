@@ -11,7 +11,9 @@ model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
   emailVerified           Boolean                  @default(false)
-  password                String
+  password                String?
+  googleId                String?                  @unique
+  microsoftId             String?                  @unique
   name                    String
   role                    Role                     @default(TEAM_MEMBER)
   avatarUrl               String?
@@ -56,7 +58,6 @@ model User {
   supportMessages         SupportMessage[]
   chatMemberships         ChatMember[]
   sentMessages            ChatMessage[]
-  auditLogs               RoleAuditLog[]
   systemAuditLogs         AuditLog[]
 
   @@index([email])
@@ -141,6 +142,8 @@ model Project {
   comments    Comment[]
   roles       ProjectRole[]
   chatChannels            ChatChannel[]
+  customFields            CustomFieldDefinition[]
+  automations             Automation[]
 
   @@index([workspaceId])
   @@index([managerId])
@@ -186,6 +189,7 @@ model Task {
   comments            Comment[]
   categorySuggestions CategorySuggestion[]
   categoryFeedbacks   CategoryFeedback[]
+  customFieldValues   CustomFieldValue[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -1108,4 +1112,340 @@ enum MessageType {
   IMAGE
   FILE
   SYSTEM
+}
+
+// ============================================
+// CUSTOM FIELDS SYSTEM
+// ============================================
+
+// Definition of a custom field at project level
+model CustomFieldDefinition {
+  id            Int                 @id @default(autoincrement())
+  projectId     Int
+  name          String              // Field label (e.g., "Sprint", "Story Points")
+  fieldType     CustomFieldType
+  description   String?
+  isRequired    Boolean             @default(false)
+  defaultValue  String?             // JSON serialized default
+  options       String?             // JSON array for DROPDOWN/MULTI_SELECT
+  order         Int                 @default(0)
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  values        CustomFieldValue[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@index([fieldType])
+  @@index([isActive])
+}
+
+// Actual values of custom fields for tasks
+model CustomFieldValue {
+  id              Int                     @id @default(autoincrement())
+  fieldId         Int
+  taskId          Int
+  value           String?                 // JSON serialized value
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  
+  field           CustomFieldDefinition   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  task            Task                    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([fieldId, taskId])
+  @@index([fieldId])
+  @@index([taskId])
+}
+
+enum CustomFieldType {
+  TEXT              // Single line text
+  TEXTAREA          // Multi-line text
+  NUMBER            // Numeric value
+  DATE              // Date picker
+  DATETIME          // Date + time picker
+  DROPDOWN          // Single select from options
+  MULTI_SELECT      // Multiple select from options
+  CHECKBOX          // Boolean toggle
+  USER              // Reference to a user
+  URL               // Link/URL
+  EMAIL             // Email address
+  PHONE             // Phone number
+  CURRENCY          // Money amount
+  PERCENTAGE        // Percentage value
+  RATING            // Star rating (1-5)
+  LABELS            // Tags/labels
+}
+
+// ============================================
+// AUTOMATIONS SYSTEM
+// ============================================
+
+model Automation {
+  id            Int                 @id @default(autoincrement())
+  projectId     Int
+  name          String
+  description   String?
+  isActive      Boolean             @default(true)
+  createdBy     Int
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  triggers      AutomationTrigger[]
+  actions       AutomationAction[]
+  logs          AutomationLog[]
+
+  @@index([projectId])
+  @@index([isActive])
+}
+
+model AutomationTrigger {
+  id            Int                 @id @default(autoincrement())
+  automationId  Int
+  triggerType   TriggerType
+  conditions    String?             // JSON: { "field": "status", "operator": "equals", "value": "COMPLETED" }
+  createdAt     DateTime            @default(now())
+  
+  automation    Automation          @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+  @@index([triggerType])
+}
+
+model AutomationAction {
+  id            Int                 @id @default(autoincrement())
+  automationId  Int
+  actionType    ActionType
+  actionData    String              // JSON: { "assigneeId": 5 } or { "status": "IN_PROGRESS" }
+  order         Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  
+  automation    Automation          @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+}
+
+model AutomationLog {
+  id            Int                 @id @default(autoincrement())
+  automationId  Int
+  taskId        Int?
+  status        AutomationLogStatus
+  triggeredBy   String              // Event that triggered
+  actionsRun    String?             // JSON array of actions executed
+  errorMessage  String?
+  executedAt    DateTime            @default(now())
+  duration      Int?                // milliseconds
+  
+  automation    Automation          @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+  @@index([taskId])
+  @@index([status])
+  @@index([executedAt])
+}
+
+enum TriggerType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_ASSIGNED
+  TASK_DUE_DATE_APPROACHING
+  TASK_OVERDUE
+  TASK_COMPLETED
+  COMMENT_ADDED
+  CUSTOM_FIELD_CHANGED
+}
+
+enum ActionType {
+  UPDATE_STATUS
+  UPDATE_PRIORITY
+  ASSIGN_USER
+  UNASSIGN_USER
+  ADD_COMMENT
+  SEND_NOTIFICATION
+  UPDATE_CUSTOM_FIELD
+  MOVE_TO_PROJECT
+  CREATE_SUBTASK
+  SEND_WEBHOOK
+  SEND_EMAIL
+}
+
+enum AutomationLogStatus {
+  SUCCESS
+  FAILED
+  PARTIAL
+  SKIPPED
+}
+
+// ============================================
+// WEBHOOKS SYSTEM
+// ============================================
+
+model Webhook {
+  id            Int               @id @default(autoincrement())
+  projectId     Int?              // null = workspace-level webhook
+  workspaceId   Int
+  name          String
+  url           String            // Target URL
+  secret        String?           // For signature verification
+  events        String            // JSON array of events: ["task.created", "task.updated"]
+  isActive      Boolean           @default(true)
+  headers       String?           // JSON: { "X-Custom-Header": "value" }
+  createdBy     Int
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  
+  logs          WebhookLog[]
+
+  @@index([projectId])
+  @@index([workspaceId])
+  @@index([isActive])
+}
+
+model WebhookLog {
+  id            Int               @id @default(autoincrement())
+  webhookId     Int
+  event         String
+  payload       String            // JSON payload sent
+  responseCode  Int?
+  responseBody  String?
+  status        WebhookLogStatus
+  errorMessage  String?
+  attempts      Int               @default(1)
+  nextRetryAt   DateTime?
+  executedAt    DateTime          @default(now())
+  duration      Int?              // milliseconds
+  
+  webhook       Webhook           @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([status])
+  @@index([executedAt])
+}
+
+enum WebhookLogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  RETRYING
+}
+
+// ============================================
+// SSO (SAML/OIDC) SYSTEM
+// ============================================
+
+model SsoProvider {
+  id                    Int               @id @default(autoincrement())
+  workspaceId           Int
+  name                  String            // "Okta", "Azure AD", "OneLogin", etc.
+  type                  SsoProviderType
+  isActive              Boolean           @default(false)
+  isDefault             Boolean           @default(false)
+  
+  // SAML Configuration
+  samlEntryPoint        String?           // IdP SSO URL
+  samlIssuer            String?           // IdP Entity ID
+  samlCertificate       String?           // IdP X.509 Certificate (PEM)
+  samlSignatureAlgorithm String?          // "sha256", "sha512"
+  samlDigestAlgorithm   String?           // "sha256", "sha512"
+  
+  // OIDC Configuration  
+  oidcClientId          String?
+  oidcClientSecret      String?           // Encrypted
+  oidcIssuerUrl         String?           // e.g., https://login.microsoftonline.com/{tenant}/v2.0
+  oidcAuthorizationUrl  String?
+  oidcTokenUrl          String?
+  oidcUserInfoUrl       String?
+  oidcScopes            String?           // JSON array: ["openid", "profile", "email"]
+  
+  // Common Settings
+  emailDomain           String?           // Auto-match users by email domain (e.g., "company.com")
+  autoProvision         Boolean           @default(true)   // Create users on first login
+  defaultRole           WorkspaceRole     @default(MEMBER)
+  allowIdpInitiated     Boolean           @default(true)
+  forceAuthentication   Boolean           @default(false)
+  
+  // Attribute Mappings (JSON)
+  attributeMapping      String?           // { "email": "http://schemas.xmlsoap.org/...", "name": "displayName" }
+  
+  // Metadata
+  metadataUrl           String?           // IdP metadata URL for auto-config
+  spEntityId            String?           // Our SP Entity ID
+  spAcsUrl              String?           // Our Assertion Consumer Service URL
+  
+  createdBy             Int
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  
+  sessions              SsoSession[]
+
+  @@unique([workspaceId, emailDomain])
+  @@index([workspaceId])
+  @@index([type])
+  @@index([isActive])
+  @@index([emailDomain])
+}
+
+model SsoSession {
+  id                    Int               @id @default(autoincrement())
+  ssoProviderId         Int
+  userId                Int
+  sessionIndex          String?           // SAML SessionIndex for SLO
+  nameId                String?           // SAML NameID
+  idpSessionId          String?           // IdP's session identifier
+  accessToken           String?           // OIDC access token (encrypted)
+  refreshToken          String?           // OIDC refresh token (encrypted)
+  idToken               String?           // OIDC ID token
+  expiresAt             DateTime?
+  createdAt             DateTime          @default(now())
+  lastActivityAt        DateTime          @default(now())
+  
+  ssoProvider           SsoProvider       @relation(fields: [ssoProviderId], references: [id], onDelete: Cascade)
+
+  @@index([ssoProviderId])
+  @@index([userId])
+  @@index([sessionIndex])
+  @@index([expiresAt])
+}
+
+model SsoAuditLog {
+  id                    Int               @id @default(autoincrement())
+  workspaceId           Int
+  ssoProviderId         Int?
+  userId                Int?
+  event                 SsoAuditEvent
+  ipAddress             String?
+  userAgent             String?
+  details               String?           // JSON with additional context
+  success               Boolean           @default(true)
+  errorMessage          String?
+  createdAt             DateTime          @default(now())
+
+  @@index([workspaceId])
+  @@index([ssoProviderId])
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+enum SsoProviderType {
+  SAML
+  OIDC
+}
+
+enum SsoAuditEvent {
+  SSO_LOGIN_INITIATED
+  SSO_LOGIN_SUCCESS
+  SSO_LOGIN_FAILED
+  SSO_LOGOUT
+  SSO_PROVIDER_CREATED
+  SSO_PROVIDER_UPDATED
+  SSO_PROVIDER_DELETED
+  SSO_PROVIDER_ACTIVATED
+  SSO_PROVIDER_DEACTIVATED
+  USER_PROVISIONED
+  USER_DEPROVISIONED
 }

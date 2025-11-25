@@ -1,8 +1,8 @@
-import express from 'express';
-import nlpController from '../controllers/nlp.controller.js';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { body } from 'express-validator';
-import { validate } from '../middleware/validation.middleware.js';
+import express from "express";
+import nlpController from "../controllers/nlp.controller.js";
+import { authenticate } from "../middleware/auth.middleware.js";
+import { body } from "express-validator";
+import { validate } from "../middleware/validation.middleware.js";
 
 const router = express.Router();
 
@@ -15,31 +15,50 @@ router.use(authenticate);
  * @access  Private
  */
 router.post(
-  '/parse-task-instruction',
+  "/parse-task-instruction",
   [
-    body('instruction')
+    body("instruction")
       .trim()
       .notEmpty()
-      .withMessage('Instruction text is required')
+      .withMessage("Instruction text is required")
       .isLength({ min: 5, max: 1000 })
-      .withMessage('Instruction must be between 5 and 1000 characters')
+      .withMessage("Instruction must be between 5 and 1000 characters"),
   ],
   validate,
   nlpController.parseInstruction
 );
 
 /**
+ * @route   POST /api/nlp/analyze-risk
+ * @desc    Analyze project risks using AI
+ * @access  Private
+ */
+router.post(
+  "/analyze-risk",
+  [body("projectData").notEmpty().withMessage("Project data is required")],
+  validate,
+  nlpController.analyzeRisk
+);
+
+/**
+ * @route   POST /api/nlp/generate-summary
+ * @desc    Generate daily standup summary
+ * @access  Private
+ */
+router.post("/generate-summary", nlpController.generateSummary);
+
+/**
  * @route   GET /api/nlp/examples
  * @desc    Get usage examples for NLP task creation
  * @access  Private
  */
-router.get('/examples', nlpController.getExamples);
+router.get("/examples", nlpController.getExamples);
 
 /**
  * @route   GET /api/nlp/info
  * @desc    Get NLP service information and capabilities
  * @access  Private
  */
-router.get('/info', nlpController.getInfo);
+router.get("/info", nlpController.getInfo);
 
 export default router;

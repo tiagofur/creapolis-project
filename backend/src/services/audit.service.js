@@ -68,6 +68,31 @@ export const auditService = {
       },
     });
   },
+
+  /**
+   * Get logs for a specific user within a date range
+   */
+  async getUserActivityLogs(userId, startDate, endDate) {
+    return prisma.auditLog.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+  },
 };
 
 export default auditService;

@@ -38,6 +38,10 @@ import gamificationRoutes from "./routes/gamification.routes.js";
 import knowledgeRoutes from "./routes/knowledge.routes.js";
 import supportRoutes from "./routes/support.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import customFieldRoutes from "./routes/custom-field.routes.js";
+import automationRoutes from "./routes/automation.routes.js";
+import webhookRoutes from "./routes/webhook.routes.js";
+import ssoRoutes from "./routes/sso.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -190,6 +194,10 @@ app.use("/api/gamification", gamificationRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api", customFieldRoutes); // Custom fields for projects and tasks
+app.use("/api", automationRoutes); // Automations for projects
+app.use("/api", webhookRoutes); // Webhooks for project/workspace events
+app.use("/api/sso", ssoRoutes); // SAML/OIDC SSO for enterprise
 
 // Root endpoint
 app.get("/", (req, res) => {

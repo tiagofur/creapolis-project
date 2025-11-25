@@ -5,6 +5,7 @@ import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/sync/sync_manager.dart';
 import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/workspace_invitation.dart';
 import '../../domain/entities/workspace_member.dart';
@@ -20,12 +21,14 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   final WorkspaceLocalDataSource _localDataSource;
   final WorkspaceCacheDataSource _cacheDataSource;
   final ConnectivityService _connectivityService;
+  final SyncManager _syncManager;
 
   WorkspaceRepositoryImpl(
     this._remoteDataSource,
     this._localDataSource,
     this._cacheDataSource,
     this._connectivityService,
+    this._syncManager,
   );
 
   @override
@@ -155,24 +158,70 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     WorkspaceSettings? settings,
   }) async {
     try {
-      final workspace = await _remoteDataSource.createWorkspace(
-        name: name,
-        description: description,
-        avatarUrl: avatarUrl,
-        type: type,
-        settings: settings,
-      );
+      final isOnline = await _connectivityService.isConnected;
 
-      try {
-        await _cacheDataSource.cacheWorkspace(workspace);
-        await _cacheDataSource.invalidateCache();
-      } catch (e) {
-        AppLogger.warning(
-          'WorkspaceRepositoryImpl: Error al sincronizar caché tras crear workspace: $e',
+      if (isOnline) {
+        final workspace = await _remoteDataSource.createWorkspace(
+          name: name,
+          description: description,
+          avatarUrl: avatarUrl,
+          type: type,
+          settings: settings,
         );
-      }
 
-      return Right(workspace);
+        try {
+          await _cacheDataSource.cacheWorkspace(workspace);
+          await _cacheDataSource.invalidateCache();
+        } catch (e) {
+          AppLogger.warning(
+            'WorkspaceRepositoryImpl: Error al sincronizar caché tras crear workspace: $e',
+          );
+        }
+
+        return Right(workspace);
+      } else {
+        // Offline: Crear workspace temporal y encolar operación
+        final tempId = -DateTime.now().millisecondsSinceEpoch;
+        final tempWorkspace = Workspace(
+          id: tempId,
+          name: name,
+          description: description,
+          avatarUrl: avatarUrl,
+          type: type,
+          settings: settings ?? WorkspaceSettings.defaults(),
+          ownerId: 0, // ID temporal
+          owner: const WorkspaceOwner(
+            id: 0,
+            name: 'Me',
+            email: '',
+          ), // Placeholder
+          userRole: WorkspaceRole.owner,
+          memberCount: 1,
+          projectCount: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        // Guardar en caché local (Optimistic UI)
+        await _cacheDataSource.cacheWorkspace(tempWorkspace);
+
+        // Encolar operación
+        final operationData = {
+          'name': name,
+          'description': description,
+          'avatarUrl': avatarUrl,
+          'type': type.toString().split('.').last,
+          'settings': settings?.toJson(),
+          'tempId': tempId,
+        };
+
+        await _syncManager.queueOperation(
+          type: 'create_workspace',
+          data: operationData,
+        );
+
+        return Right(tempWorkspace);
+      }
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
@@ -194,25 +243,70 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     WorkspaceSettings? settings,
   }) async {
     try {
-      final workspace = await _remoteDataSource.updateWorkspace(
-        workspaceId: workspaceId,
-        name: name,
-        description: description,
-        avatarUrl: avatarUrl,
-        type: type,
-        settings: settings,
-      );
+      final isOnline = await _connectivityService.isConnected;
 
-      try {
-        await _cacheDataSource.cacheWorkspace(workspace);
-        await _cacheDataSource.invalidateCache();
-      } catch (e) {
-        AppLogger.warning(
-          'WorkspaceRepositoryImpl: Error al sincronizar caché tras actualizar workspace $workspaceId: $e',
+      if (isOnline) {
+        final workspace = await _remoteDataSource.updateWorkspace(
+          workspaceId: workspaceId,
+          name: name,
+          description: description,
+          avatarUrl: avatarUrl,
+          type: type,
+          settings: settings,
         );
-      }
 
-      return Right(workspace);
+        try {
+          await _cacheDataSource.cacheWorkspace(workspace);
+          await _cacheDataSource.invalidateCache();
+        } catch (e) {
+          AppLogger.warning(
+            'WorkspaceRepositoryImpl: Error al sincronizar caché tras actualizar workspace $workspaceId: $e',
+          );
+        }
+
+        return Right(workspace);
+      } else {
+        // Offline: Actualizar caché local y encolar operación
+        final currentWorkspace = await _cacheDataSource.getCachedWorkspaceById(
+          workspaceId,
+        );
+        if (currentWorkspace == null) {
+          return const Left(
+            NotFoundFailure(
+              'Workspace no encontrado en caché para actualización offline',
+            ),
+          );
+        }
+
+        final updatedWorkspace = currentWorkspace.copyWith(
+          name: name ?? currentWorkspace.name,
+          description: description ?? currentWorkspace.description,
+          avatarUrl: avatarUrl ?? currentWorkspace.avatarUrl,
+          type: type ?? currentWorkspace.type,
+          settings: settings ?? currentWorkspace.settings,
+          updatedAt: DateTime.now(),
+        );
+
+        // Actualizar en caché local (Optimistic UI)
+        await _cacheDataSource.cacheWorkspace(updatedWorkspace);
+
+        // Encolar operación
+        final operationData = {
+          'id': workspaceId,
+          'name': name,
+          'description': description,
+          'avatarUrl': avatarUrl,
+          'type': type?.toString().split('.').last,
+          'settings': settings?.toJson(),
+        };
+
+        await _syncManager.queueOperation(
+          type: 'update_workspace',
+          data: operationData,
+        );
+
+        return Right(updatedWorkspace);
+      }
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on ForbiddenException catch (e) {
@@ -229,24 +323,49 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   @override
   Future<Either<Failure, void>> deleteWorkspace(int workspaceId) async {
     try {
-      await _remoteDataSource.deleteWorkspace(workspaceId);
+      final isOnline = await _connectivityService.isConnected;
 
-      // Si el workspace eliminado era el activo, limpiarlo del cache
-      final activeId = await _localDataSource.getActiveWorkspaceId();
-      if (activeId == workspaceId) {
-        await _localDataSource.clearActiveWorkspace();
-      }
+      if (isOnline) {
+        await _remoteDataSource.deleteWorkspace(workspaceId);
 
-      try {
+        // Si el workspace eliminado era el activo, limpiarlo del cache
+        final activeId = await _localDataSource.getActiveWorkspaceId();
+        if (activeId == workspaceId) {
+          await _localDataSource.clearActiveWorkspace();
+        }
+
+        try {
+          await _cacheDataSource.deleteCachedWorkspace(workspaceId);
+          await _cacheDataSource.invalidateCache();
+        } catch (e) {
+          AppLogger.warning(
+            'WorkspaceRepositoryImpl: Error al actualizar caché tras eliminar workspace $workspaceId: $e',
+          );
+        }
+
+        return const Right(null);
+      } else {
+        // Offline: Eliminar de caché local y encolar operación
+
+        // Si el workspace eliminado era el activo, limpiarlo del cache
+        final activeId = await _localDataSource.getActiveWorkspaceId();
+        if (activeId == workspaceId) {
+          await _localDataSource.clearActiveWorkspace();
+        }
+
+        // Eliminar del caché individual (Optimistic UI)
         await _cacheDataSource.deleteCachedWorkspace(workspaceId);
-        await _cacheDataSource.invalidateCache();
-      } catch (e) {
-        AppLogger.warning(
-          'WorkspaceRepositoryImpl: Error al actualizar caché tras eliminar workspace $workspaceId: $e',
-        );
-      }
 
-      return const Right(null);
+        // Encolar operación
+        final operationData = {'id': workspaceId};
+
+        await _syncManager.queueOperation(
+          type: 'delete_workspace',
+          data: operationData,
+        );
+
+        return const Right(null);
+      }
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on ForbiddenException catch (e) {

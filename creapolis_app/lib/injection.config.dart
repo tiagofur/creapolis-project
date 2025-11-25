@@ -29,8 +29,10 @@ import 'core/services/sync_notification_service.dart' as _i659;
 import 'core/sync/sync_manager.dart' as _i223;
 import 'core/sync/sync_operation_executor.dart' as _i203;
 import 'data/datasources/auth_remote_datasource.dart' as _i127;
+import 'data/datasources/automation_remote_datasource.dart' as _i568;
 import 'data/datasources/calendar_remote_datasource.dart' as _i318;
 import 'data/datasources/comment_remote_datasource.dart' as _i976;
+import 'data/datasources/custom_field_remote_datasource.dart' as _i325;
 import 'data/datasources/gamification_remote_datasource.dart' as _i1070;
 import 'data/datasources/local/project_cache_datasource.dart' as _i255;
 import 'data/datasources/local/task_cache_datasource.dart' as _i314;
@@ -42,37 +44,47 @@ import 'data/datasources/project_remote_datasource.dart' as _i922;
 import 'data/datasources/push_notification_remote_datasource.dart' as _i959;
 import 'data/datasources/remote/category_remote_datasource.dart' as _i1050;
 import 'data/datasources/search_remote_datasource.dart' as _i232;
+import 'data/datasources/sso_remote_datasource.dart' as _i918;
 import 'data/datasources/task_remote_datasource.dart' as _i1007;
 import 'data/datasources/time_log_remote_datasource.dart' as _i714;
+import 'data/datasources/webhook_remote_datasource.dart' as _i871;
 import 'data/datasources/workload_remote_datasource.dart' as _i233;
 import 'data/datasources/workspace_local_datasource.dart' as _i268;
 import 'data/datasources/workspace_remote_datasource.dart' as _i391;
 import 'data/repositories/auth_repository_impl.dart' as _i145;
+import 'data/repositories/automation_repository_impl.dart' as _i590;
 import 'data/repositories/calendar_repository_impl.dart' as _i365;
 import 'data/repositories/category_repository_impl.dart' as _i1032;
 import 'data/repositories/comment_repository_impl.dart' as _i329;
+import 'data/repositories/custom_field_repository_impl.dart' as _i430;
 import 'data/repositories/gamification_repository_impl.dart' as _i179;
 import 'data/repositories/nlp_repository_impl.dart' as _i693;
 import 'data/repositories/notification_repository_impl.dart' as _i704;
 import 'data/repositories/project_member_repository_impl.dart' as _i788;
 import 'data/repositories/project_repository_impl.dart' as _i40;
 import 'data/repositories/search_repository_impl.dart' as _i409;
+import 'data/repositories/sso_repository_impl.dart' as _i449;
 import 'data/repositories/task_repository_impl.dart' as _i221;
 import 'data/repositories/time_log_repository_impl.dart' as _i384;
+import 'data/repositories/webhook_repository_impl.dart' as _i633;
 import 'data/repositories/workload_repository_impl.dart' as _i773;
 import 'data/repositories/workspace_repository_impl.dart' as _i753;
 import 'domain/repositories/auth_repository.dart' as _i716;
+import 'domain/repositories/automation_repository.dart' as _i402;
 import 'domain/repositories/calendar_repository.dart' as _i916;
 import 'domain/repositories/category_repository.dart' as _i615;
 import 'domain/repositories/comment_repository.dart' as _i60;
+import 'domain/repositories/custom_field_repository.dart' as _i834;
 import 'domain/repositories/gamification_repository.dart' as _i1019;
 import 'domain/repositories/nlp_repository.dart' as _i511;
 import 'domain/repositories/notification_repository.dart' as _i82;
 import 'domain/repositories/project_member_repository.dart' as _i51;
 import 'domain/repositories/project_repository.dart' as _i17;
 import 'domain/repositories/search_repository.dart' as _i844;
+import 'domain/repositories/sso_repository.dart' as _i602;
 import 'domain/repositories/task_repository.dart' as _i449;
 import 'domain/repositories/time_log_repository.dart' as _i657;
+import 'domain/repositories/webhook_repository.dart' as _i967;
 import 'domain/repositories/workload_repository.dart' as _i42;
 import 'domain/repositories/workspace_repository.dart' as _i713;
 import 'domain/usecases/category/apply_category_usecase.dart' as _i696;
@@ -144,13 +156,17 @@ import 'features/workspace/data/datasources/workspace_remote_datasource.dart'
     as _i398;
 import 'features/workspace/presentation/bloc/workspace_bloc.dart' as _i207;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
+import 'presentation/bloc/automation/automation_bloc.dart' as _i157;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/category/category_bloc.dart' as _i116;
 import 'presentation/bloc/comment/comment_bloc.dart' as _i462;
+import 'presentation/bloc/custom_field/custom_field_bloc.dart' as _i404;
 import 'presentation/bloc/gamification/gamification_bloc.dart' as _i589;
 import 'presentation/bloc/notification/notification_bloc.dart' as _i571;
+import 'presentation/bloc/sso/sso_bloc.dart' as _i66;
 import 'presentation/bloc/task/task_bloc.dart' as _i944;
 import 'presentation/bloc/time_tracking/time_tracking_bloc.dart' as _i808;
+import 'presentation/bloc/webhook/webhook_bloc.dart' as _i890;
 import 'presentation/bloc/workload/workload_bloc.dart' as _i107;
 import 'presentation/bloc/workspace_invitation/workspace_invitation_bloc.dart'
     as _i953;
@@ -215,41 +231,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1019.GamificationRepository>(() =>
         _i179.GamificationRepositoryImpl(
             gh<_i1070.GamificationRemoteDataSource>()));
-    gh.lazySingleton<_i713.WorkspaceRepository>(
-        () => _i753.WorkspaceRepositoryImpl(
-              gh<_i391.WorkspaceRemoteDataSource>(),
-              gh<_i268.WorkspaceLocalDataSource>(),
-              gh<_i618.WorkspaceCacheDataSource>(),
-              gh<_i524.ConnectivityService>(),
-            ));
-    gh.factory<_i927.AcceptInvitationUseCase>(
-        () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i359.CreateInvitationUseCase>(
-        () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i225.CreateWorkspaceUseCase>(
-        () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i9.DeclineInvitationUseCase>(
-        () => _i9.DeclineInvitationUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i154.DeleteWorkspaceUseCase>(
-        () => _i154.DeleteWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i890.GetActiveWorkspaceUseCase>(
-        () => _i890.GetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i591.GetPendingInvitationsUseCase>(() =>
-        _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i820.GetUserWorkspacesUseCase>(
-        () => _i820.GetUserWorkspacesUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i517.GetWorkspaceMembersUseCase>(() =>
-        _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i37.RemoveMemberUseCase>(
-        () => _i37.RemoveMemberUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i245.SetActiveWorkspaceUseCase>(
-        () => _i245.SetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i905.UpdateMemberRoleUseCase>(
-        () => _i905.UpdateMemberRoleUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i1066.UpdateWorkspaceUseCase>(
-        () => _i1066.UpdateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
-    gh.factory<_i53.WorkspaceMemberBloc>(
-        () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()));
     gh.lazySingleton<_i716.AuthRepository>(() => _i145.AuthRepositoryImpl(
           gh<_i127.AuthRemoteDataSource>(),
           gh<_i558.FlutterSecureStorage>(),
@@ -259,13 +240,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i714.TimeLogRemoteDataSourceImpl(gh<_i45.DioClient>()));
     gh.factory<_i916.CalendarRepository>(() =>
         _i365.CalendarRepositoryImpl(gh<_i318.CalendarRemoteDataSource>()));
-    gh.factory<_i953.WorkspaceInvitationBloc>(
-        () => _i953.WorkspaceInvitationBloc(
-              gh<_i591.GetPendingInvitationsUseCase>(),
-              gh<_i359.CreateInvitationUseCase>(),
-              gh<_i927.AcceptInvitationUseCase>(),
-              gh<_i9.DeclineInvitationUseCase>(),
-            ));
     gh.factory<_i889.GetProfileUseCase>(
         () => _i889.GetProfileUseCase(gh<_i716.AuthRepository>()));
     gh.factory<_i883.LoginUseCase>(
@@ -313,8 +287,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i31.ProjectMemberRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i232.SearchRemoteDataSource>(
         () => _i232.SearchRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i325.CustomFieldRemoteDataSource>(
+        () => _i325.CustomFieldRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i959.PushNotificationRemoteDataSource>(() =>
         _i959.PushNotificationRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i871.WebhookRemoteDataSource>(
+        () => _i871.WebhookRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i568.AutomationRemoteDataSource>(
+        () => _i568.AutomationRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i976.CommentRemoteDataSource>(
         () => _i976.CommentRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.factory<_i605.AuthBloc>(() => _i605.AuthBloc(
@@ -329,6 +309,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i922.ProjectRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i1007.TaskRemoteDataSource>(
         () => _i1007.TaskRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i918.SsoRemoteDataSource>(
+        () => _i918.SsoRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i1050.CategoryRemoteDataSource>(
         () => _i1050.CategoryRemoteDataSource(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i398.WorkspaceRemoteDataSource>(
@@ -341,11 +323,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i888.NotificationRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i60.CommentRepository>(
         () => _i329.CommentRepositoryImpl(gh<_i976.CommentRemoteDataSource>()));
-    gh.lazySingleton<_i449.TaskRepository>(() => _i221.TaskRepositoryImpl(
-          gh<_i1007.TaskRemoteDataSource>(),
-          gh<_i314.TaskCacheDataSource>(),
-          gh<_i524.ConnectivityService>(),
-        ));
     gh.factory<_i659.CalendarBloc>(() => _i659.CalendarBloc(
           gh<_i913.ConnectCalendarUseCase>(),
           gh<_i566.DisconnectCalendarUseCase>(),
@@ -389,16 +366,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i462.CommentBloc>(
         () => _i462.CommentBloc(gh<_i60.CommentRepository>()));
-    gh.factory<_i612.CreateTaskUseCase>(
-        () => _i612.CreateTaskUseCase(gh<_i449.TaskRepository>()));
-    gh.factory<_i757.DeleteTaskUseCase>(
-        () => _i757.DeleteTaskUseCase(gh<_i449.TaskRepository>()));
-    gh.factory<_i725.GetTasksByProjectUseCase>(
-        () => _i725.GetTasksByProjectUseCase(gh<_i449.TaskRepository>()));
-    gh.factory<_i199.GetTaskByIdUseCase>(
-        () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()));
-    gh.factory<_i1018.UpdateTaskUseCase>(
-        () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()));
     gh.lazySingleton<_i51.ProjectMemberRepository>(() =>
         _i788.ProjectMemberRepositoryImpl(
             gh<_i31.ProjectMemberRemoteDataSource>()));
@@ -407,43 +374,31 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i82.NotificationRepository>(() =>
         _i704.NotificationRepositoryImpl(
             gh<_i888.NotificationRemoteDataSource>()));
-    gh.factory<_i100.TaskBloc>(
-        () => _i100.TaskBloc(taskRepository: gh<_i449.TaskRepository>()));
-    gh.factory<_i807.SearchBloc>(
-        () => _i807.SearchBloc(gh<_i844.SearchRepository>()));
-    gh.lazySingleton<_i207.WorkspaceBloc>(() => _i207.WorkspaceBloc(
-          dataSource: gh<_i398.WorkspaceRemoteDataSource>(),
-          getUserWorkspaces: gh<_i820.GetUserWorkspacesUseCase>(),
-          createWorkspace: gh<_i225.CreateWorkspaceUseCase>(),
-          setActiveWorkspace: gh<_i245.SetActiveWorkspaceUseCase>(),
-          getActiveWorkspace: gh<_i890.GetActiveWorkspaceUseCase>(),
-        ));
-    gh.lazySingleton<_i17.ProjectRepository>(() => _i40.ProjectRepositoryImpl(
-          gh<_i922.ProjectRemoteDataSource>(),
-          gh<_i255.ProjectCacheDataSource>(),
-          gh<_i524.ConnectivityService>(),
-        ));
+    gh.lazySingleton<_i602.SsoRepository>(
+        () => _i449.SsoRepositoryImpl(gh<_i918.SsoRemoteDataSource>()));
+    gh.lazySingleton<_i834.CustomFieldRepository>(
+        () => _i430.CustomFieldRepositoryImpl(
+              gh<_i325.CustomFieldRemoteDataSource>(),
+              gh<_i524.ConnectivityService>(),
+            ));
+    gh.lazySingleton<_i402.AutomationRepository>(
+        () => _i590.AutomationRepositoryImpl(
+              gh<_i568.AutomationRemoteDataSource>(),
+              gh<_i524.ConnectivityService>(),
+            ));
     gh.lazySingleton<_i203.SyncOperationExecutor>(
         () => _i203.SyncOperationExecutor(
-              gh<_i713.WorkspaceRepository>(),
-              gh<_i17.ProjectRepository>(),
-              gh<_i449.TaskRepository>(),
+              gh<_i391.WorkspaceRemoteDataSource>(),
+              gh<_i922.ProjectRemoteDataSource>(),
+              gh<_i1007.TaskRemoteDataSource>(),
             ));
-    gh.factory<_i1015.CreateProjectUseCase>(
-        () => _i1015.CreateProjectUseCase(gh<_i17.ProjectRepository>()));
-    gh.factory<_i177.DeleteProjectUseCase>(
-        () => _i177.DeleteProjectUseCase(gh<_i17.ProjectRepository>()));
-    gh.factory<_i32.GetProjectsUseCase>(
-        () => _i32.GetProjectsUseCase(gh<_i17.ProjectRepository>()));
-    gh.factory<_i356.GetProjectByIdUseCase>(
-        () => _i356.GetProjectByIdUseCase(gh<_i17.ProjectRepository>()));
-    gh.factory<_i589.UpdateProjectUseCase>(
-        () => _i589.UpdateProjectUseCase(gh<_i17.ProjectRepository>()));
-    gh.factory<_i666.GetWorkspaceTasksUseCase>(
-        () => _i666.GetWorkspaceTasksUseCase(
-              gh<_i32.GetProjectsUseCase>(),
-              gh<_i725.GetTasksByProjectUseCase>(),
-            ));
+    gh.factory<_i66.SsoBloc>(() => _i66.SsoBloc(gh<_i602.SsoRepository>()));
+    gh.factory<_i807.SearchBloc>(
+        () => _i807.SearchBloc(gh<_i844.SearchRepository>()));
+    gh.lazySingleton<_i967.WebhookRepository>(() => _i633.WebhookRepositoryImpl(
+          gh<_i871.WebhookRemoteDataSource>(),
+          gh<_i524.ConnectivityService>(),
+        ));
     gh.lazySingleton<_i696.ApplyCategoryUseCase>(
         () => _i696.ApplyCategoryUseCase(gh<_i615.CategoryRepository>()));
     gh.lazySingleton<_i766.GetCategoryMetricsUseCase>(
@@ -468,6 +423,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i422.SendMessageUseCase>(),
           gh<_i848.SocketService>(),
         ));
+    gh.factory<_i404.CustomFieldBloc>(
+        () => _i404.CustomFieldBloc(gh<_i834.CustomFieldRepository>()));
     gh.factory<_i124.ProjectMemberBloc>(
         () => _i124.ProjectMemberBloc(gh<_i51.ProjectMemberRepository>()));
     gh.lazySingleton<_i511.NLPRepository>(() => _i693.NLPRepositoryImpl(
@@ -487,8 +444,101 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i524.ConnectivityService>(),
           gh<_i203.SyncOperationExecutor>(),
         ));
-    gh.singleton<_i34.WorkspaceContext>(
-        () => _i34.WorkspaceContext(gh<_i207.WorkspaceBloc>()));
+    gh.factory<_i890.WebhookBloc>(
+        () => _i890.WebhookBloc(gh<_i967.WebhookRepository>()));
+    gh.factory<_i157.AutomationBloc>(
+        () => _i157.AutomationBloc(gh<_i402.AutomationRepository>()));
+    gh.lazySingleton<_i449.TaskRepository>(() => _i221.TaskRepositoryImpl(
+          gh<_i1007.TaskRemoteDataSource>(),
+          gh<_i314.TaskCacheDataSource>(),
+          gh<_i524.ConnectivityService>(),
+          gh<_i223.SyncManager>(),
+        ));
+    gh.lazySingleton<_i659.SyncNotificationService>(
+        () => _i659.SyncNotificationService(gh<_i223.SyncManager>()));
+    gh.factory<_i100.TaskBloc>(
+        () => _i100.TaskBloc(taskRepository: gh<_i449.TaskRepository>()));
+    gh.factory<_i116.CategoryBloc>(() => _i116.CategoryBloc(
+          gh<_i494.GetCategorySuggestionUseCase>(),
+          gh<_i696.ApplyCategoryUseCase>(),
+          gh<_i597.SubmitCategoryFeedbackUseCase>(),
+          gh<_i766.GetCategoryMetricsUseCase>(),
+          gh<_i424.GetSuggestionsHistoryUseCase>(),
+        ));
+    gh.lazySingleton<_i17.ProjectRepository>(() => _i40.ProjectRepositoryImpl(
+          gh<_i922.ProjectRemoteDataSource>(),
+          gh<_i255.ProjectCacheDataSource>(),
+          gh<_i524.ConnectivityService>(),
+          gh<_i223.SyncManager>(),
+        ));
+    gh.lazySingleton<_i713.WorkspaceRepository>(
+        () => _i753.WorkspaceRepositoryImpl(
+              gh<_i391.WorkspaceRemoteDataSource>(),
+              gh<_i268.WorkspaceLocalDataSource>(),
+              gh<_i618.WorkspaceCacheDataSource>(),
+              gh<_i524.ConnectivityService>(),
+              gh<_i223.SyncManager>(),
+            ));
+    gh.factory<_i612.CreateTaskUseCase>(
+        () => _i612.CreateTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i757.DeleteTaskUseCase>(
+        () => _i757.DeleteTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i725.GetTasksByProjectUseCase>(
+        () => _i725.GetTasksByProjectUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i199.GetTaskByIdUseCase>(
+        () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i1018.UpdateTaskUseCase>(
+        () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.factory<_i927.AcceptInvitationUseCase>(
+        () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i359.CreateInvitationUseCase>(
+        () => _i359.CreateInvitationUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i225.CreateWorkspaceUseCase>(
+        () => _i225.CreateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i9.DeclineInvitationUseCase>(
+        () => _i9.DeclineInvitationUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i154.DeleteWorkspaceUseCase>(
+        () => _i154.DeleteWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i890.GetActiveWorkspaceUseCase>(
+        () => _i890.GetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i591.GetPendingInvitationsUseCase>(() =>
+        _i591.GetPendingInvitationsUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i820.GetUserWorkspacesUseCase>(
+        () => _i820.GetUserWorkspacesUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i517.GetWorkspaceMembersUseCase>(() =>
+        _i517.GetWorkspaceMembersUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i37.RemoveMemberUseCase>(
+        () => _i37.RemoveMemberUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i245.SetActiveWorkspaceUseCase>(
+        () => _i245.SetActiveWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i905.UpdateMemberRoleUseCase>(
+        () => _i905.UpdateMemberRoleUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i1066.UpdateWorkspaceUseCase>(
+        () => _i1066.UpdateWorkspaceUseCase(gh<_i713.WorkspaceRepository>()));
+    gh.factory<_i53.WorkspaceMemberBloc>(
+        () => _i53.WorkspaceMemberBloc(gh<_i517.GetWorkspaceMembersUseCase>()));
+    gh.factory<_i1015.CreateProjectUseCase>(
+        () => _i1015.CreateProjectUseCase(gh<_i17.ProjectRepository>()));
+    gh.factory<_i177.DeleteProjectUseCase>(
+        () => _i177.DeleteProjectUseCase(gh<_i17.ProjectRepository>()));
+    gh.factory<_i32.GetProjectsUseCase>(
+        () => _i32.GetProjectsUseCase(gh<_i17.ProjectRepository>()));
+    gh.factory<_i356.GetProjectByIdUseCase>(
+        () => _i356.GetProjectByIdUseCase(gh<_i17.ProjectRepository>()));
+    gh.factory<_i589.UpdateProjectUseCase>(
+        () => _i589.UpdateProjectUseCase(gh<_i17.ProjectRepository>()));
+    gh.factory<_i666.GetWorkspaceTasksUseCase>(
+        () => _i666.GetWorkspaceTasksUseCase(
+              gh<_i32.GetProjectsUseCase>(),
+              gh<_i725.GetTasksByProjectUseCase>(),
+            ));
+    gh.factory<_i953.WorkspaceInvitationBloc>(
+        () => _i953.WorkspaceInvitationBloc(
+              gh<_i591.GetPendingInvitationsUseCase>(),
+              gh<_i359.CreateInvitationUseCase>(),
+              gh<_i927.AcceptInvitationUseCase>(),
+              gh<_i9.DeclineInvitationUseCase>(),
+            ));
     gh.factory<_i944.TaskBloc>(() => _i944.TaskBloc(
           gh<_i725.GetTasksByProjectUseCase>(),
           gh<_i666.GetWorkspaceTasksUseCase>(),
@@ -498,8 +548,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i757.DeleteTaskUseCase>(),
           gh<_i449.TaskRepository>(),
         ));
-    gh.lazySingleton<_i659.SyncNotificationService>(
-        () => _i659.SyncNotificationService(gh<_i223.SyncManager>()));
     gh.factory<_i328.ProjectBloc>(() => _i328.ProjectBloc(
           gh<_i32.GetProjectsUseCase>(),
           gh<_i356.GetProjectByIdUseCase>(),
@@ -507,13 +555,15 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i589.UpdateProjectUseCase>(),
           gh<_i177.DeleteProjectUseCase>(),
         ));
-    gh.factory<_i116.CategoryBloc>(() => _i116.CategoryBloc(
-          gh<_i494.GetCategorySuggestionUseCase>(),
-          gh<_i696.ApplyCategoryUseCase>(),
-          gh<_i597.SubmitCategoryFeedbackUseCase>(),
-          gh<_i766.GetCategoryMetricsUseCase>(),
-          gh<_i424.GetSuggestionsHistoryUseCase>(),
+    gh.lazySingleton<_i207.WorkspaceBloc>(() => _i207.WorkspaceBloc(
+          dataSource: gh<_i398.WorkspaceRemoteDataSource>(),
+          getUserWorkspaces: gh<_i820.GetUserWorkspacesUseCase>(),
+          createWorkspace: gh<_i225.CreateWorkspaceUseCase>(),
+          setActiveWorkspace: gh<_i245.SetActiveWorkspaceUseCase>(),
+          getActiveWorkspace: gh<_i890.GetActiveWorkspaceUseCase>(),
         ));
+    gh.singleton<_i34.WorkspaceContext>(
+        () => _i34.WorkspaceContext(gh<_i207.WorkspaceBloc>()));
     return this;
   }
 }

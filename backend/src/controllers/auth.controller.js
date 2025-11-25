@@ -282,6 +282,27 @@ class AuthController {
     });
     return successResponse(res, user, "Email verified");
   });
+
+  /**
+   * Handle Social Login Callback
+   * Used by Passport strategies
+   */
+  handleSocialCallback = asyncHandler(async (req, res) => {
+    // Passport attaches the user to req.user
+    if (!req.user) {
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      return res.redirect(`${frontendUrl}/login?error=auth_failed`);
+    }
+
+    // Generate JWT token
+    const result = await authService.generateAuthResponse(req.user);
+
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${result.token}`;
+
+    res.redirect(redirectUrl);
+  });
 }
 
 export default new AuthController();

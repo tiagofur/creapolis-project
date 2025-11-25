@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
 import '../../data/models/hive/hive_operation_queue.dart';
-import '../../domain/repositories/workspace_repository.dart';
-import '../../domain/repositories/project_repository.dart';
-import '../../domain/repositories/task_repository.dart';
+import '../../data/datasources/workspace_remote_datasource.dart';
+import '../../data/datasources/project_remote_datasource.dart';
+import '../../data/datasources/task_remote_datasource.dart';
 import '../../features/workspace/data/models/workspace_model.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/entities/task.dart';
@@ -11,21 +11,21 @@ import '../utils/app_logger.dart';
 
 /// Ejecutor de operaciones encoladas
 ///
-/// Toma operaciones de la cola y las ejecuta contra los repositorios
-/// apropiados. Soporta 9 tipos de operaciones:
+/// Toma operaciones de la cola y las ejecuta contra los data sources remotos.
+/// Soporta 9 tipos de operaciones:
 /// - Workspace: create, update, delete
 /// - Project: create, update, delete
 /// - Task: create, update, delete
 @lazySingleton
 class SyncOperationExecutor {
-  final WorkspaceRepository _workspaceRepository;
-  final ProjectRepository _projectRepository;
-  final TaskRepository _taskRepository;
+  final WorkspaceRemoteDataSource _workspaceRemoteDataSource;
+  final ProjectRemoteDataSource _projectRemoteDataSource;
+  final TaskRemoteDataSource _taskRemoteDataSource;
 
   SyncOperationExecutor(
-    this._workspaceRepository,
-    this._projectRepository,
-    this._taskRepository,
+    this._workspaceRemoteDataSource,
+    this._projectRemoteDataSource,
+    this._taskRemoteDataSource,
   );
 
   /// Ejecutar una operación encolada
@@ -93,24 +93,15 @@ class SyncOperationExecutor {
 
   Future<bool> _executeCreateWorkspace(Map<String, dynamic> data) async {
     try {
-      final result = await _workspaceRepository.createWorkspace(
+      final workspace = await _workspaceRemoteDataSource.createWorkspace(
         name: data['name'] as String,
         description: data['description'] as String?,
         avatarUrl: data['avatarUrl'] as String?,
         type: _parseWorkspaceType(data['type'] as String?),
         settings: _parseWorkspaceSettings(data['settings']),
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló create_workspace', failure);
-          return false;
-        },
-        (workspace) {
-          AppLogger.info('Workspace creado exitosamente: ${workspace.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Workspace creado exitosamente: ${workspace.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeCreateWorkspace', e, stackTrace);
       return false;
@@ -125,7 +116,7 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _workspaceRepository.updateWorkspace(
+      final workspace = await _workspaceRemoteDataSource.updateWorkspace(
         workspaceId: workspaceId,
         name: data['name'] as String?,
         description: data['description'] as String?,
@@ -133,17 +124,8 @@ class SyncOperationExecutor {
         type: _parseWorkspaceType(data['type'] as String?),
         settings: _parseWorkspaceSettings(data['settings']),
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló update_workspace', failure);
-          return false;
-        },
-        (workspace) {
-          AppLogger.info('Workspace actualizado exitosamente: ${workspace.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Workspace actualizado exitosamente: ${workspace.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeUpdateWorkspace', e, stackTrace);
       return false;
@@ -158,18 +140,9 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _workspaceRepository.deleteWorkspace(workspaceId);
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló delete_workspace', failure);
-          return false;
-        },
-        (_) {
-          AppLogger.info('Workspace eliminado exitosamente: $workspaceId');
-          return true;
-        },
-      );
+      await _workspaceRemoteDataSource.deleteWorkspace(workspaceId);
+      AppLogger.info('Workspace eliminado exitosamente: $workspaceId');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeDeleteWorkspace', e, stackTrace);
       return false;
@@ -180,7 +153,7 @@ class SyncOperationExecutor {
 
   Future<bool> _executeCreateProject(Map<String, dynamic> data) async {
     try {
-      final result = await _projectRepository.createProject(
+      final project = await _projectRemoteDataSource.createProject(
         name: data['name'] as String,
         description: data['description'] as String,
         startDate: DateTime.parse(data['startDate'] as String),
@@ -189,17 +162,8 @@ class SyncOperationExecutor {
         managerId: data['managerId'] as int?,
         workspaceId: data['workspaceId'] as int,
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló create_project', failure);
-          return false;
-        },
-        (project) {
-          AppLogger.info('Project creado exitosamente: ${project.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Project creado exitosamente: ${project.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeCreateProject', e, stackTrace);
       return false;
@@ -214,7 +178,7 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _projectRepository.updateProject(
+      final project = await _projectRemoteDataSource.updateProject(
         id: projectId,
         name: data['name'] as String?,
         description: data['description'] as String?,
@@ -229,17 +193,8 @@ class SyncOperationExecutor {
             : null,
         managerId: data['managerId'] as int?,
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló update_project', failure);
-          return false;
-        },
-        (project) {
-          AppLogger.info('Project actualizado exitosamente: ${project.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Project actualizado exitosamente: ${project.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeUpdateProject', e, stackTrace);
       return false;
@@ -254,18 +209,9 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _projectRepository.deleteProject(projectId);
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló delete_project', failure);
-          return false;
-        },
-        (_) {
-          AppLogger.info('Project eliminado exitosamente: $projectId');
-          return true;
-        },
-      );
+      await _projectRemoteDataSource.deleteProject(projectId);
+      AppLogger.info('Project eliminado exitosamente: $projectId');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeDeleteProject', e, stackTrace);
       return false;
@@ -276,7 +222,7 @@ class SyncOperationExecutor {
 
   Future<bool> _executeCreateTask(Map<String, dynamic> data) async {
     try {
-      final result = await _taskRepository.createTask(
+      final task = await _taskRemoteDataSource.createTask(
         title: data['title'] as String,
         description: data['description'] as String,
         status: _parseTaskStatus(data['status'] as String),
@@ -288,17 +234,8 @@ class SyncOperationExecutor {
         assignedUserId: data['assignedUserId'] as int?,
         dependencyIds: (data['dependencyIds'] as List?)?.cast<int>(),
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló create_task', failure);
-          return false;
-        },
-        (task) {
-          AppLogger.info('Task creada exitosamente: ${task.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Task creada exitosamente: ${task.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeCreateTask', e, stackTrace);
       return false;
@@ -315,7 +252,7 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _taskRepository.updateTask(
+      final task = await _taskRemoteDataSource.updateTask(
         projectId: projectId,
         taskId: taskId,
         title: data['title'] as String?,
@@ -338,17 +275,8 @@ class SyncOperationExecutor {
         assignedUserId: data['assignedUserId'] as int?,
         dependencyIds: (data['dependencyIds'] as List?)?.cast<int>(),
       );
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló update_task', failure);
-          return false;
-        },
-        (task) {
-          AppLogger.info('Task actualizada exitosamente: ${task.id}');
-          return true;
-        },
-      );
+      AppLogger.info('Task actualizada exitosamente: ${task.id}');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeUpdateTask', e, stackTrace);
       return false;
@@ -365,18 +293,9 @@ class SyncOperationExecutor {
         return false;
       }
 
-      final result = await _taskRepository.deleteTask(projectId, taskId);
-
-      return result.fold(
-        (failure) {
-          AppLogger.error('Falló delete_task', failure);
-          return false;
-        },
-        (_) {
-          AppLogger.info('Task eliminada exitosamente: $taskId');
-          return true;
-        },
-      );
+      await _taskRemoteDataSource.deleteTask(projectId, taskId);
+      AppLogger.info('Task eliminada exitosamente: $taskId');
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error en _executeDeleteTask', e, stackTrace);
       return false;

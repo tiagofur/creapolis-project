@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/sync/sync_manager.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../datasources/local/project_cache_datasource.dart';
@@ -15,11 +16,13 @@ class ProjectRepositoryImpl implements ProjectRepository {
   final ProjectRemoteDataSource _remoteDataSource;
   final ProjectCacheDataSource _cacheDataSource;
   final ConnectivityService _connectivityService;
+  final SyncManager _syncManager;
 
   ProjectRepositoryImpl(
     this._remoteDataSource,
     this._cacheDataSource,
     this._connectivityService,
+    this._syncManager,
   );
 
   @override
@@ -232,23 +235,64 @@ class ProjectRepositoryImpl implements ProjectRepository {
     required int workspaceId,
   }) async {
     try {
-      final project = await _remoteDataSource.createProject(
-        name: name,
-        description: description,
-        startDate: startDate,
-        endDate: endDate,
-        status: status,
-        managerId: managerId,
-        workspaceId: workspaceId,
-      );
+      final isOnline = await _connectivityService.isConnected;
 
-      // Invalidar el caché de la lista de proyectos del workspace
-      await _cacheDataSource.invalidateCache(workspaceId);
+      if (isOnline) {
+        final project = await _remoteDataSource.createProject(
+          name: name,
+          description: description,
+          startDate: startDate,
+          endDate: endDate,
+          status: status,
+          managerId: managerId,
+          workspaceId: workspaceId,
+        );
 
-      // Cachear el nuevo proyecto
-      await _cacheDataSource.cacheProject(project);
+        // Invalidar el caché de la lista de proyectos del workspace
+        await _cacheDataSource.invalidateCache(workspaceId);
 
-      return Right(project);
+        // Cachear el nuevo proyecto
+        await _cacheDataSource.cacheProject(project);
+
+        return Right(project);
+      } else {
+        // Offline: Crear proyecto temporal y encolar operación
+        final tempId = -DateTime.now().millisecondsSinceEpoch;
+        final tempProject = Project(
+          id: tempId,
+          name: name,
+          description: description,
+          startDate: startDate,
+          endDate: endDate,
+          status: status,
+          managerId: managerId,
+          workspaceId: workspaceId,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        // Guardar en caché local (Optimistic UI)
+        await _cacheDataSource.cacheProject(tempProject);
+
+        // Encolar operación
+        final operationData = {
+          'name': name,
+          'description': description,
+          'startDate': startDate.toIso8601String(),
+          'endDate': endDate.toIso8601String(),
+          'status': status.toString().split('.').last,
+          'managerId': managerId,
+          'workspaceId': workspaceId,
+          'tempId': tempId,
+        };
+
+        await _syncManager.queueOperation(
+          type: 'create_project',
+          data: operationData,
+        );
+
+        return Right(tempProject);
+      }
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on AuthException catch (e) {
@@ -273,23 +317,68 @@ class ProjectRepositoryImpl implements ProjectRepository {
     int? managerId,
   }) async {
     try {
-      final project = await _remoteDataSource.updateProject(
-        id: id,
-        name: name,
-        description: description,
-        startDate: startDate,
-        endDate: endDate,
-        status: status,
-        managerId: managerId,
-      );
+      final isOnline = await _connectivityService.isConnected;
 
-      // Invalidar el caché de la lista de proyectos del workspace
-      await _cacheDataSource.invalidateCache(project.workspaceId);
+      if (isOnline) {
+        final project = await _remoteDataSource.updateProject(
+          id: id,
+          name: name,
+          description: description,
+          startDate: startDate,
+          endDate: endDate,
+          status: status,
+          managerId: managerId,
+        );
 
-      // Actualizar el proyecto específico en el caché
-      await _cacheDataSource.cacheProject(project);
+        // Invalidar el caché de la lista de proyectos del workspace
+        await _cacheDataSource.invalidateCache(project.workspaceId);
 
-      return Right(project);
+        // Actualizar el proyecto específico en el caché
+        await _cacheDataSource.cacheProject(project);
+
+        return Right(project);
+      } else {
+        // Offline: Actualizar caché local y encolar operación
+        final currentProject = await _cacheDataSource.getCachedProjectById(id);
+        if (currentProject == null) {
+          return const Left(
+            NotFoundFailure(
+              'Proyecto no encontrado en caché para actualización offline',
+            ),
+          );
+        }
+
+        final updatedProject = currentProject.copyWith(
+          name: name ?? currentProject.name,
+          description: description ?? currentProject.description,
+          startDate: startDate ?? currentProject.startDate,
+          endDate: endDate ?? currentProject.endDate,
+          status: status ?? currentProject.status,
+          managerId: managerId ?? currentProject.managerId,
+          updatedAt: DateTime.now(),
+        );
+
+        // Actualizar en caché local (Optimistic UI)
+        await _cacheDataSource.cacheProject(updatedProject);
+
+        // Encolar operación
+        final operationData = {
+          'id': id,
+          'name': name,
+          'description': description,
+          'startDate': startDate?.toIso8601String(),
+          'endDate': endDate?.toIso8601String(),
+          'status': status?.toString().split('.').last,
+          'managerId': managerId,
+        };
+
+        await _syncManager.queueOperation(
+          type: 'update_project',
+          data: operationData,
+        );
+
+        return Right(updatedProject);
+      }
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on ValidationException catch (e) {
@@ -314,18 +403,41 @@ class ProjectRepositoryImpl implements ProjectRepository {
       final cachedProject = await _cacheDataSource.getCachedProjectById(id);
       final workspaceId = cachedProject?.workspaceId;
 
-      // Eliminar del servidor
-      await _remoteDataSource.deleteProject(id);
+      final isOnline = await _connectivityService.isConnected;
 
-      // Invalidar el caché si conocemos el workspaceId
-      if (workspaceId != null) {
-        await _cacheDataSource.invalidateCache(workspaceId);
+      if (isOnline) {
+        // Eliminar del servidor
+        await _remoteDataSource.deleteProject(id);
+
+        // Invalidar el caché si conocemos el workspaceId
+        if (workspaceId != null) {
+          await _cacheDataSource.invalidateCache(workspaceId);
+        }
+
+        // Eliminar del caché individual
+        await _cacheDataSource.deleteCachedProject(id);
+
+        return const Right(null);
+      } else {
+        // Offline: Eliminar de caché local y encolar operación
+
+        // Eliminar del caché individual (Optimistic UI)
+        await _cacheDataSource.deleteCachedProject(id);
+
+        // Nota: No invalidamos el caché de lista completo para mantener la UI consistente,
+        // pero idealmente deberíamos removerlo de la lista en caché también.
+        // Por ahora, asumimos que la UI se actualiza al eliminar el item.
+
+        // Encolar operación
+        final operationData = {'id': id};
+
+        await _syncManager.queueOperation(
+          type: 'delete_project',
+          data: operationData,
+        );
+
+        return const Right(null);
       }
-
-      // Eliminar del caché individual
-      await _cacheDataSource.deleteCachedProject(id);
-
-      return const Right(null);
     } on NotFoundException catch (e) {
       return Left(NotFoundFailure(e.message));
     } on AuthException catch (e) {

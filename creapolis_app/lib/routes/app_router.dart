@@ -49,6 +49,10 @@ import '../presentation/providers/workspace_context.dart';
 import '../features/calendar/presentation/screens/calendar_screen.dart';
 import '../presentation/screens/gamification/leaderboard_screen.dart';
 import '../features/chat/presentation/pages/chat_list_screen.dart';
+import '../presentation/pages/custom_fields/custom_fields_screen.dart';
+import '../presentation/pages/automations/automations_screen.dart';
+import '../presentation/pages/webhooks/webhooks_screen.dart';
+import '../presentation/pages/sso/sso_settings_screen.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -274,6 +278,36 @@ class AppRouter {
                             },
                           ),
 
+                          // Workspace Webhooks
+                          GoRoute(
+                            path: 'webhooks',
+                            name: RouteNames.webhooks,
+                            builder: (context, state) {
+                              final wId = state.pathParameters['wId'] ?? '0';
+                              final extra =
+                                  state.extra as Map<String, dynamic>?;
+                              final workspaceName =
+                                  extra?['workspaceName'] as String? ??
+                                  'Workspace';
+                              return WebhooksScreen(
+                                workspaceId: int.parse(wId),
+                                workspaceName: workspaceName,
+                              );
+                            },
+                          ),
+
+                          // Workspace SSO Settings
+                          GoRoute(
+                            path: 'sso',
+                            name: RouteNames.sso,
+                            builder: (context, state) {
+                              final wId = state.pathParameters['wId'] ?? '0';
+                              return SsoSettingsScreen(
+                                workspaceId: int.parse(wId),
+                              );
+                            },
+                          ),
+
                           // Projects list dentro de workspace
                           GoRoute(
                             path: 'projects',
@@ -350,6 +384,44 @@ class AppRouter {
                                           state.pathParameters['pId'] ?? '0';
                                       return ResourceAllocationMapScreen(
                                         projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+
+                                  // Custom Fields del proyecto
+                                  GoRoute(
+                                    path: 'custom-fields',
+                                    name: RouteNames.customFields,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      final extra =
+                                          state.extra as Map<String, dynamic>?;
+                                      final projectName =
+                                          extra?['projectName'] as String? ??
+                                          'Project';
+                                      return CustomFieldsScreen(
+                                        projectId: int.parse(projectId),
+                                        projectName: projectName,
+                                      );
+                                    },
+                                  ),
+
+                                  // Automations del proyecto
+                                  GoRoute(
+                                    path: 'automations',
+                                    name: RouteNames.automations,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      final extra =
+                                          state.extra as Map<String, dynamic>?;
+                                      final projectName =
+                                          extra?['projectName'] as String? ??
+                                          'Project';
+                                      return AutomationsScreen(
+                                        projectId: int.parse(projectId),
+                                        projectName: projectName,
                                       );
                                     },
                                   ),
@@ -655,6 +727,8 @@ class RoutePaths {
   static String workspaceDetail(int wId) => '/more/workspaces/$wId';
   static String workspaceMembers(int wId) => '/more/workspaces/$wId/members';
   static String workspaceSettings(int wId) => '/more/workspaces/$wId/settings';
+  static String webhooks(int wId) => '/more/workspaces/$wId/webhooks';
+  static String sso(int wId) => '/more/workspaces/$wId/sso';
 
   // Project routes (requieren workspaceId)
   static String projects(int wId) => '/more/workspaces/$wId/projects';
@@ -686,6 +760,14 @@ class RoutePaths {
       '/more/workspaces/$wId/projects/$pId/reports';
   static String reportBuilder(int wId, int pId) =>
       '/more/workspaces/$wId/projects/$pId/reports/builder';
+
+  // Custom Fields route (requiere workspaceId y projectId)
+  static String customFields(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/custom-fields';
+
+  // Automations route (requiere workspaceId y projectId)
+  static String automations(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/automations';
 }
 
 /// Nombres de rutas para navegación con nombre
@@ -732,4 +814,16 @@ class RouteNames {
   // Report route names
   static const String reports = 'reports';
   static const String reportBuilder = 'report-builder';
+
+  // Custom Fields route name
+  static const String customFields = 'custom-fields';
+
+  // Automations route name
+  static const String automations = 'automations';
+
+  // Webhooks route name
+  static const String webhooks = 'webhooks';
+
+  // SSO route name
+  static const String sso = 'sso';
 }

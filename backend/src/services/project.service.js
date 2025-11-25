@@ -1,5 +1,6 @@
 import prisma from "../config/database.js";
 import { ErrorResponses } from "../utils/errors.js";
+import auditService from "./audit.service.js";
 
 /**
  * Project Service
@@ -246,6 +247,15 @@ class ProjectService {
       },
     });
 
+    await auditService.log({
+      userId,
+      action: "CREATE",
+      entityType: "PROJECT",
+      entityId: project.id,
+      details: `Project "${project.name}" created`,
+      metadata: { workspaceId, status, managerId },
+    });
+
     return project;
   }
 
@@ -303,6 +313,15 @@ class ProjectService {
       },
     });
 
+    await auditService.log({
+      userId,
+      action: "UPDATE",
+      entityType: "PROJECT",
+      entityId: project.id,
+      details: `Project "${project.name}" updated`,
+      metadata: updateData,
+    });
+
     return project;
   }
 
@@ -315,6 +334,14 @@ class ProjectService {
 
     await prisma.project.delete({
       where: { id: projectId },
+    });
+
+    await auditService.log({
+      userId,
+      action: "DELETE",
+      entityType: "PROJECT",
+      entityId: projectId,
+      details: `Project ${projectId} deleted`,
     });
 
     return { message: "Project deleted successfully" };
