@@ -162,6 +162,17 @@ import 'features/chat/domain/usecases/get_channels.dart' as _i924;
 import 'features/chat/domain/usecases/get_messages.dart' as _i537;
 import 'features/chat/domain/usecases/send_message.dart' as _i422;
 import 'features/chat/presentation/bloc/chat_bloc.dart' as _i1026;
+import 'features/forms/data/datasources/form_remote_data_source.dart' as _i1005;
+import 'features/forms/data/repositories/form_repository_impl.dart' as _i1001;
+import 'features/forms/domain/repositories/form_repository.dart' as _i807;
+import 'features/forms/domain/usecases/create_form.dart' as _i180;
+import 'features/forms/domain/usecases/delete_form.dart' as _i60;
+import 'features/forms/domain/usecases/get_form_by_id.dart' as _i753;
+import 'features/forms/domain/usecases/get_forms_by_project.dart' as _i692;
+import 'features/forms/domain/usecases/get_public_form.dart' as _i212;
+import 'features/forms/domain/usecases/submit_public_form.dart' as _i881;
+import 'features/forms/domain/usecases/update_form.dart' as _i985;
+import 'features/forms/presentation/bloc/form_bloc.dart' as _i77;
 import 'features/projects/presentation/blocs/project_bloc.dart' as _i328;
 import 'features/projects/presentation/blocs/sprint/sprint_bloc.dart' as _i709;
 import 'features/search/presentation/blocs/search_bloc.dart' as _i807;
@@ -296,6 +307,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i825.ChangePasswordUseCase(gh<_i716.AuthRepository>()));
     gh.lazySingleton<_i567.UpdateProfileUseCase>(
         () => _i567.UpdateProfileUseCase(gh<_i716.AuthRepository>()));
+    gh.lazySingleton<_i1005.FormRemoteDataSource>(
+        () => _i1005.FormRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.factory<_i812.CompleteCalendarOAuthUseCase>(() =>
         _i812.CompleteCalendarOAuthUseCase(gh<_i916.CalendarRepository>()));
     gh.factory<_i913.ConnectCalendarUseCase>(
@@ -394,6 +407,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i462.CommentBloc>(
         () => _i462.CommentBloc(gh<_i60.CommentRepository>()));
+    gh.lazySingleton<_i807.FormRepository>(
+        () => _i1001.FormRepositoryImpl(gh<_i1005.FormRemoteDataSource>()));
     gh.factory<_i977.AuditBloc>(
         () => _i977.AuditBloc(repository: gh<_i819.AuditRepository>()));
     gh.lazySingleton<_i51.ProjectMemberRepository>(() =>
@@ -425,6 +440,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i66.SsoBloc>(() => _i66.SsoBloc(gh<_i602.SsoRepository>()));
     gh.factory<_i807.SearchBloc>(
         () => _i807.SearchBloc(gh<_i844.SearchRepository>()));
+    gh.lazySingleton<_i180.CreateForm>(
+        () => _i180.CreateForm(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i60.DeleteForm>(
+        () => _i60.DeleteForm(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i692.GetFormsByProject>(
+        () => _i692.GetFormsByProject(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i753.GetFormById>(
+        () => _i753.GetFormById(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i212.GetPublicForm>(
+        () => _i212.GetPublicForm(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i881.SubmitPublicForm>(
+        () => _i881.SubmitPublicForm(gh<_i807.FormRepository>()));
+    gh.lazySingleton<_i985.UpdateForm>(
+        () => _i985.UpdateForm(gh<_i807.FormRepository>()));
     gh.lazySingleton<_i967.WebhookRepository>(() => _i633.WebhookRepositoryImpl(
           gh<_i871.WebhookRemoteDataSource>(),
           gh<_i524.ConnectivityService>(),
@@ -451,6 +480,15 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i687.ManageSprintUseCase(gh<_i585.SprintRepository>()));
     gh.factory<_i571.NotificationBloc>(
         () => _i571.NotificationBloc(gh<_i82.NotificationRepository>()));
+    gh.factory<_i77.FormBloc>(() => _i77.FormBloc(
+          getFormsByProject: gh<_i692.GetFormsByProject>(),
+          getFormById: gh<_i753.GetFormById>(),
+          createForm: gh<_i180.CreateForm>(),
+          updateForm: gh<_i985.UpdateForm>(),
+          deleteForm: gh<_i60.DeleteForm>(),
+          getPublicForm: gh<_i212.GetPublicForm>(),
+          submitPublicForm: gh<_i881.SubmitPublicForm>(),
+        ));
     gh.lazySingleton<_i924.GetChannelsUseCase>(
         () => _i924.GetChannelsUseCase(gh<_i453.ChatRepository>()));
     gh.lazySingleton<_i537.GetMessagesUseCase>(

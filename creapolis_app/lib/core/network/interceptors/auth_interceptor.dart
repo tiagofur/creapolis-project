@@ -18,6 +18,7 @@ class AuthInterceptor extends Interceptor {
     '/auth/login',
     '/auth/register',
     '/auth/refresh-token',
+    '/forms/public',
   ];
 
   AuthInterceptor({FlutterSecureStorage? storage})

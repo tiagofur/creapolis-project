@@ -147,6 +147,7 @@ model Project {
   automations             Automation[]
   auditLogs               AuditLog[]
   sprints                 Sprint[]
+  forms                   Form[]
 
   @@index([workspaceId])
   @@index([managerId])
@@ -657,7 +658,7 @@ model BlogComment {
   parentId    Int?           
   isApproved  Boolean         @default(false)
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  updatedAt   DateTime        @default(now())
   article     BlogArticle     @relation(fields: [articleId], references: [id], onDelete: Cascade)
   author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent      BlogComment?    @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
@@ -1483,4 +1484,62 @@ enum SprintStatus {
   PLANNED
   ACTIVE
   COMPLETED
+}
+
+// ============================================
+// FORMS / INTAKE SYSTEM
+// ============================================
+
+model Form {
+  id          Int              @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  isActive    Boolean          @default(true)
+  publicLink  String           @unique // UUID or slug for public access
+  config      String           // JSON: Field definitions and mapping to Task fields
+  // Example config:
+  // {
+  //   "fields": [
+  //     { "id": "f1", "type": "text", "label": "Title", "required": true, "mapTo": "title" },
+  //     { "id": "f2", "type": "textarea", "label": "Description", "mapTo": "description" },
+  //     { "id": "f3", "type": "dropdown", "label": "Priority", "options": ["Low", "High"], "mapTo": "priority" }
+  //   ],
+  //   "settings": {
+  //     "defaultAssigneeId": 123,
+  //     "confirmationMessage": "Thanks for your submission!"
+  //   }
+  // }
+  
+  viewCount   Int              @default(0)
+  submitCount Int              @default(0)
+  createdBy   Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submissions FormSubmission[]
+
+  @@index([projectId])
+  @@index([publicLink])
+  @@index([isActive])
+}
+
+model FormSubmission {
+  id        Int      @id @default(autoincrement())
+  formId    Int
+  taskId    Int?     // The task created from this submission
+  data      String   // JSON: The actual values submitted
+  // Example data: { "f1": "Fix bug", "f2": "Login fails", "f3": "High" }
+  
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([formId])
+  @@index([taskId])
+  @@index([createdAt])
 }

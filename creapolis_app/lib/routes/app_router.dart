@@ -57,6 +57,9 @@ import '../presentation/pages/conflicts/conflict_resolution_screen.dart';
 import '../presentation/pages/audit/audit_logs_screen.dart';
 import '../presentation/screens/projects/portfolio_screen.dart';
 import '../presentation/screens/projects/sprint_board_screen.dart';
+import '../features/forms/presentation/pages/form_list_page.dart';
+import '../features/forms/presentation/pages/form_builder_page.dart';
+import '../features/forms/presentation/pages/public_form_page.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -95,6 +98,16 @@ class AppRouter {
         path: RoutePaths.onboarding,
         name: RouteNames.onboarding,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // Public Form Route
+      GoRoute(
+        path: '/forms/public/:publicLink',
+        name: RouteNames.publicForm,
+        builder: (context, state) {
+          final publicLink = state.pathParameters['publicLink'] ?? '';
+          return PublicFormPage(publicLink: publicLink);
+        },
       ),
 
       // ========== SHELL CON BOTTOM NAVIGATION PERSISTENTE ==========
@@ -476,6 +489,40 @@ class AppRouter {
                                     },
                                   ),
 
+                                  // Forms del proyecto
+                                  GoRoute(
+                                    path: 'forms',
+                                    name: RouteNames.forms,
+                                    builder: (context, state) {
+                                      final projectId = state.pathParameters['pId'] ?? '0';
+                                      return FormListPage(projectId: int.parse(projectId));
+                                    },
+                                    routes: [
+                                      // Form Builder (Create)
+                                      GoRoute(
+                                        path: 'create',
+                                        name: RouteNames.createForm,
+                                        builder: (context, state) {
+                                          final projectId = state.pathParameters['pId'] ?? '0';
+                                          return FormBuilderPage(projectId: int.parse(projectId));
+                                        },
+                                      ),
+                                      // Form Builder (Edit)
+                                      GoRoute(
+                                        path: ':formId/edit',
+                                        name: RouteNames.editForm,
+                                        builder: (context, state) {
+                                          final projectId = state.pathParameters['pId'] ?? '0';
+                                          final formId = state.pathParameters['formId'] ?? '0';
+                                          return FormBuilderPage(
+                                            projectId: int.parse(projectId),
+                                            formId: int.parse(formId),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+
                                   // Roles del proyecto
                                   GoRoute(
                                     path: 'roles',
@@ -597,6 +644,11 @@ class AppRouter {
 
     // Si está en splash, permitir
     if (currentPath == RoutePaths.splash) {
+      return null;
+    }
+
+    // Permitir rutas públicas de formularios
+    if (currentPath.startsWith('/forms/public/')) {
       return null;
     }
 
@@ -876,6 +928,12 @@ class RouteNames {
 
   // Automations route name
   static const String automations = 'automations';
+
+  // Forms route names
+  static const String forms = 'forms';
+  static const String createForm = 'create-form';
+  static const String editForm = 'edit-form';
+  static const String publicForm = 'public-form';
 
   // Webhooks route name
   static const String webhooks = 'webhooks';

@@ -44,6 +44,7 @@ import webhookRoutes from "./routes/webhook.routes.js";
 import ssoRoutes from "./routes/sso.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import sprintRoutes from "./routes/sprint.routes.js";
+import formRoutes from "./routes/form.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -202,6 +203,7 @@ app.use("/api", webhookRoutes); // Webhooks for project/workspace events
 app.use("/api/sso", ssoRoutes); // SAML/OIDC SSO for enterprise
 app.use("/api/audit", auditRoutes); // Audit logs for enterprise
 app.use("/api/sprints", sprintRoutes); // Sprint management
+app.use("/api", formRoutes); // Forms/Intake
 
 // Root endpoint
 app.get("/", (req, res) => {
