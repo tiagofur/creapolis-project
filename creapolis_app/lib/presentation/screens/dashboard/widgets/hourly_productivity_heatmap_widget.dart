@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/domain/entities/productivity_heatmap.dart';
 
 /// Widget que muestra un heatmap de productividad por hora del día
 /// Muestra un gráfico de calor que indica las horas más productivas
 class HourlyProductivityHeatmapWidget extends StatefulWidget {
   final bool isTeamView;
+  final ProductivityHeatmap? data;
+  final Function(bool) onTeamViewChanged;
 
-  const HourlyProductivityHeatmapWidget({super.key, this.isTeamView = false});
+  const HourlyProductivityHeatmapWidget({
+    super.key,
+    this.isTeamView = false,
+    this.data,
+    required this.onTeamViewChanged,
+  });
 
   @override
   State<HourlyProductivityHeatmapWidget> createState() =>
@@ -14,14 +22,6 @@ class HourlyProductivityHeatmapWidget extends StatefulWidget {
 
 class _HourlyProductivityHeatmapWidgetState
     extends State<HourlyProductivityHeatmapWidget> {
-  bool _isTeamView = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isTeamView = widget.isTeamView;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -55,17 +55,13 @@ class _HourlyProductivityHeatmapWidgetState
                 Row(
                   children: [
                     Text(
-                      _isTeamView ? 'Equipo' : 'Individual',
+                      widget.isTeamView ? 'Equipo' : 'Individual',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(width: 8),
                     Switch(
-                      value: _isTeamView,
-                      onChanged: (value) {
-                        setState(() {
-                          _isTeamView = value;
-                        });
-                      },
+                      value: widget.isTeamView,
+                      onChanged: widget.onTeamViewChanged,
                     ),
                   ],
                 ),
@@ -81,7 +77,10 @@ class _HourlyProductivityHeatmapWidgetState
             const SizedBox(height: 24),
 
             // Heatmap visualization
-            _buildHeatmap(theme),
+            if (widget.data != null)
+              _buildHeatmap(theme, widget.data!)
+            else
+              const Center(child: CircularProgressIndicator()),
 
             const SizedBox(height: 16),
 
@@ -91,17 +90,22 @@ class _HourlyProductivityHeatmapWidgetState
             const SizedBox(height: 16),
 
             // Insights section
-            _buildInsights(theme),
+            if (widget.data != null && widget.data!.insights.isNotEmpty)
+              _buildInsights(theme, widget.data!.insights),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeatmap(ThemeData theme) {
-    // Mock data - replace with real API call
-    final hourlyData = _generateMockHourlyData();
-    final maxHours = hourlyData.reduce((a, b) => a > b ? a : b);
+  Widget _buildHeatmap(ThemeData theme, ProductivityHeatmap data) {
+    final hourlyData = data.hourlyData;
+    // Ensure we have 24 hours
+    final safeHourlyData = hourlyData.length == 24
+        ? hourlyData
+        : List<double>.filled(24, 0.0);
+
+    final maxHours = safeHourlyData.reduce((a, b) => a > b ? a : b);
 
     return SizedBox(
       height: 200,
@@ -109,7 +113,7 @@ class _HourlyProductivityHeatmapWidgetState
         scrollDirection: Axis.horizontal,
         itemCount: 24,
         itemBuilder: (context, hour) {
-          final hours = hourlyData[hour];
+          final hours = safeHourlyData[hour];
           final intensity = maxHours > 0 ? hours / maxHours : 0.0;
           final color = _getHeatmapColor(intensity, theme);
 
@@ -119,22 +123,25 @@ class _HourlyProductivityHeatmapWidgetState
               children: [
                 // Hour bar
                 Expanded(
-                  child: Container(
-                    width: 28,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Center(
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: Text(
-                          '${hours.toStringAsFixed(1)}h',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: intensity > 0.5
-                                ? Colors.white
-                                : theme.colorScheme.onSurface,
-                            fontSize: 10,
+                  child: Tooltip(
+                    message: '${hour}h: ${hours.toStringAsFixed(1)} horas',
+                    child: Container(
+                      width: 28,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Center(
+                        child: RotatedBox(
+                          quarterTurns: 3,
+                          child: Text(
+                            hours > 0 ? '${hours.toStringAsFixed(1)}h' : '',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: intensity > 0.5
+                                  ? Colors.white
+                                  : theme.colorScheme.onSurface,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
                       ),
@@ -177,26 +184,7 @@ class _HourlyProductivityHeatmapWidgetState
     );
   }
 
-  Widget _buildInsights(ThemeData theme) {
-    // Mock insights - replace with real data from API
-    final insights = [
-      {
-        'icon': Icons.wb_sunny,
-        'message': 'Mayor productividad en horario matutino (9-12h)',
-        'color': Colors.orange,
-      },
-      {
-        'icon': Icons.trending_up,
-        'message': 'Pico de actividad a las 10:00 AM',
-        'color': Colors.green,
-      },
-      {
-        'icon': Icons.calendar_today,
-        'message': 'Promedio de 6.5 horas/día',
-        'color': Colors.blue,
-      },
-    ];
-
+  Widget _buildInsights(ThemeData theme, List<ProductivityInsight> insights) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -213,14 +201,14 @@ class _HourlyProductivityHeatmapWidgetState
             child: Row(
               children: [
                 Icon(
-                  insight['icon'] as IconData,
+                  _getIconData(insight.icon),
                   size: 16,
-                  color: insight['color'] as Color,
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    insight['message'] as String,
+                    insight.message,
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
@@ -232,8 +220,25 @@ class _HourlyProductivityHeatmapWidgetState
     );
   }
 
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'morning':
+        return Icons.wb_sunny;
+      case 'afternoon':
+        return Icons.wb_twilight;
+      case 'calendar':
+        return Icons.calendar_today;
+      case 'trending_up':
+        return Icons.trending_up;
+      case 'trending_down':
+        return Icons.trending_down;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
   Color _getHeatmapColor(double intensity, ThemeData theme) {
-    if (intensity < 0.2) {
+    if (intensity < 0.1) {
       return theme.colorScheme.surfaceContainerHighest;
     } else if (intensity < 0.4) {
       return theme.colorScheme.primaryContainer.withValues(alpha: 0.4);
@@ -245,21 +250,4 @@ class _HourlyProductivityHeatmapWidgetState
       return theme.colorScheme.primary;
     }
   }
-
-  List<double> _generateMockHourlyData() {
-    // Mock data for demonstration
-    final base = [
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // 0-6h
-      0.5, 1.2, 2.8, 4.5, 3.2, 1.5, 0.8, // 7-13h
-      2.1, 3.8, 4.2, 3.5, 2.0, 0.9, 0.3, // 14-20h
-      0.0, 0.0, 0.0, // 21-23h
-    ];
-    if (_isTeamView) {
-      return base.map((v) => v * 1.15).toList();
-    }
-    return base;
-  }
 }
-
-
-

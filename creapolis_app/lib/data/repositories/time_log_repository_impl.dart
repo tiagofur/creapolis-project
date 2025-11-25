@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../domain/entities/time_log.dart';
+import '../../domain/entities/productivity_heatmap.dart';
 import '../../domain/repositories/time_log_repository.dart';
 import '../datasources/time_log_remote_datasource.dart';
 
@@ -121,7 +122,32 @@ class TimeLogRepositoryImpl implements TimeLogRepository {
       return Left(UnknownFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, ProductivityHeatmap>> getProductivityHeatmap({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? projectId,
+    bool teamView = false,
+    int? workspaceId,
+  }) async {
+    try {
+      final data = await _remoteDataSource.getProductivityHeatmap(
+        startDate: startDate,
+        endDate: endDate,
+        projectId: projectId,
+        teamView: teamView,
+        workspaceId: workspaceId,
+      );
+      return Right(ProductivityHeatmap.fromJson(data));
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
 }
-
-
-

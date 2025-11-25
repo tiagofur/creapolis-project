@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/workspace_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../helpers/test_http_overrides.dart';
 
 const _defaultOwner = WorkspaceOwner(
   id: 1,
@@ -14,6 +16,7 @@ void main() {
     late Workspace testWorkspace;
 
     setUp(() {
+      HttpOverrides.global = TestHttpOverrides();
       testWorkspace = Workspace(
         id: 1,
         name: 'Test Workspace',
@@ -32,6 +35,10 @@ void main() {
         createdAt: DateTime(2024, 1, 1),
         updatedAt: DateTime(2024, 1, 1),
       );
+    });
+
+    tearDown(() {
+      HttpOverrides.global = null;
     });
 
     Widget createWidget({

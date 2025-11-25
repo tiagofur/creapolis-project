@@ -97,6 +97,7 @@ import 'domain/usecases/get_active_time_log_usecase.dart' as _i987;
 import 'domain/usecases/get_calendar_connection_status_usecase.dart' as _i649;
 import 'domain/usecases/get_calendar_events_usecase.dart' as _i587;
 import 'domain/usecases/get_nlp_examples_usecase.dart' as _i764;
+import 'domain/usecases/get_productivity_heatmap_usecase.dart' as _i444;
 import 'domain/usecases/get_profile_usecase.dart' as _i889;
 import 'domain/usecases/get_project_by_id_usecase.dart' as _i356;
 import 'domain/usecases/get_projects_usecase.dart' as _i32;
@@ -372,6 +373,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i137.StartTimerUseCase(gh<_i657.TimeLogRepository>()));
     gh.factory<_i838.StopTimerUseCase>(
         () => _i838.StopTimerUseCase(gh<_i657.TimeLogRepository>()));
+    gh.lazySingleton<_i444.GetProductivityHeatmapUseCase>(() =>
+        _i444.GetProductivityHeatmapUseCase(gh<_i657.TimeLogRepository>()));
     gh.lazySingleton<_i43.FirebaseMessagingService>(
         () => _i43.FirebaseMessagingService(
               gh<_i892.FirebaseMessaging>(),

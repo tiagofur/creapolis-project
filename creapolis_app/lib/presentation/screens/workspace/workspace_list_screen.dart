@@ -251,6 +251,9 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
     bool isFromCache = false,
     DateTime? lastSync,
   }) {
+    print(
+      'DEBUG: _buildWorkspaceContent called with ${workspaces.length} workspaces',
+    );
     if (workspaces.isEmpty) {
       return _buildEmptyState(context);
     }
@@ -258,72 +261,68 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
     final displayWorkspaces = _isFiltering ? _filteredWorkspaces : workspaces;
     final hasActiveWorkspace = workspaceContext.activeWorkspace != null;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<WorkspaceBloc>().add(const LoadWorkspaces());
-        await Future.delayed(const Duration(milliseconds: 500));
-      },
-      child: Column(
-        children: [
-          // Banner de conectividad/caché
-          ConnectivityBanner(
-            isFromCache: isFromCache,
-            lastSync: lastSync,
-            onRefresh: () {
-              context.read<WorkspaceBloc>().add(const LoadWorkspaces());
-            },
-            isLoading: isLoading,
-          ),
-          // Barra de búsqueda y filtros
-          WorkspaceSearchBar(
-            workspaces: workspaces,
-            onFiltered: (filtered) {
-              setState(() {
-                _filteredWorkspaces = filtered;
-                _isFiltering = true;
-              });
-            },
-            onClear: () {
-              setState(() {
-                _isFiltering = false;
-                _filteredWorkspaces = [];
-              });
-            },
-          ),
-          // Mostrar mensaje si no hay workspace activo
-          if (!hasActiveWorkspace) _buildSelectWorkspaceHeader(context),
-          // Lista de workspaces
-          if (displayWorkspaces.isEmpty && _isFiltering)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 80,
-                      color: Colors.grey.shade300,
+    return Column(
+      children: [
+        // Banner de conectividad/caché
+        ConnectivityBanner(
+          isFromCache: isFromCache,
+          lastSync: lastSync,
+          onRefresh: () {
+            context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+          },
+          isLoading: isLoading,
+        ),
+        // Barra de búsqueda y filtros
+        WorkspaceSearchBar(
+          workspaces: workspaces,
+          onFiltered: (filtered) {
+            setState(() {
+              _filteredWorkspaces = filtered;
+              _isFiltering = true;
+            });
+          },
+          onClear: () {
+            setState(() {
+              _isFiltering = false;
+              _filteredWorkspaces = [];
+            });
+          },
+        ),
+        // Mostrar mensaje si no hay workspace activo
+        if (!hasActiveWorkspace) _buildSelectWorkspaceHeader(context),
+        // Lista de workspaces
+        if (displayWorkspaces.isEmpty && _isFiltering)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 80, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No se encontraron workspaces',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No se encontraron workspaces',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Intenta con otros términos de búsqueda',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade500,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Intenta con otros términos de búsqueda',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            )
-          else
-            Expanded(
+            ),
+          )
+        else
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                context.read<WorkspaceBloc>().add(const LoadWorkspaces());
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: displayWorkspaces.length,
@@ -348,8 +347,8 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
                 },
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 

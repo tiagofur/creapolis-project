@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/storage_keys.dart';
 import '../../../core/services/view_preferences_service.dart';
@@ -234,7 +235,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           label: Text('Retrasado'),
                           backgroundColor: Colors.red,
                           labelStyle: TextStyle(color: Colors.white),
-                        ),
+                        ).animate().shake(duration: 500.ms),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -245,7 +246,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _getStatusColor(project.status),
                     ),
-                  ),
+                  ).animate().shimmer(duration: 1500.ms, delay: 500.ms),
                   const SizedBox(height: 4),
                   Text(
                     '${(project.progress * 100).toStringAsFixed(0)}% completado',
@@ -253,7 +254,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
           ),
 
           // TabBar
@@ -306,87 +307,93 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             text: project.description,
             textStyle: theme.textTheme.bodyMedium,
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1, end: 0),
 
         // Detalles del proyecto (colapsable)
         CollapsibleSection(
-          title: 'Detalles del Proyecto',
-          icon: Icons.info,
-          storageKey: 'project_${project.id}_details',
-          initiallyExpanded: false,
-          itemCount: 4,
-          child: Column(
-            children: [
-              _buildInfoRow(
-                context,
-                Icons.calendar_today,
-                'Fecha Inicio',
-                _formatDate(project.startDate),
+              title: 'Detalles del Proyecto',
+              icon: Icons.info,
+              storageKey: 'project_${project.id}_details',
+              initiallyExpanded: false,
+              itemCount: 4,
+              child: Column(
+                children: [
+                  _buildInfoRow(
+                    context,
+                    Icons.calendar_today,
+                    'Fecha Inicio',
+                    _formatDate(project.startDate),
+                  ),
+                  const Divider(height: 24),
+                  _buildInfoRow(
+                    context,
+                    Icons.event,
+                    'Fecha Fin',
+                    _formatDate(project.endDate),
+                  ),
+                  const Divider(height: 24),
+                  _buildInfoRow(
+                    context,
+                    Icons.schedule,
+                    'Duración',
+                    '${project.durationInDays} días',
+                  ),
+                  if (project.managerName != null) ...[
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      context,
+                      Icons.person,
+                      'Manager',
+                      project.managerName!,
+                    ),
+                  ],
+                ],
               ),
-              const Divider(height: 24),
-              _buildInfoRow(
-                context,
-                Icons.event,
-                'Fecha Fin',
-                _formatDate(project.endDate),
-              ),
-              const Divider(height: 24),
-              _buildInfoRow(
-                context,
-                Icons.schedule,
-                'Duración',
-                '${project.durationInDays} días',
-              ),
-              if (project.managerName != null) ...[
-                const Divider(height: 24),
-                _buildInfoRow(
-                  context,
-                  Icons.person,
-                  'Manager',
-                  project.managerName!,
-                ),
-              ],
-            ],
-          ),
-        ),
+            )
+            .animate()
+            .fadeIn(delay: 100.ms, duration: 400.ms)
+            .slideX(begin: -0.1, end: 0),
 
         // Editar Fechas (colapsable)
         CollapsibleSection(
-          title: 'Editar Fechas',
-          icon: Icons.edit_calendar,
-          storageKey: 'project_${project.id}_edit_dates',
-          initiallyExpanded: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Actualiza las fechas del proyecto',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              title: 'Editar Fechas',
+              icon: Icons.edit_calendar,
+              storageKey: 'project_${project.id}_edit_dates',
+              initiallyExpanded: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Actualiza las fechas del proyecto',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ProjectDatePicker(
+                    startDate: project.startDate,
+                    endDate: project.endDate,
+                    onStartDateChanged: (newDate) {
+                      if (newDate != null) {
+                        context.read<ProjectBloc>().add(
+                          UpdateProject(id: project.id, startDate: newDate),
+                        );
+                      }
+                    },
+                    onEndDateChanged: (newDate) {
+                      if (newDate != null) {
+                        context.read<ProjectBloc>().add(
+                          UpdateProject(id: project.id, endDate: newDate),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              ProjectDatePicker(
-                startDate: project.startDate,
-                endDate: project.endDate,
-                onStartDateChanged: (newDate) {
-                  if (newDate != null) {
-                    context.read<ProjectBloc>().add(
-                      UpdateProject(id: project.id, startDate: newDate),
-                    );
-                  }
-                },
-                onEndDateChanged: (newDate) {
-                  if (newDate != null) {
-                    context.read<ProjectBloc>().add(
-                      UpdateProject(id: project.id, endDate: newDate),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+            )
+            .animate()
+            .fadeIn(delay: 200.ms, duration: 400.ms)
+            .slideX(begin: -0.1, end: 0),
 
         // Gestión de Manager (colapsable)
         CollapsibleSection(
@@ -534,54 +541,57 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               ),
             ],
           ),
-        ),
+        ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideX(begin: -0.1, end: 0),
 
         // Estadísticas (expandido por defecto)
         CollapsibleSection(
-          title: 'Estadísticas',
-          icon: Icons.bar_chart,
-          storageKey: 'project_${project.id}_stats',
-          initiallyExpanded: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatRow(
-                context,
-                Icons.check_circle,
-                'Progreso',
-                '${(project.progress * 100).toStringAsFixed(0)}%',
-                colorScheme.primary,
+              title: 'Estadísticas',
+              icon: Icons.bar_chart,
+              storageKey: 'project_${project.id}_stats',
+              initiallyExpanded: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatRow(
+                    context,
+                    Icons.check_circle,
+                    'Progreso',
+                    '${(project.progress * 100).toStringAsFixed(0)}%',
+                    colorScheme.primary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStatRow(
+                    context,
+                    Icons.timelapse,
+                    'Días restantes',
+                    '${_calculateRemainingDays(project)} días',
+                    _calculateRemainingDays(project) < 0
+                        ? colorScheme.error
+                        : colorScheme.tertiary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStatRow(
+                    context,
+                    Icons.trending_up,
+                    'Estado',
+                    project.status.label,
+                    _getStatusColor(project.status),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _navigateToReports(context, project),
+                      icon: const Icon(Icons.analytics),
+                      label: const Text('Ver Reportes Completos'),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              _buildStatRow(
-                context,
-                Icons.timelapse,
-                'Días restantes',
-                '${_calculateRemainingDays(project)} días',
-                _calculateRemainingDays(project) < 0
-                    ? colorScheme.error
-                    : colorScheme.tertiary,
-              ),
-              const SizedBox(height: 12),
-              _buildStatRow(
-                context,
-                Icons.trending_up,
-                'Estado',
-                project.status.label,
-                _getStatusColor(project.status),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _navigateToReports(context, project),
-                  icon: const Icon(Icons.analytics),
-                  label: const Text('Ver Reportes Completos'),
-                ),
-              ),
-            ],
-          ),
-        ),
+            )
+            .animate()
+            .fadeIn(delay: 400.ms, duration: 400.ms)
+            .slideX(begin: -0.1, end: 0),
       ],
     );
   }
@@ -626,7 +636,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: color),
-        ),
+        ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -644,7 +654,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
-              ),
+              ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
             ],
           ),
         ),

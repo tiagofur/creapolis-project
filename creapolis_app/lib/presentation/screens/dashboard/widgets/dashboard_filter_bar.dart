@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../features/projects/presentation/blocs/project_bloc.dart';
 import '../../../../features/projects/presentation/blocs/project_state.dart';
@@ -231,6 +232,6 @@ class _ActiveFilterChip extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       backgroundColor: theme.colorScheme.primaryContainer,
       labelStyle: TextStyle(color: theme.colorScheme.onPrimaryContainer),
-    );
+    ).animate().scale(duration: 200.ms, curve: Curves.easeOut);
   }
 }

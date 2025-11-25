@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -60,80 +61,95 @@ class _LoginScreenState extends State<LoginScreen> {
                         Icons.location_city,
                         size: 80,
                         color: colorScheme.primary,
+                      ).animate().scale(
+                        duration: 600.ms,
+                        curve: Curves.elasticOut,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Creapolis',
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                            'Creapolis',
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                          .animate()
+                          .fadeIn(delay: 200.ms)
+                          .slideY(begin: 0.5, end: 0),
                       const SizedBox(height: 8),
                       Text(
-                        'Gestión de Proyectos Urbanos',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                            'Gestión de Proyectos Urbanos',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                          .animate()
+                          .fadeIn(delay: 400.ms)
+                          .slideY(begin: 0.5, end: 0),
                       const SizedBox(height: 48),
 
                       // Email field
                       FormBuilderTextField(
-                        name: 'email',
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'tu@email.com',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'El email es requerido',
-                          ),
-                          FormBuilderValidators.email(
-                            errorText: 'Ingresa un email válido',
-                          ),
-                        ]),
-                      ),
+                            name: 'email',
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              hintText: 'tu@email.com',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: 'El email es requerido',
+                              ),
+                              FormBuilderValidators.email(
+                                errorText: 'Ingresa un email válido',
+                              ),
+                            ]),
+                          )
+                          .animate()
+                          .fadeIn(delay: 600.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 16),
 
                       // Password field
                       FormBuilderTextField(
-                        name: 'password',
-                        decoration: InputDecoration(
-                          labelText: 'Contraseña',
-                          hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outlined),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                            name: 'password',
+                            decoration: InputDecoration(
+                              labelText: 'Contraseña',
+                              hintText: '••••••••',
+                              prefixIcon: const Icon(Icons.lock_outlined),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        obscureText: !_isPasswordVisible,
-                        textInputAction: TextInputAction.done,
-                        validator: FormBuilderValidators.required(
-                          errorText: 'La contraseña es requerida',
-                        ),
-                        onSubmitted: (_) => _handleLogin(),
-                      ),
+                            obscureText: !_isPasswordVisible,
+                            textInputAction: TextInputAction.done,
+                            validator: FormBuilderValidators.required(
+                              errorText: 'La contraseña es requerida',
+                            ),
+                            onSubmitted: (_) => _handleLogin(),
+                          )
+                          .animate()
+                          .fadeIn(delay: 700.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 24),
 
                       // Login button
@@ -163,12 +179,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(delay: 800.ms).scale(),
                       const SizedBox(height: 16),
 
                       // Register link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             '¿No tienes cuenta? ',
@@ -179,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: const Text('Regístrate'),
                           ),
                         ],
-                      ),
+                      ).animate().fadeIn(delay: 1000.ms),
                     ],
                   ),
                 ),
@@ -204,6 +221,3 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 }
-
-
-

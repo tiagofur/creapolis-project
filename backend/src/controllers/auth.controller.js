@@ -2,6 +2,7 @@ import authService from "../services/auth.service.js";
 import { successResponse, asyncHandler } from "../utils/response.js";
 import fs from "fs";
 import emailService from "../services/email.service.js";
+import twoFactorService from "../services/two-factor.service.js";
 
 /**
  * Auth Controller
@@ -30,11 +31,99 @@ class AuthController {
    * POST /api/auth/login
    */
   login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, twoFactorToken } = req.body;
 
-    const result = await authService.login({ email, password });
+    // 1. Verify credentials first
+    const user = await authService.validateCredentials(email, password);
+
+    if (!user) {
+      return successResponse(res, null, "Invalid credentials", 401);
+    }
+
+    // 2. Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      if (!twoFactorToken) {
+        // Require 2FA token
+        return successResponse(
+          res,
+          {
+            require2FA: true,
+            userId: user.id, // In a real app, use a temporary signed token instead of ID
+          },
+          "2FA token required",
+          200
+        );
+      }
+
+      // Verify 2FA token
+      const isValid = twoFactorService.verifyToken(
+        twoFactorToken,
+        user.twoFactorSecret
+      );
+      if (!isValid) {
+        return successResponse(res, null, "Invalid 2FA token", 401);
+      }
+    }
+
+    // 3. Generate token and return login result
+    const result = await authService.generateAuthResponse(user);
 
     return successResponse(res, result, "Login successful");
+  });
+
+  /**
+   * Generate 2FA Secret
+   * POST /api/auth/2fa/generate
+   */
+  generate2FA = asyncHandler(async (req, res) => {
+    const { secret, otpauthUrl, qrCode } =
+      await twoFactorService.generateSecret(req.user.email);
+
+    return successResponse(
+      res,
+      { secret, otpauthUrl, qrCode },
+      "2FA secret generated"
+    );
+  });
+
+  /**
+   * Enable 2FA
+   * POST /api/auth/2fa/enable
+   */
+  enable2FA = asyncHandler(async (req, res) => {
+    const { token, secret } = req.body;
+
+    // Verify the token against the secret provided (to ensure user scanned it correctly)
+    const isValid = twoFactorService.verifyToken(token, secret);
+    if (!isValid) {
+      return successResponse(res, null, "Invalid 2FA token", 400);
+    }
+
+    await twoFactorService.enable2FA(req.user.id, secret);
+
+    return successResponse(res, { enabled: true }, "2FA enabled successfully");
+  });
+
+  /**
+   * Disable 2FA
+   * POST /api/auth/2fa/disable
+   */
+  disable2FA = asyncHandler(async (req, res) => {
+    const { password } = req.body;
+
+    // Verify password before disabling security feature
+    const isMatch = await authService.verifyPassword(req.user.id, password);
+    if (!isMatch) {
+      return successResponse(res, null, "Incorrect password", 401);
+    }
+
+    await twoFactorService.disable2FA(req.user.id);
+
+    return successResponse(
+      res,
+      { enabled: false },
+      "2FA disabled successfully"
+    );
   });
 
   /**

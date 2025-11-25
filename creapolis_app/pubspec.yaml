@@ -71,6 +71,8 @@ dependencies:
   drag_and_drop_lists: ^0.4.2
   table_calendar: ^3.2.0
   bloc: ^8.1.4
+  sentry_flutter: ^9.8.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

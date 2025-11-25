@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/services/dashboard_preferences_service.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -40,7 +41,9 @@ class AddWidgetBottomSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.4,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -134,7 +137,9 @@ class AddWidgetBottomSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          AppLogger.info('AddWidgetBottomSheet: Widget seleccionado: ${type.name}');
+          AppLogger.info(
+            'AddWidgetBottomSheet: Widget seleccionado: ${type.name}',
+          );
           Navigator.pop(context, type);
         },
         borderRadius: BorderRadius.circular(12),
@@ -189,7 +194,7 @@ class AddWidgetBottomSheet extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.1, end: 0);
   }
 
   IconData _getIconData(String iconName) {
@@ -211,6 +216,3 @@ class AddWidgetBottomSheet extends StatelessWidget {
     }
   }
 }
-
-
-

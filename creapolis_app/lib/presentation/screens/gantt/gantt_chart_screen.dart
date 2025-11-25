@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/task.dart';
@@ -120,16 +121,21 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
                   Text(
-                    'Calculando cronograma...',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                        'Calculando cronograma...',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      )
+                      .animate(
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
+                      .fade(duration: 1000.ms, begin: 0.5, end: 1.0),
                   const SizedBox(height: 8),
                   Text(
                     'Esto puede tomar unos momentos',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade600,
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 500.ms),
                 ],
               ),
             );
@@ -143,16 +149,21 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
                   Text(
-                    'Replanificando proyecto...',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                        'Replanificando proyecto...',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      )
+                      .animate(
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
+                      .fade(duration: 1000.ms, begin: 0.5, end: 1.0),
                   const SizedBox(height: 8),
                   Text(
                     'Recalculando fechas de tareas',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade600,
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 500.ms),
                 ],
               ),
             );
@@ -167,12 +178,12 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                     Icons.error_outline,
                     size: 64,
                     color: Colors.red.shade300,
-                  ),
+                  ).animate().scale().shake(),
                   const SizedBox(height: 16),
                   Text(
                     'Error al cargar tareas',
                     style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  ).animate().fadeIn().slideY(begin: 0.5, end: 0),
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -183,13 +194,13 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                         color: Colors.grey.shade600,
                       ),
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 200.ms),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: _loadTasks,
                     icon: const Icon(Icons.refresh),
                     label: const Text('Reintentar'),
-                  ),
+                  ).animate().scale(delay: 400.ms),
                 ],
               ),
             );
@@ -213,26 +224,29 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                     Icons.calendar_today,
                     size: 64,
                     color: Colors.grey.shade400,
-                  ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                   const SizedBox(height: 16),
                   Text(
                     'No hay tareas en este proyecto',
                     style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5, end: 0),
                   const SizedBox(height: 8),
                   Text(
                     'Crea tareas para verlas en el diagrama de Gantt',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey.shade600,
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.5, end: 0),
                 ],
               ),
             );
           }
 
           return _showResourcePanel
-              ? GanttResourcePanel(tasks: tasks, onTaskTap: _showTaskDetails)
+              ? GanttResourcePanel(
+                  tasks: tasks,
+                  onTaskTap: _showTaskDetails,
+                ).animate().fadeIn().slideX(begin: 0.1, end: 0)
               : RepaintBoundary(
                   key: _ganttKey,
                   child: GanttChartWidget(
@@ -241,7 +255,7 @@ class _GanttChartScreenState extends State<GanttChartScreen> {
                     onTaskLongPress: _showTaskEditOptions,
                     onTaskDateChanged: _handleTaskDateChanged,
                   ),
-                );
+                ).animate().fadeIn();
         },
       ),
     );

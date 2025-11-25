@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../injection.dart';
@@ -168,27 +169,31 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                     Icons.psychology_outlined,
                     color: theme.primaryColor,
                     size: 28,
-                  ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Crear Tarea con IA',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Escribe en lenguaje natural',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
+                    child:
+                        Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Crear Tarea con IA',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Escribe en lenguaje natural',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            )
+                            .animate()
+                            .fadeIn(delay: 200.ms)
+                            .slideX(begin: -0.1, end: 0),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -232,7 +237,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       ),
                       maxLines: 3,
                       textCapitalization: TextCapitalization.sentences,
-                    ),
+                    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
 
                     // Examples
                     if (_showExamples && _examples != null) ...[
@@ -240,9 +245,8 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 
-                            0.3,
-                          ),
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -284,7 +288,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 )),
                           ],
                         ),
-                      ),
+                      ).animate().fadeIn().slideY(begin: -0.1, end: 0),
                     ],
 
                     const SizedBox(height: 16),
@@ -303,7 +307,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                    ),
+                    ).animate().fadeIn(delay: 400.ms).scale(),
 
                     // Error message
                     if (_errorMessage != null) ...[
@@ -333,7 +337,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                             ),
                           ],
                         ),
-                      ),
+                      ).animate().fadeIn().shake(),
                     ],
 
                     // Parsed result
@@ -357,7 +361,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                   Icons.check_circle_outline,
                                   color: Colors.green,
                                   size: 24,
-                                ),
+                                ).animate().scale(curve: Curves.elasticOut),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Resultado del análisis',
@@ -369,7 +373,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 const Spacer(),
                                 _buildConfidenceIndicator(
                                   _parsedTask!.analysis.overallConfidence,
-                                ),
+                                ).animate().fadeIn(delay: 300.ms),
                               ],
                             ),
                             const Divider(height: 24),
@@ -378,7 +382,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                               _parsedTask!.title,
                               Icons.title,
                               _parsedTask!.analysis.overallConfidence,
-                            ),
+                            ).animate().fadeIn(delay: 400.ms).slideX(),
                             if (_parsedTask!.description.isNotEmpty) ...[
                               const SizedBox(height: 12),
                               _buildResultField(
@@ -386,7 +390,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 _parsedTask!.description,
                                 Icons.description,
                                 _parsedTask!.analysis.overallConfidence,
-                              ),
+                              ).animate().fadeIn(delay: 500.ms).slideX(),
                             ],
                             const SizedBox(height: 12),
                             _buildResultField(
@@ -398,14 +402,14 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                   .toUpperCase(),
                               Icons.flag,
                               _parsedTask!.analysis.priority.confidence,
-                            ),
+                            ).animate().fadeIn(delay: 600.ms).slideX(),
                             const SizedBox(height: 12),
                             _buildResultField(
                               'Fecha límite',
                               _formatDate(_parsedTask!.dueDate),
                               Icons.calendar_today,
                               _parsedTask!.analysis.dueDate.confidence,
-                            ),
+                            ).animate().fadeIn(delay: 700.ms).slideX(),
                             if (_parsedTask!.assignee != null) ...[
                               const SizedBox(height: 12),
                               _buildResultField(
@@ -413,7 +417,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 _parsedTask!.assignee!,
                                 Icons.person,
                                 _parsedTask!.analysis.assignee.confidence,
-                              ),
+                              ).animate().fadeIn(delay: 800.ms).slideX(),
                             ],
                             if (_parsedTask!.category != null) ...[
                               const SizedBox(height: 12),
@@ -423,11 +427,11 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                                 Icons.category,
                                 _parsedTask!.analysis.category?.confidence ??
                                     0.5,
-                              ),
+                              ).animate().fadeIn(delay: 900.ms).slideX(),
                             ],
                           ],
                         ),
-                      ),
+                      ).animate().fadeIn().slideY(begin: 0.1, end: 0),
                       const SizedBox(height: 20),
 
                       // Create button
@@ -454,7 +458,7 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
                             ),
                           ),
                         ],
-                      ),
+                      ).animate().fadeIn(delay: 1000.ms).scale(),
                     ],
                   ],
                 ),
@@ -520,6 +524,3 @@ class _NLPCreateTaskDialogState extends State<NLPCreateTaskDialog> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-
-
-

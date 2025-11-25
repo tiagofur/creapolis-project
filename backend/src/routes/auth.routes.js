@@ -64,4 +64,9 @@ router.post("/reset-password", authController.resetPassword);
 router.post("/verify/send", authenticate, authController.sendVerification);
 router.post("/verify", authController.verifyEmail);
 
+// 2FA Routes
+router.post("/2fa/generate", authenticate, authController.generate2FA);
+router.post("/2fa/enable", authenticate, authController.enable2FA);
+router.post("/2fa/disable", authenticate, authController.disable2FA);
+
 export default router;

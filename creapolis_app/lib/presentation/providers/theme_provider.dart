@@ -50,8 +50,7 @@ enum AppThemeMode {
 /// Enum para las paletas de colores disponibles
 enum ColorPalette {
   defaultPalette,
-  // Futuras paletas se pueden agregar aquí
-  // oceanBlue,
+  oceanBlue,
   // forestGreen,
   // sunset,
 }
@@ -75,9 +74,9 @@ class ThemeProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   ThemeProvider(this._prefs)
-      : _themeMode = AppThemeMode.system,
-        _colorPalette = ColorPalette.defaultPalette,
-        _layoutType = LayoutType.bottomNavigation {
+    : _themeMode = AppThemeMode.system,
+      _colorPalette = ColorPalette.defaultPalette,
+      _layoutType = LayoutType.bottomNavigation {
     _loadPreferences();
   }
 
@@ -152,7 +151,10 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _prefs.setString(StorageKeys.colorPalette, palette.index.toString());
+      await _prefs.setString(
+        StorageKeys.colorPalette,
+        palette.index.toString(),
+      );
       AppLogger.info('[ThemeProvider] Paleta guardada: $palette');
     } catch (e) {
       AppLogger.error('[ThemeProvider] Error al guardar paleta: $e');
@@ -187,9 +189,8 @@ class ThemeProvider extends ChangeNotifier {
     await setThemeMode(AppThemeMode.system);
     await setColorPalette(ColorPalette.defaultPalette);
     await setLayoutType(LayoutType.bottomNavigation);
-    AppLogger.info('[ThemeProvider] Preferencias reseteadas a valores por defecto');
+    AppLogger.info(
+      '[ThemeProvider] Preferencias reseteadas a valores por defecto',
+    );
   }
 }
-
-
-

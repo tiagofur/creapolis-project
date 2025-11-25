@@ -1,5 +1,7 @@
 import projectService from "../services/project.service.js";
 import { successResponse, asyncHandler } from "../utils/response.js";
+import { invalidateCache } from "../middleware/cache.middleware.js";
+import auditService from "../services/audit.service.js";
 
 /**
  * Project Controller
@@ -68,6 +70,20 @@ class ProjectController {
       managerId,
     });
 
+    // Invalidate projects cache for this user
+    await invalidateCache(`projects:${req.user.id}:*`);
+
+    // Audit Log
+    await auditService.log({
+      userId: req.user.id,
+      action: "CREATE",
+      entityType: "PROJECT",
+      entityId: project.id,
+      details: `Created project "${project.name}"`,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
+
     return successResponse(res, project, "Project created successfully", 201);
   });
 
@@ -97,6 +113,21 @@ class ProjectController {
       progress,
     });
 
+    // Invalidate projects cache for this user
+    await invalidateCache(`projects:${req.user.id}:*`);
+
+    // Audit Log
+    await auditService.log({
+      userId: req.user.id,
+      action: "UPDATE",
+      entityType: "PROJECT",
+      entityId: project.id,
+      details: `Updated project "${project.name}"`,
+      metadata: req.body,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
+
     return successResponse(res, project, "Project updated successfully");
   });
 
@@ -108,6 +139,20 @@ class ProjectController {
     const projectId = parseInt(req.params.id);
 
     const result = await projectService.deleteProject(projectId, req.user.id);
+
+    // Invalidate projects cache for this user
+    await invalidateCache(`projects:${req.user.id}:*`);
+
+    // Audit Log
+    await auditService.log({
+      userId: req.user.id,
+      action: "DELETE",
+      entityType: "PROJECT",
+      entityId: projectId,
+      details: `Deleted project ID ${projectId}`,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent"),
+    });
 
     return successResponse(res, result, "Project deleted successfully");
   });

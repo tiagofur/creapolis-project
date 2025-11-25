@@ -156,6 +156,39 @@ flutter test test/domain/usecases/workspace/
 - ⏳ BLoC tests (pendiente)
 - ⏳ Widget tests (pendiente)
 
+### Testing
+
+```bash
+# Todos los tests
+flutter test
+
+# Tests con cobertura
+flutter test --coverage
+
+# Tests específicos
+flutter test test/domain/usecases/workspace/get_user_workspaces_test.dart
+```
+
+### E2E Testing (Maestro)
+
+Este proyecto utiliza [Maestro](https://maestro.mobile.dev/) para pruebas de UI automatizadas.
+
+**Prerrequisitos:**
+
+- Instalar Maestro: `powershell -Command "iwr -useb https://get.maestro.mobile.dev | iex"`
+- Tener un emulador de Android o simulador de iOS corriendo.
+- Tener la app instalada en el emulador (`flutter run`).
+
+**Ejecutar Tests:**
+
+```powershell
+# Ejecutar script de ayuda (Windows)
+./run-maestro.ps1
+
+# O ejecutar manualmente
+maestro test .maestro/login_flow.yaml
+```
+
 ## 📋 Principios de Organización
 
 ### 1. **Clean Architecture**
@@ -222,6 +255,26 @@ flutter test --coverage
 
 # Tests específicos
 flutter test test/domain/usecases/workspace/get_user_workspaces_test.dart
+```
+
+### E2E Testing (Maestro)
+
+Este proyecto utiliza [Maestro](https://maestro.mobile.dev/) para pruebas de UI automatizadas.
+
+**Prerrequisitos:**
+
+- Instalar Maestro: `powershell -Command "iwr -useb https://get.maestro.mobile.dev | iex"`
+- Tener un emulador de Android o simulador de iOS corriendo.
+- Tener la app instalada en el emulador (`flutter run`).
+
+**Ejecutar Tests:**
+
+```powershell
+# Ejecutar script de ayuda (Windows)
+./run-maestro.ps1
+
+# O ejecutar manualmente
+maestro test .maestro/login_flow.yaml
 ```
 
 ## 📦 Dependencias Principales

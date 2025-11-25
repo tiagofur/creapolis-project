@@ -5,6 +5,8 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import { createServer } from "http";
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 // Load environment variables
 dotenv.config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
@@ -50,7 +52,29 @@ import {
   createGraphQLMiddleware,
 } from "./graphql/index.js";
 
+// Import Redis
+import { initRedis, closeRedis } from "./config/redis.js";
+import { initNotificationWorker } from "./workers/notification.worker.js";
+
 const app = express();
+
+// Initialize Sentry
+if (!isTestEnvironment) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [nodeProfilingIntegration()],
+    // Performance Monitoring
+    tracesSampleRate: 1.0, // Capture 100% of the transactions
+    // Set sampling rate for profiling - this is relative to tracesSampleRate
+    profilesSampleRate: 1.0,
+  });
+}
+
+// The request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
+// TracingHandler creates a trace for every incoming request
+app.use(Sentry.Handlers.tracingHandler());
+
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
 const isTestEnvironment = process.env.NODE_ENV === "test";
@@ -134,6 +158,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.get("/debug-sentry", function mainHandler(req, res) {
+  throw new Error("My first Sentry error!");
+});
+
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
@@ -180,6 +208,12 @@ const startServer = ({ listen = true } = {}) => {
     initializationPromise = (async () => {
       try {
         if (!isTestEnvironment) {
+          // Initialize Redis
+          initRedis();
+
+          // Initialize Workers
+          initNotificationWorker();
+
           firebaseService.initialize();
           websocketService.initialize(httpServer);
         }
@@ -205,6 +239,9 @@ const startServer = ({ listen = true } = {}) => {
         }
 
         if (!errorHandlerRegistered) {
+          // The error handler must be before any other error middleware and after all controllers
+          app.use(Sentry.Handlers.errorHandler());
+
           app.use((err, req, res, next) => {
             console.error("Error:", err);
 
@@ -277,6 +314,12 @@ if (!isTestEnvironment) {
     console.error("Server startup failed:", error);
   });
 }
+
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
+  console.log("🔌 Database disconnected");
+  await closeRedis();
+});
 
 export { app, startServer, serverReady };
 export default app;

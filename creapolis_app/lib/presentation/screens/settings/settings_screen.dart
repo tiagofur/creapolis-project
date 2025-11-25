@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:creapolis_app/l10n/app_localizations.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -32,8 +33,8 @@ class SettingsScreen extends StatelessWidget {
         body: ListView(
           children: [
             // Sección de Apariencia
-            _AppearanceSection(),
-            const Divider(),
+            _AppearanceSection().animate().fadeIn(duration: 600.ms),
+            const Divider().animate().fadeIn(delay: 200.ms),
 
             // Sección de Personalización
             _buildSection(
@@ -48,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
               onTap: () {
                 context.go(RoutePaths.rolePreferences);
               },
-            ),
+            ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
             _buildSection(
               context,
               title:
@@ -61,12 +62,15 @@ class SettingsScreen extends StatelessWidget {
               onTap: () {
                 context.go(RoutePaths.customizationMetrics);
               },
-            ),
-            const Divider(),
+            ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0),
+            const Divider().animate().fadeIn(delay: 500.ms),
 
             // Sección de Integraciones
-            _IntegrationsSection(),
-            const Divider(),
+            _IntegrationsSection()
+                .animate()
+                .fadeIn(delay: 600.ms)
+                .slideY(begin: 0.1, end: 0),
+            const Divider().animate().fadeIn(delay: 700.ms),
 
             // Otras secciones de configuración pueden ir aquí
             _buildSection(
@@ -78,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
               onTap: () {
                 context.go(RoutePaths.notificationSettings);
               },
-            ),
+            ).animate().fadeIn(delay: 800.ms).slideX(begin: -0.1, end: 0),
             _buildSection(
               context,
               title: AppLocalizations.of(context)?.profileTitle ?? 'Perfil',
@@ -93,7 +97,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 );
               },
-            ),
+            ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.1, end: 0),
             _buildSection(
               context,
               title: AppLocalizations.of(context)?.aboutTitle ?? 'Acerca de',
@@ -108,7 +112,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 );
               },
-            ),
+            ).animate().fadeIn(delay: 1000.ms).slideX(begin: -0.1, end: 0),
           ],
         ),
       ),
@@ -186,33 +190,46 @@ class _AppearanceSection extends StatelessWidget {
 
                     // Opciones de tema
                     _ThemeOption(
-                      title:
-                          AppLocalizations.of(context)?.themeLight ?? 'Claro',
-                      icon: Icons.light_mode,
-                      isSelected: themeProvider.themeMode == AppThemeMode.light,
-                      onTap: () =>
-                          themeProvider.setThemeMode(AppThemeMode.light),
-                    ),
+                          title:
+                              AppLocalizations.of(context)?.themeLight ??
+                              'Claro',
+                          icon: Icons.light_mode,
+                          isSelected:
+                              themeProvider.themeMode == AppThemeMode.light,
+                          onTap: () =>
+                              themeProvider.setThemeMode(AppThemeMode.light),
+                        )
+                        .animate()
+                        .fadeIn(delay: 200.ms)
+                        .slideX(begin: 0.2, end: 0),
                     const SizedBox(height: 8),
                     _ThemeOption(
-                      title:
-                          AppLocalizations.of(context)?.themeDark ?? 'Oscuro',
-                      icon: Icons.dark_mode,
-                      isSelected: themeProvider.themeMode == AppThemeMode.dark,
-                      onTap: () =>
-                          themeProvider.setThemeMode(AppThemeMode.dark),
-                    ),
+                          title:
+                              AppLocalizations.of(context)?.themeDark ??
+                              'Oscuro',
+                          icon: Icons.dark_mode,
+                          isSelected:
+                              themeProvider.themeMode == AppThemeMode.dark,
+                          onTap: () =>
+                              themeProvider.setThemeMode(AppThemeMode.dark),
+                        )
+                        .animate()
+                        .fadeIn(delay: 300.ms)
+                        .slideX(begin: 0.2, end: 0),
                     const SizedBox(height: 8),
                     _ThemeOption(
-                      title:
-                          AppLocalizations.of(context)?.themeSystem ??
-                          'Seguir sistema',
-                      icon: Icons.brightness_auto,
-                      isSelected:
-                          themeProvider.themeMode == AppThemeMode.system,
-                      onTap: () =>
-                          themeProvider.setThemeMode(AppThemeMode.system),
-                    ),
+                          title:
+                              AppLocalizations.of(context)?.themeSystem ??
+                              'Seguir sistema',
+                          icon: Icons.brightness_auto,
+                          isSelected:
+                              themeProvider.themeMode == AppThemeMode.system,
+                          onTap: () =>
+                              themeProvider.setThemeMode(AppThemeMode.system),
+                        )
+                        .animate()
+                        .fadeIn(delay: 400.ms)
+                        .slideX(begin: 0.2, end: 0),
                   ],
                 ),
               ),
@@ -251,36 +268,44 @@ class _AppearanceSection extends StatelessWidget {
 
                     // Opciones de layout
                     _LayoutOption(
-                      title:
-                          AppLocalizations.of(context)?.sidebarTitle ??
-                          'Barra lateral',
-                      subtitle:
-                          AppLocalizations.of(context)?.sidebarSubtitle ??
-                          'Menú de navegación en el lateral',
-                      icon: Icons.menu,
-                      isSelected:
-                          themeProvider.layoutType == LayoutType.sidebar,
-                      onTap: () =>
-                          themeProvider.setLayoutType(LayoutType.sidebar),
-                    ),
+                          title:
+                              AppLocalizations.of(context)?.sidebarTitle ??
+                              'Barra lateral',
+                          subtitle:
+                              AppLocalizations.of(context)?.sidebarSubtitle ??
+                              'Menú de navegación en el lateral',
+                          icon: Icons.menu,
+                          isSelected:
+                              themeProvider.layoutType == LayoutType.sidebar,
+                          onTap: () =>
+                              themeProvider.setLayoutType(LayoutType.sidebar),
+                        )
+                        .animate()
+                        .fadeIn(delay: 500.ms)
+                        .slideX(begin: 0.2, end: 0),
                     const SizedBox(height: 8),
                     _LayoutOption(
-                      title:
-                          AppLocalizations.of(context)?.bottomNavigationTitle ??
-                          'Navegación inferior',
-                      subtitle:
-                          AppLocalizations.of(
-                            context,
-                          )?.bottomNavigationSubtitle ??
-                          'Menú de navegación en la parte inferior',
-                      icon: Icons.navigation,
-                      isSelected:
-                          themeProvider.layoutType ==
-                          LayoutType.bottomNavigation,
-                      onTap: () => themeProvider.setLayoutType(
-                        LayoutType.bottomNavigation,
-                      ),
-                    ),
+                          title:
+                              AppLocalizations.of(
+                                context,
+                              )?.bottomNavigationTitle ??
+                              'Navegación inferior',
+                          subtitle:
+                              AppLocalizations.of(
+                                context,
+                              )?.bottomNavigationSubtitle ??
+                              'Menú de navegación en la parte inferior',
+                          icon: Icons.navigation,
+                          isSelected:
+                              themeProvider.layoutType ==
+                              LayoutType.bottomNavigation,
+                          onTap: () => themeProvider.setLayoutType(
+                            LayoutType.bottomNavigation,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(delay: 600.ms)
+                        .slideX(begin: 0.2, end: 0),
                   ],
                 ),
               ),

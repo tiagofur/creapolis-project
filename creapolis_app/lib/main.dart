@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
 import 'core/database/hive_manager.dart';
@@ -75,8 +76,17 @@ void main() async {
       'main: ✅ SyncManager inicializado y escuchando conectividad',
     );
 
-    // Ejecutar app
-    runApp(const CreopolisApp());
+    // Ejecutar app con Sentry
+    await SentryFlutter.init((options) {
+      options.dsn =
+          'https://examplePublicKey@o0.ingest.sentry.io/0'; // TODO: Replace with your DSN
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+      // We recommend adjusting this value in production.
+      options.tracesSampleRate = 1.0;
+      // The sampling rate for profiling is relative to tracesSampleRate
+      // Setting to 1.0 will profile 100% of sampled transactions:
+      options.profilesSampleRate = 1.0;
+    }, appRunner: () => runApp(const CreopolisApp()));
   } catch (e, stackTrace) {
     AppLogger.error('main: ❌ Error crítico en inicialización', e, stackTrace);
 

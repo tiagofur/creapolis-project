@@ -7,21 +7,25 @@ import 'package:creapolis_app/domain/entities/task.dart';
 import 'package:creapolis_app/domain/repositories/project_repository.dart';
 import 'package:creapolis_app/domain/repositories/task_repository.dart';
 import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
+import 'package:creapolis_app/domain/usecases/get_productivity_heatmap_usecase.dart';
 
 /// BLoC para gestionar el dashboard principal
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final WorkspaceRepository workspaceRepository;
   final ProjectRepository projectRepository;
   final TaskRepository taskRepository;
+  final GetProductivityHeatmapUseCase getProductivityHeatmapUseCase;
   final Logger logger = Logger();
 
   DashboardBloc({
     required this.workspaceRepository,
     required this.projectRepository,
     required this.taskRepository,
+    required this.getProductivityHeatmapUseCase,
   }) : super(const DashboardInitial()) {
     on<LoadDashboardData>(_onLoadDashboardData);
     on<RefreshDashboardData>(_onRefreshDashboardData);
+    on<LoadProductivityHeatmap>(_onLoadProductivityHeatmap);
   }
 
   /// Maneja el evento de carga inicial del dashboard
@@ -140,15 +144,45 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
             completionRate: completionRate,
           );
 
-          emit(
-            DashboardLoaded(
-              workspaces: workspaces,
-              allProjects: allProjects,
-              activeProjects: activeProjects,
-              pendingTasks: pendingTasks,
-              recentTasks: top5RecentTasks,
-              stats: stats,
-            ),
+          // Cargar heatmap de productividad (últimos 30 días)
+          final now = DateTime.now();
+          final startDate = now.subtract(const Duration(days: 30));
+
+          final heatmapResult = await getProductivityHeatmapUseCase(
+            GetProductivityHeatmapParams(startDate: startDate, endDate: now),
+          );
+
+          heatmapResult.fold(
+            (failure) {
+              logger.w(
+                'Error loading productivity heatmap: ${failure.message}',
+              );
+              // Emitir estado sin heatmap
+              emit(
+                DashboardLoaded(
+                  workspaces: workspaces,
+                  allProjects: allProjects,
+                  activeProjects: activeProjects,
+                  pendingTasks: pendingTasks,
+                  recentTasks: top5RecentTasks,
+                  stats: stats,
+                  productivityHeatmap: null,
+                ),
+              );
+            },
+            (heatmap) {
+              emit(
+                DashboardLoaded(
+                  workspaces: workspaces,
+                  allProjects: allProjects,
+                  activeProjects: activeProjects,
+                  pendingTasks: pendingTasks,
+                  recentTasks: top5RecentTasks,
+                  stats: stats,
+                  productivityHeatmap: heatmap,
+                ),
+              );
+            },
           );
 
           logger.i('Dashboard data loaded successfully');
@@ -171,5 +205,49 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     // Reutilizar la lógica de carga
     await _onLoadDashboardData(const LoadDashboardData(), emit);
+  }
+
+  Future<void> _onLoadProductivityHeatmap(
+    LoadProductivityHeatmap event,
+    Emitter<DashboardState> emit,
+  ) async {
+    if (state is! DashboardLoaded) return;
+    final currentState = state as DashboardLoaded;
+
+    // Mantener el estado actual pero indicando carga si fuera necesario
+    // Por ahora solo actualizamos el heatmap
+
+    final now = DateTime.now();
+    final startDate = event.startDate ?? now.subtract(const Duration(days: 30));
+    final endDate = event.endDate ?? now;
+
+    final heatmapResult = await getProductivityHeatmapUseCase(
+      GetProductivityHeatmapParams(
+        startDate: startDate,
+        endDate: endDate,
+        teamView: event.teamView,
+      ),
+    );
+
+    heatmapResult.fold(
+      (failure) {
+        logger.w('Error loading productivity heatmap: ${failure.message}');
+        // No cambiamos el estado general a error, solo el heatmap a null o mantenemos el anterior
+        // Podríamos añadir un campo error específico para el heatmap
+      },
+      (heatmap) {
+        emit(
+          DashboardLoaded(
+            workspaces: currentState.workspaces,
+            allProjects: currentState.allProjects,
+            activeProjects: currentState.activeProjects,
+            pendingTasks: currentState.pendingTasks,
+            recentTasks: currentState.recentTasks,
+            stats: currentState.stats,
+            productivityHeatmap: heatmap,
+          ),
+        );
+      },
+    );
   }
 }

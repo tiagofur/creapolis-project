@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/app_logger.dart';
@@ -140,8 +141,8 @@ class _ResourceAllocationMapScreenState
               icon: const Icon(Icons.refresh),
               onPressed: () {
                 context.read<WorkloadBloc>().add(
-                      RefreshWorkloadEvent(widget.projectId),
-                    );
+                  RefreshWorkloadEvent(widget.projectId),
+                );
               },
             ),
           ],
@@ -181,7 +182,7 @@ class _ResourceAllocationMapScreenState
   Widget _buildContent(BuildContext context, ResourceAllocationLoaded state) {
     // Aplicar filtros
     var filteredAllocations = state.allocations;
-    
+
     if (_filterBy == 'overloaded') {
       filteredAllocations = filteredAllocations
           .where((a) => a.isOverloaded)
@@ -197,20 +198,18 @@ class _ResourceAllocationMapScreenState
     if (_sortBy == 'name') {
       filteredAllocations.sort((a, b) => a.userName.compareTo(b.userName));
     } else if (_sortBy == 'workload') {
-      filteredAllocations.sort((a, b) => 
-        b.totalHours.compareTo(a.totalHours)
-      );
+      filteredAllocations.sort((a, b) => b.totalHours.compareTo(a.totalHours));
     } else if (_sortBy == 'availability') {
-      filteredAllocations.sort((a, b) => 
-        a.averageHoursPerDay.compareTo(b.averageHoursPerDay)
+      filteredAllocations.sort(
+        (a, b) => a.averageHoursPerDay.compareTo(b.averageHoursPerDay),
       );
     }
 
     return RefreshIndicator(
       onRefresh: () async {
         context.read<WorkloadBloc>().add(
-              RefreshWorkloadEvent(widget.projectId),
-            );
+          RefreshWorkloadEvent(widget.projectId),
+        );
         await Future.delayed(const Duration(seconds: 1));
       },
       child: CustomScrollView(
@@ -224,8 +223,8 @@ class _ResourceAllocationMapScreenState
                 endDate: state.endDate ?? state.dateRange?.end,
                 onDateRangeChanged: (start, end) {
                   context.read<WorkloadBloc>().add(
-                        ChangeDateRangeEvent(widget.projectId, start, end),
-                      );
+                    ChangeDateRangeEvent(widget.projectId, start, end),
+                  );
                 },
               ),
             ),
@@ -244,7 +243,11 @@ class _ResourceAllocationMapScreenState
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildFilterInfo(context, filteredAllocations.length, state.allocations.length),
+              child: _buildFilterInfo(
+                context,
+                filteredAllocations.length,
+                state.allocations.length,
+              ).animate().fadeIn().slideX(begin: -0.1, end: 0),
             ),
           ),
 
@@ -259,7 +262,7 @@ class _ResourceAllocationMapScreenState
                 dates: state.allDates,
                 projectId: widget.projectId,
                 viewMode: _viewMode,
-              ),
+              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
             ),
 
           // Espacio final
@@ -322,7 +325,7 @@ class _ResourceAllocationMapScreenState
 
     String message;
     IconData icon;
-    
+
     if (_filterBy == 'overloaded') {
       message = 'No hay recursos sobrecargados';
       icon = Icons.check_circle;
@@ -342,14 +345,14 @@ class _ResourceAllocationMapScreenState
             icon,
             size: 80,
             color: colorScheme.onSurfaceVariant,
-          ),
+          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
           const SizedBox(height: 16),
           Text(
             message,
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
+          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5, end: 0),
           const SizedBox(height: 8),
           Text(
             'Ajusta los filtros o el rango de fechas\npara ver más recursos',
@@ -357,7 +360,7 @@ class _ResourceAllocationMapScreenState
               color: colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
-          ),
+          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.5, end: 0),
         ],
       ),
     );
@@ -372,14 +375,18 @@ class _ResourceAllocationMapScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 80, color: colorScheme.error),
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: colorScheme.error,
+          ).animate().scale().shake(),
           const SizedBox(height: 16),
           Text(
             'Error al cargar recursos',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.error,
             ),
-          ),
+          ).animate().fadeIn().slideY(begin: 0.5, end: 0),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -390,23 +397,20 @@ class _ResourceAllocationMapScreenState
               ),
               textAlign: TextAlign.center,
             ),
-          ),
+          ).animate().fadeIn(delay: 200.ms),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: () {
               AppLogger.info('ResourceMapScreen: Reintentando carga');
               context.read<WorkloadBloc>().add(
-                    LoadResourceAllocationEvent(widget.projectId),
-                  );
+                LoadResourceAllocationEvent(widget.projectId),
+              );
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Reintentar'),
-          ),
+          ).animate().scale(delay: 400.ms),
         ],
       ),
     );
   }
 }
-
-
-

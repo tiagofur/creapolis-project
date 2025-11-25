@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
@@ -390,27 +391,31 @@ class _TasksListScreenState extends State<TasksListScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.task_alt, size: 80, color: colorScheme.onSurfaceVariant),
+          Icon(Icons.task_alt, size: 80, color: colorScheme.onSurfaceVariant)
+              .animate()
+              .scale(duration: 600.ms, curve: Curves.elasticOut)
+              .then(delay: 200.ms)
+              .shake(duration: 400.ms, hz: 2),
           const SizedBox(height: 16),
           Text(
             'No hay tareas',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
+          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.5, end: 0),
           const SizedBox(height: 8),
           Text(
             'Crea tu primera tarea para comenzar',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
+          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.5, end: 0),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: () => _showCreateTaskSheet(context),
             icon: const Icon(Icons.add),
             label: const Text('Crear Tarea'),
-          ),
+          ).animate().fadeIn(delay: 800.ms).scale(),
         ],
       ),
     );

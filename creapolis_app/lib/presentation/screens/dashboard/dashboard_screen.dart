@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:async';
 
 import '../../../core/services/dashboard_preferences_service.dart';
@@ -259,7 +260,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.add_task),
             onPressed: () => _handleCreateTask(context),
-            tooltip: AppLocalizations.of(context)?.newTaskTooltip ?? 'Nueva tarea',
+            tooltip:
+                AppLocalizations.of(context)?.newTaskTooltip ?? 'Nueva tarea',
           ),
           // Profile
           IconButton(
@@ -308,7 +310,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       projectBloc.add(LoadProjects(workspaceId));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)?.updatingProjectsSnack ?? 'Actualizando lista de proyectos...'),
+          content: Text(
+            AppLocalizations.of(context)?.updatingProjectsSnack ??
+                'Actualizando lista de proyectos...',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -373,9 +378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SnackBar(content: Text('Tarea "${result.task.title}" creada')),
       );
     } else if (result is TaskError) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(result.message)));
     }
   }
 
@@ -393,11 +396,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                AppLocalizations.of(sheetContext)?.selectProject ?? 'Selecciona un proyecto',
-                style: Theme.of(sheetContext)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                AppLocalizations.of(sheetContext)?.selectProject ??
+                    'Selecciona un proyecto',
+                style: Theme.of(
+                  sheetContext,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             const Divider(height: 1),
@@ -435,7 +438,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text('Workspace requerido'),
           ],
         ),
-        content: Text(AppLocalizations.of(context)?.workspaceRequiredMessage ?? message),
+        content: Text(
+          AppLocalizations.of(context)?.workspaceRequiredMessage ?? message,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -447,7 +452,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               context.go(RoutePaths.workspaceCreate);
             },
             icon: const Icon(Icons.add),
-            label: Text(AppLocalizations.of(context)?.createWorkspace ?? 'Crear Workspace'),
+            label: Text(
+              AppLocalizations.of(context)?.createWorkspace ??
+                  'Crear Workspace',
+            ),
           ),
         ],
       ),
@@ -480,7 +488,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _addWidget();
             },
             icon: const Icon(Icons.create_new_folder),
-            label: Text(AppLocalizations.of(context)?.addWidgetCreateProject ?? 'Añadir Widget / Crear Proyecto'),
+            label: Text(
+              AppLocalizations.of(context)?.addWidgetCreateProject ??
+                  'Añadir Widget / Crear Proyecto',
+            ),
           ),
         ],
       ),
@@ -500,11 +511,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Filter bar
-          const DashboardFilterBar(),
+          const DashboardFilterBar()
+              .animate()
+              .fadeIn(duration: 400.ms)
+              .slideY(begin: -0.2, end: 0),
           const SizedBox(height: 16),
           // Widgets
-          for (var config in visibleWidgets) ...[
-            DashboardWidgetFactory.buildWidget(context, config),
+          for (var i = 0; i < visibleWidgets.length; i++) ...[
+            DashboardWidgetFactory.buildWidget(context, visibleWidgets[i])
+                .animate()
+                .fadeIn(delay: (100 * i).ms, duration: 500.ms)
+                .slideY(begin: 0.1, end: 0),
             const SizedBox(height: 16),
           ],
         ],
@@ -548,32 +565,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.widgets_outlined,
-              size: 80,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
+                  Icons.dashboard_customize_outlined,
+                  size: 100,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                )
+                .animate(
+                  onPlay: (controller) => controller.repeat(reverse: true),
+                )
+                .scale(
+                  begin: const Offset(0.9, 0.9),
+                  end: const Offset(1.1, 1.1),
+                  duration: 2000.ms,
+                ),
+            const SizedBox(height: 32),
             Text(
               'Tu dashboard está vacío',
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
+            ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+            const SizedBox(height: 12),
             Text(
-              'Añade widgets para personalizar tu experiencia',
-              style: theme.textTheme.bodyMedium?.copyWith(
+              'Personaliza tu espacio de trabajo añadiendo widgets que te ayuden a ser más productivo.',
+              style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
+            ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
+            const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: _addWidget,
               icon: const Icon(Icons.add),
-              label: const Text('Añadir Widget'),
-            ),
+              label: const Text('Añadir mi primer Widget'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+              ),
+            ).animate().fadeIn(delay: 400.ms, duration: 600.ms).scale(),
           ],
         ),
       ),

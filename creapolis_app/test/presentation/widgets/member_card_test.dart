@@ -1,15 +1,18 @@
+import 'dart:io';
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/member_card.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/role_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../helpers/test_http_overrides.dart';
 
 void main() {
   group('MemberCard Widget', () {
     late WorkspaceMember testMember;
 
     setUp(() {
+      HttpOverrides.global = TestHttpOverrides();
       testMember = WorkspaceMember(
         id: 1,
         workspaceId: 1,
@@ -19,6 +22,10 @@ void main() {
         role: WorkspaceRole.member,
         joinedAt: DateTime(2024, 1, 1),
       );
+    });
+
+    tearDown(() {
+      HttpOverrides.global = null;
     });
 
     Widget createWidget({
@@ -315,6 +322,3 @@ void main() {
     });
   });
 }
-
-
-

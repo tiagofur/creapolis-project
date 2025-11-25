@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart' hide Task;
 
 import '../../core/errors/failures.dart';
+import '../entities/productivity_heatmap.dart';
 import '../entities/time_log.dart';
 
 /// Repositorio de time logs
@@ -22,7 +23,13 @@ abstract class TimeLogRepository {
 
   /// Obtener time log activo de una tarea específica
   Future<Either<Failure, TimeLog?>> getActiveTimeLogByTask(int taskId);
+
+  /// Obtener heatmap de productividad
+  Future<Either<Failure, ProductivityHeatmap>> getProductivityHeatmap({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? projectId,
+    bool teamView = false,
+    int? workspaceId,
+  });
 }
-
-
-

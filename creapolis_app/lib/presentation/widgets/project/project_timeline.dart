@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/entities/project.dart';
@@ -123,6 +124,10 @@ class ProjectTimeline extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
+                      ).animate().slideX(
+                        duration: 800.ms,
+                        curve: Curves.easeOutQuad,
+                        begin: -1,
                       ),
                       // Progreso real de tareas (si se muestra)
                       if (showProgress)
@@ -135,6 +140,10 @@ class ProjectTimeline extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
+                        ).animate().slideX(
+                          duration: 1000.ms,
+                          curve: Curves.easeOutCubic,
+                          begin: -1,
                         ),
                     ],
                   ),
@@ -173,19 +182,19 @@ class ProjectTimeline extends StatelessWidget {
                   label: 'Días totales',
                   value: totalDays.toString(),
                   color: colorScheme.primary,
-                ),
+                ).animate().scale(delay: 200.ms, duration: 400.ms),
                 _MetricCard(
                   icon: Icons.trending_up,
                   label: 'Transcurridos',
                   value: elapsedDays.toString(),
                   color: Colors.blue,
-                ),
+                ).animate().scale(delay: 300.ms, duration: 400.ms),
                 _MetricCard(
                   icon: Icons.schedule,
                   label: 'Restantes',
                   value: remainingDays.toString(),
                   color: isOverdue ? colorScheme.error : Colors.green,
-                ),
+                ).animate().scale(delay: 400.ms, duration: 400.ms),
               ],
             ),
 
@@ -207,10 +216,12 @@ class ProjectTimeline extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.warning_rounded,
-                      size: 20,
-                      color: colorScheme.error,
-                    ),
+                          Icons.warning_rounded,
+                          size: 20,
+                          color: colorScheme.error,
+                        )
+                        .animate(onPlay: (controller) => controller.repeat())
+                        .shake(delay: 1000.ms, duration: 1000.ms, hz: 2),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

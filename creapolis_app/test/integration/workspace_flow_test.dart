@@ -9,6 +9,7 @@ import 'package:creapolis_app/features/workspace/presentation/bloc/workspace_blo
 import 'package:creapolis_app/features/workspace/presentation/bloc/workspace_event.dart';
 import 'package:creapolis_app/presentation/screens/workspace/workspace_list_screen.dart';
 import 'package:creapolis_app/presentation/providers/workspace_context.dart';
+import 'package:creapolis_app/presentation/widgets/loading/skeleton_list.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -130,9 +131,14 @@ void main() {
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Assert
@@ -147,28 +153,30 @@ void main() {
       tester,
     ) async {
       // Arrange
-      when(
-        mockGetUserWorkspaces.call(),
-      ).thenAnswer((_) async => Right(tWorkspaces));
+      when(mockGetUserWorkspaces.call()).thenAnswer((_) async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        return Right(tWorkspaces);
+      });
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Process event -> Loading
-      await tester.pump(
-        const Duration(milliseconds: 10),
-      ); // Small pump to ensure loading state
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+      await tester.pump(const Duration(milliseconds: 100)); // Ensure UI updates
 
       // Assert - Loading state
-      // Note: WorkspaceListScreen uses SkeletonList or LinearProgressIndicator, not CircularProgressIndicator
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      // WorkspaceListScreen uses SkeletonList when cache is empty
+      expect(find.byType(SkeletonList), findsOneWidget);
 
       // Wait for completion
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Assert - Loaded state
-      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(SkeletonList), findsNothing);
       expect(find.text('Test Workspace 1'), findsOneWidget);
     });
 
@@ -182,9 +190,14 @@ void main() {
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Assert
@@ -204,9 +217,14 @@ void main() {
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Assert - Empty state message
@@ -228,13 +246,21 @@ void main() {
 
       // Act - Initial load
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
+      // Ensure list is loaded
+      expect(find.byType(ListView), findsOneWidget);
+
       // Act - Pull to refresh
-      await tester.drag(find.byType(RefreshIndicator), const Offset(0, 300));
+      await tester.drag(find.byType(ListView), const Offset(0, 300));
       await tester.pumpAndSettle();
 
       // Assert - GetUserWorkspaces called twice (initial + refresh)
@@ -254,9 +280,14 @@ void main() {
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Find and tap "Activar" button if present
@@ -281,14 +312,19 @@ void main() {
 
       // Act
       await tester.pumpWidget(createApp());
-      workspaceBloc.add(const LoadWorkspaces()); // Manual trigger
-      await tester.pump(); // Trigger initState
-      await tester.pump(const Duration(seconds: 1)); // Wait for mock delay
+      // Event is added in addPostFrameCallback
+      await tester.pump(); // Trigger initState callback
+      await tester.pump(); // Process event
+
+      // Wait for async operations to complete
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
       await tester.pumpAndSettle(); // Rebuild UI
 
       // Assert - Icons present
       // WorkspaceCard uses icons based on type
-      expect(find.byIcon(Icons.group), findsWidgets); // Team workspace
+      expect(find.byIcon(Icons.groups), findsWidgets); // Team workspace
       expect(find.byIcon(Icons.person), findsWidgets); // Personal workspace
     });
   });

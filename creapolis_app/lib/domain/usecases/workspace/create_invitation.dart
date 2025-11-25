@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../core/errors/failures.dart';
@@ -7,16 +8,19 @@ import '../../entities/workspace_invitation.dart';
 import '../../repositories/workspace_repository.dart';
 
 /// Parámetros para crear invitación
-class CreateInvitationParams {
+class CreateInvitationParams extends Equatable {
   final int workspaceId;
   final String email;
   final WorkspaceRole role;
 
-  CreateInvitationParams({
+  const CreateInvitationParams({
     required this.workspaceId,
     required this.email,
     required this.role,
   });
+
+  @override
+  List<Object?> get props => [workspaceId, email, role];
 }
 
 /// Caso de uso para crear una invitación

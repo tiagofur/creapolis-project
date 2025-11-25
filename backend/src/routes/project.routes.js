@@ -13,6 +13,7 @@ import {
   listProjectsValidation,
 } from "../validators/project.validator.js";
 import schedulerRoutes from "./scheduler.routes.js";
+import { cacheMiddleware } from "../middleware/cache.middleware.js";
 
 const router = express.Router();
 
@@ -24,7 +25,13 @@ router.use(authenticate);
  * @desc    Get all projects for authenticated user
  * @access  Private
  */
-router.get("/", listProjectsValidation, validate, projectController.list);
+router.get(
+  "/",
+  listProjectsValidation,
+  validate,
+  cacheMiddleware(60, "projects"),
+  projectController.list
+);
 
 /**
  * @route   POST /api/projects

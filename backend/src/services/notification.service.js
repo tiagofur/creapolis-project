@@ -1,6 +1,7 @@
 import prisma from "../config/database.js";
 import pushNotificationService from "./push-notification.service.js";
 import websocketService from "./websocket.service.js";
+import { addNotificationJob } from "../queues/notification.queue.js";
 
 export const notificationService = {
   // Create a new notification
@@ -93,34 +94,22 @@ export const notificationService = {
       // Emit WebSocket event
       websocketService.emitToUser(userId, "notification", notification);
 
-      // Send Push Notification using the dedicated service
+      // Send Push Notification using the dedicated service via Queue
       // This handles token retrieval, preference checks, logging, and invalid token cleanup
-      pushNotificationService
-        .sendPushNotification(userId, {
+      addNotificationJob({
+        userId,
+        notification: {
           id: notification.id,
           type,
           title,
           message,
           relatedId,
           relatedType,
-        })
-        .catch((err) =>
-          console.error("Failed to send push notification:", err)
-        );
-
-      // Send WebSocket notification
-      websocketService
-        .sendNotification(userId, {
-          id: notification.id,
-          type,
-          title,
-          message,
-          relatedId,
-          relatedType,
-        })
-        .catch((err) =>
-          console.error("Failed to send WebSocket notification:", err)
-        );
+        },
+        emitWebsocket: false, // Already emitted above
+      }).catch((err) =>
+        console.error("Failed to queue push notification:", err)
+      );
 
       return notification;
     } catch (error) {

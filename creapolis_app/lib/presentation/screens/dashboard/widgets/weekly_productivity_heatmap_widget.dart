@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:creapolis_app/domain/entities/productivity_heatmap.dart';
 
 /// Widget que muestra un heatmap de productividad por día de la semana
 /// Muestra una matriz de calor hora x día para identificar patrones semanales
 class WeeklyProductivityHeatmapWidget extends StatefulWidget {
   final bool isTeamView;
+  final ProductivityHeatmap? data;
+  final Function(bool) onTeamViewChanged;
 
-  const WeeklyProductivityHeatmapWidget({super.key, this.isTeamView = false});
+  const WeeklyProductivityHeatmapWidget({
+    super.key,
+    this.isTeamView = false,
+    this.data,
+    required this.onTeamViewChanged,
+  });
 
   @override
   State<WeeklyProductivityHeatmapWidget> createState() =>
@@ -14,14 +22,6 @@ class WeeklyProductivityHeatmapWidget extends StatefulWidget {
 
 class _WeeklyProductivityHeatmapWidgetState
     extends State<WeeklyProductivityHeatmapWidget> {
-  bool _isTeamView = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isTeamView = widget.isTeamView;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -55,17 +55,13 @@ class _WeeklyProductivityHeatmapWidgetState
                 Row(
                   children: [
                     Text(
-                      _isTeamView ? 'Equipo' : 'Individual',
+                      widget.isTeamView ? 'Equipo' : 'Individual',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(width: 8),
                     Switch(
-                      value: _isTeamView,
-                      onChanged: (value) {
-                        setState(() {
-                          _isTeamView = value;
-                        });
-                      },
+                      value: widget.isTeamView,
+                      onChanged: widget.onTeamViewChanged,
                     ),
                   ],
                 ),
@@ -81,7 +77,10 @@ class _WeeklyProductivityHeatmapWidgetState
             const SizedBox(height: 24),
 
             // Heatmap matrix visualization
-            _buildHeatmapMatrix(theme),
+            if (widget.data != null)
+              _buildHeatmapMatrix(theme, widget.data!)
+            else
+              const Center(child: CircularProgressIndicator()),
 
             const SizedBox(height: 16),
 
@@ -91,21 +90,26 @@ class _WeeklyProductivityHeatmapWidgetState
             const SizedBox(height: 16),
 
             // Insights section
-            _buildInsights(theme),
+            if (widget.data != null && widget.data!.insights.isNotEmpty)
+              _buildInsights(theme, widget.data!.insights),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeatmapMatrix(ThemeData theme) {
-    // Mock data - replace with real API call
-    final matrixData = _generateMockMatrixData();
-    final maxHours = matrixData
+  Widget _buildHeatmapMatrix(ThemeData theme, ProductivityHeatmap data) {
+    final matrixData = data.hourlyWeeklyMatrix;
+    // Ensure we have 7 days x 24 hours
+    final safeMatrixData = matrixData.length == 7
+        ? matrixData
+        : List.generate(7, (_) => List<double>.filled(24, 0.0));
+
+    final maxHours = safeMatrixData
         .expand((row) => row)
         .reduce((a, b) => a > b ? a : b);
 
-    final days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    final days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     final hours = ['9h', '12h', '15h', '18h', '21h'];
     final hoursIndices = [9, 12, 15, 18, 21];
 
@@ -137,6 +141,10 @@ class _WeeklyProductivityHeatmapWidgetState
 
           // Heatmap rows
           ...List.generate(7, (dayIndex) {
+            // Adjust day index if needed (backend might use 0=Sunday, frontend 0=Monday?)
+            // Backend: 0=Sunday, 6=Saturday.
+            // Frontend days array: ['Dom', 'Lun', ...] -> Matches backend.
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
@@ -154,7 +162,10 @@ class _WeeklyProductivityHeatmapWidgetState
                   // Hour cells
                   ...List.generate(hoursIndices.length, (hourIndex) {
                     final actualHour = hoursIndices[hourIndex];
-                    final hours = matrixData[dayIndex][actualHour];
+                    final hours = safeMatrixData[dayIndex].length > actualHour
+                        ? safeMatrixData[dayIndex][actualHour]
+                        : 0.0;
+
                     final intensity = maxHours > 0 ? hours / maxHours : 0.0;
                     final color = _getHeatmapColor(intensity, theme);
 
@@ -225,26 +236,7 @@ class _WeeklyProductivityHeatmapWidgetState
     );
   }
 
-  Widget _buildInsights(ThemeData theme) {
-    // Mock insights - replace with real data from API
-    final insights = [
-      {
-        'icon': Icons.calendar_today,
-        'message': 'Martes es tu día más productivo',
-        'color': Colors.green,
-      },
-      {
-        'icon': Icons.access_time,
-        'message': 'Pico de productividad: Martes 10:00 AM',
-        'color': Colors.blue,
-      },
-      {
-        'icon': Icons.trending_up,
-        'message': 'Promedio de 6.2 horas/día laboral',
-        'color': Colors.orange,
-      },
-    ];
-
+  Widget _buildInsights(ThemeData theme, List<ProductivityInsight> insights) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -261,14 +253,14 @@ class _WeeklyProductivityHeatmapWidgetState
             child: Row(
               children: [
                 Icon(
-                  insight['icon'] as IconData,
+                  _getIconData(insight.icon),
                   size: 16,
-                  color: insight['color'] as Color,
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    insight['message'] as String,
+                    insight.message,
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
@@ -280,8 +272,25 @@ class _WeeklyProductivityHeatmapWidgetState
     );
   }
 
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'morning':
+        return Icons.wb_sunny;
+      case 'afternoon':
+        return Icons.wb_twilight;
+      case 'calendar':
+        return Icons.calendar_today;
+      case 'trending_up':
+        return Icons.trending_up;
+      case 'trending_down':
+        return Icons.trending_down;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
   Color _getHeatmapColor(double intensity, ThemeData theme) {
-    if (intensity < 0.2) {
+    if (intensity < 0.1) {
       return theme.colorScheme.surfaceContainerHighest;
     } else if (intensity < 0.4) {
       return theme.colorScheme.primaryContainer.withValues(alpha: 0.4);
@@ -293,51 +302,4 @@ class _WeeklyProductivityHeatmapWidgetState
       return theme.colorScheme.primary;
     }
   }
-
-  List<List<double>> _generateMockMatrixData() {
-    // Mock data for demonstration - 7 days x 24 hours
-    final base = [
-      // Monday
-      List.generate(24, (hour) {
-        if (hour >= 9 && hour <= 18) return 0.5 + (hour % 3) * 0.5;
-        return 0.0;
-      }),
-      // Tuesday (most productive)
-      List.generate(24, (hour) {
-        if (hour >= 9 && hour <= 18) return 0.8 + (hour % 3) * 0.4;
-        return 0.0;
-      }),
-      // Wednesday
-      List.generate(24, (hour) {
-        if (hour >= 9 && hour <= 18) return 0.6 + (hour % 3) * 0.3;
-        return 0.0;
-      }),
-      // Thursday
-      List.generate(24, (hour) {
-        if (hour >= 9 && hour <= 18) return 0.7 + (hour % 3) * 0.3;
-        return 0.0;
-      }),
-      // Friday
-      List.generate(24, (hour) {
-        if (hour >= 9 && hour <= 18) return 0.4 + (hour % 3) * 0.3;
-        return 0.0;
-      }),
-      // Saturday (less productive)
-      List.generate(24, (hour) {
-        if (hour >= 10 && hour <= 14) return 0.2 + (hour % 2) * 0.2;
-        return 0.0;
-      }),
-      // Sunday (minimal)
-      List.generate(24, (hour) => 0.0),
-    ];
-    if (_isTeamView) {
-      return base
-          .map((row) => row.map((v) => v * 1.2).toList())
-          .toList();
-    }
-    return base;
-  }
 }
-
-
-

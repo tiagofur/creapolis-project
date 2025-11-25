@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -68,100 +69,118 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Icons.person_add_outlined,
                         size: 64,
                         color: colorScheme.primary,
+                      ).animate().scale(
+                        duration: 600.ms,
+                        curve: Curves.elasticOut,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Únete a Creapolis',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                            'Únete a Creapolis',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                          .animate()
+                          .fadeIn(delay: 200.ms)
+                          .slideY(begin: 0.5, end: 0),
                       const SizedBox(height: 8),
                       Text(
-                        'Completa el formulario para crear tu cuenta',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                            'Completa el formulario para crear tu cuenta',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                          .animate()
+                          .fadeIn(delay: 400.ms)
+                          .slideY(begin: 0.5, end: 0),
                       const SizedBox(height: 32),
 
                       // First Name field
                       FormBuilderTextField(
-                        name: 'firstName',
-                        decoration: InputDecoration(
-                          labelText: 'Nombre',
-                          hintText: 'Juan',
-                          prefixIcon: const Icon(Icons.person_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'El nombre es requerido',
-                          ),
-                          FormBuilderValidators.minLength(
-                            2,
-                            errorText:
-                                'El nombre debe tener al menos 2 caracteres',
-                          ),
-                        ]),
-                      ),
+                            name: 'firstName',
+                            decoration: InputDecoration(
+                              labelText: 'Nombre',
+                              hintText: 'Juan',
+                              prefixIcon: const Icon(Icons.person_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: 'El nombre es requerido',
+                              ),
+                              FormBuilderValidators.minLength(
+                                2,
+                                errorText:
+                                    'El nombre debe tener al menos 2 caracteres',
+                              ),
+                            ]),
+                          )
+                          .animate()
+                          .fadeIn(delay: 500.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 16),
 
                       // Last Name field
                       FormBuilderTextField(
-                        name: 'lastName',
-                        decoration: InputDecoration(
-                          labelText: 'Apellido',
-                          hintText: 'Pérez',
-                          prefixIcon: const Icon(Icons.person_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'El apellido es requerido',
-                          ),
-                          FormBuilderValidators.minLength(
-                            2,
-                            errorText:
-                                'El apellido debe tener al menos 2 caracteres',
-                          ),
-                        ]),
-                      ),
+                            name: 'lastName',
+                            decoration: InputDecoration(
+                              labelText: 'Apellido',
+                              hintText: 'Pérez',
+                              prefixIcon: const Icon(Icons.person_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: 'El apellido es requerido',
+                              ),
+                              FormBuilderValidators.minLength(
+                                2,
+                                errorText:
+                                    'El apellido debe tener al menos 2 caracteres',
+                              ),
+                            ]),
+                          )
+                          .animate()
+                          .fadeIn(delay: 600.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 16),
 
                       // Email field
                       FormBuilderTextField(
-                        name: 'email',
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'tu@email.com',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'El email es requerido',
-                          ),
-                          FormBuilderValidators.email(
-                            errorText: 'Ingresa un email válido',
-                          ),
-                        ]),
-                      ),
+                            name: 'email',
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              hintText: 'tu@email.com',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: 'El email es requerido',
+                              ),
+                              FormBuilderValidators.email(
+                                errorText: 'Ingresa un email válido',
+                              ),
+                            ]),
+                          )
+                          .animate()
+                          .fadeIn(delay: 700.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 16),
 
                       // Password field
@@ -200,52 +219,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 'La contraseña debe tener al menos 6 caracteres',
                           ),
                         ]),
-                      ),
+                      ).animate().fadeIn(delay: 800.ms).slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 16),
 
                       // Confirm Password field
                       FormBuilderTextField(
-                        name: 'confirmPassword',
-                        decoration: InputDecoration(
-                          labelText: 'Confirmar Contraseña',
-                          hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outlined),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isConfirmPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                            name: 'confirmPassword',
+                            decoration: InputDecoration(
+                              labelText: 'Confirmar Contraseña',
+                              hintText: '••••••••',
+                              prefixIcon: const Icon(Icons.lock_outlined),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isConfirmPasswordVisible
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isConfirmPasswordVisible =
+                                        !_isConfirmPasswordVisible;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isConfirmPasswordVisible =
-                                    !_isConfirmPasswordVisible;
-                              });
-                            },
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        obscureText: !_isConfirmPasswordVisible,
-                        textInputAction: TextInputAction.done,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'Confirma tu contraseña',
-                          ),
-                          (value) {
-                            final password = _formKey
-                                .currentState
-                                ?.fields['password']
-                                ?.value;
-                            if (value != password) {
-                              return 'Las contraseñas no coinciden';
-                            }
-                            return null;
-                          },
-                        ]),
-                        onSubmitted: (_) => _handleRegister(),
-                      ),
+                            obscureText: !_isConfirmPasswordVisible,
+                            textInputAction: TextInputAction.done,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: 'Confirma tu contraseña',
+                              ),
+                              (value) {
+                                final password = _formKey
+                                    .currentState
+                                    ?.fields['password']
+                                    ?.value;
+                                if (value != password) {
+                                  return 'Las contraseñas no coinciden';
+                                }
+                                return null;
+                              },
+                            ]),
+                            onSubmitted: (_) => _handleRegister(),
+                          )
+                          .animate()
+                          .fadeIn(delay: 900.ms)
+                          .slideX(begin: -0.2, end: 0),
                       const SizedBox(height: 24),
 
                       // Register button
@@ -275,7 +297,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                           );
                         },
-                      ),
+                      ).animate().fadeIn(delay: 1000.ms).scale(),
                       const SizedBox(height: 16),
 
                       // Login link
@@ -291,7 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: const Text('Inicia Sesión'),
                           ),
                         ],
-                      ),
+                      ).animate().fadeIn(delay: 1200.ms),
                     ],
                   ),
                 ),
@@ -323,6 +345,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 }
-
-
-

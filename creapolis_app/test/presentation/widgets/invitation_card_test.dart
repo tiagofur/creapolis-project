@@ -1,15 +1,18 @@
+import 'dart:io';
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_invitation.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/invitation_card.dart';
 import 'package:creapolis_app/presentation/widgets/workspace/role_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../helpers/test_http_overrides.dart';
 
 void main() {
   group('InvitationCard Widget', () {
     late WorkspaceInvitation testInvitation;
 
     setUp(() {
+      HttpOverrides.global = TestHttpOverrides();
       testInvitation = WorkspaceInvitation(
         id: 1,
         workspaceId: 1,
@@ -24,6 +27,10 @@ void main() {
         expiresAt: DateTime.now().add(const Duration(days: 7)),
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       );
+    });
+
+    tearDown(() {
+      HttpOverrides.global = null;
     });
 
     Widget createWidget({
@@ -328,6 +335,3 @@ void main() {
     });
   });
 }
-
-
-

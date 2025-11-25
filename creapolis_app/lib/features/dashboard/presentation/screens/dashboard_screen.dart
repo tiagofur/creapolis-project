@@ -26,6 +26,8 @@ import 'package:creapolis_app/injection.dart';
 import 'package:go_router/go_router.dart';
 import 'package:creapolis_app/routes/app_router.dart';
 import 'package:creapolis_app/features/notifications/presentation/widgets/notification_badge.dart';
+import 'package:creapolis_app/presentation/screens/dashboard/widgets/hourly_productivity_heatmap_widget.dart';
+import 'package:creapolis_app/presentation/screens/dashboard/widgets/weekly_productivity_heatmap_widget.dart';
 
 /// Pantalla principal del Dashboard
 class DashboardScreen extends StatelessWidget {
@@ -38,6 +40,7 @@ class DashboardScreen extends StatelessWidget {
         workspaceRepository: getIt(),
         projectRepository: getIt(),
         taskRepository: getIt(),
+        getProductivityHeatmapUseCase: getIt(),
       )..add(const LoadDashboardData()),
       child: const _DashboardView(),
     );
@@ -53,6 +56,7 @@ class _DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<_DashboardView> {
   int? _lastWorkspaceId;
+  bool _isTeamView = false;
 
   @override
   void didChangeDependencies() {
@@ -220,6 +224,43 @@ class _DashboardViewState extends State<_DashboardView> {
                     // Stats Overview
                     StatsOverviewCard(stats: state.stats),
                     const SizedBox(height: 16),
+
+                    // Productivity Heatmaps
+                    if (state.productivityHeatmap != null) ...[
+                      Text(
+                        'Productividad',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      HourlyProductivityHeatmapWidget(
+                        data: state.productivityHeatmap,
+                        isTeamView: _isTeamView,
+                        onTeamViewChanged: (value) {
+                          setState(() {
+                            _isTeamView = value;
+                          });
+                          context.read<DashboardBloc>().add(
+                            LoadProductivityHeatmap(teamView: value),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      WeeklyProductivityHeatmapWidget(
+                        data: state.productivityHeatmap,
+                        isTeamView: _isTeamView,
+                        onTeamViewChanged: (value) {
+                          setState(() {
+                            _isTeamView = value;
+                          });
+                          context.read<DashboardBloc>().add(
+                            LoadProductivityHeatmap(teamView: value),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Recent Items
                     RecentItemsList(

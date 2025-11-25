@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../core/errors/failures.dart';
@@ -6,10 +7,13 @@ import '../../entities/workspace_member.dart';
 import '../../repositories/workspace_repository.dart';
 
 /// Parámetros para obtener miembros
-class GetWorkspaceMembersParams {
+class GetWorkspaceMembersParams extends Equatable {
   final int workspaceId;
 
-  GetWorkspaceMembersParams({required this.workspaceId});
+  const GetWorkspaceMembersParams({required this.workspaceId});
+
+  @override
+  List<Object?> get props => [workspaceId];
 }
 
 /// Caso de uso para obtener miembros de un workspace
@@ -26,6 +30,3 @@ class GetWorkspaceMembersUseCase {
     return await _repository.getWorkspaceMembers(params.workspaceId);
   }
 }
-
-
-

@@ -55,22 +55,44 @@ class AuthService {
    */
   async login({ email, password }) {
     // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await this.validateCredentials(email, password);
 
     if (!user) {
       throw ErrorResponses.unauthorized("Invalid email or password");
     }
 
-    // Verify password
+    return this.generateAuthResponse(user);
+  }
+
+  /**
+   * Validate user credentials
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<User|null>}
+   */
+  async validateCredentials(email, password) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return null;
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw ErrorResponses.unauthorized("Invalid email or password");
+      return null;
     }
 
-    // Generate token
+    return user;
+  }
+
+  /**
+   * Generate auth response with token
+   * @param {User} user
+   */
+  async generateAuthResponse(user) {
     const token = this.generateToken(user.id);
 
     return {
@@ -79,6 +101,8 @@ class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        avatarUrl: user.avatarUrl,
+        twoFactorEnabled: user.twoFactorEnabled,
         createdAt: user.createdAt,
       },
       token,

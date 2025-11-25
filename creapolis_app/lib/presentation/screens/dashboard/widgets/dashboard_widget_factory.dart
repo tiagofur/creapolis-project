@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_bloc.dart';
+import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_state.dart';
+import 'package:creapolis_app/features/dashboard/presentation/blocs/dashboard_event.dart';
 
 import '../../../../domain/entities/dashboard_widget_config.dart';
 import '../../../providers/workspace_context.dart';
@@ -63,10 +68,10 @@ class DashboardWidgetFactory {
         child = const BurnupChartWidget();
         break;
       case DashboardWidgetType.hourlyProductivityHeatmap:
-        child = const HourlyProductivityHeatmapWidget();
+        child = const _ConnectedHourlyHeatmap();
         break;
       case DashboardWidgetType.weeklyProductivityHeatmap:
-        child = const WeeklyProductivityHeatmapWidget();
+        child = const _ConnectedWeeklyHeatmap();
         break;
     }
 
@@ -123,7 +128,9 @@ class DashboardWidgetFactory {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Cambio de workspace - Por implementar'),
+                          content: Text(
+                            'Cambio de workspace - Por implementar',
+                          ),
                           duration: Duration(seconds: 2),
                         ),
                       );
@@ -175,56 +182,64 @@ class _DraggableWidgetState extends State<DraggableWidget> {
             Positioned(
               top: 8,
               right: 8,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Drag handle
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.drag_indicator,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      onPressed: null, // Handle is just visual
-                      tooltip: 'Arrastrar para reordenar',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Remove button
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                      onPressed: widget.onRemove,
-                      tooltip: 'Eliminar widget',
-                    ),
-                  ),
-                ],
-              ),
+              child:
+                  Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Drag handle
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.drag_indicator,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              onPressed: null, // Handle is just visual
+                              tooltip: 'Arrastrar para reordenar',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Remove button
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onErrorContainer,
+                              ),
+                              onPressed: widget.onRemove,
+                              tooltip: 'Eliminar widget',
+                            ),
+                          ),
+                        ],
+                      )
+                      .animate()
+                      .fadeIn(duration: 200.ms)
+                      .scale(begin: const Offset(0.8, 0.8)),
             ),
         ],
       ),
@@ -232,5 +247,68 @@ class _DraggableWidgetState extends State<DraggableWidget> {
   }
 }
 
+class _ConnectedHourlyHeatmap extends StatefulWidget {
+  const _ConnectedHourlyHeatmap();
 
+  @override
+  State<_ConnectedHourlyHeatmap> createState() =>
+      _ConnectedHourlyHeatmapState();
+}
 
+class _ConnectedHourlyHeatmapState extends State<_ConnectedHourlyHeatmap> {
+  bool _isTeamView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        final data = state is DashboardLoaded
+            ? state.productivityHeatmap
+            : null;
+        return HourlyProductivityHeatmapWidget(
+          data: data,
+          isTeamView: _isTeamView,
+          onTeamViewChanged: (value) {
+            setState(() => _isTeamView = value);
+            context.read<DashboardBloc>().add(
+              LoadProductivityHeatmap(teamView: value),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ConnectedWeeklyHeatmap extends StatefulWidget {
+  const _ConnectedWeeklyHeatmap();
+
+  @override
+  State<_ConnectedWeeklyHeatmap> createState() =>
+      _ConnectedWeeklyHeatmapState();
+}
+
+class _ConnectedWeeklyHeatmapState extends State<_ConnectedWeeklyHeatmap> {
+  bool _isTeamView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        final data = state is DashboardLoaded
+            ? state.productivityHeatmap
+            : null;
+        return WeeklyProductivityHeatmapWidget(
+          data: data,
+          isTeamView: _isTeamView,
+          onTeamViewChanged: (value) {
+            setState(() => _isTeamView = value);
+            context.read<DashboardBloc>().add(
+              LoadProductivityHeatmap(teamView: value),
+            );
+          },
+        );
+      },
+    );
+  }
+}

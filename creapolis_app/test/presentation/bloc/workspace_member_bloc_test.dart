@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:creapolis_app/core/errors/failures.dart';
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/workspace_member.dart';
+import 'package:creapolis_app/domain/repositories/workspace_repository.dart';
 import 'package:creapolis_app/domain/usecases/workspace/get_workspace_members.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_bloc.dart';
 import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_event.dart';
@@ -15,6 +16,8 @@ import 'workspace_member_bloc_test.mocks.dart';
 import 'package:creapolis_app/injection.dart';
 import 'package:creapolis_app/domain/usecases/workspace/update_member_role.dart';
 import 'package:creapolis_app/domain/usecases/workspace/remove_member.dart';
+
+class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
 @GenerateMocks([GetWorkspaceMembersUseCase])
 void main() {
@@ -181,8 +184,15 @@ void main() {
 
     group('UpdateMemberRoleEvent', () {
       setUp(() {
+        if (!getIt.isRegistered<WorkspaceRepository>()) {
+          getIt.registerSingleton<WorkspaceRepository>(
+            MockWorkspaceRepository(),
+          );
+        }
         if (!getIt.isRegistered<UpdateMemberRoleUseCase>()) {
-          getIt.registerFactory<UpdateMemberRoleUseCase>(() => _FailUpdateMemberRoleUseCase());
+          getIt.registerFactory<UpdateMemberRoleUseCase>(
+            () => _FailUpdateMemberRoleUseCase(),
+          );
         }
       });
 
@@ -205,8 +215,15 @@ void main() {
 
     group('RemoveMemberEvent', () {
       setUp(() {
+        if (!getIt.isRegistered<WorkspaceRepository>()) {
+          getIt.registerSingleton<WorkspaceRepository>(
+            MockWorkspaceRepository(),
+          );
+        }
         if (!getIt.isRegistered<RemoveMemberUseCase>()) {
-          getIt.registerFactory<RemoveMemberUseCase>(() => _FailRemoveMemberUseCase());
+          getIt.registerFactory<RemoveMemberUseCase>(
+            () => _FailRemoveMemberUseCase(),
+          );
         }
       });
 
@@ -228,7 +245,9 @@ void main() {
 class _FailUpdateMemberRoleUseCase extends UpdateMemberRoleUseCase {
   _FailUpdateMemberRoleUseCase() : super(getIt());
   @override
-  Future<Either<Failure, WorkspaceMember>> call(UpdateMemberRoleParams params) async {
+  Future<Either<Failure, WorkspaceMember>> call(
+    UpdateMemberRoleParams params,
+  ) async {
     return const Left(ServerFailure('Server error'));
   }
 }
@@ -240,6 +259,3 @@ class _FailRemoveMemberUseCase extends RemoveMemberUseCase {
     return const Left(ServerFailure('Server error'));
   }
 }
-
-
-

@@ -18,5 +18,18 @@ class RefreshDashboardData extends DashboardEvent {
   const RefreshDashboardData();
 }
 
+/// Evento para cargar el heatmap de productividad
+class LoadProductivityHeatmap extends DashboardEvent {
+  final bool teamView;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
+  const LoadProductivityHeatmap({
+    this.teamView = false,
+    this.startDate,
+    this.endDate,
+  });
 
+  @override
+  List<Object?> get props => [teamView, startDate, endDate];
+}

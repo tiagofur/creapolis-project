@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:creapolis_app/features/workspace/data/models/workspace_model.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
 import 'package:creapolis_app/domain/entities/task.dart';
+import 'package:creapolis_app/domain/entities/productivity_heatmap.dart';
 
 /// Estados del DashboardBloc
 abstract class DashboardState extends Equatable {
@@ -29,6 +30,7 @@ class DashboardLoaded extends DashboardState {
   final List<Task> pendingTasks;
   final List<Task> recentTasks;
   final DashboardStats stats;
+  final ProductivityHeatmap? productivityHeatmap;
 
   const DashboardLoaded({
     required this.workspaces,
@@ -37,6 +39,7 @@ class DashboardLoaded extends DashboardState {
     required this.pendingTasks,
     required this.recentTasks,
     required this.stats,
+    this.productivityHeatmap,
   });
 
   @override
@@ -47,6 +50,7 @@ class DashboardLoaded extends DashboardState {
     pendingTasks,
     recentTasks,
     stats,
+    productivityHeatmap,
   ];
 }
 

@@ -19,6 +19,8 @@ model User {
   reputationLastUpdated   DateTime                 @default(now())
   googleAccessToken       String?
   googleRefreshToken      String?
+  twoFactorSecret         String?
+  twoFactorEnabled        Boolean                  @default(false)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   projects                ProjectMember[]
@@ -54,7 +56,8 @@ model User {
   supportMessages         SupportMessage[]
   chatMemberships         ChatMember[]
   sentMessages            ChatMessage[]
-  
+  auditLogs               RoleAuditLog[]
+  systemAuditLogs         AuditLog[]
 
   @@index([email])
 }
@@ -78,7 +81,7 @@ model Workspace {
   owner                    User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations              WorkspaceInvitation[]
   members                  WorkspaceMember[]
-  chatChannels              ChatChannel[]
+  chatChannels            ChatChannel[]
 
   @@index([ownerId])
   @@index([name])
@@ -506,6 +509,25 @@ model RoleAuditLog {
   @@index([createdAt])
 }
 
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, ETC
+  entityType  String   // PROJECT, TASK, USER, WORKSPACE
+  entityId    Int
+  details     String?  // Human readable description
+  metadata    String?  // JSON with before/after state or specific details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
 enum AuditAction {
   ROLE_CREATED
   ROLE_UPDATED
@@ -718,7 +740,7 @@ model ForumThread {
   reputationEarned Int       @default(0)
   lastReplyAt DateTime?
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  updatedAt   DateTime        @default(now())
   author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category    ForumCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   posts       ForumPost[]
@@ -743,7 +765,7 @@ model ForumPost {
   downvotes   Int             @default(0)
   score       Int             @default(0)
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  updatedAt   DateTime        @default(now())
   thread      ForumThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
   author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent      ForumPost?      @relation("PostThread", fields: [parentId], references: [id], onDelete: Cascade)

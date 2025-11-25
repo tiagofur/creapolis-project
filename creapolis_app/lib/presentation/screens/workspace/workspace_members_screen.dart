@@ -6,9 +6,9 @@ import '../../../core/animations/list_animations.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../features/workspace/data/models/workspace_model.dart';
 import '../../../domain/entities/workspace_member.dart';
-import '../../bloc/workspace_member/workspace_member_bloc.dart';
-import '../../bloc/workspace_member/workspace_member_event.dart';
-import '../../bloc/workspace_member/workspace_member_state.dart';
+import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_bloc.dart';
+import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_event.dart';
+import 'package:creapolis_app/presentation/bloc/workspace_member/workspace_member_state.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../widgets/loading/skeleton_list.dart';
@@ -54,7 +54,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context)?.searchMembersHint ?? 'Buscar miembros...',
+                  hintText:
+                      AppLocalizations.of(context)?.searchMembersHint ??
+                      'Buscar miembros...',
                   border: InputBorder.none,
                   hintStyle: const TextStyle(color: Colors.white70),
                 ),
@@ -63,7 +65,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                   setState(() => _searchQuery = value.toLowerCase());
                 },
               )
-            : Text(AppLocalizations.of(context)?.workspaceMembersTitle ?? 'Miembros del Workspace'),
+            : Text(
+                AppLocalizations.of(context)?.workspaceMembersTitle ??
+                    'Miembros del Workspace',
+              ),
         actions: [
           // Botón de búsqueda
           IconButton(
@@ -77,13 +82,18 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                 }
               });
             },
-            tooltip: _isSearching ? (AppLocalizations.of(context)?.closeSearch ?? 'Cerrar búsqueda') : (AppLocalizations.of(context)?.search ?? 'Buscar'),
+            tooltip: _isSearching
+                ? (AppLocalizations.of(context)?.closeSearch ??
+                      'Cerrar búsqueda')
+                : (AppLocalizations.of(context)?.search ?? 'Buscar'),
           ),
           // Filtro por rol
           if (!_isSearching)
             PopupMenuButton<WorkspaceRole?>(
               icon: const Icon(Icons.filter_list),
-              tooltip: AppLocalizations.of(context)?.filterByRole ?? 'Filtrar por rol',
+              tooltip:
+                  AppLocalizations.of(context)?.filterByRole ??
+                  'Filtrar por rol',
               onSelected: (role) {
                 setState(() => _filterRole = role);
               },
@@ -108,7 +118,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         color: _getRoleColor(WorkspaceRole.owner),
                       ),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.ownersRoleLabel ?? 'Propietarios'),
+                      Text(
+                        AppLocalizations.of(context)?.ownersRoleLabel ??
+                            'Propietarios',
+                      ),
                     ],
                   ),
                 ),
@@ -121,7 +134,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         color: _getRoleColor(WorkspaceRole.admin),
                       ),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.adminsRoleLabel ?? 'Administradores'),
+                      Text(
+                        AppLocalizations.of(context)?.adminsRoleLabel ??
+                            'Administradores',
+                      ),
                     ],
                   ),
                 ),
@@ -134,7 +150,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         color: _getRoleColor(WorkspaceRole.member),
                       ),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.membersRoleLabel ?? 'Miembros'),
+                      Text(
+                        AppLocalizations.of(context)?.membersRoleLabel ??
+                            'Miembros',
+                      ),
                     ],
                   ),
                 ),
@@ -147,7 +166,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         color: _getRoleColor(WorkspaceRole.guest),
                       ),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.guestsRoleLabel ?? 'Invitados'),
+                      Text(
+                        AppLocalizations.of(context)?.guestsRoleLabel ??
+                            'Invitados',
+                      ),
                     ],
                   ),
                 ),
@@ -171,14 +193,22 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
           if (state is WorkspaceMemberError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)?.loadDataError ?? state.message),
+                content: Text(
+                  AppLocalizations.of(context)?.loadDataError ?? state.message,
+                ),
                 backgroundColor: Colors.red,
               ),
             );
           } else if (state is MemberRoleUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)?.memberRoleUpdated(state.member.userName, state.member.role.displayName) ?? 'Rol de ${state.member.userName} actualizado a ${state.member.role.displayName}'),
+                content: Text(
+                  AppLocalizations.of(context)?.memberRoleUpdated(
+                        state.member.userName,
+                        state.member.role.displayName,
+                      ) ??
+                      'Rol de ${state.member.userName} actualizado a ${state.member.role.displayName}',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -189,7 +219,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
           } else if (state is MemberRemoved) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)?.memberRemovedSnack ?? 'Miembro removido del workspace'),
+                content: Text(
+                  AppLocalizations.of(context)?.memberRemovedSnack ??
+                      'Miembro removido del workspace',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -231,19 +264,19 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
               return _buildEmptyState();
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<WorkspaceMemberBloc>().add(
-                  RefreshWorkspaceMembersEvent(widget.workspace.id),
-                );
-                await Future.delayed(const Duration(milliseconds: 500));
-              },
-              child: Column(
-                children: [
-                  // Estadísticas por rol
-                  _buildRoleStats(allMembers),
-                  // Lista de miembros con animación
-                  Expanded(
+            return Column(
+              children: [
+                // Estadísticas por rol
+                _buildRoleStats(allMembers),
+                // Lista de miembros con animación
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<WorkspaceMemberBloc>().add(
+                        RefreshWorkspaceMembersEvent(widget.workspace.id),
+                      );
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    },
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: filteredMembers.length,
@@ -258,8 +291,8 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                       },
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           }
 
@@ -298,10 +331,26 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatChip(WorkspaceRole.owner, ownerCount, AppLocalizations.of(context)?.ownersRoleLabel ?? 'Owners'),
-            _buildStatChip(WorkspaceRole.admin, adminCount, AppLocalizations.of(context)?.adminsRoleLabel ?? 'Admins'),
-            _buildStatChip(WorkspaceRole.member, memberCount, AppLocalizations.of(context)?.membersRoleLabel ?? 'Miembros'),
-            _buildStatChip(WorkspaceRole.guest, guestCount, AppLocalizations.of(context)?.guestsRoleLabel ?? 'Invitados'),
+            _buildStatChip(
+              WorkspaceRole.owner,
+              ownerCount,
+              AppLocalizations.of(context)?.ownersRoleLabel ?? 'Owners',
+            ),
+            _buildStatChip(
+              WorkspaceRole.admin,
+              adminCount,
+              AppLocalizations.of(context)?.adminsRoleLabel ?? 'Admins',
+            ),
+            _buildStatChip(
+              WorkspaceRole.member,
+              memberCount,
+              AppLocalizations.of(context)?.membersRoleLabel ?? 'Miembros',
+            ),
+            _buildStatChip(
+              WorkspaceRole.guest,
+              guestCount,
+              AppLocalizations.of(context)?.guestsRoleLabel ?? 'Invitados',
+            ),
           ],
         ),
       ),
@@ -396,8 +445,7 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                     padding: EdgeInsets.zero,
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 );
               },
@@ -433,7 +481,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                       size: 8,
                       color: Colors.green,
                     ),
-                    label: Text(AppLocalizations.of(context)?.activeChip ?? 'Activo'),
+                    label: Text(
+                      AppLocalizations.of(context)?.activeChip ?? 'Activo',
+                    ),
                     backgroundColor: Colors.green.shade50,
                     labelStyle: TextStyle(
                       fontSize: 12,
@@ -457,7 +507,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         children: [
                           Icon(Icons.swap_horiz),
                           SizedBox(width: 8),
-                          Text(AppLocalizations.of(context)?.changeRoleAction ?? 'Cambiar Rol'),
+                          Text(
+                            AppLocalizations.of(context)?.changeRoleAction ??
+                                'Cambiar Rol',
+                          ),
                         ],
                       ),
                     ),
@@ -468,7 +521,11 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                         children: [
                           Icon(Icons.person_remove, color: Colors.red),
                           SizedBox(width: 8),
-                          Text(AppLocalizations.of(context)?.removeAction ?? 'Remover', style: const TextStyle(color: Colors.red)),
+                          Text(
+                            AppLocalizations.of(context)?.removeAction ??
+                                'Remover',
+                            style: const TextStyle(color: Colors.red),
+                          ),
                         ],
                       ),
                     ),
@@ -493,15 +550,19 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
           const SizedBox(height: 16),
           Text(
             _filterRole != null
-                ? (AppLocalizations.of(context)?.noMembersWithRole ?? 'No hay miembros con ese rol')
-                : (AppLocalizations.of(context)?.noMembersInWorkspace ?? 'No hay miembros en este workspace'),
+                ? (AppLocalizations.of(context)?.noMembersWithRole ??
+                      'No hay miembros con ese rol')
+                : (AppLocalizations.of(context)?.noMembersInWorkspace ??
+                      'No hay miembros en este workspace'),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
             _filterRole != null
-                ? (AppLocalizations.of(context)?.tryAnotherFilter ?? 'Prueba con otro filtro')
-                : (AppLocalizations.of(context)?.invitePeopleToCollaborate ?? 'Invita a personas para colaborar'),
+                ? (AppLocalizations.of(context)?.tryAnotherFilter ??
+                      'Prueba con otro filtro')
+                : (AppLocalizations.of(context)?.invitePeopleToCollaborate ??
+                      'Invita a personas para colaborar'),
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -511,7 +572,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
             ElevatedButton.icon(
               onPressed: _showInviteMemberDialog,
               icon: const Icon(Icons.person_add),
-              label: Text(AppLocalizations.of(context)?.inviteMember ?? 'Invitar Miembro'),
+              label: Text(
+                AppLocalizations.of(context)?.inviteMember ?? 'Invitar Miembro',
+              ),
             ),
         ],
       ),
@@ -551,7 +614,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.changeRoleTitle(member.userName) ?? 'Cambiar rol de ${member.userName}'),
+        title: Text(
+          AppLocalizations.of(context)?.changeRoleTitle(member.userName) ??
+              'Cambiar rol de ${member.userName}',
+        ),
         content: RadioGroup<WorkspaceRole>(
           groupValue: member.role,
           onChanged: (value) {
@@ -600,9 +666,12 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.removeMemberTitle ?? 'Remover Miembro'),
+        title: Text(
+          AppLocalizations.of(context)?.removeMemberTitle ?? 'Remover Miembro',
+        ),
         content: Text(
-          AppLocalizations.of(context)?.removeMemberConfirm(member.userName) ?? '¿Estás seguro de que deseas remover a ${member.userName} del workspace?',
+          AppLocalizations.of(context)?.removeMemberConfirm(member.userName) ??
+              '¿Estás seguro de que deseas remover a ${member.userName} del workspace?',
         ),
         actions: [
           TextButton(
@@ -615,7 +684,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
               _removeMember(member);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(AppLocalizations.of(context)?.removeAction ?? 'Remover'),
+            child: Text(
+              AppLocalizations.of(context)?.removeAction ?? 'Remover',
+            ),
           ),
         ],
       ),
@@ -635,7 +706,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
               size: 28,
             ),
             const SizedBox(width: 12),
-            Text(AppLocalizations.of(context)?.removeMemberTitle ?? 'Remover Miembro'),
+            Text(
+              AppLocalizations.of(context)?.removeMemberTitle ??
+                  'Remover Miembro',
+            ),
           ],
         ),
         content: Column(
@@ -643,7 +717,10 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context)?.removeMemberConfirm(member.userName) ?? '¿Estás seguro de que deseas remover a ${member.userName} del workspace?',
+              AppLocalizations.of(
+                    context,
+                  )?.removeMemberConfirm(member.userName) ??
+                  '¿Estás seguro de que deseas remover a ${member.userName} del workspace?',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 16),
@@ -660,7 +737,8 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context)?.removeMemberNote ?? 'El usuario perderá acceso a todos los proyectos y tareas de este workspace.',
+                      AppLocalizations.of(context)?.removeMemberNote ??
+                          'El usuario perderá acceso a todos los proyectos y tareas de este workspace.',
                       style: TextStyle(color: Colors.blue[900], fontSize: 13),
                     ),
                   ),
@@ -669,7 +747,8 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context)?.removeMemberInviteAgainNote ?? 'Podrás invitarlo nuevamente en el futuro.',
+              AppLocalizations.of(context)?.removeMemberInviteAgainNote ??
+                  'Podrás invitarlo nuevamente en el futuro.',
               style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
           ],
@@ -693,7 +772,9 @@ class _WorkspaceMembersScreenState extends State<WorkspaceMembersScreen> {
                 ),
               );
             },
-            child: Text(AppLocalizations.of(context)?.confirmRemoveLabel ?? 'Sí, Remover'),
+            child: Text(
+              AppLocalizations.of(context)?.confirmRemoveLabel ?? 'Sí, Remover',
+            ),
           ),
         ],
       ),

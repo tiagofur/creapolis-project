@@ -1,0 +1,14 @@
+appId: com.creapolis.app
+---
+- launchApp
+- assertVisible: "Creapolis"
+- tapOn: "Email"
+- inputText: "test@creapolis.com"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Login"
+# Wait for dashboard
+- extendedWaitUntil:
+    visible: "Dashboard"
+    timeout: 5000
+- assertVisible: "Projects"
