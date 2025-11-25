@@ -34,10 +34,7 @@ class _FormListView extends StatelessWidget {
   final int workspaceId;
   final int projectId;
 
-  const _FormListView({
-    required this.workspaceId,
-    required this.projectId,
-  });
+  const _FormListView({required this.workspaceId, required this.projectId});
 
   @override
   Widget build(BuildContext context) {
@@ -206,9 +203,12 @@ class _FormListView extends StatelessWidget {
                       if (value == 'delete') {
                         _showDeleteDialog(context, form);
                       } else if (value == 'copy_link') {
-                        Clipboard.setData(ClipboardData(
-                          text: 'https://creapolis.app/forms/public/${form.publicLink}',
-                        ));
+                        Clipboard.setData(
+                          ClipboardData(
+                            text:
+                                'https://creapolis.app/forms/public/${form.publicLink}',
+                          ),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Enlace copiado al portapapeles'),

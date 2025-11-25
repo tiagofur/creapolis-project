@@ -494,8 +494,11 @@ class AppRouter {
                                     path: 'forms',
                                     name: RouteNames.forms,
                                     builder: (context, state) {
-                                      final projectId = state.pathParameters['pId'] ?? '0';
-                                      return FormListPage(projectId: int.parse(projectId));
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return FormListPage(
+                                        projectId: int.parse(projectId),
+                                      );
                                     },
                                     routes: [
                                       // Form Builder (Create)
@@ -503,8 +506,12 @@ class AppRouter {
                                         path: 'create',
                                         name: RouteNames.createForm,
                                         builder: (context, state) {
-                                          final projectId = state.pathParameters['pId'] ?? '0';
-                                          return FormBuilderPage(projectId: int.parse(projectId));
+                                          final projectId =
+                                              state.pathParameters['pId'] ??
+                                              '0';
+                                          return FormBuilderPage(
+                                            projectId: int.parse(projectId),
+                                          );
                                         },
                                       ),
                                       // Form Builder (Edit)
@@ -512,8 +519,12 @@ class AppRouter {
                                         path: ':formId/edit',
                                         name: RouteNames.editForm,
                                         builder: (context, state) {
-                                          final projectId = state.pathParameters['pId'] ?? '0';
-                                          final formId = state.pathParameters['formId'] ?? '0';
+                                          final projectId =
+                                              state.pathParameters['pId'] ??
+                                              '0';
+                                          final formId =
+                                              state.pathParameters['formId'] ??
+                                              '0';
                                           return FormBuilderPage(
                                             projectId: int.parse(projectId),
                                             formId: int.parse(formId),
