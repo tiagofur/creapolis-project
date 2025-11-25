@@ -8,8 +8,7 @@ import 'package:creapolis_app/domain/entities/task.dart';
 class SprintBoardScreen extends StatefulWidget {
   final int projectId;
 
-  const SprintBoardScreen({Key? key, required this.projectId})
-    : super(key: key);
+  const SprintBoardScreen({super.key, required this.projectId});
 
   @override
   State<SprintBoardScreen> createState() => _SprintBoardScreenState();

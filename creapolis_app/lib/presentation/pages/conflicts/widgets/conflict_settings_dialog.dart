@@ -228,7 +228,8 @@ class _ConflictSettingsDialogState extends State<ConflictSettingsDialog> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<ConflictResolutionStrategy>(
-            value: value,
+            key: ValueKey(value),
+            initialValue: value,
             decoration: const InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

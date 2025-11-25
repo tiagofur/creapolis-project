@@ -251,9 +251,7 @@ class _WorkspaceListScreenState extends State<WorkspaceListScreen> {
     bool isFromCache = false,
     DateTime? lastSync,
   }) {
-    print(
-      'DEBUG: _buildWorkspaceContent called with ${workspaces.length} workspaces',
-    );
+    // print('DEBUG: _buildWorkspaceContent called with ${workspaces.length} workspaces');
     if (workspaces.isEmpty) {
       return _buildEmptyState(context);
     }

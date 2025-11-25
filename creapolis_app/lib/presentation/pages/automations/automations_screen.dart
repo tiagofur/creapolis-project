@@ -60,7 +60,7 @@ class _AutomationsViewState extends State<AutomationsView> {
             Text(
               widget.projectName,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -209,7 +209,7 @@ class _AutomationsViewState extends State<AutomationsView> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _createAutomation(context),
+        onPressed: () => _createAutomation(),
         icon: const Icon(Icons.add),
         label: const Text('Add Automation'),
       ),
@@ -228,7 +228,7 @@ class _AutomationsViewState extends State<AutomationsView> {
             Icon(
               Icons.auto_fix_high,
               size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.5),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24),
             Text('No Automations Yet', style: theme.textTheme.headlineSmall),
@@ -238,12 +238,12 @@ class _AutomationsViewState extends State<AutomationsView> {
               'For example: "When a task is completed, notify the project manager"',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _createAutomation(context),
+              onPressed: () => _createAutomation(),
               icon: const Icon(Icons.add),
               label: const Text('Create First Automation'),
             ),
@@ -262,7 +262,7 @@ class _AutomationsViewState extends State<AutomationsView> {
     );
   }
 
-  void _createAutomation(BuildContext context) async {
+  void _createAutomation() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AutomationFormDialog(projectId: widget.projectId),

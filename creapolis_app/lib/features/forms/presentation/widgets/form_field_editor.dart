@@ -86,7 +86,7 @@ class _FormFieldEditorState extends State<FormFieldEditor> {
                 const SizedBox(width: 36), // Align with text field
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedType,
+                    initialValue: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Tipo de campo',
                       border: OutlineInputBorder(),

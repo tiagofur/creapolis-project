@@ -84,7 +84,8 @@ class _SsoAuditLogsDialogState extends State<SsoAuditLogsDialog> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String?>(
-                      value: _selectedEvent,
+                      key: ValueKey(_selectedEvent),
+                      initialValue: _selectedEvent,
                       decoration: const InputDecoration(
                         labelText: 'Event Type',
                         prefixIcon: Icon(Icons.filter_list),
@@ -254,7 +255,7 @@ class _SsoAuditLogsDialogState extends State<SsoAuditLogsDialog> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: eventColor.withOpacity(0.1),
+            color: eventColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(eventIcon, color: eventColor),

@@ -47,7 +47,9 @@ class TriggerConfigWidget extends StatelessWidget {
                       Text(
                         trigger.triggerType.description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -87,7 +89,7 @@ class TriggerConfigWidget extends StatelessWidget {
         Text(
           'Conditions (optional)',
           style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 8),
@@ -125,7 +127,7 @@ class TriggerConfigWidget extends StatelessWidget {
             labelText: 'From Status',
             isDense: true,
           ),
-          value: trigger.conditions?.rules.firstOrNull?.value,
+          initialValue: trigger.conditions?.rules.firstOrNull?.value,
           items: const [
             DropdownMenuItem(value: null, child: Text('Any')),
             DropdownMenuItem(value: 'BACKLOG', child: Text('Backlog')),
@@ -156,7 +158,7 @@ class TriggerConfigWidget extends StatelessWidget {
             labelText: 'To Status',
             isDense: true,
           ),
-          value: null,
+          initialValue: null,
           items: const [
             DropdownMenuItem(value: null, child: Text('Any')),
             DropdownMenuItem(value: 'BACKLOG', child: Text('Backlog')),

@@ -494,10 +494,13 @@ class AppRouter {
                                     path: 'forms',
                                     name: RouteNames.forms,
                                     builder: (context, state) {
+                                      final wId =
+                                          state.pathParameters['wId'] ?? '0';
                                       final projectId =
                                           state.pathParameters['pId'] ?? '0';
                                       return FormListPage(
                                         projectId: int.parse(projectId),
+                                        workspaceId: int.parse(wId),
                                       );
                                     },
                                     routes: [

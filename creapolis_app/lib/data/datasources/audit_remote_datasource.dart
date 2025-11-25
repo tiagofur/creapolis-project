@@ -40,9 +40,12 @@ class AuditRemoteDataSourceImpl implements AuditRemoteDataSource {
     if (projectId != null) queryParams['projectId'] = projectId.toString();
     if (userId != null) queryParams['userId'] = userId.toString();
     if (action != null) queryParams['action'] = action;
-    if (startDate != null)
+    if (startDate != null) {
       queryParams['startDate'] = startDate.toIso8601String();
-    if (endDate != null) queryParams['endDate'] = endDate.toIso8601String();
+    }
+    if (endDate != null) {
+      queryParams['endDate'] = endDate.toIso8601String();
+    }
 
     final response = await client.get(
       '/audit/workspaces/$workspaceId',

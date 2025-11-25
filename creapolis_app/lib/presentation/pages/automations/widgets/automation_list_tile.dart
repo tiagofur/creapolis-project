@@ -38,7 +38,7 @@ class AutomationListTile extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: automation.isActive
                 ? null
-                : theme.colorScheme.onSurface.withOpacity(0.5),
+                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
         subtitle: automation.description != null
@@ -49,7 +49,7 @@ class AutomationListTile extends StatelessWidget {
                 style: TextStyle(
                   color: automation.isActive
                       ? null
-                      : theme.colorScheme.onSurface.withOpacity(0.4),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               )
             : null,
@@ -220,7 +220,7 @@ class AutomationListTile extends StatelessWidget {
           Text(
             '${action.order + 1}.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(width: 8),

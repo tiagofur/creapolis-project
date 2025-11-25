@@ -117,9 +117,7 @@ class _WorkspaceInvitationsScreenState
 
           if (state is PendingInvitationsLoaded) {
             final invitations = state.invitations;
-            print(
-              'DEBUG: PendingInvitationsLoaded with ${invitations.length} invitations',
-            );
+            // print('DEBUG: PendingInvitationsLoaded with ${invitations.length} invitations');
 
             if (invitations.isEmpty) {
               return _buildEmptyState();

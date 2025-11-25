@@ -277,7 +277,8 @@ class _SsoProviderFormDialogState extends State<SsoProviderFormDialog> {
                         const SizedBox(height: 16),
 
                         DropdownButtonFormField<SsoDefaultRole>(
-                          value: _defaultRole,
+                          key: ValueKey(_defaultRole),
+                          initialValue: _defaultRole,
                           decoration: const InputDecoration(
                             labelText: 'Default Role',
                             prefixIcon: Icon(Icons.person),

@@ -62,7 +62,7 @@ class _WebhooksViewState extends State<WebhooksView> {
             Text(
               widget.workspaceName,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -212,7 +212,7 @@ class _WebhooksViewState extends State<WebhooksView> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _createWebhook(context),
+        onPressed: () => _createWebhook(),
         icon: const Icon(Icons.add),
         label: const Text('Add Webhook'),
       ),
@@ -231,7 +231,7 @@ class _WebhooksViewState extends State<WebhooksView> {
             Icon(
               Icons.webhook,
               size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.5),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24),
             Text('No Webhooks Yet', style: theme.textTheme.headlineSmall),
@@ -241,12 +241,12 @@ class _WebhooksViewState extends State<WebhooksView> {
               'when events happen in your workspace.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _createWebhook(context),
+              onPressed: () => _createWebhook(),
               icon: const Icon(Icons.add),
               label: const Text('Create First Webhook'),
             ),
@@ -265,7 +265,7 @@ class _WebhooksViewState extends State<WebhooksView> {
     );
   }
 
-  void _createWebhook(BuildContext context) async {
+  void _createWebhook() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => WebhookFormDialog(workspaceId: widget.workspaceId),

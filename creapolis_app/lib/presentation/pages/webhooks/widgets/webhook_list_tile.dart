@@ -38,7 +38,7 @@ class WebhookListTile extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: webhook.isActive
                 ? null
-                : theme.colorScheme.onSurface.withOpacity(0.5),
+                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
         subtitle: Text(
@@ -49,8 +49,8 @@ class WebhookListTile extends StatelessWidget {
             fontFamily: 'monospace',
             fontSize: 12,
             color: webhook.isActive
-                ? theme.colorScheme.onSurface.withOpacity(0.7)
-                : theme.colorScheme.onSurface.withOpacity(0.4),
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
+                : theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -202,14 +202,18 @@ class WebhookListTile extends StatelessWidget {
                     Text(
                       'Created: ${_formatDate(webhook.createdAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Text(
                       'Updated: ${_formatDate(webhook.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],

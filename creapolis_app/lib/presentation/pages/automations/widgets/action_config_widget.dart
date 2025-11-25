@@ -74,7 +74,9 @@ class ActionConfigWidget extends StatelessWidget {
                       Text(
                         action.actionType.description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -125,7 +127,7 @@ class ActionConfigWidget extends StatelessWidget {
   Widget _buildStatusConfig(BuildContext context) {
     return DropdownButtonFormField<String>(
       decoration: const InputDecoration(labelText: 'New Status', isDense: true),
-      value: action.config?['status'],
+      initialValue: action.config?['status'],
       items: const [
         DropdownMenuItem(value: 'BACKLOG', child: Text('Backlog')),
         DropdownMenuItem(value: 'TODO', child: Text('To Do')),
@@ -145,7 +147,7 @@ class ActionConfigWidget extends StatelessWidget {
         labelText: 'New Priority',
         isDense: true,
       ),
-      value: action.config?['priority'],
+      initialValue: action.config?['priority'],
       items: const [
         DropdownMenuItem(value: 'LOW', child: Text('Low')),
         DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
@@ -228,7 +230,7 @@ class ActionConfigWidget extends StatelessWidget {
             labelText: 'Send To',
             isDense: true,
           ),
-          value: action.config?['recipient'] ?? 'assignee',
+          initialValue: action.config?['recipient'] ?? 'assignee',
           items: const [
             DropdownMenuItem(value: 'assignee', child: Text('Task Assignee')),
             DropdownMenuItem(value: 'creator', child: Text('Task Creator')),
@@ -374,7 +376,7 @@ class ActionConfigWidget extends StatelessWidget {
             labelText: 'HTTP Method',
             isDense: true,
           ),
-          value: action.config?['method'] ?? 'POST',
+          initialValue: action.config?['method'] ?? 'POST',
           items: const [
             DropdownMenuItem(value: 'POST', child: Text('POST')),
             DropdownMenuItem(value: 'PUT', child: Text('PUT')),
