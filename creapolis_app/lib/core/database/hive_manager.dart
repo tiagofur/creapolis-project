@@ -3,6 +3,7 @@ import '../../data/models/hive/hive_workspace.dart';
 import '../../data/models/hive/hive_project.dart';
 import '../../data/models/hive/hive_task.dart';
 import '../../data/models/hive/hive_operation_queue.dart';
+import '../../data/models/hive/hive_sync_conflict.dart';
 import '../utils/app_logger.dart';
 
 /// Manager para inicialización y gestión de Hive
@@ -14,6 +15,7 @@ class HiveManager {
   static const String tasksBox = 'tasks';
   static const String operationQueueBox = 'operation_queue';
   static const String cacheMetadataBox = 'cache_metadata';
+  static const String syncConflictsBoxName = 'sync_conflicts';
 
   static bool _isInitialized = false;
 
@@ -73,6 +75,13 @@ class HiveManager {
         'HiveManager: HiveOperationQueueAdapter registrado (typeId: 10)',
       );
     }
+
+    if (!Hive.isAdapterRegistered(11)) {
+      Hive.registerAdapter(HiveSyncConflictAdapter());
+      AppLogger.info(
+        'HiveManager: HiveSyncConflictAdapter registrado (typeId: 11)',
+      );
+    }
   }
 
   /// Abrir todos los boxes necesarios
@@ -106,6 +115,12 @@ class HiveManager {
       if (!Hive.isBoxOpen(cacheMetadataBox)) {
         await Hive.openBox(cacheMetadataBox);
         AppLogger.info('HiveManager: Box "$cacheMetadataBox" abierto');
+      }
+
+      // Sync Conflicts
+      if (!Hive.isBoxOpen(syncConflictsBoxName)) {
+        await Hive.openBox<HiveSyncConflict>(syncConflictsBoxName);
+        AppLogger.info('HiveManager: Box "$syncConflictsBoxName" abierto');
       }
     } catch (e, stackTrace) {
       AppLogger.error('HiveManager: Error abriendo boxes', e, stackTrace);
@@ -153,6 +168,14 @@ class HiveManager {
     return Hive.box(cacheMetadataBox);
   }
 
+  /// Obtener box de sync conflicts
+  static Box<HiveSyncConflict> get syncConflictsBox {
+    if (!Hive.isBoxOpen(syncConflictsBoxName)) {
+      throw HiveError('Box "$syncConflictsBoxName" no está abierto');
+    }
+    return Hive.box<HiveSyncConflict>(syncConflictsBoxName);
+  }
+
   /// Cerrar todos los boxes (útil para testing)
   static Future<void> closeAllBoxes() async {
     try {
@@ -174,6 +197,7 @@ class HiveManager {
       await tasks.clear();
       await operationQueue.clear();
       await cacheMetadata.clear();
+      await syncConflictsBox.clear();
 
       AppLogger.info('HiveManager: ✅ Todos los datos limpiados');
     } catch (e, stackTrace) {
@@ -190,6 +214,7 @@ class HiveManager {
         'tasks': tasks.length,
         'operationQueue': operationQueue.length,
         'cacheMetadata': cacheMetadata.length,
+        'syncConflicts': syncConflictsBox.length,
       };
     } catch (e) {
       AppLogger.error('HiveManager: Error obteniendo stats', e);
@@ -200,6 +225,3 @@ class HiveManager {
   /// Verificar si Hive está inicializado
   static bool get isInitialized => _isInitialized;
 }
-
-
-

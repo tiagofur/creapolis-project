@@ -503,6 +503,76 @@ class ProjectService {
 
     return updatedMember;
   }
+
+  /**
+   * Get portfolio statistics for a workspace
+   */
+  async getPortfolioStats(workspaceId, userId) {
+    // Verify workspace access
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        members: {
+          where: { userId },
+        },
+      },
+    });
+
+    if (!workspace || workspace.members.length === 0) {
+      throw ErrorResponses.forbidden(
+        "You do not have access to this workspace"
+      );
+    }
+
+    // Get all projects in workspace
+    const projects = await prisma.project.findMany({
+      where: { workspaceId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        progress: true,
+        startDate: true,
+        endDate: true,
+        manager: {
+          select: { name: true },
+        },
+        _count: {
+          select: {
+            members: true,
+            tasks: true,
+          },
+        },
+      },
+    });
+
+    // Calculate stats
+    const totalProjects = projects.length;
+
+    const statusDistribution = projects.reduce((acc, curr) => {
+      acc[curr.status] = (acc[curr.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const avgProgress =
+      totalProjects > 0
+        ? projects.reduce((sum, p) => sum + (p.progress || 0), 0) /
+          totalProjects
+        : 0;
+
+    const upcomingDeadlines = projects
+      .filter((p) => p.endDate && new Date(p.endDate) > new Date())
+      .sort((a, b) => new Date(a.endDate) - new Date(b.endDate))
+      .slice(0, 5);
+
+    return {
+      totalProjects,
+      statusDistribution,
+      avgProgress,
+      upcomingDeadlines,
+      projects, // Return list for timeline view
+    };
+  }
 }
 
 export default new ProjectService();

@@ -26,8 +26,10 @@ import 'core/services/firebase_messaging_service.dart' as _i43;
 import 'core/services/last_route_service.dart' as _i406;
 import 'core/services/socket_service.dart' as _i848;
 import 'core/services/sync_notification_service.dart' as _i659;
+import 'core/sync/conflict_resolution_service.dart' as _i738;
 import 'core/sync/sync_manager.dart' as _i223;
 import 'core/sync/sync_operation_executor.dart' as _i203;
+import 'data/datasources/audit_remote_datasource.dart' as _i993;
 import 'data/datasources/auth_remote_datasource.dart' as _i127;
 import 'data/datasources/automation_remote_datasource.dart' as _i568;
 import 'data/datasources/calendar_remote_datasource.dart' as _i318;
@@ -44,6 +46,7 @@ import 'data/datasources/project_remote_datasource.dart' as _i922;
 import 'data/datasources/push_notification_remote_datasource.dart' as _i959;
 import 'data/datasources/remote/category_remote_datasource.dart' as _i1050;
 import 'data/datasources/search_remote_datasource.dart' as _i232;
+import 'data/datasources/sprint_remote_datasource.dart' as _i747;
 import 'data/datasources/sso_remote_datasource.dart' as _i918;
 import 'data/datasources/task_remote_datasource.dart' as _i1007;
 import 'data/datasources/time_log_remote_datasource.dart' as _i714;
@@ -51,6 +54,7 @@ import 'data/datasources/webhook_remote_datasource.dart' as _i871;
 import 'data/datasources/workload_remote_datasource.dart' as _i233;
 import 'data/datasources/workspace_local_datasource.dart' as _i268;
 import 'data/datasources/workspace_remote_datasource.dart' as _i391;
+import 'data/repositories/audit_repository_impl.dart' as _i71;
 import 'data/repositories/auth_repository_impl.dart' as _i145;
 import 'data/repositories/automation_repository_impl.dart' as _i590;
 import 'data/repositories/calendar_repository_impl.dart' as _i365;
@@ -63,12 +67,14 @@ import 'data/repositories/notification_repository_impl.dart' as _i704;
 import 'data/repositories/project_member_repository_impl.dart' as _i788;
 import 'data/repositories/project_repository_impl.dart' as _i40;
 import 'data/repositories/search_repository_impl.dart' as _i409;
+import 'data/repositories/sprint_repository_impl.dart' as _i1030;
 import 'data/repositories/sso_repository_impl.dart' as _i449;
 import 'data/repositories/task_repository_impl.dart' as _i221;
 import 'data/repositories/time_log_repository_impl.dart' as _i384;
 import 'data/repositories/webhook_repository_impl.dart' as _i633;
 import 'data/repositories/workload_repository_impl.dart' as _i773;
 import 'data/repositories/workspace_repository_impl.dart' as _i753;
+import 'domain/repositories/audit_repository.dart' as _i819;
 import 'domain/repositories/auth_repository.dart' as _i716;
 import 'domain/repositories/automation_repository.dart' as _i402;
 import 'domain/repositories/calendar_repository.dart' as _i916;
@@ -81,6 +87,7 @@ import 'domain/repositories/notification_repository.dart' as _i82;
 import 'domain/repositories/project_member_repository.dart' as _i51;
 import 'domain/repositories/project_repository.dart' as _i17;
 import 'domain/repositories/search_repository.dart' as _i844;
+import 'domain/repositories/sprint_repository.dart' as _i585;
 import 'domain/repositories/sso_repository.dart' as _i602;
 import 'domain/repositories/task_repository.dart' as _i449;
 import 'domain/repositories/time_log_repository.dart' as _i657;
@@ -109,6 +116,7 @@ import 'domain/usecases/get_active_time_log_usecase.dart' as _i987;
 import 'domain/usecases/get_calendar_connection_status_usecase.dart' as _i649;
 import 'domain/usecases/get_calendar_events_usecase.dart' as _i587;
 import 'domain/usecases/get_nlp_examples_usecase.dart' as _i764;
+import 'domain/usecases/get_portfolio_stats_usecase.dart' as _i114;
 import 'domain/usecases/get_productivity_heatmap_usecase.dart' as _i444;
 import 'domain/usecases/get_profile_usecase.dart' as _i889;
 import 'domain/usecases/get_project_by_id_usecase.dart' as _i356;
@@ -124,6 +132,11 @@ import 'domain/usecases/login_usecase.dart' as _i883;
 import 'domain/usecases/logout_usecase.dart' as _i808;
 import 'domain/usecases/parse_task_instruction_usecase.dart' as _i82;
 import 'domain/usecases/register_usecase.dart' as _i784;
+import 'domain/usecases/sprint/create_sprint_usecase.dart' as _i144;
+import 'domain/usecases/sprint/get_backlog_usecase.dart' as _i408;
+import 'domain/usecases/sprint/get_sprints_by_project_usecase.dart' as _i514;
+import 'domain/usecases/sprint/manage_sprint_tasks_usecase.dart' as _i27;
+import 'domain/usecases/sprint/manage_sprint_usecase.dart' as _i687;
 import 'domain/usecases/start_timer_usecase.dart' as _i137;
 import 'domain/usecases/stop_timer_usecase.dart' as _i838;
 import 'domain/usecases/update_profile_usecase.dart' as _i567;
@@ -150,16 +163,19 @@ import 'features/chat/domain/usecases/get_messages.dart' as _i537;
 import 'features/chat/domain/usecases/send_message.dart' as _i422;
 import 'features/chat/presentation/bloc/chat_bloc.dart' as _i1026;
 import 'features/projects/presentation/blocs/project_bloc.dart' as _i328;
+import 'features/projects/presentation/blocs/sprint/sprint_bloc.dart' as _i709;
 import 'features/search/presentation/blocs/search_bloc.dart' as _i807;
 import 'features/tasks/presentation/blocs/task_bloc.dart' as _i100;
 import 'features/workspace/data/datasources/workspace_remote_datasource.dart'
     as _i398;
 import 'features/workspace/presentation/bloc/workspace_bloc.dart' as _i207;
+import 'presentation/bloc/audit/audit_bloc.dart' as _i977;
 import 'presentation/bloc/auth/auth_bloc.dart' as _i605;
 import 'presentation/bloc/automation/automation_bloc.dart' as _i157;
 import 'presentation/bloc/calendar/calendar_bloc.dart' as _i659;
 import 'presentation/bloc/category/category_bloc.dart' as _i116;
 import 'presentation/bloc/comment/comment_bloc.dart' as _i462;
+import 'presentation/bloc/conflict/conflict_bloc.dart' as _i774;
 import 'presentation/bloc/custom_field/custom_field_bloc.dart' as _i404;
 import 'presentation/bloc/gamification/gamification_bloc.dart' as _i589;
 import 'presentation/bloc/notification/notification_bloc.dart' as _i571;
@@ -198,12 +214,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i895.Connectivity>(() => registerModule.connectivity);
     gh.lazySingleton<_i892.FirebaseMessaging>(
         () => registerModule.firebaseMessaging);
+    gh.lazySingleton<_i738.ConflictResolutionService>(
+        () => _i738.ConflictResolutionService());
     gh.lazySingleton<_i618.WorkspaceCacheDataSource>(
         () => _i618.WorkspaceCacheDataSourceImpl(gh<_i454.CacheManager>()));
     gh.factory<_i971.ThemeProvider>(
         () => _i971.ThemeProvider(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i255.ProjectCacheDataSource>(
         () => _i255.ProjectCacheDataSourceImpl(gh<_i454.CacheManager>()));
+    gh.factory<_i774.ConflictBloc>(
+        () => _i774.ConflictBloc(gh<_i738.ConflictResolutionService>()));
     gh.lazySingleton<_i314.TaskCacheDataSource>(
         () => _i314.TaskCacheDataSourceImpl(gh<_i454.CacheManager>()));
     gh.lazySingleton<_i268.WorkspaceLocalDataSource>(() =>
@@ -267,7 +287,11 @@ extension GetItInjectableX on _i174.GetIt {
         _i773.WorkloadRepositoryImpl(gh<_i233.WorkloadRemoteDataSource>()));
     gh.lazySingleton<_i1000.ChatRemoteDataSource>(() =>
         _i1000.ChatRemoteDataSourceImpl(apiClient: gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i747.SprintRemoteDataSource>(
+        () => _i747.SprintRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.singleton<_i361.Dio>(() => registerModule.dio(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i993.AuditRemoteDataSource>(
+        () => _i993.AuditRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i825.ChangePasswordUseCase>(
         () => _i825.ChangePasswordUseCase(gh<_i716.AuthRepository>()));
     gh.lazySingleton<_i567.UpdateProfileUseCase>(
@@ -287,6 +311,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i31.ProjectMemberRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i232.SearchRemoteDataSource>(
         () => _i232.SearchRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i819.AuditRepository>(
+        () => _i71.AuditRepositoryImpl(gh<_i993.AuditRemoteDataSource>()));
     gh.lazySingleton<_i325.CustomFieldRemoteDataSource>(
         () => _i325.CustomFieldRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i959.PushNotificationRemoteDataSource>(() =>
@@ -319,6 +345,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i123.ReportService(gh<_i361.Dio>()));
     gh.lazySingleton<_i23.NLPRemoteDataSource>(
         () => _i23.NLPRemoteDataSourceImpl(gh<_i871.ApiClient>()));
+    gh.lazySingleton<_i585.SprintRepository>(
+        () => _i1030.SprintRepositoryImpl(gh<_i747.SprintRemoteDataSource>()));
     gh.lazySingleton<_i888.NotificationRemoteDataSource>(
         () => _i888.NotificationRemoteDataSourceImpl(gh<_i871.ApiClient>()));
     gh.lazySingleton<_i60.CommentRepository>(
@@ -366,6 +394,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i462.CommentBloc>(
         () => _i462.CommentBloc(gh<_i60.CommentRepository>()));
+    gh.factory<_i977.AuditBloc>(
+        () => _i977.AuditBloc(repository: gh<_i819.AuditRepository>()));
     gh.lazySingleton<_i51.ProjectMemberRepository>(() =>
         _i788.ProjectMemberRepositoryImpl(
             gh<_i31.ProjectMemberRemoteDataSource>()));
@@ -409,6 +439,16 @@ extension GetItInjectableX on _i174.GetIt {
         _i424.GetSuggestionsHistoryUseCase(gh<_i615.CategoryRepository>()));
     gh.lazySingleton<_i597.SubmitCategoryFeedbackUseCase>(() =>
         _i597.SubmitCategoryFeedbackUseCase(gh<_i615.CategoryRepository>()));
+    gh.factory<_i144.CreateSprintUseCase>(
+        () => _i144.CreateSprintUseCase(gh<_i585.SprintRepository>()));
+    gh.factory<_i408.GetBacklogUseCase>(
+        () => _i408.GetBacklogUseCase(gh<_i585.SprintRepository>()));
+    gh.factory<_i514.GetSprintsByProjectUseCase>(
+        () => _i514.GetSprintsByProjectUseCase(gh<_i585.SprintRepository>()));
+    gh.factory<_i27.ManageSprintTasksUseCase>(
+        () => _i27.ManageSprintTasksUseCase(gh<_i585.SprintRepository>()));
+    gh.factory<_i687.ManageSprintUseCase>(
+        () => _i687.ManageSprintUseCase(gh<_i585.SprintRepository>()));
     gh.factory<_i571.NotificationBloc>(
         () => _i571.NotificationBloc(gh<_i82.NotificationRepository>()));
     gh.lazySingleton<_i924.GetChannelsUseCase>(
@@ -465,6 +505,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i766.GetCategoryMetricsUseCase>(),
           gh<_i424.GetSuggestionsHistoryUseCase>(),
         ));
+    gh.factory<_i709.SprintBloc>(() => _i709.SprintBloc(
+          getSprints: gh<_i514.GetSprintsByProjectUseCase>(),
+          createSprint: gh<_i144.CreateSprintUseCase>(),
+          manageSprint: gh<_i687.ManageSprintUseCase>(),
+          manageSprintTasks: gh<_i27.ManageSprintTasksUseCase>(),
+          getBacklog: gh<_i408.GetBacklogUseCase>(),
+        ));
     gh.lazySingleton<_i17.ProjectRepository>(() => _i40.ProjectRepositoryImpl(
           gh<_i922.ProjectRemoteDataSource>(),
           gh<_i255.ProjectCacheDataSource>(),
@@ -489,6 +536,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i199.GetTaskByIdUseCase(gh<_i449.TaskRepository>()));
     gh.factory<_i1018.UpdateTaskUseCase>(
         () => _i1018.UpdateTaskUseCase(gh<_i449.TaskRepository>()));
+    gh.lazySingleton<_i114.GetPortfolioStatsUseCase>(
+        () => _i114.GetPortfolioStatsUseCase(gh<_i17.ProjectRepository>()));
     gh.factory<_i927.AcceptInvitationUseCase>(
         () => _i927.AcceptInvitationUseCase(gh<_i713.WorkspaceRepository>()));
     gh.factory<_i359.CreateInvitationUseCase>(
@@ -532,6 +581,14 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i32.GetProjectsUseCase>(),
               gh<_i725.GetTasksByProjectUseCase>(),
             ));
+    gh.factory<_i328.ProjectBloc>(() => _i328.ProjectBloc(
+          gh<_i32.GetProjectsUseCase>(),
+          gh<_i356.GetProjectByIdUseCase>(),
+          gh<_i1015.CreateProjectUseCase>(),
+          gh<_i589.UpdateProjectUseCase>(),
+          gh<_i177.DeleteProjectUseCase>(),
+          gh<_i114.GetPortfolioStatsUseCase>(),
+        ));
     gh.factory<_i953.WorkspaceInvitationBloc>(
         () => _i953.WorkspaceInvitationBloc(
               gh<_i591.GetPendingInvitationsUseCase>(),
@@ -547,13 +604,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i1018.UpdateTaskUseCase>(),
           gh<_i757.DeleteTaskUseCase>(),
           gh<_i449.TaskRepository>(),
-        ));
-    gh.factory<_i328.ProjectBloc>(() => _i328.ProjectBloc(
-          gh<_i32.GetProjectsUseCase>(),
-          gh<_i356.GetProjectByIdUseCase>(),
-          gh<_i1015.CreateProjectUseCase>(),
-          gh<_i589.UpdateProjectUseCase>(),
-          gh<_i177.DeleteProjectUseCase>(),
         ));
     gh.lazySingleton<_i207.WorkspaceBloc>(() => _i207.WorkspaceBloc(
           dataSource: gh<_i398.WorkspaceRemoteDataSource>(),

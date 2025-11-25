@@ -76,6 +76,8 @@ class Task extends Equatable {
   final DateTime startDate;
   final DateTime endDate;
   final List<int> dependencyIds;
+  final int? sprintId;
+  final int? storyPoints;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -92,6 +94,8 @@ class Task extends Equatable {
     required this.startDate,
     required this.endDate,
     this.dependencyIds = const [],
+    this.sprintId,
+    this.storyPoints,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -181,6 +185,8 @@ class Task extends Equatable {
     DateTime? startDate,
     DateTime? endDate,
     List<int>? dependencyIds,
+    int? sprintId,
+    int? storyPoints,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -197,6 +203,8 @@ class Task extends Equatable {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       dependencyIds: dependencyIds ?? this.dependencyIds,
+      sprintId: sprintId ?? this.sprintId,
+      storyPoints: storyPoints ?? this.storyPoints,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -216,6 +224,8 @@ class Task extends Equatable {
     startDate,
     endDate,
     dependencyIds,
+    sprintId,
+    storyPoints,
     createdAt,
     updatedAt,
   ];
@@ -253,6 +263,3 @@ class TaskDependency extends Equatable {
     );
   }
 }
-
-
-

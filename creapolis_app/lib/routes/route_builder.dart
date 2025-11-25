@@ -54,6 +54,9 @@ class RouteBuilder {
   static String gantt(int workspaceId, int projectId) =>
       '/more/workspaces/$workspaceId/projects/$projectId/gantt';
 
+  static String sprints(int workspaceId, int projectId) =>
+      '/more/workspaces/$workspaceId/projects/$projectId/sprints';
+
   static String workload(int workspaceId, int projectId) =>
       '/more/workspaces/$workspaceId/projects/$projectId/workload';
 
@@ -116,6 +119,8 @@ extension RouteNavigationExtension on BuildContext {
   // Project views navigation
   void goToGantt(int workspaceId, int projectId) =>
       go(RouteBuilder.gantt(workspaceId, projectId));
+  void goToSprints(int workspaceId, int projectId) =>
+      go(RouteBuilder.sprints(workspaceId, projectId));
   void goToWorkload(int workspaceId, int projectId) =>
       go(RouteBuilder.workload(workspaceId, projectId));
   void goToResourceMap(int workspaceId, int projectId) =>

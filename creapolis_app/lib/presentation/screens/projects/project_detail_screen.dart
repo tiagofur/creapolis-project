@@ -100,6 +100,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
   }
 
+  /// Navegar a la pantalla de sprints
+  void _navigateToSprints(BuildContext context, Project project) {
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId != null) {
+      context.goToSprints(workspaceId, project.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -182,6 +192,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.view_kanban),
+                onPressed: () => _navigateToSprints(context, project),
+                tooltip: 'Sprint Board',
+              ),
               IconButton(
                 icon: const Icon(Icons.analytics_outlined),
                 onPressed: () => _navigateToReports(context, project),

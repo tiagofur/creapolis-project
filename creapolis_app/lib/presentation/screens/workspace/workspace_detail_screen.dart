@@ -162,6 +162,10 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
 
                 // Configuración
                 if (_workspace.canManageSettings) _buildSettingsCard(),
+                const SizedBox(height: 16),
+
+                // Enterprise / Integraciones
+                if (_workspace.canManageSettings) _buildEnterpriseCard(),
               ],
             ),
           ),
@@ -466,6 +470,47 @@ class _WorkspaceDetailScreenState extends State<WorkspaceDetailScreen> {
             subtitle: Text(settings.timezone),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showTimezoneDialog(settings),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construir tarjeta de Enterprise / Integraciones
+  Widget _buildEnterpriseCard() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(Icons.business, color: colorScheme.primary),
+            title: const Text(
+              'Enterprise',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.security),
+            title: const Text('SSO (Single Sign-On)'),
+            subtitle: const Text('SAML 2.0 y OpenID Connect'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              context.go(RoutePaths.sso(_workspace.id));
+            },
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.webhook),
+            title: const Text('Webhooks'),
+            subtitle: const Text('HTTP callbacks para eventos'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              context.go(
+                RoutePaths.webhooks(_workspace.id),
+                extra: {'workspaceName': _workspace.name},
+              );
+            },
           ),
         ],
       ),

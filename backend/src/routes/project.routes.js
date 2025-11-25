@@ -41,6 +41,13 @@ router.get(
 router.post("/", createProjectValidation, validate, projectController.create);
 
 /**
+ * @route   GET /api/projects/portfolio
+ * @desc    Get portfolio stats
+ * @access  Private
+ */
+router.get("/portfolio", projectController.getPortfolio);
+
+/**
  * @route   GET /api/projects/:id
  * @desc    Get project by ID
  * @access  Private

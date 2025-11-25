@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'task.dart';
 
 /// Estados posibles de un sprint
 enum SprintStatus {
@@ -25,24 +26,24 @@ enum SprintStatus {
 class Sprint extends Equatable {
   final int id;
   final String name;
-  final String description;
+  final String? goal;
   final int projectId;
   final DateTime startDate;
   final DateTime endDate;
   final SprintStatus status;
-  final double plannedPoints;
+  final List<Task> tasks;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const Sprint({
     required this.id,
     required this.name,
-    required this.description,
+    this.goal,
     required this.projectId,
     required this.startDate,
     required this.endDate,
     required this.status,
-    required this.plannedPoints,
+    this.tasks = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -76,28 +77,37 @@ class Sprint extends Equatable {
     return elapsed / totalDuration;
   }
 
+  /// Puntos de historia totales
+  int get totalPoints =>
+      tasks.fold(0, (sum, task) => sum + (task.storyPoints ?? 0));
+
+  /// Puntos completados
+  int get completedPoints => tasks
+      .where((t) => t.isCompleted)
+      .fold(0, (sum, task) => sum + (task.storyPoints ?? 0));
+
   /// Copia el sprint con nuevos valores
   Sprint copyWith({
     int? id,
     String? name,
-    String? description,
+    String? goal,
     int? projectId,
     DateTime? startDate,
     DateTime? endDate,
     SprintStatus? status,
-    double? plannedPoints,
+    List<Task>? tasks,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return Sprint(
       id: id ?? this.id,
       name: name ?? this.name,
-      description: description ?? this.description,
+      goal: goal ?? this.goal,
       projectId: projectId ?? this.projectId,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
-      plannedPoints: plannedPoints ?? this.plannedPoints,
+      tasks: tasks ?? this.tasks,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -107,16 +117,13 @@ class Sprint extends Equatable {
   List<Object?> get props => [
     id,
     name,
-    description,
+    goal,
     projectId,
     startDate,
     endDate,
     status,
-    plannedPoints,
+    tasks,
     createdAt,
     updatedAt,
   ];
 }
-
-
-

@@ -17,6 +17,8 @@ class TaskModel extends Task {
     required super.startDate,
     required super.endDate,
     super.dependencyIds,
+    super.sprintId,
+    super.storyPoints,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -33,6 +35,8 @@ class TaskModel extends Task {
     final updatedAtRaw = json['updatedAt'] ?? json['updated_at'];
     final statusRaw = json['status'];
     final priorityRaw = json['priority'];
+    final sprintId = json['sprintId'] ?? json['sprint_id'];
+    final storyPoints = json['storyPoints'] ?? json['story_points'];
 
     // Helper to safely parse dates - handles both String and DateTime objects
     DateTime parseDate(dynamic dateValue, DateTime defaultValue) {
@@ -112,6 +116,8 @@ class TaskModel extends Task {
                       .map((p) => p['id'] as int)
                       .toList()
                 : const []),
+      sprintId: sprintId as int?,
+      storyPoints: storyPoints as int?,
       createdAt: parseDate(createdAtRaw, DateTime.now()),
       updatedAt: parseDate(updatedAtRaw, DateTime.now()),
     );
@@ -132,6 +138,8 @@ class TaskModel extends Task {
       'start_date': startDate.toIso8601String(),
       'end_date': endDate.toIso8601String(),
       'dependency_ids': dependencyIds,
+      'sprint_id': sprintId,
+      'story_points': storyPoints,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -152,6 +160,8 @@ class TaskModel extends Task {
       startDate: task.startDate,
       endDate: task.endDate,
       dependencyIds: task.dependencyIds,
+      sprintId: task.sprintId,
+      storyPoints: task.storyPoints,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     );
@@ -235,6 +245,8 @@ class TaskModel extends Task {
     DateTime? startDate,
     DateTime? endDate,
     List<int>? dependencyIds,
+    int? sprintId,
+    int? storyPoints,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -251,6 +263,8 @@ class TaskModel extends Task {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       dependencyIds: dependencyIds ?? this.dependencyIds,
+      sprintId: sprintId ?? this.sprintId,
+      storyPoints: storyPoints ?? this.storyPoints,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

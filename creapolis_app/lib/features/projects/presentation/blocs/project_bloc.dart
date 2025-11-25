@@ -8,6 +8,7 @@ import 'package:creapolis_app/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:creapolis_app/domain/usecases/create_project_usecase.dart';
 import 'package:creapolis_app/domain/usecases/update_project_usecase.dart';
 import 'package:creapolis_app/domain/usecases/delete_project_usecase.dart';
+import 'package:creapolis_app/domain/usecases/get_portfolio_stats_usecase.dart';
 import 'package:creapolis_app/core/utils/app_logger.dart';
 
 /// BLoC para gestionar proyectos (Unificado - Fase 3)
@@ -20,6 +21,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   final CreateProjectUseCase _createProjectUseCase;
   final UpdateProjectUseCase _updateProjectUseCase;
   final DeleteProjectUseCase _deleteProjectUseCase;
+  final GetPortfolioStatsUseCase _getPortfolioStatsUseCase;
 
   int? _currentWorkspaceId;
   ProjectStatus? _activeStatusFilter;
@@ -31,6 +33,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     this._createProjectUseCase,
     this._updateProjectUseCase,
     this._deleteProjectUseCase,
+    this._getPortfolioStatsUseCase,
   ) : super(const ProjectInitial()) {
     on<LoadProjects>(_onLoadProjects);
     on<LoadProjectById>(_onLoadProjectById);
@@ -40,6 +43,33 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<RefreshProjects>(_onRefreshProjects);
     on<FilterProjectsByStatus>(_onFilterProjectsByStatus);
     on<SearchProjects>(_onSearchProjects);
+    on<LoadPortfolioStats>(_onLoadPortfolioStats);
+  }
+
+  /// Maneja el evento de cargar estadísticas del portafolio
+  Future<void> _onLoadPortfolioStats(
+    LoadPortfolioStats event,
+    Emitter<ProjectState> emit,
+  ) async {
+    try {
+      emit(const ProjectLoading());
+
+      final result = await _getPortfolioStatsUseCase(event.workspaceId);
+
+      result.fold(
+        (failure) {
+          AppLogger.error('Error loading portfolio stats: ${failure.message}');
+          emit(ProjectError(failure.message));
+        },
+        (stats) {
+          AppLogger.info('Portfolio stats loaded successfully');
+          emit(PortfolioStatsLoaded(stats));
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Unexpected error loading portfolio stats: $e');
+      emit(ProjectError('Error inesperado: ${e.toString()}'));
+    }
   }
 
   /// Maneja el evento de cargar proyectos de un workspace

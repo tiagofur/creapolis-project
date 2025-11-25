@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:creapolis_app/domain/entities/project.dart';
+import 'package:creapolis_app/domain/entities/portfolio_stats.dart';
 
 /// Estados del ProjectBloc
 abstract class ProjectState extends Equatable {
@@ -102,4 +103,14 @@ class ProjectError extends ProjectState {
 
   @override
   List<Object?> get props => [message, currentProjects];
+}
+
+/// Estado con estadísticas del portafolio cargadas
+class PortfolioStatsLoaded extends ProjectState {
+  final PortfolioStats stats;
+
+  const PortfolioStatsLoaded(this.stats);
+
+  @override
+  List<Object?> get props => [stats];
 }

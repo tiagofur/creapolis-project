@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../core/network/api_client.dart';
 import '../../core/utils/app_logger.dart';
 import '../../domain/entities/project.dart';
+import '../models/portfolio_stats_model.dart';
 import '../models/project_model.dart';
 
 /// Interface para el data source remoto de proyectos
@@ -43,6 +44,9 @@ abstract class ProjectRemoteDataSource {
 
   /// Eliminar proyecto
   Future<void> deleteProject(int id);
+
+  /// Obtener estadísticas del portafolio
+  Future<PortfolioStatsModel> getPortfolioStats(int workspaceId);
 }
 
 /// Implementación del data source remoto de proyectos usando ApiClient
@@ -270,6 +274,34 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     } catch (e) {
       AppLogger.error(
         'ProjectRemoteDataSource: Error al eliminar proyecto $id - $e',
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PortfolioStatsModel> getPortfolioStats(int workspaceId) async {
+    AppLogger.info(
+      'ProjectRemoteDataSource: Obteniendo estadísticas del portafolio para workspace $workspaceId',
+    );
+
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/projects/portfolio',
+        queryParameters: {'workspaceId': workspaceId},
+      );
+
+      final responseBody = response.data;
+      if (responseBody == null || responseBody['data'] == null) {
+        throw Exception('Error al obtener estadísticas');
+      }
+
+      return PortfolioStatsModel.fromJson(
+        responseBody['data'] as Map<String, dynamic>,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'ProjectRemoteDataSource: Error al obtener estadísticas - $e',
       );
       rethrow;
     }

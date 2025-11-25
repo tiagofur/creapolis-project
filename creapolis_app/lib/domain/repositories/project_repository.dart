@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../core/errors/failures.dart';
+import '../entities/portfolio_stats.dart';
 import '../entities/project.dart';
 
 /// Repositorio de proyectos
@@ -57,4 +58,7 @@ abstract class ProjectRepository {
   /// Retorna `Right(void)` si es exitoso.
   /// Retorna `Left(Failure)` si hay error.
   Future<Either<Failure, void>> deleteProject(int id);
+
+  /// Obtener estadísticas del portafolio
+  Future<Either<Failure, PortfolioStats>> getPortfolioStats(int workspaceId);
 }

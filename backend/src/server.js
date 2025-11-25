@@ -42,6 +42,8 @@ import customFieldRoutes from "./routes/custom-field.routes.js";
 import automationRoutes from "./routes/automation.routes.js";
 import webhookRoutes from "./routes/webhook.routes.js";
 import ssoRoutes from "./routes/sso.routes.js";
+import auditRoutes from "./routes/audit.routes.js";
+import sprintRoutes from "./routes/sprint.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -198,6 +200,8 @@ app.use("/api", customFieldRoutes); // Custom fields for projects and tasks
 app.use("/api", automationRoutes); // Automations for projects
 app.use("/api", webhookRoutes); // Webhooks for project/workspace events
 app.use("/api/sso", ssoRoutes); // SAML/OIDC SSO for enterprise
+app.use("/api/audit", auditRoutes); // Audit logs for enterprise
+app.use("/api/sprints", sprintRoutes); // Sprint management
 
 // Root endpoint
 app.get("/", (req, res) => {

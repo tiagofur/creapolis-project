@@ -53,6 +53,10 @@ import '../presentation/pages/custom_fields/custom_fields_screen.dart';
 import '../presentation/pages/automations/automations_screen.dart';
 import '../presentation/pages/webhooks/webhooks_screen.dart';
 import '../presentation/pages/sso/sso_settings_screen.dart';
+import '../presentation/pages/conflicts/conflict_resolution_screen.dart';
+import '../presentation/pages/audit/audit_logs_screen.dart';
+import '../presentation/screens/projects/portfolio_screen.dart';
+import '../presentation/screens/projects/sprint_board_screen.dart';
 
 /// Configuración de rutas de la aplicación
 class AppRouter {
@@ -308,6 +312,39 @@ class AppRouter {
                             },
                           ),
 
+                          // Conflict Resolution
+                          GoRoute(
+                            path: 'conflicts',
+                            name: RouteNames.conflicts,
+                            builder: (context, state) {
+                              return const ConflictResolutionScreen();
+                            },
+                          ),
+
+                          // Audit Logs
+                          GoRoute(
+                            path: 'audit-logs',
+                            name: RouteNames.auditLogs,
+                            builder: (context, state) {
+                              final wId = state.pathParameters['wId'] ?? '0';
+                              return AuditLogsScreen(
+                                workspaceId: int.parse(wId),
+                              );
+                            },
+                          ),
+
+                          // Portfolio
+                          GoRoute(
+                            path: 'portfolio',
+                            name: RouteNames.portfolio,
+                            builder: (context, state) {
+                              return BlocProvider.value(
+                                value: getIt<ProjectBloc>(),
+                                child: const PortfolioScreen(),
+                              );
+                            },
+                          ),
+
                           // Projects list dentro de workspace
                           GoRoute(
                             path: 'projects',
@@ -357,6 +394,19 @@ class AppRouter {
                                       final projectId =
                                           state.pathParameters['pId'] ?? '0';
                                       return GanttChartScreen(
+                                        projectId: int.parse(projectId),
+                                      );
+                                    },
+                                  ),
+
+                                  // Sprints del proyecto
+                                  GoRoute(
+                                    path: 'sprints',
+                                    name: RouteNames.sprints,
+                                    builder: (context, state) {
+                                      final projectId =
+                                          state.pathParameters['pId'] ?? '0';
+                                      return SprintBoardScreen(
                                         projectId: int.parse(projectId),
                                       );
                                     },
@@ -729,6 +779,9 @@ class RoutePaths {
   static String workspaceSettings(int wId) => '/more/workspaces/$wId/settings';
   static String webhooks(int wId) => '/more/workspaces/$wId/webhooks';
   static String sso(int wId) => '/more/workspaces/$wId/sso';
+  static String conflicts(int wId) => '/more/workspaces/$wId/conflicts';
+  static String auditLogs(int wId) => '/more/workspaces/$wId/audit-logs';
+  static String portfolio(int wId) => '/more/workspaces/$wId/portfolio';
 
   // Project routes (requieren workspaceId)
   static String projects(int wId) => '/more/workspaces/$wId/projects';
@@ -738,6 +791,8 @@ class RoutePaths {
   // Project views (requieren workspaceId y projectId)
   static String gantt(int wId, int pId) =>
       '/more/workspaces/$wId/projects/$pId/gantt';
+  static String sprints(int wId, int pId) =>
+      '/more/workspaces/$wId/projects/$pId/sprints';
   static String workload(int wId, int pId) =>
       '/more/workspaces/$wId/projects/$pId/workload';
   static String resourceMap(int wId, int pId) =>
@@ -785,6 +840,7 @@ class RouteNames {
   static const String tasks = 'tasks';
   static const String taskDetail = 'task-detail';
   static const String gantt = 'gantt';
+  static const String sprints = 'sprints';
   static const String timeTracking = 'time-tracking';
   static const String workload = 'workload';
   static const String resourceMap = 'resource-map';
@@ -826,4 +882,13 @@ class RouteNames {
 
   // SSO route name
   static const String sso = 'sso';
+
+  // Conflicts route name
+  static const String conflicts = 'conflicts';
+
+  // Audit Logs route name
+  static const String auditLogs = 'audit-logs';
+
+  // Portfolio route name
+  static const String portfolio = 'portfolio';
 }

@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../domain/entities/sso_provider.dart';
-
 /// Events for SSO BLoC
 abstract class SsoEvent extends Equatable {
   const SsoEvent();

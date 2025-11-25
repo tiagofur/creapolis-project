@@ -83,6 +83,7 @@ model Workspace {
   invitations              WorkspaceInvitation[]
   members                  WorkspaceMember[]
   chatChannels            ChatChannel[]
+  auditLogs               AuditLog[]
 
   @@index([ownerId])
   @@index([name])
@@ -144,6 +145,8 @@ model Project {
   chatChannels            ChatChannel[]
   customFields            CustomFieldDefinition[]
   automations             Automation[]
+  auditLogs               AuditLog[]
+  sprints                 Sprint[]
 
   @@index([workspaceId])
   @@index([managerId])
@@ -185,6 +188,9 @@ model Task {
   successors          Dependency[]         @relation("TaskSuccessors")
   assignee            User?                @relation(fields: [assigneeId], references: [id])
   project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint              Sprint?              @relation(fields: [sprintId], references: [id])
+  sprintId            Int?
+  storyPoints         Int?
   timeLogs            TimeLog[]
   comments            Comment[]
   categorySuggestions CategorySuggestion[]
@@ -516,6 +522,8 @@ model RoleAuditLog {
 model AuditLog {
   id          Int      @id @default(autoincrement())
   userId      Int
+  workspaceId Int?
+  projectId   Int?
   action      String   // CREATE, UPDATE, DELETE, LOGIN, ETC
   entityType  String   // PROJECT, TASK, USER, WORKSPACE
   entityId    Int
@@ -525,8 +533,12 @@ model AuditLog {
   userAgent   String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([workspaceId])
+  @@index([projectId])
   @@index([entityType, entityId])
   @@index([action])
   @@index([createdAt])
@@ -1350,7 +1362,7 @@ model SsoProvider {
   samlIssuer            String?           // IdP Entity ID
   samlCertificate       String?           // IdP X.509 Certificate (PEM)
   samlSignatureAlgorithm String?          // "sha256", "sha512"
-  samlDigestAlgorithm   String?           // "sha256", "sha512"
+  samlDigestAlgorithm   String?          // "sha256", "sha512"
   
   // OIDC Configuration  
   oidcClientId          String?
@@ -1448,4 +1460,27 @@ enum SsoAuditEvent {
   SSO_PROVIDER_DEACTIVATED
   USER_PROVISIONED
   USER_DEPROVISIONED
+}
+
+model Sprint {
+  id          Int          @id @default(autoincrement())
+  name        String
+  goal        String?
+  startDate   DateTime
+  endDate     DateTime
+  status      SprintStatus @default(PLANNED)
+  projectId   Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
 }

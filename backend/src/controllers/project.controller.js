@@ -32,6 +32,29 @@ class ProjectController {
   });
 
   /**
+   * Get portfolio stats
+   * GET /api/projects/portfolio
+   */
+  getPortfolio = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.query;
+
+    if (!workspaceId) {
+      return res.status(400).json({ message: "Workspace ID is required" });
+    }
+
+    const stats = await projectService.getPortfolioStats(
+      parseInt(workspaceId),
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      stats,
+      "Portfolio stats retrieved successfully"
+    );
+  });
+
+  /**
    * Get project by ID
    * GET /api/projects/:id
    */

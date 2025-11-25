@@ -134,3 +134,13 @@ class SearchProjects extends ProjectEvent {
   @override
   List<Object?> get props => [query];
 }
+
+/// Evento para cargar estadísticas del portafolio
+class LoadPortfolioStats extends ProjectEvent {
+  final int workspaceId;
+
+  const LoadPortfolioStats(this.workspaceId);
+
+  @override
+  List<Object?> get props => [workspaceId];
+}

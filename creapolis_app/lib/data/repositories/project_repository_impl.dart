@@ -5,6 +5,7 @@ import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/sync/sync_manager.dart';
+import '../../domain/entities/portfolio_stats.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../datasources/local/project_cache_datasource.dart';
@@ -446,6 +447,32 @@ class ProjectRepositoryImpl implements ProjectRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure('Error inesperado al eliminar proyecto: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PortfolioStats>> getPortfolioStats(
+    int workspaceId,
+  ) async {
+    try {
+      final isOnline = await _connectivityService.isConnected;
+
+      if (isOnline) {
+        final stats = await _remoteDataSource.getPortfolioStats(workspaceId);
+        return Right(stats);
+      } else {
+        return const Left(
+          NetworkFailure(
+            'Se requiere conexión a internet para ver estadísticas',
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnknownFailure('Error al obtener estadísticas: $e'));
     }
   }
 }
