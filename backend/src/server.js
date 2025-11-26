@@ -48,6 +48,7 @@ import formRoutes from "./routes/form.routes.js";
 import kanbanRoutes from "./routes/kanban.routes.js";
 import billingRoutes from "./routes/billingRoutes.js";
 import wikiRoutes from "./routes/wiki.routes.js";
+import templateRoutes from "./routes/template.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -212,6 +213,7 @@ app.use("/api", formRoutes); // Forms/Intake
 app.use("/api/kanban", kanbanRoutes); // Kanban board configuration
 app.use("/api/billing", billingRoutes); // Billing and subscriptions
 app.use("/api/wiki", wikiRoutes); // Wiki and documentation
+app.use("/api/templates", templateRoutes); // Project and task templates
 
 // Root endpoint
 app.get("/", (req, res) => {

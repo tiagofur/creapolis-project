@@ -78,6 +78,7 @@ import 'data/repositories/workload_repository_impl.dart' as _i773;
 import 'data/repositories/workspace_repository_impl.dart' as _i753;
 import 'data/services/billing_service.dart' as _i867;
 import 'data/services/gamification_service.dart' as _i309;
+import 'data/services/template_service.dart' as _i17;
 import 'data/services/wiki_service.dart' as _i644;
 import 'domain/repositories/audit_repository.dart' as _i819;
 import 'domain/repositories/auth_repository.dart' as _i716;
@@ -264,6 +265,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i309.GamificationService>(
         () => _i309.GamificationService(gh<InvalidType>()));
     gh.factory<_i644.WikiService>(() => _i644.WikiService(gh<InvalidType>()));
+    gh.factory<_i17.TemplateService>(
+        () => _i17.TemplateService(gh<InvalidType>()));
     gh.factory<_i318.CalendarRemoteDataSource>(
         () => _i318.CalendarRemoteDataSource(gh<_i45.DioClient>()));
     gh.factory<_i1070.GamificationRemoteDataSource>(

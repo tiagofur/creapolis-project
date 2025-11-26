@@ -64,6 +64,7 @@ model User {
   wikiDocumentVersions    WikiDocumentVersion[] @relation("VersionEditor")
   userActivities          UserActivity[]
   userAchievements        UserAchievement[]
+  projectTemplates        ProjectTemplate[]
 
   @@index([email])
 }
@@ -92,6 +93,7 @@ model Workspace {
   subscription             Subscription?
   wikiCategories           WikiCategory[]
   wikiDocuments            WikiDocument[]
+  projectTemplates         ProjectTemplate[]
 
   @@index([ownerId])
   @@index([name])
@@ -1786,6 +1788,40 @@ enum ActivityType {
 enum ProgressType {
   INCREMENTAL // e.g., complete N tasks
   BOOLEAN     // e.g., first task completed
+}
+
+// ============================================
+// TEMPLATES SYSTEM
+// ============================================
+
+model ProjectTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  workspaceId Int
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creator     User      @relation(fields: [createdBy], references: [id])
+  tasks       TaskTemplate[]
+
+  @@index([workspaceId])
+  @@index([createdBy])
+}
+
+model TaskTemplate {
+  id                Int      @id @default(autoincrement())
+  projectTemplateId Int
+  title             String
+  description       String?
+  category          TaskCategory?
+  estimatedHours    Float?
+  
+  projectTemplate   ProjectTemplate @relation(fields: [projectTemplateId], references: [id], onDelete: Cascade)
+
+  @@index([projectTemplateId])
 }
 
     
