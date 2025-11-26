@@ -54,7 +54,8 @@
     "passport-microsoft": "^2.1.0",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "mailparser": "^3.7.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
