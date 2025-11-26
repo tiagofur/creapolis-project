@@ -1,0 +1,101 @@
+{
+  "name": "ordo-todo",
+  "displayName": "Ordo-Todo",
+  "description": "Ordo Todo integration for VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": ["onStartup"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ordo-todo.login",
+        "title": "Creapolis: Login"
+      },
+      {
+        "command": "ordo-todo.logout",
+        "title": "Creapolis: Logout"
+      },
+      {
+        "command": "ordo-todo.getProjects",
+        "title": "Creapolis: Get Projects"
+      },
+      {
+        "command": "ordo-todo.refresh",
+        "title": "Creapolis: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ordo-todo.createTask",
+        "title": "Creapolis: Create Task"
+      },
+      {
+        "command": "ordo-todo.startTimer",
+        "title": "Creapolis: Start Timer"
+      }
+    ],
+    "views": {
+      "package": [
+        {
+          "id": "creapolisProjects",
+          "name": "Creapolis Projects",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Creapolis"
+        }
+      ]
+    },
+    "menus": {
+        "view/title": [
+            {
+                "command": "ordo-todo.refresh",
+                "when": "view == creapolisProjects",
+                "group": "navigation"
+            }
+        ],
+        "view/item/context": [
+            {
+                "command": "ordo-todo.createTask",
+                "when": "view == creapolisProjects && viewItem == project",
+                "group": "inline"
+            },
+            {
+                "command": "ordo-todo.startTimer",
+                "when": "view == creapolisProjects && viewItem == task",
+                "group": "inline"
+            }
+        ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.106.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.46.3",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "ts-loader": "^9.5.4",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  },
+  "dependencies": {
+    "axios": "^0.27.0"
+  }
+}
