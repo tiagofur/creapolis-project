@@ -134,6 +134,7 @@ model Project {
   endDate     DateTime        @default(now())
   managerId   Int?
   progress    Float           @default(0.0)
+  kanbanConfig String?        // JSON: WIP limits y swimlanes
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -197,6 +198,7 @@ model Task {
   categorySuggestions CategorySuggestion[]
   categoryFeedbacks   CategoryFeedback[]
   customFieldValues   CustomFieldValue[]
+  formSubmissions     FormSubmission[]
 
   @@index([projectId])
   @@index([assigneeId])

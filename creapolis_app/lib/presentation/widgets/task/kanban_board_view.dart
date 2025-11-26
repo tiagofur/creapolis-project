@@ -9,6 +9,7 @@ import '../../../domain/entities/kanban_config.dart';
 import '../../../domain/entities/task.dart';
 import '../../bloc/task/task_bloc.dart';
 import '../../bloc/task/task_event.dart';
+import 'kanban_config_dialog.dart';
 import 'task_card.dart';
 
 /// Vista tipo Kanban Board para tareas
@@ -596,7 +597,7 @@ class _KanbanBoardViewState extends State<KanbanBoardView> {
   void _showConfigDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => _KanbanConfigDialog(
+      builder: (context) => KanbanConfigDialog(
         projectId: widget.projectId,
         currentConfig: _boardConfig,
         onConfigChanged: () {
