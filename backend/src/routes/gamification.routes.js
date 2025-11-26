@@ -1,14 +1,11 @@
-import express from "express";
-import gamificationController from "../controllers/gamification.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import express from 'express';
+import gamificationController from '../controllers/gamification.controller.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticate);
+router.use(protect);
 
-router.get("/me", gamificationController.getMyStats);
-router.get("/leaderboard", gamificationController.getLeaderboard);
-router.get("/users/:userId", gamificationController.getUserStats);
+router.get('/profile/:userId', gamificationController.getProfile);
 
 export default router;

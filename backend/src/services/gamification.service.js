@@ -1,247 +1,193 @@
-import prisma from "../config/database.js";
+import prisma from '../prisma/client.js';
 
 class GamificationService {
-  constructor() {
-    this.reputationRules = {
-      UPVOTE_RECEIVED: 10,
-      DOWNVOTE_RECEIVED: -2,
-      POST_CREATED: 5,
-      THREAD_CREATED: 15,
-      UPVOTE_GIVEN: 1,
-      DOWNVOTE_GIVEN: -1,
-      DAILY_LOGIN: 2,
-      BADGE_EARNED: 50,
-      TASK_COMPLETED: 20,
-      PROJECT_COMPLETED: 100,
-    };
+  /**
+   * Records a user activity and updates gamification stats.
+   * @param {number} userId - The ID of the user.
+   * @param {string} activityType - The type of activity (e.g., 'TASK_COMPLETED').
+   * @param {string} entityType - The type of entity the activity is related to (e.g., 'Task').
+   * @param {number} entityId - The ID of the related entity.
+   * @param {number} points - The number of points to award for the activity.
+   */
+  async recordActivity(userId, activityType, entityType, entityId, points) {
+    // 1. Log the activity
+    await prisma.userActivity.create({
+      data: {
+        userId,
+        activityType,
+        entityType,
+        entityId,
+        pointsEarned: points,
+      },
+    });
 
-    this.badges = [
-      {
-        type: "REPUTATION_MILESTONE_100",
-        name: "Contribuidor Novato",
-        description: "Alcanzó 100 puntos de reputación",
-        icon: "🌟",
-        pointsValue: 100,
-        condition: (user) => user.reputation >= 100,
-      },
-      {
-        type: "REPUTATION_MILESTONE_500",
-        name: "Miembro Respetado",
-        description: "Alcanzó 500 puntos de reputación",
-        icon: "⭐",
-        pointsValue: 500,
-        condition: (user) => user.reputation >= 500,
-      },
-      {
-        type: "REPUTATION_MILESTONE_1000",
-        name: "Experto Comunitario",
-        description: "Alcanzó 1000 puntos de reputación",
-        icon: "🏆",
-        pointsValue: 1000,
-        condition: (user) => user.reputation >= 1000,
-      },
-      {
-        type: "POST_MILESTONE_10",
-        name: "Conversador",
-        description: "Publicó 10 mensajes en el foro",
-        icon: "💬",
-        pointsValue: 50,
-        condition: async (user) => {
-          const postCount = await prisma.forumPost.count({
-            where: { authorId: user.id },
-          });
-          return postCount >= 10;
+    // 2. Update user's reputation (points)
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        reputation: {
+          increment: points,
         },
+        reputationLastUpdated: new Date(),
       },
-      {
-        type: "THREAD_MILESTONE_5",
-        name: "Iniciador de Debates",
-        description: "Creó 5 temas en el foro",
-        icon: "📢",
-        pointsValue: 75,
-        condition: async (user) => {
-          const threadCount = await prisma.forumThread.count({
-            where: { authorId: user.id },
-          });
-          return threadCount >= 5;
-        },
-      },
-      {
-        type: "TASK_MILESTONE_10",
-        name: "Productivo",
-        description: "Completó 10 tareas",
-        icon: "✅",
-        pointsValue: 50,
-        condition: async (user) => {
-          const taskCount = await prisma.task.count({
-            where: {
-              assigneeId: user.id,
-              status: "COMPLETED",
-            },
-          });
-          return taskCount >= 10;
-        },
-      },
-    ];
+    });
+
+    // 3. Check for achievement progress
+    await this.checkAchievements(userId, activityType);
+    
+    // 4. Check for new badges
+    await this.checkBadges(userId);
   }
 
-  async awardPoints(userId, points, reason, sourceType, sourceId) {
-    try {
-      // Actualizar reputación del usuario
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          reputation: {
-            increment: points,
-          },
-          reputationLastUpdated: new Date(),
+  /**
+   * Checks and updates user's achievements based on a new activity.
+   * @param {number} userId - The ID of the user.
+   * @param {string} activityType - The type of activity performed.
+   */
+  async checkAchievements(userId, activityType) {
+    const achievements = await prisma.achievement.findMany({
+      where: {
+        // Find achievements related to this activity type
+        name: {
+          contains: activityType,
+          mode: 'insensitive',
         },
-      });
+      },
+    });
 
-      // Registrar el cambio de reputación
-      await prisma.userReputationLog.create({
-        data: {
-          userId,
-          points,
-          reason,
-          sourceType,
-          sourceId: sourceId ? parseInt(sourceId) : null,
-        },
-      });
-
-      // Verificar badges después de otorgar puntos
-      await this.checkAndAwardBadges(userId);
-
-      return updatedUser;
-    } catch (error) {
-      console.error("Error al actualizar reputación:", error);
-      throw error;
-    }
-  }
-
-  async checkAndAwardBadges(userId) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          badges: true,
-        },
-      });
-
-      if (!user) return;
-
-      for (const badge of this.badges) {
-        // Verificar si el usuario ya tiene esta insignia
-        const hasBadge = user.badges.some((b) => b.badgeType === badge.type);
-        if (hasBadge) continue;
-
-        // Verificar si cumple la condición
-        const meetsCondition = await badge.condition(user);
-        if (meetsCondition) {
-          // Otorgar la insignia
-          await prisma.userBadge.create({
-            data: {
-              userId,
-              badgeType: badge.type,
-              badgeName: badge.name,
-              badgeDescription: badge.description,
-              badgeIcon: badge.icon,
-              pointsValue: badge.pointsValue,
-            },
-          });
-
-          // Otorgar puntos de reputación por la insignia (recursivo, pero seguro porque ya tiene el badge)
-          await this.awardPoints(
+    for (const achievement of achievements) {
+      let userAchievement = await prisma.userAchievement.findUnique({
+        where: {
+          userId_achievementId: {
             userId,
-            this.reputationRules.BADGE_EARNED,
-            "BADGE_EARNED",
-            "UserBadge",
-            null
-          );
+            achievementId: achievement.id,
+          },
+        },
+      });
+
+      if (!userAchievement) {
+        userAchievement = await prisma.userAchievement.create({
+          data: {
+            userId,
+            achievementId: achievement.id,
+            progress: 0,
+          },
+        });
+      }
+
+      if (!userAchievement.isUnlocked) {
+        let newProgress = userAchievement.progress;
+        if (achievement.progressType === 'INCREMENTAL') {
+          newProgress += 1;
+        } else if (achievement.progressType === 'BOOLEAN') {
+          newProgress = 1;
+        }
+
+        const isUnlocked = newProgress >= achievement.goal;
+
+        await prisma.userAchievement.update({
+          where: { id: userAchievement.id },
+          data: {
+            progress: newProgress,
+            isUnlocked: isUnlocked,
+            unlockedAt: isUnlocked ? new Date() : null,
+          },
+        });
+
+        if (isUnlocked) {
+          // Award points for unlocking the achievement
+          await this.recordActivity(userId, 'ACHIEVEMENT_UNLOCKED', 'Achievement', achievement.id, achievement.pointsAwarded);
         }
       }
-    } catch (error) {
-      console.error("Error al verificar insignias:", error);
     }
   }
+  
+  /**
+   * Checks and awards badges to a user based on their stats.
+   * @param {number} userId - The ID of the user.
+   */
+  async checkBadges(userId) {
+      // This is a simplified example. A real implementation would have more complex logic
+      // and a more efficient way to check for multiple badges.
 
-  async getUserStats(userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
-      select: {
-        id: true,
-        name: true,
-        avatarUrl: true,
-        reputation: true,
-        reputationLastUpdated: true,
-        _count: {
-          select: {
-            forumThreads: true,
-            forumPosts: true,
-            badges: true,
-            assignedTasks: {
-              where: { status: "COMPLETED" },
-            },
+      const tasksCompleted = await prisma.task.count({
+          where: {
+              assigneeId: userId,
+              status: 'COMPLETED',
           },
+      });
+      
+      if (tasksCompleted >= 1) {
+          await this.awardBadge(userId, 'First Task Completed');
+      }
+      if (tasksCompleted >= 10) {
+          await this.awardBadge(userId, 'Task Master');
+      }
+  }
+
+  /**
+   * Awards a badge to a user if they don't have it already.
+   * @param {number} userId - The ID of the user.
+   * @param {string} badgeName - The name of the badge to award.
+   */
+  async awardBadge(userId, badgeName) {
+    const badge = await prisma.badge.findUnique({ where: { name: badgeName } });
+    if (!badge) return;
+
+    const existingUserBadge = await prisma.userBadge.findUnique({
+      where: {
+        userId_badgeId: {
+          userId,
+          badgeId: badge.id,
         },
       },
     });
 
-    if (!user) return null;
+    if (!existingUserBadge) {
+      await prisma.userBadge.create({
+        data: {
+          userId,
+          badgeId: badge.id,
+        },
+      });
+      // Award points for earning the badge
+      await this.recordActivity(userId, 'BADGE_EARNED', 'Badge', badge.id, badge.pointsAwarded);
+    }
+  }
 
-    const badges = await prisma.userBadge.findMany({
-      where: { userId: parseInt(userId) },
-      orderBy: { earnedAt: "desc" },
+  /**
+   * Retrieves a user's gamification profile (points, badges, achievements).
+   * @param {number} userId - The ID of the user.
+   * @returns {Promise<object>}
+   */
+  async getGamificationProfile(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        reputation: true,
+      },
     });
 
-    const recentActivity = await prisma.userReputationLog.findMany({
-      where: { userId: parseInt(userId) },
-      orderBy: { createdAt: "desc" },
-      take: 10,
+    const badges = await prisma.userBadge.findMany({
+      where: { userId },
+      include: { badge: true },
+    });
+
+    const achievements = await prisma.userAchievement.findMany({
+      where: { userId },
+      include: { achievement: true },
     });
 
     return {
-      user: {
-        ...user,
-        badges,
-      },
-      recentActivity,
+      points: user?.reputation || 0,
+      badges: badges.map(b => b.badge),
+      achievements: achievements.map(a => ({
+        ...a.achievement,
+        progress: a.progress,
+        isUnlocked: a.isUnlocked,
+        unlockedAt: a.unlockedAt,
+      })),
     };
-  }
-
-  async getLeaderboard(limit = 10, timeframe = "all") {
-    let dateFilter = {};
-    // Nota: El filtro por fecha para leaderboard es complejo porque la reputación es un acumulado total.
-    // Para un leaderboard "semanal", necesitaríamos sumar los logs de reputación de la semana.
-    // Por ahora, mantendremos el leaderboard global basado en el total de reputación.
-
-    // Si quisiéramos hacerlo por logs:
-    if (timeframe !== "all") {
-      // TODO: Implementar leaderboard basado en logs para timeframes específicos
-    }
-
-    const leaderboard = await prisma.user.findMany({
-      where: {
-        reputation: { gt: 0 },
-      },
-      select: {
-        id: true,
-        name: true,
-        avatarUrl: true,
-        reputation: true,
-        _count: {
-          select: {
-            forumThreads: true,
-            forumPosts: true,
-            badges: true,
-          },
-        },
-      },
-      orderBy: { reputation: "desc" },
-      take: parseInt(limit),
-    });
-
-    return leaderboard;
   }
 }
 

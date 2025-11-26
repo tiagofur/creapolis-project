@@ -1,42 +1,50 @@
-# Gamification Feature
+# Gamification
+
+This document describes the Gamification feature in Creapolis.
 
 ## Overview
 
-The Gamification feature aims to increase user engagement by rewarding actions with reputation points and badges. It includes a leaderboard to foster friendly competition.
+The Gamification feature is designed to increase user engagement and motivation by rewarding users for their activity within the application. Users can earn points, unlock badges, and complete achievements.
 
-## Architecture
+## Backend
 
-### Backend
+### Prisma Models
 
-- **Service**: `src/services/gamification.service.js` - Centralizes logic for points, badges, and rules.
-- **Controller**: `src/controllers/gamification.controller.js` - Endpoints for stats and leaderboard.
-- **Routes**: `/api/gamification/me`, `/api/gamification/leaderboard`.
-- **Database**: Uses `User` (reputation), `Badge`, and `ReputationLog` models.
+The following models have been added to the `schema.prisma` file:
+- `Badge`: Defines a badge that can be earned.
+- `UserBadge`: Links a user to an earned badge.
+- `UserActivity`: Logs user activities that contribute to gamification.
+- `Achievement`: Defines an achievement that can be unlocked.
+- `UserAchievement`: Links a user to an unlocked achievement.
 
-### Frontend (Flutter)
+### Gamification Service (`gamification.service.js`)
 
-- **Domain**:
-  - Entities: `GamificationStats`, `Badge`, `ReputationLog`.
-  - Repository: `GamificationRepository`.
-  - UseCases: `GetGamificationStatsUseCase`, `GetLeaderboardUseCase`.
-- **Data**:
-  - DataSource: `GamificationRemoteDataSource`.
-  - Repository Impl: `GamificationRepositoryImpl`.
-  - Models: `UserModel` (updated with reputation).
-- **Presentation**:
-  - BLoC: `GamificationBloc`.
-  - Widgets: `GamificationCard` (in Profile).
-  - Screens: `LeaderboardScreen`.
+The `backend/src/services/gamification.service.js` file provides the core logic for the gamification system:
+- `recordActivity`: Logs a user activity, updates the user's reputation (points), and checks for new achievements and badges.
+- `checkAchievements`: Updates a user's progress towards achievements based on their activities.
+- `checkBadges`: Awards badges to users based on their stats (e.g., number of completed tasks).
+- `awardBadge`: Awards a specific badge to a user if they haven't earned it yet.
+- `getGamificationProfile`: Retrieves a user's complete gamification profile, including points, badges, and achievements.
 
-## Key Features
+### API Routes (`gamification.routes.js`)
 
-1. **Reputation Points**: Awarded for actions like voting (logic in `GamificationService`).
-2. **Badges**: Awarded based on milestones (e.g., "First Vote").
-3. **Leaderboard**: Displays top users based on reputation.
-4. **Profile Integration**: Shows current reputation and recent badges in the user profile.
+- `GET /api/gamification/profile/:userId`: Retrieves the gamification profile for a given user.
 
-## Future Improvements
+## Frontend (Flutter)
 
-- Add more badge types and rules.
-- Implement levels based on reputation points.
-- Add notifications when a badge is earned.
+### Entities
+
+- `Badge`: Represents a badge.
+- `Achievement`: Represents an achievement, including progress.
+- `GamificationProfile`: A comprehensive model for a user's gamification status.
+
+### Gamification Service (`gamification_service.dart`)
+
+- `getGamificationProfile(userId)`: Fetches the gamification profile from the backend.
+
+### Screens
+
+- `GamificationProfileScreen`: A new screen that displays the user's gamification profile, including:
+    - Total points.
+    - A grid of earned badges.
+    - A list of achievements with their progress.

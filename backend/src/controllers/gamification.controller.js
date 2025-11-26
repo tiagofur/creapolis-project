@@ -1,62 +1,12 @@
-import gamificationService from "../services/gamification.service.js";
-import { successResponse, asyncHandler } from "../utils/response.js";
-import { ErrorResponses } from "../utils/errors.js";
+import gamificationService from '../services/gamification.service.js';
+import { catchAsync } from '../utils/catchAsync.js';
+import { sendResponse } from '../utils/sendResponse.js';
 
 class GamificationController {
-  /**
-   * Get current user's gamification stats
-   * GET /api/gamification/me
-   */
-  getMyStats = asyncHandler(async (req, res) => {
-    const userId = req.user.id;
-    const stats = await gamificationService.getUserStats(userId);
-
-    if (!stats) {
-      throw ErrorResponses.notFound("User not found");
-    }
-
-    return successResponse(
-      res,
-      stats,
-      "User gamification stats retrieved successfully"
-    );
-  });
-
-  /**
-   * Get specific user's gamification stats
-   * GET /api/gamification/users/:userId
-   */
-  getUserStats = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-    const stats = await gamificationService.getUserStats(userId);
-
-    if (!stats) {
-      throw ErrorResponses.notFound("User not found");
-    }
-
-    return successResponse(
-      res,
-      stats,
-      "User gamification stats retrieved successfully"
-    );
-  });
-
-  /**
-   * Get leaderboard
-   * GET /api/gamification/leaderboard
-   */
-  getLeaderboard = asyncHandler(async (req, res) => {
-    const { limit, timeframe } = req.query;
-    const leaderboard = await gamificationService.getLeaderboard(
-      limit,
-      timeframe
-    );
-
-    return successResponse(
-      res,
-      leaderboard,
-      "Leaderboard retrieved successfully"
-    );
+  getProfile = catchAsync(async (req, res, next) => {
+    const userId = parseInt(req.params.userId);
+    const profile = await gamificationService.getGamificationProfile(userId);
+    sendResponse(res, 200, profile);
   });
 }
 

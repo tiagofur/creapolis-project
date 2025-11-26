@@ -62,6 +62,8 @@ class _WikiListScreenState extends State<WikiListScreen> {
               _showSearchDialog(context);
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.add),
             onPressed: () async {
               final result = await Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const WikiEditorScreen()),
@@ -70,6 +72,7 @@ class _WikiListScreenState extends State<WikiListScreen> {
                 _loadDocuments();
               }
             },
+          ),
         ],
       ),
       body: _isLoading

@@ -62,6 +62,8 @@ model User {
   authoredWikiDocuments   WikiDocument[]      @relation("WikiAuthor")
   lastEditedWikiDocuments WikiDocument[]      @relation("WikiLastEditor")
   wikiDocumentVersions    WikiDocumentVersion[] @relation("VersionEditor")
+  userActivities          UserActivity[]
+  userAchievements        UserAchievement[]
 
   @@index([email])
 }
@@ -1713,4 +1715,77 @@ model FormSubmission {
     @@index([documentId])
     @@index([editorId])
   }
+
+// ============================================
+// GAMIFICATION SYSTEM
+// ============================================
+
+model UserActivity {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  activityType  ActivityType
+  entityType    String         // e.g., 'Task', 'Project', 'Comment'
+  entityId      Int            // ID of the related entity
+  pointsEarned  Int            @default(0)
+  createdAt     DateTime       @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([activityType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Achievement {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String
+  goal          Int            // e.g., number of tasks, hours logged
+  progressType  ProgressType
+  pointsAwarded Int            @default(0)
+  icon          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  userAchievements UserAchievement[]
+
+  @@index([name])
+}
+
+model UserAchievement {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  achievementId Int
+  progress      Int            @default(0) // Current progress towards the achievement
+  isUnlocked    Boolean        @default(false)
+  unlockedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement    @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([isUnlocked])
+}
+
+enum ActivityType {
+  TASK_CREATED
+  TASK_COMPLETED
+  TASK_UPDATED
+  COMMENT_POSTED
+  PROJECT_CREATED
+  TIME_LOGGED
+  BADGE_EARNED
+  ACHIEVEMENT_UNLOCKED
+  WIKI_DOCUMENT_CREATED
+}
+
+enum ProgressType {
+  INCREMENTAL // e.g., complete N tasks
+  BOOLEAN     // e.g., first task completed
+}
+
     
