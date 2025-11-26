@@ -6,8 +6,10 @@ import '../../../injection.dart';
 import '../../bloc/custom_field/custom_field_bloc.dart';
 import '../../bloc/custom_field/custom_field_event.dart';
 import '../../bloc/custom_field/custom_field_state.dart';
+import '../../providers/workspace_context.dart';
 import '../../shared/widgets/error_widget.dart' as app;
 import '../../shared/widgets/loading_widget.dart';
+import '../../widgets/common/project_picker_dialog.dart';
 import 'widgets/custom_field_form_dialog.dart';
 import 'widgets/custom_field_list_tile.dart';
 
@@ -312,10 +314,60 @@ class _CustomFieldsScreenContent extends StatelessWidget {
     );
   }
 
-  void _showCopyDialog(BuildContext context) {
-    // TODO: Implement project selection dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copy from project - Coming soon')),
+  void _showCopyDialog(BuildContext context) async {
+    // Obtener el workspace actual
+    final workspaceContext = context.read<WorkspaceContext>();
+    final workspaceId = workspaceContext.activeWorkspace?.id;
+
+    if (workspaceId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active workspace selected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Mostrar diálogo de selección de proyecto
+    final result = await showProjectPickerDialog(
+      context: context,
+      workspaceId: workspaceId,
+      excludeProjectId: projectId,
+      title: 'Copy fields from project',
     );
+
+    if (result == null || !context.mounted) return;
+
+    // Confirmar la copia
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Copy Custom Fields'),
+        content: Text(
+          'Copy all custom fields from "${result.project.name}" to "$projectName"?\n\n'
+          'This will add new fields without removing existing ones.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Copy Fields'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<CustomFieldBloc>().add(
+        CopyFieldDefinitionsEvent(
+          sourceProjectId: result.project.id,
+          targetProjectId: projectId,
+        ),
+      );
+    }
   }
 }

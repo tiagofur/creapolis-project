@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
+import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../domain/entities/task.dart';
 import '../../bloc/task/task_bloc.dart';
@@ -364,6 +365,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   /// Manejar envío del formulario
   void _handleSubmit() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
+      HapticService.mediumImpact();
       final values = _formKey.currentState!.value;
       final title = values['title'] as String;
       final description = values['description'] as String;

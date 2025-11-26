@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'adaptive_illustration.dart';
 
 /// Widget reutilizable para estados de loading
 class LoadingWidget extends StatelessWidget {
@@ -40,35 +41,48 @@ class ErrorWidget extends StatelessWidget {
   final VoidCallback? onRetry;
   final IconData? icon;
 
+  /// Si es true, usa AdaptiveIllustration en vez de un icono simple
+  final bool useAdaptiveIllustration;
+
   const ErrorWidget({
     super.key,
     required this.message,
     this.onRetry,
     this.icon,
+    this.useAdaptiveIllustration = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon ?? Icons.error_outline, size: 64, color: Colors.red[400]),
+            if (useAdaptiveIllustration)
+              PredefinedIllustrations.error(size: 140)
+            else
+              Icon(
+                icon ?? Icons.error_outline,
+                size: 64,
+                color: theme.colorScheme.error,
+              ),
             const SizedBox(height: 16),
             Text(
               'Oops!',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -100,6 +114,12 @@ class EmptyStateWidget extends StatelessWidget {
   final VoidCallback? onAction;
   final String? actionLabel;
 
+  /// Si es true, usa AdaptiveIllustration en vez de un icono simple
+  final bool useAdaptiveIllustration;
+
+  /// Tipo de ilustración cuando [useAdaptiveIllustration] es true
+  final IllustrationType illustrationType;
+
   const EmptyStateWidget({
     super.key,
     required this.title,
@@ -107,32 +127,44 @@ class EmptyStateWidget extends StatelessWidget {
     this.icon = Icons.inbox_outlined,
     this.onAction,
     this.actionLabel,
+    this.useAdaptiveIllustration = false,
+    this.illustrationType = IllustrationType.neutral,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: Colors.grey[400]),
+            if (useAdaptiveIllustration)
+              AdaptiveIllustration(
+                icon: icon,
+                type: illustrationType,
+                size: 160,
+                showGlow: false,
+              )
+            else
+              Icon(icon, size: 80, color: theme.colorScheme.outline),
             const SizedBox(height: 24),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             if (onAction != null && actionLabel != null) ...[
@@ -248,6 +280,3 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     );
   }
 }
-
-
-

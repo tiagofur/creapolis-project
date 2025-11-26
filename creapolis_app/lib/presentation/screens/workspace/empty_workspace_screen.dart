@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/common/adaptive_illustration.dart';
 
 /// Pantalla que se muestra cuando el usuario no tiene workspaces
 /// Inspirada en el diseño de onboarding de Notion, Slack y Asana
@@ -82,8 +83,6 @@ class EmptyWorkspaceScreen extends StatelessWidget {
 
   /// Ilustración principal con animación
   Widget _buildIllustration(BuildContext context) {
-    final theme = Theme.of(context);
-
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 800),
@@ -91,57 +90,7 @@ class EmptyWorkspaceScreen extends StatelessWidget {
       builder: (context, value, child) {
         return Transform.scale(
           scale: value,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.2),
-                  theme.colorScheme.secondary.withValues(alpha: 0.2),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Círculos decorativos
-                Positioned(
-                  top: 30,
-                  right: 40,
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 40,
-                  left: 35,
-                  child: Container(
-                    width: 25,
-                    height: 25,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                // Icono principal
-                Icon(
-                  Icons.workspaces_outlined,
-                  size: 100,
-                  color: theme.colorScheme.primary,
-                ),
-              ],
-            ),
-          ),
+          child: PredefinedIllustrations.workspace(size: 200),
         );
       },
     );

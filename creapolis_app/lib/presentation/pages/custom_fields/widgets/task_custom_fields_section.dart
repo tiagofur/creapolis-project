@@ -3,10 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/custom_field.dart';
+import '../../../../domain/entities/workspace_member.dart';
 import '../../../../injection.dart';
 import '../../../bloc/custom_field/custom_field_bloc.dart';
 import '../../../bloc/custom_field/custom_field_event.dart';
 import '../../../bloc/custom_field/custom_field_state.dart';
+import '../../../bloc/workspace_member/workspace_member_bloc.dart';
+import '../../../bloc/workspace_member/workspace_member_state.dart';
+import '../../../widgets/common/user_picker_dialog.dart';
 
 /// Widget for displaying and editing custom field values for a task
 class TaskCustomFieldsSection extends StatelessWidget {
@@ -429,13 +433,178 @@ class _CustomFieldRow extends StatelessWidget {
 
       case CustomFieldType.user:
       case CustomFieldType.multiuser:
-        // TODO: Implement user picker
-        return Text(
-          value.value?.toString() ?? 'Select user...',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.outline,
+        return _buildUserPicker(context);
+    }
+  }
+
+  Widget _buildUserPicker(BuildContext context) {
+    final theme = Theme.of(context);
+    final isMultiUser = definition.type == CustomFieldType.multiuser;
+
+    // Obtener los IDs seleccionados
+    List<int> selectedIds = [];
+    if (value.value != null) {
+      if (value.value is List) {
+        selectedIds = (value.value as List).cast<int>();
+      } else if (value.value is int) {
+        selectedIds = [value.value as int];
+      } else if (value.value is String) {
+        // Puede venir como string separado por comas
+        final strValue = value.value as String;
+        if (strValue.isNotEmpty) {
+          selectedIds = strValue
+              .split(',')
+              .map((s) => int.tryParse(s.trim()) ?? 0)
+              .where((id) => id > 0)
+              .toList();
+        }
+      }
+    }
+
+    // Intentar obtener los miembros del WorkspaceMemberBloc si está disponible
+    return BlocBuilder<WorkspaceMemberBloc, WorkspaceMemberState>(
+      builder: (context, memberState) {
+        List<WorkspaceMember> members = [];
+        if (memberState is WorkspaceMembersLoaded) {
+          members = memberState.members;
+        }
+
+        // Mostrar nombres de usuarios seleccionados
+        String displayText;
+        if (selectedIds.isEmpty) {
+          displayText = isMultiUser
+              ? 'Seleccionar usuarios...'
+              : 'Seleccionar usuario...';
+        } else if (members.isNotEmpty) {
+          final selectedMembers = members
+              .where((m) => selectedIds.contains(m.userId))
+              .toList();
+          if (selectedMembers.isEmpty) {
+            displayText = '${selectedIds.length} usuario(s)';
+          } else {
+            displayText = selectedMembers.map((m) => m.userName).join(', ');
+          }
+        } else {
+          displayText = '${selectedIds.length} usuario(s)';
+        }
+
+        return InkWell(
+          onTap: isEditable && members.isNotEmpty
+              ? () => _showUserPickerDialog(
+                  context,
+                  members,
+                  selectedIds,
+                  isMultiUser,
+                )
+              : null,
+          child: InputDecorator(
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              isDense: true,
+              suffixIcon: Icon(
+                isMultiUser ? Icons.people : Icons.person,
+                size: 18,
+              ),
+              enabled: isEditable && members.isNotEmpty,
+            ),
+            child: Row(
+              children: [
+                if (selectedIds.isNotEmpty && members.isNotEmpty) ...[
+                  // Mostrar avatares apilados
+                  _buildAvatarStack(members, selectedIds),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    displayText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: selectedIds.isEmpty || members.isEmpty
+                          ? theme.colorScheme.outline
+                          : null,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildAvatarStack(
+    List<WorkspaceMember> allMembers,
+    List<int> selectedIds,
+  ) {
+    final selectedMembers = allMembers
+        .where((m) => selectedIds.contains(m.userId))
+        .take(3)
+        .toList();
+    final extraCount = selectedIds.length - 3;
+
+    return SizedBox(
+      width: selectedMembers.length * 16 + 8,
+      height: 24,
+      child: Stack(
+        children: [
+          for (var i = 0; i < selectedMembers.length; i++)
+            Positioned(
+              left: i * 12.0,
+              child: CircleAvatar(
+                radius: 12,
+                backgroundImage: selectedMembers[i].userAvatarUrl != null
+                    ? NetworkImage(selectedMembers[i].userAvatarUrl!)
+                    : null,
+                child: selectedMembers[i].userAvatarUrl == null
+                    ? Text(
+                        selectedMembers[i].userName[0].toUpperCase(),
+                        style: const TextStyle(fontSize: 10),
+                      )
+                    : null,
+              ),
+            ),
+          if (extraCount > 0)
+            Positioned(
+              left: selectedMembers.length * 12.0,
+              child: CircleAvatar(
+                radius: 12,
+                backgroundColor: Colors.grey[300],
+                child: Text(
+                  '+$extraCount',
+                  style: const TextStyle(fontSize: 9, color: Colors.black87),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showUserPickerDialog(
+    BuildContext context,
+    List<WorkspaceMember> members,
+    List<int> currentSelection,
+    bool isMultiUser,
+  ) async {
+    final result = await showUserPickerDialog(
+      context: context,
+      members: members,
+      selectedUserIds: currentSelection,
+      multiSelect: isMultiUser,
+      title: isMultiUser ? 'Seleccionar usuarios' : 'Seleccionar usuario',
+    );
+
+    if (result != null) {
+      if (isMultiUser) {
+        onValueChanged(result.selectedUserIds);
+      } else {
+        onValueChanged(result.singleUserId);
+      }
     }
   }
 

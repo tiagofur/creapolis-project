@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +15,7 @@ import 'core/services/dashboard_preferences_service.dart';
 import 'core/services/role_based_preferences_service.dart';
 import 'core/services/customization_metrics_service.dart';
 import 'core/services/kanban_preferences_service.dart';
+import 'core/services/firebase_messaging_service.dart';
 import 'core/sync/sync_manager.dart';
 import 'core/utils/app_logger.dart';
 import 'injection.dart';
@@ -39,6 +42,14 @@ void main() async {
   }
 
   try {
+    // Inicializar Firebase
+    AppLogger.info('main: Inicializando Firebase...');
+    await Firebase.initializeApp();
+    AppLogger.info('main: ✅ Firebase inicializado');
+
+    // Configurar background message handler para notificaciones push
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     // Inicializar datos de localización para formateo de fechas
     AppLogger.info('main: Inicializando localización de fechas...');
     await initializeDateFormatting('es', null);
@@ -75,6 +86,12 @@ void main() async {
     AppLogger.info(
       'main: ✅ SyncManager inicializado y escuchando conectividad',
     );
+
+    // Inicializar Firebase Messaging Service
+    AppLogger.info('main: Inicializando Firebase Messaging...');
+    final firebaseMessagingService = getIt<FirebaseMessagingService>();
+    await firebaseMessagingService.initialize();
+    AppLogger.info('main: ✅ Firebase Messaging inicializado');
 
     // Ejecutar app con Sentry
     await SentryFlutter.init((options) {

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
+import '../../../core/services/haptic_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../routes/route_builder.dart';
 import '../../bloc/auth/auth_bloc.dart';
@@ -244,6 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
+      HapticService.mediumImpact();
       final values = _formKey.currentState!.value;
       final email = values['email'] as String;
       final password = values['password'] as String;
@@ -252,6 +254,8 @@ class _LoginScreenState extends State<LoginScreen> {
       context.read<AuthBloc>().add(
         LoginEvent(email: email, password: password),
       );
+    } else {
+      HapticService.error();
     }
   }
 
