@@ -32,6 +32,7 @@ class BillingService {
       // Handle error
       return null;
     }
+  }
   Future<String?> createCustomerPortalSession(int workspaceId) async {
     try {
       final response = await _apiService.post(

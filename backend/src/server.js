@@ -47,6 +47,7 @@ import sprintRoutes from "./routes/sprint.routes.js";
 import formRoutes from "./routes/form.routes.js";
 import kanbanRoutes from "./routes/kanban.routes.js";
 import billingRoutes from "./routes/billingRoutes.js";
+import wikiRoutes from "./routes/wiki.routes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -210,6 +211,7 @@ app.use("/api/sprints", sprintRoutes); // Sprint management
 app.use("/api", formRoutes); // Forms/Intake
 app.use("/api/kanban", kanbanRoutes); // Kanban board configuration
 app.use("/api/billing", billingRoutes); // Billing and subscriptions
+app.use("/api/wiki", wikiRoutes); // Wiki and documentation
 
 // Root endpoint
 app.get("/", (req, res) => {
