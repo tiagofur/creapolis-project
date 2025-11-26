@@ -29,6 +29,7 @@ import 'presentation/providers/workspace_context.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/providers/dashboard_filter_provider.dart';
 import 'presentation/providers/locale_provider.dart';
+import 'presentation/providers/subscription_provider.dart';
 import 'routes/app_router.dart';
 import 'package:creapolis_app/l10n/app_localizations.dart';
 
@@ -172,6 +173,7 @@ class _CreopolisAppState extends State<CreopolisApp> {
         ChangeNotifierProvider(create: (context) => getIt<ThemeProvider>()),
         ChangeNotifierProvider(create: (context) => DashboardFilterProvider()),
         ChangeNotifierProvider(create: (context) => LocaleProvider()),
+        ChangeNotifierProvider(create: (context) => SubscriptionProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

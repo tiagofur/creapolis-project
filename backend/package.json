@@ -7,9 +7,9 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:studio": "npx prisma studio",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand",
     "test:watch": "jest --watch"
   },

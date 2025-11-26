@@ -46,6 +46,7 @@ import auditRoutes from "./routes/audit.routes.js";
 import sprintRoutes from "./routes/sprint.routes.js";
 import formRoutes from "./routes/form.routes.js";
 import kanbanRoutes from "./routes/kanban.routes.js";
+import billingRoutes from "./routes/billingRoutes.js";
 
 // Import WebSocket service
 import websocketService from "./services/websocket.service.js";
@@ -138,6 +139,8 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 // Apply rate limit to GraphQL as well
 app.use("/graphql", limiter);
+// Apply rate limit to GraphQL as well
+app.use("/graphql", limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: "2mb" }));
@@ -206,6 +209,7 @@ app.use("/api/audit", auditRoutes); // Audit logs for enterprise
 app.use("/api/sprints", sprintRoutes); // Sprint management
 app.use("/api", formRoutes); // Forms/Intake
 app.use("/api/kanban", kanbanRoutes); // Kanban board configuration
+app.use("/api/billing", billingRoutes); // Billing and subscriptions
 
 // Root endpoint
 app.get("/", (req, res) => {

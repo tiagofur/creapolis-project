@@ -84,6 +84,7 @@ model Workspace {
   members                  WorkspaceMember[]
   chatChannels            ChatChannel[]
   auditLogs               AuditLog[]
+  subscription             Subscription?
 
   @@index([ownerId])
   @@index([name])
@@ -1539,9 +1540,92 @@ model FormSubmission {
   createdAt DateTime @default(now())
 
   form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
-
-  @@index([formId])
-  @@index([taskId])
-  @@index([createdAt])
-}
+    task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  
+    @@index([formId])
+    @@index([taskId])
+    @@index([createdAt])
+  }
+  
+  // ============================================
+  // BILLING & SUBSCRIPTIONS SYSTEM
+  // ============================================
+  
+  model Plan {
+    id                Int                  @id @default(autoincrement())
+    name              String               @unique // "Free", "Pro", "Enterprise"
+    slug              String               @unique // "free", "pro", "enterprise"
+    description       String?
+    priceMonthly      Float?               // null for free plan
+    priceYearly       Float?               // null for free plan
+    stripePriceId     String?              @unique // Stripe Price ID
+    features          String[]             // List of features
+    limits            String               // JSON: { "projects": 5, "users": 1, "storage": 1024 }
+    isPublic          Boolean              @default(true)
+    sortOrder         Int                  @default(0)
+    createdAt         DateTime             @default(now())
+    updatedAt         DateTime             @updatedAt
+    subscriptions     Subscription[]
+  
+    @@index([slug])
+    @@index([isPublic])
+  }
+  
+  model Subscription {
+    id                   Int                  @id @default(autoincrement())
+    workspaceId          Int                  @unique
+    planId               Int
+    stripeSubscriptionId String               @unique
+    status               SubscriptionStatus
+    currentPeriodEnd     DateTime
+    trialEnd             DateTime?
+    cancelAtPeriodEnd    Boolean              @default(false)
+    canceledAt           DateTime?
+    createdAt            DateTime             @default(now())
+    updatedAt            DateTime             @updatedAt
+    
+    workspace            Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+    plan                 Plan                 @relation(fields: [planId], references: [id])
+    payments             Payment[]
+  
+    @@index([workspaceId])
+    @@index([planId])
+    @@index([stripeSubscriptionId])
+    @@index([status])
+    @@index([currentPeriodEnd])
+  }
+  
+  model Payment {
+    id                Int                  @id @default(autoincrement())
+    subscriptionId    Int
+    stripeInvoiceId   String               @unique
+    amount            Float
+    currency          String
+    status            PaymentStatus
+    paidAt            DateTime
+    invoicePdf        String?
+    createdAt         DateTime             @default(now())
+    
+    subscription      Subscription         @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+    @@index([subscriptionId])
+    @@index([stripeInvoiceId])
+    @@index([status])
+  }
+  
+  enum SubscriptionStatus {
+    TRIALING
+    ACTIVE
+    PAST_DUE
+    CANCELED
+    UNPAID
+    INCOMPLETE
+    INCOMPLETE_EXPIRED
+  }
+  
+  enum PaymentStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+  }
+  

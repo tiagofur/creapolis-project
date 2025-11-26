@@ -14,6 +14,7 @@ import {
 } from "../validators/project.validator.js";
 import schedulerRoutes from "./scheduler.routes.js";
 import { cacheMiddleware } from "../middleware/cache.middleware.js";
+import { checkPlanLimits } from "../middleware/planMiddleware.js";
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.get(
  * @desc    Create new project
  * @access  Private
  */
-router.post("/", createProjectValidation, validate, projectController.create);
+router.post("/", createProjectValidation, validate, checkPlanLimits('projects'), projectController.create);
 
 /**
  * @route   GET /api/projects/portfolio

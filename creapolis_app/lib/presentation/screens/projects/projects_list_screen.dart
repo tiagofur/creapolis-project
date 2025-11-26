@@ -249,15 +249,24 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
           return const Center(child: CircularProgressIndicator());
         },
       ),
-      floatingActionButton: Consumer<WorkspaceContext>(
-        builder: (context, workspaceContext, _) {
+      floatingActionButton: Consumer2<WorkspaceContext, SubscriptionProvider>(
+        builder: (context, workspaceContext, subscriptionProvider, _) {
           final hasWorkspace = workspaceContext.hasActiveWorkspace;
+          final canCreateProject = subscriptionProvider.canCreateProject();
+
           return FloatingActionButton.extended(
             onPressed: hasWorkspace
-                ? () => _showCreateProjectSheet(context)
+                ? () {
+                    if (canCreateProject) {
+                      _showCreateProjectSheet(context);
+                    } else {
+                      _showLimitReachedDialog(context);
+                    }
+                  }
                 : () => _showNoWorkspaceMessage(context),
             icon: const Icon(Icons.add),
             label: const Text('Nuevo Proyecto'),
+            backgroundColor: canCreateProject ? null : Colors.grey,
           );
         },
       ),
@@ -423,6 +432,22 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                   ? 'Seleccionar Workspace'
                   : 'Crear Workspace',
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLimitReachedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limit Reached'),
+        content: const Text('You have reached the maximum number of projects for your current plan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
           ),
         ],
       ),

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../domain/entities/productivity_heatmap.dart';
 import '../../../domain/usecases/get_productivity_heatmap_usecase.dart';
 import '../../../injection.dart';
-import '../../widgets/time_tracking/time_stats_card.dart';
 import '../dashboard/widgets/hourly_productivity_heatmap_widget.dart';
 import '../dashboard/widgets/weekly_productivity_heatmap_widget.dart';
 

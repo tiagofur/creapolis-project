@@ -3,6 +3,14 @@ import { app, serverReady } from "../src/server.js";
 let prisma;
 const HAS_DB = !!process.env.DATABASE_URL;
 
+// Mock the email service
+jest.mock("../src/services/email.service.js", () => ({
+  sendVerificationEmail: jest.fn().mockResolvedValue({ sent: true }),
+  sendResetEmail: jest.fn().mockResolvedValue({ sent: true }),
+}));
+
+import emailService from "../src/services/email.service.js"; // Import after mock
+
 const suite = HAS_DB ? describe : describe.skip;
 
 suite("Auth Endpoints", () => {
@@ -21,6 +29,7 @@ suite("Auth Endpoints", () => {
       await prisma.user.deleteMany();
       await prisma.$disconnect();
     }
+    jest.clearAllMocks();
   });
 
   describe("POST /api/auth/register", () => {
@@ -141,6 +150,103 @@ suite("Auth Endpoints", () => {
 
       expect(res.statusCode).toBe(401);
       expect(res.body.success).toBe(false);
+    });
+  });
+
+  describe("Email and Password Flows", () => {
+    let resetToken;
+    let verificationToken;
+
+    beforeEach(() => {
+      // Clear mock calls before each test
+      emailService.sendResetEmail.mockClear();
+      emailService.sendVerificationEmail.mockClear();
+    });
+
+    it("should request a password reset and call email service", async () => {
+      const res = await request(app)
+        .post("/api/auth/forgot-password")
+        .send({ email: "test@example.com" });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data).toHaveProperty("token");
+      resetToken = res.body.data.token;
+
+      // Check that email service was called
+      expect(emailService.sendResetEmail).toHaveBeenCalledTimes(1);
+      expect(emailService.sendResetEmail).toHaveBeenCalledWith(
+        "test@example.com",
+        expect.any(String)
+      );
+    });
+
+    it("should fail to reset password with invalid token", async () => {
+      const res = await request(app).post("/api/auth/reset-password").send({
+        token: "invalidtoken",
+        newPassword: "newpassword123",
+      });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it("should reset password with valid token", async () => {
+      const res = await request(app).post("/api/auth/reset-password").send({
+        token: resetToken,
+        newPassword: "newpassword123",
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // Verify new password works
+      const loginRes = await request(app).post("/api/auth/login").send({
+        email: "test@example.com",
+        password: "newpassword123",
+      });
+      expect(loginRes.statusCode).toBe(200);
+    });
+
+    it("should send a verification email", async () => {
+      // Login to get a valid auth token
+      const loginRes = await request(app).post("/api/auth/login").send({
+        email: "test@example.com",
+        password: "newpassword123",
+      });
+      const authToken = loginRes.body.data.token;
+
+      const res = await request(app)
+        .post("/api/auth/verify/send")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data).toHaveProperty("token");
+      verificationToken = res.body.data.token;
+
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
+        "test@example.com",
+        expect.any(String)
+      );
+    });
+
+    it("should verify email with valid token", async () => {
+      const userBefore = await prisma.user.findUnique({
+        where: { email: "test@example.com" },
+      });
+      expect(userBefore.emailVerified).toBe(false);
+
+      const res = await request(app)
+        .post("/api/auth/verify")
+        .send({ token: verificationToken });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.emailVerified).toBe(true);
+
+      const userAfter = await prisma.user.findUnique({
+        where: { email: "test@example.com" },
+      });
+      expect(userAfter.emailVerified).toBe(true);
     });
   });
 });
